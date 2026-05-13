@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build-apk:
-    name: Build FOSS Debug APK
+    name: Build Debug APK
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,9 +32,9 @@ jobs:
           sdkmanager "build-tools;36.0.0"
           sdkmanager "build-tools;29.0.3"
       - name: Build Debug APK
-        run: bash ./gradlew :androidApp:assembleFossDebug --stacktrace
+        run: bash ./gradlew :androidApp:assembleDebug --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: beer-foss-debug
-          path: androidApp/build/outputs/apk/foss/debug/*.apk
+          name: beer-debug
+          path: androidApp/build/outputs/apk/debug/*.apk
