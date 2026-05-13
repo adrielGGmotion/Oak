@@ -983,7 +983,6 @@ class RemoteDataRepository(
         }
     }
 
-
     /**
      * Walks the message list and ensures tool-call sequence integrity.
      * OpenAI-compatible APIs require every `assistant` message with `tool_calls`
@@ -1026,10 +1025,12 @@ class RemoteDataRepository(
                     }
                     i = j
                 }
+
                 msg.role == "tool" -> {
                     // Orphaned tool message — drop it
                     i++
                 }
+
                 else -> {
                     result.add(msg)
                     i++
