@@ -36,7 +36,6 @@ class AppSettingsExportImportTest {
         val settings = MapSettings()
         val appSettings = AppSettings(settings)
         appSettings.setDaemonEnabled(true)
-        appSettings.trackAppOpen()
 
         val json = appSettings.exportToJson(toolIds)
         assertNull(json["daemon_enabled"])
