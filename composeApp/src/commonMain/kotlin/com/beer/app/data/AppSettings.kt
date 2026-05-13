@@ -380,7 +380,6 @@ class AppSettings(private val settings: Settings) {
         return "${serviceId}_$counter"
     }
 
-
     // Tool enable/disable settings
     fun isToolEnabled(toolId: String, defaultEnabled: Boolean = true): Boolean = settings.getBoolean("$KEY_TOOL_PREFIX$toolId", defaultEnabled)
 

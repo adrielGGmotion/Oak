@@ -1,9 +1,9 @@
 package com.beer.app.ui.sandbox
 
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.compose.runtime.snapshots.Snapshot
 import com.beer.app.CommandHandle
 import com.beer.app.SandboxController
 import com.beer.app.SandboxSessions
@@ -169,8 +169,8 @@ class SandboxSessionViewModel(
                 handle.awaitExit()
                 if (handle.isCancelled()) {
                     Snapshot.withMutableSnapshot {
-                    sandboxController.transcriptFor(sessionId).add(TerminalLine.Output("^C"))
-                }
+                        sandboxController.transcriptFor(sessionId).add(TerminalLine.Output("^C"))
+                    }
                 }
             }
         } catch (e: CancellationException) {
@@ -193,4 +193,3 @@ class SandboxSessionViewModel(
         super.onCleared()
     }
 }
-

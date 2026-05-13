@@ -114,7 +114,9 @@ class ToolExecutor {
                 value.doubleOrNull != null -> value.double
                 else -> value.toString()
             }
+
             is JsonObject -> value.toMap()
+
             else -> value.toString()
         }
     }
@@ -123,4 +125,3 @@ class ToolExecutor {
         return toolInfo.nameRes?.let { getString(it) } ?: toolInfo.name
     }
 }
-
