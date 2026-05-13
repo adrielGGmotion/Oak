@@ -166,7 +166,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm, TargetFormat.AppImage)
-            packageName = "Kai"
+            packageName = "Beer"
             packageVersion = libs.versions.appVersion.get()
 
             macOS {
@@ -174,7 +174,7 @@ compose.desktop {
             }
             windows {
                 iconFile.set(project.file("icon.ico"))
-                menuGroup = "Kai"
+                menuGroup = "Beer"
             }
             linux {
                 iconFile.set(project.file("icon.png"))
