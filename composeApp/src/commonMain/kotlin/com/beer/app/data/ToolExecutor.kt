@@ -101,6 +101,9 @@ class ToolExecutor {
     }
 
     private fun parseJsonToMap(json: String): Map<String, Any> {
+        val jsonObject = jsonParser.parseToJsonElement(json).jsonObject
+        return jsonObject.toMap()
+    }
 
     private fun JsonObject.toMap(): Map<String, Any> = entries.associate { (key, value) ->
         key to when (value) {
@@ -115,7 +118,6 @@ class ToolExecutor {
             else -> value.toString()
         }
     }
-
     suspend fun getToolDisplayName(toolId: String): String {
         val toolInfo = getPlatformToolDefinitions().find { it.id == toolId } ?: return toolId
         return toolInfo.nameRes?.let { getString(it) } ?: toolInfo.name
