@@ -380,13 +380,6 @@ class AppSettings(private val settings: Settings) {
         return "${serviceId}_$counter"
     }
 
-    // App open tracking
-    fun trackAppOpen(): Int {
-        val currentCount = settings.getInt(KEY_APP_OPENS, 0)
-        val newCount = currentCount + 1
-        settings.putInt(KEY_APP_OPENS, newCount)
-        return newCount
-    }
 
     // Tool enable/disable settings
     fun isToolEnabled(toolId: String, defaultEnabled: Boolean = true): Boolean = settings.getBoolean("$KEY_TOOL_PREFIX$toolId", defaultEnabled)
@@ -447,7 +440,6 @@ class AppSettings(private val settings: Settings) {
 
         // Migrate general settings
         migrateString(legacySettings, KEY_CURRENT_SERVICE_ID)
-        migrateInt(legacySettings, KEY_APP_OPENS)
 
         // Migrate per-service settings
         for (service in Service.all) {
@@ -1217,7 +1209,6 @@ class AppSettings(private val settings: Settings) {
 
     companion object {
         const val KEY_CURRENT_SERVICE_ID = "current_service_id"
-        const val KEY_APP_OPENS = "app_opens"
 
         const val KEY_CONVERSATIONS = "conversations_json"
         const val KEY_CURRENT_CONVERSATION_ID = "current_conversation_id"
