@@ -101,16 +101,16 @@ class ToolExecutor {
     }
 
     private fun parseJsonToMap(json: String): Map<String, Any> {
-        val jsonObject = jsonParser.parseToJsonElement(json).jsonObject
-        return jsonObject.toMap()
-    }
 
     private fun JsonObject.toMap(): Map<String, Any> = entries.associate { (key, value) ->
         key to when (value) {
-            is JsonPrimitive if value.isString -> value.content
-            is JsonPrimitive if value.booleanOrNull != null -> value.boolean
-            is JsonPrimitive if value.intOrNull != null -> value.int
-            is JsonPrimitive if value.doubleOrNull != null -> value.double
+            is JsonPrimitive -> when {
+                value.isString -> value.content
+                value.booleanOrNull != null -> value.boolean
+                value.intOrNull != null -> value.int
+                value.doubleOrNull != null -> value.double
+                else -> value.toString()
+            }
             is JsonObject -> value.toMap()
             else -> value.toString()
         }
@@ -121,3 +121,4 @@ class ToolExecutor {
         return toolInfo.nameRes?.let { getString(it) } ?: toolInfo.name
     }
 }
+
