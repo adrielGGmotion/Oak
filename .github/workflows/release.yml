@@ -32,11 +32,11 @@ jobs:
           sdkmanager "build-tools;36.0.0"
           sdkmanager "build-tools;29.0.3"
       - name: Build APK
-        run: bash ./gradlew :androidApp:assembleFossRelease --stacktrace
+        run: bash ./gradlew :androidApp:assembleRelease --stacktrace
       - name: Sign APK
         uses: r0adkll/sign-android-release@v1
         with:
-          releaseDirectory: androidApp/build/outputs/apk/foss/release
+          releaseDirectory: androidApp/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.KEYSTORE_B64 }}
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: signed-apk
-          path: androidApp/build/outputs/apk/foss/release/androidApp-foss-release-signed.apk
+          path: androidApp/build/outputs/apk/release/androidApp-release-signed.apk
 
   dmg:
     name: Generate DMG
@@ -374,7 +374,7 @@ jobs:
       - name: Rename assets
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          mv androidApp-foss-release-signed.apk "Kai-${VERSION}-android.apk"
+          mv androidApp-release-signed.apk "Kai-${VERSION}-android.apk"
           mv *.dmg "Kai-${VERSION}-macos.dmg"
           mv *.msi "Kai-${VERSION}-windows.msi"
           mv *.deb "Kai-${VERSION}-linux.deb"
