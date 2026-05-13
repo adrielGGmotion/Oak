@@ -17,7 +17,7 @@ class BeerApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         startKoin {
-            androidContext(this@KaiApplication)
+            androidContext(this@BeerApplication)
             modules(appModule, sandboxModule)
         }
         // Track app foreground state so the scheduler only pushes a heartbeat notification
