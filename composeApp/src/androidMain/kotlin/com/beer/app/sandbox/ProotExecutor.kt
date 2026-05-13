@@ -5,6 +5,8 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -50,6 +52,7 @@ class ProotHandle internal constructor(
 }
 
 class ProotExecutor(
+    private val readerPool: ExecutorService = Executors.newCachedThreadPool(),
     private val prootPath: String,
     private val libDir: String,
     private val rootfsPath: String,
@@ -73,12 +76,14 @@ class ProotExecutor(
             )
 
             // Drain stdout/stderr concurrently to avoid pipe buffer deadlock
-            val stdoutFuture = CompletableFuture.supplyAsync {
-                readBounded(process.inputStream.bufferedReader())
-            }
-            val stderrFuture = CompletableFuture.supplyAsync {
-                readBounded(process.errorStream.bufferedReader())
-            }
+            val stdoutFuture = CompletableFuture.supplyAsync(
+                { readBounded(process.inputStream.bufferedReader()) },
+                readerPool,
+            )
+            val stderrFuture = CompletableFuture.supplyAsync(
+                { readBounded(process.errorStream.bufferedReader()) },
+                readerPool,
+            )
 
             val completed = process.waitFor(effectiveTimeout, TimeUnit.SECONDS)
 
@@ -121,12 +126,14 @@ class ProotExecutor(
             File(rootfsPath).parentFile,
         )
         val cancelled = AtomicBoolean(false)
-        val stdoutFuture = CompletableFuture.runAsync {
-            streamLines(process.inputStream.bufferedReader(), cancelled, onStdout)
-        }
-        val stderrFuture = CompletableFuture.runAsync {
-            streamLines(process.errorStream.bufferedReader(), cancelled, onStderr)
-        }
+        val stdoutFuture = CompletableFuture.runAsync(
+            { streamLines(process.inputStream.bufferedReader(), cancelled, onStdout) },
+            readerPool,
+        )
+        val stderrFuture = CompletableFuture.runAsync(
+            { streamLines(process.errorStream.bufferedReader(), cancelled, onStderr) },
+            readerPool,
+        )
         return ProotHandle(process, cancelled, listOf(stdoutFuture, stderrFuture))
     }
 
@@ -196,3 +203,4 @@ class ProotExecutor(
         }
     }
 }
+
