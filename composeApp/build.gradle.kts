@@ -13,7 +13,7 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "com.inspiredandroid.kai.shared"
+        namespace = "com.beer.app.shared"
         compileSdk =
             libs.versions.android.compileSdk
                 .get()
@@ -38,7 +38,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
-            binaryOption("bundleId", "com.inspiredandroid.kai")
+            binaryOption("bundleId", "com.beer.app")
         }
     }
 
@@ -155,7 +155,7 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "com.inspiredandroid.kai.MainKt"
+        mainClass = "com.beer.app.MainKt"
 
         buildTypes.release.proguard {
             configurationFiles.from(
@@ -166,7 +166,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm, TargetFormat.AppImage)
-            packageName = "Kai"
+            packageName = "Beer"
             packageVersion = libs.versions.appVersion.get()
 
             macOS {
@@ -174,7 +174,7 @@ compose.desktop {
             }
             windows {
                 iconFile.set(project.file("icon.ico"))
-                menuGroup = "Kai"
+                menuGroup = "Beer"
             }
             linux {
                 iconFile.set(project.file("icon.png"))
@@ -214,13 +214,13 @@ class VersionGeneratorPlugin : Plugin<Project> {
             // Generate Kotlin version file
             val versionFile =
                 layout.buildDirectory
-                    .file("generated/src/commonMain/kotlin/com/inspiredandroid/kai/Version.kt")
+                    .file("generated/src/commonMain/kotlin/com/beer/app/Version.kt")
                     .get()
                     .asFile
             versionFile.parentFile?.mkdirs()
             versionFile.writeText(
                 """
-                package com.inspiredandroid.kai
+                package com.beer.app
 
                 object Version {
                     const val appVersion = "$appVersion"
