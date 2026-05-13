@@ -80,7 +80,6 @@ fun App(
     darkColorScheme: ColorScheme = DarkColorScheme,
     textToSpeech: TextToSpeechInstance? = null,
     isKoinStarted: Boolean = false,
-    onAppOpens: ((Int) -> Unit)? = null,
 ) {
     setSingletonImageLoaderFactory { context: PlatformContext ->
         ImageLoader.Builder(context)
@@ -94,14 +93,14 @@ fun App(
     // Reuse global Koin if already started (Android Application class),
     // otherwise create a new instance (iOS, Desktop, Wasm).
     if (isKoinStarted) {
-        AppContent(navController, lightColorScheme, darkColorScheme, textToSpeech, onAppOpens)
+        AppContent(navController, lightColorScheme, darkColorScheme, textToSpeech)
     } else {
         KoinApplication(
             configuration = koinConfiguration {
                 modules(appModule)
             },
         ) {
-            AppContent(navController, lightColorScheme, darkColorScheme, textToSpeech, onAppOpens)
+            AppContent(navController, lightColorScheme, darkColorScheme, textToSpeech)
         }
     }
 }
@@ -112,16 +111,8 @@ private fun AppContent(
     lightColorScheme: ColorScheme,
     darkColorScheme: ColorScheme,
     textToSpeech: TextToSpeechInstance?,
-    onAppOpens: ((Int) -> Unit)?,
 ) {
     val appSettings = koinInject<AppSettings>()
-
-    // Track app opens after Koin is initialized
-    onAppOpens?.let { callback ->
-        LaunchedEffect(Unit) {
-            callback(appSettings.trackAppOpen())
-        }
-    }
 
     // Set up permission handlers
     val calendarPermissionController = koinInject<CalendarPermissionController>()

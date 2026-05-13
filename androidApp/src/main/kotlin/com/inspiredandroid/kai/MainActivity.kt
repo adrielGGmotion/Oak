@@ -88,11 +88,6 @@ class MainActivity : ComponentActivity() {
                 darkColorScheme = darkScheme,
                 textToSpeech = textToSpeech,
                 isKoinStarted = true,
-                onAppOpens = { appOpens ->
-                    if (appOpens % 5 == 0) {
-                        requestReview(this@MainActivity)
-                    }
-                },
             )
         }
     }
