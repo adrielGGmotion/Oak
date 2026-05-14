@@ -53,8 +53,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.beer.app.SandboxFileEntry
 import com.beer.app.formatFileSize
 import com.beer.app.ui.handCursor
-import com.beer.app.ui.kaiAdaptiveCardBorder
-import com.beer.app.ui.kaiAdaptiveCardColors
+import com.beer.app.ui.beerAdaptiveCardBorder
+import com.beer.app.ui.beerAdaptiveCardColors
 import beer.composeapp.generated.resources.Res
 import beer.composeapp.generated.resources.sandbox_files_action_delete
 import beer.composeapp.generated.resources.sandbox_files_action_more
@@ -277,8 +277,8 @@ private fun FileRow(
     onDelete: () -> Unit,
 ) {
     Card(
-        colors = kaiAdaptiveCardColors(),
-        border = kaiAdaptiveCardBorder(),
+        colors = beerAdaptiveCardColors(),
+        border = beerAdaptiveCardBorder(),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(

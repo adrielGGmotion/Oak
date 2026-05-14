@@ -65,7 +65,7 @@ internal fun BotMessage(
     var isEditing by remember(frozen) { mutableStateOf(false) }
     val effectiveFrozen = if (isEditing && frozen != null) frozen.copy(pressedEvent = null) else frozen
     val effectiveInteractive = if (frozen != null) (onResubmit != null && isEditing) else isInteractive
-    val kaiUiCallback: (String, Map<String, String>) -> Unit = if (onResubmit != null) {
+    val beerUiCallback: (String, Map<String, String>) -> Unit = if (onResubmit != null) {
         { event, data ->
             isEditing = false
             onResubmit(event, data)
@@ -79,7 +79,7 @@ internal fun BotMessage(
             MarkdownContent(
                 document = document,
                 isInteractive = effectiveInteractive,
-                onUiCallback = kaiUiCallback,
+                onUiCallback = beerUiCallback,
                 frozen = effectiveFrozen,
                 modifier = Modifier.fillMaxWidth()
                     .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
