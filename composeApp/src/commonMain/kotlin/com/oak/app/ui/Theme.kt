@@ -5,6 +5,7 @@ package com.oak.app.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,36 +31,101 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-val darkPurple = Color(0xFF6200EE)
-val lightPurple = Color(0xff8063C5)
-val gradientBrush = androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(darkPurple, lightPurple))
+val OakSeed = Color(0xFF5B8C5B)
 
-// Animated border gradient colors
-val gradientPurple = Color(0xFF9C27B0)
-val gradientViolet = Color(0xFF7C4DFF)
-val gradientMagenta = Color(0xFFE040FB)
+private fun tonal(seed: Color, tone: Float): Color {
+    return when {
+        tone <= 50f -> lerp(Color.Black, seed, tone / 50f)
+        else -> lerp(seed, Color.White, (tone - 50f) / 50f)
+    }
+}
 
 fun Modifier.handCursor() = pointerHoverIcon(PointerIcon.Hand, overrideDescendants = true)
 
-val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFBB86FC),
-    onPrimary = Color(0xFF000000),
-    surface = Color(0xFF1E1E1E),
-    background = Color(0xFF121212),
-    onBackground = Color(0xFFFFFFFF),
-    onSurface = Color(0xFFFFFFFF),
-)
+fun greenLightColorScheme(): ColorScheme {
+    return lightColorScheme(
+        primary = tonal(OakSeed, 40f),
+        onPrimary = tonal(OakSeed, 100f),
+        primaryContainer = tonal(OakSeed, 90f),
+        onPrimaryContainer = tonal(OakSeed, 10f),
+        secondary = tonal(OakSeed, 40f),
+        onSecondary = tonal(OakSeed, 100f),
+        secondaryContainer = tonal(OakSeed, 90f),
+        onSecondaryContainer = tonal(OakSeed, 10f),
+        tertiary = tonal(OakSeed, 40f),
+        onTertiary = tonal(OakSeed, 100f),
+        tertiaryContainer = tonal(OakSeed, 90f),
+        onTertiaryContainer = tonal(OakSeed, 10f),
+        error = Color(0xFFBA1A1A),
+        onError = Color.White,
+        errorContainer = Color(0xFFFFDAD6),
+        onErrorContainer = Color(0xFF410002),
+        background = Color(0xFFF8FAF3),
+        onBackground = Color(0xFF1A1C19),
+        surface = Color(0xFFF8FAF3),
+        onSurface = Color(0xFF1A1C19),
+        surfaceVariant = Color(0xFFDDE5D9),
+        onSurfaceVariant = Color(0xFF424940),
+        outline = Color(0xFF72796F),
+        outlineVariant = Color(0xFFC1C9BD),
+        inverseSurface = Color(0xFF2F312D),
+        inverseOnSurface = Color(0xFFF0F1EB),
+        inversePrimary = tonal(OakSeed, 80f),
+        scrim = Color(0xFF000000),
+    )
+}
+
+fun greenDarkColorScheme(): ColorScheme {
+    return darkColorScheme(
+        primary = tonal(OakSeed, 80f),
+        onPrimary = tonal(OakSeed, 20f),
+        primaryContainer = tonal(OakSeed, 30f),
+        onPrimaryContainer = tonal(OakSeed, 90f),
+        secondary = tonal(OakSeed, 80f),
+        onSecondary = tonal(OakSeed, 20f),
+        secondaryContainer = tonal(OakSeed, 30f),
+        onSecondaryContainer = tonal(OakSeed, 90f),
+        tertiary = tonal(OakSeed, 80f),
+        onTertiary = tonal(OakSeed, 20f),
+        tertiaryContainer = tonal(OakSeed, 30f),
+        onTertiaryContainer = tonal(OakSeed, 90f),
+        error = Color(0xFFFFB4AB),
+        onError = Color(0xFF690005),
+        errorContainer = Color(0xFF93000A),
+        onErrorContainer = Color(0xFFFFDAD6),
+        background = Color(0xFF1A1C19),
+        onBackground = Color(0xFFE2E3DC),
+        surface = Color(0xFF1A1C19),
+        onSurface = Color(0xFFE2E3DC),
+        surfaceVariant = Color(0xFF424940),
+        onSurfaceVariant = Color(0xFFC1C9BD),
+        outline = Color(0xFF8B9388),
+        outlineVariant = Color(0xFF424940),
+        inverseSurface = Color(0xFFE2E3DC),
+        inverseOnSurface = Color(0xFF2F312D),
+        inversePrimary = tonal(OakSeed, 40f),
+        scrim = Color(0xFF000000),
+    )
+}
+
+val DarkColorScheme = greenDarkColorScheme()
+val LightColorScheme = greenLightColorScheme()
 
 fun ColorScheme.withBlackBackground(): ColorScheme = copy(
     background = Color.Black,
     surface = Color.Black,
     surfaceContainerLowest = Color.Black,
+    surfaceContainerLow = Color.Black,
+    surfaceContainer = Color.Black,
+    surfaceContainerHigh = Color.Black,
+    surfaceContainerHighest = Color.Black,
 )
 
 val ColorScheme.isOledFlavor: Boolean get() = background == Color.Black
@@ -98,14 +164,22 @@ fun Modifier.oakAdaptiveCardSurface(shape: Shape = CardDefaults.shape): Modifier
         },
     )
 
-val LightColorScheme = lightColorScheme(
-    primary = darkPurple,
-    onPrimary = Color(0xFFFFFFFF),
-    surface = Color(0xFFF2F2F2),
-    background = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF000000),
-    onSurface = Color(0xFF000000),
-)
+@Composable
+expect fun oakColorScheme(useDynamicColors: Boolean, darkTheme: Boolean): ColorScheme
+
+@Composable
+fun OakTheme(
+    useDynamicColors: Boolean = false,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    isOledBlack: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    val colorScheme = oakColorScheme(useDynamicColors, darkTheme)
+    val effectiveScheme = if (isOledBlack) colorScheme.withBlackBackground() else colorScheme
+    MaterialTheme(colorScheme = effectiveScheme) {
+        content()
+    }
+}
 
 @Composable
 fun outlineTextFieldColors() = OutlinedTextFieldDefaults.colors()

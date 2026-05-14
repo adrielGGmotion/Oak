@@ -95,6 +95,8 @@ interface DataRepository {
     // Theme mode
     fun getThemeMode(): ThemeMode
     fun setThemeMode(mode: ThemeMode)
+    fun isUseDynamicColorsEnabled(): Boolean
+    fun setUseDynamicColorsEnabled(enabled: Boolean)
 
     // Interactive mode
     fun setInteractiveMode(enabled: Boolean)

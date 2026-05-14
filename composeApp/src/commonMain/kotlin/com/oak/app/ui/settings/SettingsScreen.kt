@@ -1687,6 +1687,13 @@ private fun GeneralContent(uiState: SettingsUiState, actions: SettingsActions) {
                             themeMode = uiState.themeMode,
                             onChangeThemeMode = actions.onChangeThemeMode,
                         )
+                        if (uiState.showDynamicColorsToggle) {
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            DynamicColorsToggle(
+                                useDynamicColors = uiState.useDynamicColors,
+                                onToggleDynamicColors = actions.onToggleDynamicColors,
+                            )
+                        }
                     }
                 }
                 Column(
@@ -1731,6 +1738,13 @@ private fun GeneralContent(uiState: SettingsUiState, actions: SettingsActions) {
                         themeMode = uiState.themeMode,
                         onChangeThemeMode = actions.onChangeThemeMode,
                     )
+                    if (uiState.showDynamicColorsToggle) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                        DynamicColorsToggle(
+                            useDynamicColors = uiState.useDynamicColors,
+                            onToggleDynamicColors = actions.onToggleDynamicColors,
+                        )
+                    }
                 }
                 if (uiState.showUiScale) {
                     SettingsCard {
@@ -2995,6 +3009,44 @@ private fun DynamicUiToggle(
             checked = isDynamicUiEnabled,
             onCheckedChange = onToggleDynamicUi,
         )
+    }
+}
+
+@Composable
+private fun DynamicColorsToggle(
+    useDynamicColors: Boolean,
+    onToggleDynamicColors: (Boolean) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onToggleDynamicColors(!useDynamicColors) }
+                .handCursor()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Dynamic Colors (Android 12+)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.size(2.dp))
+                Text(
+                    text = "Adapt to your system wallpaper colors",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Switch(
+                checked = useDynamicColors,
+                onCheckedChange = onToggleDynamicColors,
+                modifier = Modifier.handCursor(),
+            )
+        }
     }
 }
 

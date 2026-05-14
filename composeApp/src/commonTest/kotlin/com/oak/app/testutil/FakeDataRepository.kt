@@ -361,6 +361,14 @@ class FakeDataRepository : DataRepository {
         themeMode = mode
     }
 
+    private var useDynamicColors = false
+
+    override fun isUseDynamicColorsEnabled(): Boolean = useDynamicColors
+
+    override fun setUseDynamicColorsEnabled(enabled: Boolean) {
+        useDynamicColors = enabled
+    }
+
     private var interactiveMode = false
 
     override fun setInteractiveMode(enabled: Boolean) {

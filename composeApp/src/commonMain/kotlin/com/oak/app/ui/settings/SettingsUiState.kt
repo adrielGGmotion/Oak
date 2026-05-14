@@ -63,6 +63,8 @@ data class SettingsUiState(
     val soulText: String = "",
     val isDynamicUiEnabled: Boolean = true,
     val themeMode: ThemeMode = ThemeMode.System,
+    val useDynamicColors: Boolean = false,
+    val showDynamicColorsToggle: Boolean = false,
     val isMemoryEnabled: Boolean = true,
     val memories: ImmutableList<MemoryEntry> = persistentListOf(),
     val isSchedulingEnabled: Boolean = true,

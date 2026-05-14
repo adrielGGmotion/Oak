@@ -26,7 +26,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.oak.app.ui.components.LogoAnimation
-import com.oak.app.ui.components.animatedGradientBorder
+import com.oak.app.ui.components.oakOutlinedBorder
 import com.oak.app.ui.handCursor
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.privacy_agree_prefix
@@ -96,7 +96,7 @@ private fun AnimatedBorderButton(
             .handCursor()
             .clip(RoundedCornerShape(50))
             .clickable(onClick = onClick)
-            .animatedGradientBorder(
+            .oakOutlinedBorder(
                 cornerRadius = 50.dp,
                 borderWidth = 3.dp,
                 backgroundColor = MaterialTheme.colorScheme.background,

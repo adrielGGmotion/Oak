@@ -524,6 +524,17 @@ class AppSettings(private val settings: Settings) {
         settings.putBoolean(KEY_DYNAMIC_UI_ENABLED, enabled)
     }
 
+    // Dynamic Colors (Android 12+)
+    private val _useDynamicColorsFlow = MutableStateFlow(settings.getBoolean(KEY_USE_DYNAMIC_COLORS, false))
+    val useDynamicColorsFlow: StateFlow<Boolean> = _useDynamicColorsFlow
+
+    fun isUseDynamicColorsEnabled(): Boolean = _useDynamicColorsFlow.value
+
+    fun setUseDynamicColorsEnabled(enabled: Boolean) {
+        settings.putBoolean(KEY_USE_DYNAMIC_COLORS, enabled)
+        _useDynamicColorsFlow.value = enabled
+    }
+
     private val _themeModeFlow = MutableStateFlow(loadInitialThemeMode())
     val themeModeFlow: StateFlow<ThemeMode> = _themeModeFlow
 
@@ -1223,6 +1234,7 @@ class AppSettings(private val settings: Settings) {
         const val KEY_SCHEDULED_TASKS = "scheduled_tasks"
         const val KEY_SCHEDULING_ENABLED = "scheduling_enabled"
         const val KEY_DYNAMIC_UI_ENABLED = "dynamic_ui_enabled"
+        const val KEY_USE_DYNAMIC_COLORS = "use_dynamic_colors"
         const val KEY_OLED_MODE_ENABLED = "oled_mode_enabled"
         const val KEY_THEME_MODE = "theme_mode"
         const val KEY_DAEMON_ENABLED = "daemon_enabled"

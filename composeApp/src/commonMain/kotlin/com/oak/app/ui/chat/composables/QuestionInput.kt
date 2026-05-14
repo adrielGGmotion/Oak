@@ -62,7 +62,6 @@ import com.oak.app.Platform
 import com.oak.app.currentPlatform
 import com.oak.app.data.ServiceEntry
 import com.oak.app.data.imageExtensions
-import com.oak.app.ui.gradientBrush
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.outlineTextFieldColors
 import io.github.vinceglb.filekit.PlatformFile
@@ -171,7 +170,7 @@ fun QuestionInput(
                 .clip(RoundedCornerShape(28.dp))
                 .background(MaterialTheme.colorScheme.background)
                 .border(
-                    BorderStroke(width = 2.dp, brush = gradientBrush),
+                    BorderStroke(width = 2.dp, MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(28.dp),
                 )
                 .onPreviewKeyEvent { event ->
@@ -306,7 +305,7 @@ internal fun TrailingIcon(
         modifier = modifier
             .size(42.dp)
             .clip(CircleShape)
-            .background(brush = gradientBrush, CircleShape)
+            .background(MaterialTheme.colorScheme.primary, CircleShape)
             .handCursor()
             .clickable {
                 onClick()
