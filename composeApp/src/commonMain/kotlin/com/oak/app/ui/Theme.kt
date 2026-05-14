@@ -18,8 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import com.materialkolor.dynamicColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +30,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.input.VisualTransformation
@@ -40,83 +38,15 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 val OakSeed = Color(0xFF5B8C5B)
 
-private fun tonal(seed: Color, tone: Float): Color {
-    return when {
-        tone <= 50f -> lerp(Color.Black, seed, tone / 50f)
-        else -> lerp(seed, Color.White, (tone - 50f) / 50f)
-    }
-}
-
 fun Modifier.handCursor() = pointerHoverIcon(PointerIcon.Hand, overrideDescendants = true)
 
-fun greenLightColorScheme(): ColorScheme {
-    return lightColorScheme(
-        primary = tonal(OakSeed, 40f),
-        onPrimary = tonal(OakSeed, 100f),
-        primaryContainer = tonal(OakSeed, 90f),
-        onPrimaryContainer = tonal(OakSeed, 10f),
-        secondary = tonal(OakSeed, 40f),
-        onSecondary = tonal(OakSeed, 100f),
-        secondaryContainer = tonal(OakSeed, 90f),
-        onSecondaryContainer = tonal(OakSeed, 10f),
-        tertiary = tonal(OakSeed, 40f),
-        onTertiary = tonal(OakSeed, 100f),
-        tertiaryContainer = tonal(OakSeed, 90f),
-        onTertiaryContainer = tonal(OakSeed, 10f),
-        error = Color(0xFFBA1A1A),
-        onError = Color.White,
-        errorContainer = Color(0xFFFFDAD6),
-        onErrorContainer = Color(0xFF410002),
-        background = Color(0xFFF8FAF3),
-        onBackground = Color(0xFF1A1C19),
-        surface = Color(0xFFF8FAF3),
-        onSurface = Color(0xFF1A1C19),
-        surfaceVariant = Color(0xFFDDE5D9),
-        onSurfaceVariant = Color(0xFF424940),
-        outline = Color(0xFF72796F),
-        outlineVariant = Color(0xFFC1C9BD),
-        inverseSurface = Color(0xFF2F312D),
-        inverseOnSurface = Color(0xFFF0F1EB),
-        inversePrimary = tonal(OakSeed, 80f),
-        scrim = Color(0xFF000000),
-    )
-}
+fun greenColorScheme(darkTheme: Boolean): ColorScheme = dynamicColorScheme(
+    seedColor = OakSeed,
+    isDark = darkTheme,
+)
 
-fun greenDarkColorScheme(): ColorScheme {
-    return darkColorScheme(
-        primary = tonal(OakSeed, 80f),
-        onPrimary = tonal(OakSeed, 20f),
-        primaryContainer = tonal(OakSeed, 30f),
-        onPrimaryContainer = tonal(OakSeed, 90f),
-        secondary = tonal(OakSeed, 80f),
-        onSecondary = tonal(OakSeed, 20f),
-        secondaryContainer = tonal(OakSeed, 30f),
-        onSecondaryContainer = tonal(OakSeed, 90f),
-        tertiary = tonal(OakSeed, 80f),
-        onTertiary = tonal(OakSeed, 20f),
-        tertiaryContainer = tonal(OakSeed, 30f),
-        onTertiaryContainer = tonal(OakSeed, 90f),
-        error = Color(0xFFFFB4AB),
-        onError = Color(0xFF690005),
-        errorContainer = Color(0xFF93000A),
-        onErrorContainer = Color(0xFFFFDAD6),
-        background = Color(0xFF1A1C19),
-        onBackground = Color(0xFFE2E3DC),
-        surface = Color(0xFF1A1C19),
-        onSurface = Color(0xFFE2E3DC),
-        surfaceVariant = Color(0xFF424940),
-        onSurfaceVariant = Color(0xFFC1C9BD),
-        outline = Color(0xFF8B9388),
-        outlineVariant = Color(0xFF424940),
-        inverseSurface = Color(0xFFE2E3DC),
-        inverseOnSurface = Color(0xFF2F312D),
-        inversePrimary = tonal(OakSeed, 40f),
-        scrim = Color(0xFF000000),
-    )
-}
-
-val DarkColorScheme = greenDarkColorScheme()
-val LightColorScheme = greenLightColorScheme()
+val DarkColorScheme = greenColorScheme(darkTheme = true)
+val LightColorScheme = greenColorScheme(darkTheme = false)
 
 fun ColorScheme.withBlackBackground(): ColorScheme = copy(
     background = Color.Black,
