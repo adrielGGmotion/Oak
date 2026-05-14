@@ -348,8 +348,8 @@ Als iets aandacht nodig heeft (verouderde herinneringen, verlopen taken, gebruik
     <string name="tool_search_notifications_name">Meldingen zoeken</string>
     <string name="tool_search_notifications_description">Meldingen zoeken op app of tekst</string>
     <string name="settings_notifications_label">Meldingen lezen</string>
-    <string name="settings_notifications_description">Inkomende meldingen worden op de achtergrond verzameld en door de heartbeat opgepikt. Kies in de systeeminstellingen voor meldingstoegang welke apps Kai mag lezen.</string>
-    <string name="settings_notifications_access_required">Meldingstoegang is niet verleend. Tik hieronder om Kai in de systeeminstellingen in te schakelen.</string>
+    <string name="settings_notifications_description">Inkomende meldingen worden op de achtergrond verzameld en door de heartbeat opgepikt. Kies in de systeeminstellingen voor meldingstoegang welke apps Beer mag lezen.</string>
+    <string name="settings_notifications_access_required">Meldingstoegang is niet verleend. Tik hieronder om Beer in de systeeminstellingen in te schakelen.</string>
     <string name="settings_notifications_access_button">Meldingstoegang openen</string>
     <string name="settings_notifications_manage_apps">Apps beheren</string>
     <string name="settings_notifications_listener_bound">Listener actief</string>

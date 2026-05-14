@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">Ieškoti pranešimų</string>
     <string name="tool_search_notifications_description">Ieškoti pranešimų pagal programą ar tekstą</string>
     <string name="settings_notifications_label">Skaityti pranešimus</string>
-    <string name="settings_notifications_description">Įeinantys pranešimai renkami fone, juos paima heartbeat. Sistemos pranešimų prieigos nustatymuose pasirink, kurias programas Kai gali skaityti.</string>
-    <string name="settings_notifications_access_required">Pranešimų prieiga nesuteikta. Bakstelėk žemiau, kad įjungtum Kai sistemos nustatymuose.</string>
+    <string name="settings_notifications_description">Įeinantys pranešimai renkami fone, juos paima heartbeat. Sistemos pranešimų prieigos nustatymuose pasirink, kurias programas Beer gali skaityti.</string>
+    <string name="settings_notifications_access_required">Pranešimų prieiga nesuteikta. Bakstelėk žemiau, kad įjungtum Beer sistemos nustatymuose.</string>
     <string name="settings_notifications_access_button">Atverti pranešimų prieigą</string>
     <string name="settings_notifications_manage_apps">Tvarkyti programas</string>
     <string name="settings_notifications_listener_bound">Klausytojas aktyvus</string>

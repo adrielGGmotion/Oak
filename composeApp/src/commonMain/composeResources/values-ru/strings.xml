@@ -348,8 +348,8 @@
     <string name="tool_search_notifications_name">Поиск уведомлений</string>
     <string name="tool_search_notifications_description">Поиск уведомлений по приложению или тексту</string>
     <string name="settings_notifications_label">Чтение уведомлений</string>
-    <string name="settings_notifications_description">Входящие уведомления собираются в фоновом режиме и обрабатываются heartbeat. В системных настройках доступа к уведомлениям выберите, какие приложения может читать Kai.</string>
-    <string name="settings_notifications_access_required">Доступ к уведомлениям не предоставлен. Нажмите ниже, чтобы включить Kai в системных настройках.</string>
+    <string name="settings_notifications_description">Входящие уведомления собираются в фоновом режиме и обрабатываются heartbeat. В системных настройках доступа к уведомлениям выберите, какие приложения может читать Beer.</string>
+    <string name="settings_notifications_access_required">Доступ к уведомлениям не предоставлен. Нажмите ниже, чтобы включить Beer в системных настройках.</string>
     <string name="settings_notifications_access_button">Открыть доступ к уведомлениям</string>
     <string name="settings_notifications_manage_apps">Управление приложениями</string>
     <string name="settings_notifications_listener_bound">Listener активен</string>

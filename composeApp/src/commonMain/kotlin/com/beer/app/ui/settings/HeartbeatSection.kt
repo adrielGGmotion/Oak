@@ -42,58 +42,58 @@ import com.beer.app.data.EmailSyncState
 import com.beer.app.data.HeartbeatLogEntry
 import com.beer.app.data.ServiceEntry
 import com.beer.app.data.SmsSyncState
-import com.beer.app.ui.KaiOutlinedTextField
-import com.beer.app.ui.components.KaiRangeSlider
-import com.beer.app.ui.components.KaiSlider
+import com.beer.app.ui.BeerOutlinedTextField
+import com.beer.app.ui.components.BeerRangeSlider
+import com.beer.app.ui.components.BeerSlider
 import com.beer.app.ui.components.RefreshIconButton
 import com.beer.app.ui.components.SettingsListItem
 import com.beer.app.ui.handCursor
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.settings_email
-import kai.composeapp.generated.resources.settings_email_description
-import kai.composeapp.generated.resources.settings_email_empty
-import kai.composeapp.generated.resources.settings_email_last_poll
-import kai.composeapp.generated.resources.settings_email_poll_failed
-import kai.composeapp.generated.resources.settings_email_poll_interval
-import kai.composeapp.generated.resources.settings_email_poll_never
-import kai.composeapp.generated.resources.settings_email_queued
-import kai.composeapp.generated.resources.settings_email_refresh
-import kai.composeapp.generated.resources.settings_email_remove
-import kai.composeapp.generated.resources.settings_heartbeat
-import kai.composeapp.generated.resources.settings_heartbeat_active_hours
-import kai.composeapp.generated.resources.settings_heartbeat_default_prompt
-import kai.composeapp.generated.resources.settings_heartbeat_description
-import kai.composeapp.generated.resources.settings_heartbeat_interval
-import kai.composeapp.generated.resources.settings_heartbeat_model
-import kai.composeapp.generated.resources.settings_heartbeat_model_default
-import kai.composeapp.generated.resources.settings_heartbeat_prompt_label
-import kai.composeapp.generated.resources.settings_heartbeat_recent
-import kai.composeapp.generated.resources.settings_heartbeat_refresh
-import kai.composeapp.generated.resources.settings_heartbeat_reset_confirm
-import kai.composeapp.generated.resources.settings_notifications_access_button
-import kai.composeapp.generated.resources.settings_notifications_access_required
-import kai.composeapp.generated.resources.settings_notifications_clear_queue
-import kai.composeapp.generated.resources.settings_notifications_description
-import kai.composeapp.generated.resources.settings_notifications_label
-import kai.composeapp.generated.resources.settings_notifications_listener_bound
-import kai.composeapp.generated.resources.settings_notifications_listener_disconnected
-import kai.composeapp.generated.resources.settings_notifications_manage_apps
-import kai.composeapp.generated.resources.settings_notifications_queued
-import kai.composeapp.generated.resources.settings_sms_description
-import kai.composeapp.generated.resources.settings_sms_last_poll
-import kai.composeapp.generated.resources.settings_sms_permission_button
-import kai.composeapp.generated.resources.settings_sms_permission_required
-import kai.composeapp.generated.resources.settings_sms_poll_failed
-import kai.composeapp.generated.resources.settings_sms_poll_interval
-import kai.composeapp.generated.resources.settings_sms_queued
-import kai.composeapp.generated.resources.settings_sms_read_label
-import kai.composeapp.generated.resources.settings_sms_refresh
-import kai.composeapp.generated.resources.settings_sms_send_description
-import kai.composeapp.generated.resources.settings_sms_send_label
-import kai.composeapp.generated.resources.settings_sms_send_permission_required
-import kai.composeapp.generated.resources.settings_soul_reset
-import kai.composeapp.generated.resources.settings_soul_reset_cancel
-import kai.composeapp.generated.resources.settings_soul_save
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.settings_email
+import beer.composeapp.generated.resources.settings_email_description
+import beer.composeapp.generated.resources.settings_email_empty
+import beer.composeapp.generated.resources.settings_email_last_poll
+import beer.composeapp.generated.resources.settings_email_poll_failed
+import beer.composeapp.generated.resources.settings_email_poll_interval
+import beer.composeapp.generated.resources.settings_email_poll_never
+import beer.composeapp.generated.resources.settings_email_queued
+import beer.composeapp.generated.resources.settings_email_refresh
+import beer.composeapp.generated.resources.settings_email_remove
+import beer.composeapp.generated.resources.settings_heartbeat
+import beer.composeapp.generated.resources.settings_heartbeat_active_hours
+import beer.composeapp.generated.resources.settings_heartbeat_default_prompt
+import beer.composeapp.generated.resources.settings_heartbeat_description
+import beer.composeapp.generated.resources.settings_heartbeat_interval
+import beer.composeapp.generated.resources.settings_heartbeat_model
+import beer.composeapp.generated.resources.settings_heartbeat_model_default
+import beer.composeapp.generated.resources.settings_heartbeat_prompt_label
+import beer.composeapp.generated.resources.settings_heartbeat_recent
+import beer.composeapp.generated.resources.settings_heartbeat_refresh
+import beer.composeapp.generated.resources.settings_heartbeat_reset_confirm
+import beer.composeapp.generated.resources.settings_notifications_access_button
+import beer.composeapp.generated.resources.settings_notifications_access_required
+import beer.composeapp.generated.resources.settings_notifications_clear_queue
+import beer.composeapp.generated.resources.settings_notifications_description
+import beer.composeapp.generated.resources.settings_notifications_label
+import beer.composeapp.generated.resources.settings_notifications_listener_bound
+import beer.composeapp.generated.resources.settings_notifications_listener_disconnected
+import beer.composeapp.generated.resources.settings_notifications_manage_apps
+import beer.composeapp.generated.resources.settings_notifications_queued
+import beer.composeapp.generated.resources.settings_sms_description
+import beer.composeapp.generated.resources.settings_sms_last_poll
+import beer.composeapp.generated.resources.settings_sms_permission_button
+import beer.composeapp.generated.resources.settings_sms_permission_required
+import beer.composeapp.generated.resources.settings_sms_poll_failed
+import beer.composeapp.generated.resources.settings_sms_poll_interval
+import beer.composeapp.generated.resources.settings_sms_queued
+import beer.composeapp.generated.resources.settings_sms_read_label
+import beer.composeapp.generated.resources.settings_sms_refresh
+import beer.composeapp.generated.resources.settings_sms_send_description
+import beer.composeapp.generated.resources.settings_sms_send_label
+import beer.composeapp.generated.resources.settings_sms_send_permission_required
+import beer.composeapp.generated.resources.settings_soul_reset
+import beer.composeapp.generated.resources.settings_soul_reset_cancel
+import beer.composeapp.generated.resources.settings_soul_save
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
@@ -185,7 +185,7 @@ internal fun HeartbeatSection(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
             }
-            KaiSlider(
+            BeerSlider(
                 value = intervalSliderValue,
                 onValueChange = { intervalSliderValue = it },
                 onValueChangeFinished = {
@@ -218,7 +218,7 @@ internal fun HeartbeatSection(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
             }
-            KaiRangeSlider(
+            BeerRangeSlider(
                 value = activeStart..activeEnd,
                 onValueChange = { range ->
                     activeStart = range.start
@@ -365,7 +365,7 @@ internal fun HeartbeatSection(
 
             Spacer(Modifier.height(12.dp))
 
-            KaiOutlinedTextField(
+            BeerOutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = editedText,
                 onValueChange = { if (it.length <= maxChars) editedText = it },
@@ -547,7 +547,7 @@ internal fun EmailSection(
                         color = MaterialTheme.colorScheme.onBackground,
                     )
                 }
-                KaiSlider(
+                BeerSlider(
                     value = emailSliderValue,
                     onValueChange = { emailSliderValue = it },
                     onValueChangeFinished = {
@@ -664,7 +664,7 @@ internal fun SmsSection(
                         color = MaterialTheme.colorScheme.onBackground,
                     )
                 }
-                KaiSlider(
+                BeerSlider(
                     value = smsSliderValue,
                     onValueChange = { smsSliderValue = it },
                     onValueChangeFinished = {

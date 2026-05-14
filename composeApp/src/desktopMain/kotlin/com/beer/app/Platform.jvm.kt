@@ -217,7 +217,7 @@ actual fun sendHeartbeatNotification(title: String, body: String) {
                 val tray = java.awt.SystemTray.getSystemTray()
                 // 1×1 transparent placeholder — Windows auto-supplies a fallback icon for the toast.
                 val image = java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB)
-                val trayIcon = java.awt.TrayIcon(image, "Kai")
+                val trayIcon = java.awt.TrayIcon(image, "Beer")
                 trayIcon.isImageAutoSize = true
                 tray.add(trayIcon)
                 trayIcon.displayMessage(title, body, java.awt.TrayIcon.MessageType.INFO)

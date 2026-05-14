@@ -1,35 +1,35 @@
 package com.beer.app.data
 
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.ic_service_aihubmix
-import kai.composeapp.generated.resources.ic_service_anthropic
-import kai.composeapp.generated.resources.ic_service_cerebras
-import kai.composeapp.generated.resources.ic_service_deepinfra
-import kai.composeapp.generated.resources.ic_service_deepseek
-import kai.composeapp.generated.resources.ic_service_fireworksai
-import kai.composeapp.generated.resources.ic_service_free_expert
-import kai.composeapp.generated.resources.ic_service_free_fast
-import kai.composeapp.generated.resources.ic_service_gemini
-import kai.composeapp.generated.resources.ic_service_groqcloud
-import kai.composeapp.generated.resources.ic_service_huggingface
-import kai.composeapp.generated.resources.ic_service_litert
-import kai.composeapp.generated.resources.ic_service_longcat
-import kai.composeapp.generated.resources.ic_service_minimax
-import kai.composeapp.generated.resources.ic_service_mistral
-import kai.composeapp.generated.resources.ic_service_moonshot
-import kai.composeapp.generated.resources.ic_service_nvidia
-import kai.composeapp.generated.resources.ic_service_ollamacloud
-import kai.composeapp.generated.resources.ic_service_openai
-import kai.composeapp.generated.resources.ic_service_openai_compatible
-import kai.composeapp.generated.resources.ic_service_opencode
-import kai.composeapp.generated.resources.ic_service_openrouter
-import kai.composeapp.generated.resources.ic_service_publicai
-import kai.composeapp.generated.resources.ic_service_together
-import kai.composeapp.generated.resources.ic_service_venice
-import kai.composeapp.generated.resources.ic_service_xai
-import kai.composeapp.generated.resources.ic_service_zai
-import kai.composeapp.generated.resources.service_free_expert
-import kai.composeapp.generated.resources.service_free_fast
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.ic_service_aihubmix
+import beer.composeapp.generated.resources.ic_service_anthropic
+import beer.composeapp.generated.resources.ic_service_cerebras
+import beer.composeapp.generated.resources.ic_service_deepinfra
+import beer.composeapp.generated.resources.ic_service_deepseek
+import beer.composeapp.generated.resources.ic_service_fireworksai
+import beer.composeapp.generated.resources.ic_service_free_expert
+import beer.composeapp.generated.resources.ic_service_free_fast
+import beer.composeapp.generated.resources.ic_service_gemini
+import beer.composeapp.generated.resources.ic_service_groqcloud
+import beer.composeapp.generated.resources.ic_service_huggingface
+import beer.composeapp.generated.resources.ic_service_litert
+import beer.composeapp.generated.resources.ic_service_longcat
+import beer.composeapp.generated.resources.ic_service_minimax
+import beer.composeapp.generated.resources.ic_service_mistral
+import beer.composeapp.generated.resources.ic_service_moonshot
+import beer.composeapp.generated.resources.ic_service_nvidia
+import beer.composeapp.generated.resources.ic_service_ollamacloud
+import beer.composeapp.generated.resources.ic_service_openai
+import beer.composeapp.generated.resources.ic_service_openai_compatible
+import beer.composeapp.generated.resources.ic_service_opencode
+import beer.composeapp.generated.resources.ic_service_openrouter
+import beer.composeapp.generated.resources.ic_service_publicai
+import beer.composeapp.generated.resources.ic_service_together
+import beer.composeapp.generated.resources.ic_service_venice
+import beer.composeapp.generated.resources.ic_service_xai
+import beer.composeapp.generated.resources.ic_service_zai
+import beer.composeapp.generated.resources.service_free_expert
+import beer.composeapp.generated.resources.service_free_fast
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 
@@ -74,8 +74,6 @@ sealed class Service(
         requiresApiKey = false,
         defaultModel = null,
         settingsKeyPrefix = "",
-        chatUrl = "https://api.kai9000.com/chat/completions",
-        modelsUrl = null,
     )
 
     data object Groq : Service(

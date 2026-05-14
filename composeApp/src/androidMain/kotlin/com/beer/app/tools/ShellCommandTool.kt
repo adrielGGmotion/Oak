@@ -8,9 +8,9 @@ import com.beer.app.network.tools.ToolInfo
 import com.beer.app.network.tools.ToolSchema
 import com.beer.app.sandbox.LinuxSandboxManager
 import com.beer.app.sandbox.SandboxState
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.tool_execute_shell_command_description
-import kai.composeapp.generated.resources.tool_execute_shell_command_name
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.tool_execute_shell_command_description
+import beer.composeapp.generated.resources.tool_execute_shell_command_name
 import org.koin.java.KoinJavaComponent.inject
 
 private const val TOOL_DESCRIPTION = """Execute a shell command in an Alpine Linux sandbox and return stdout, stderr, exit code, and current working directory. The environment is a full Alpine Linux system running via proot.

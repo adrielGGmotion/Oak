@@ -52,9 +52,9 @@ import com.beer.app.ui.components.FullScreenImageHost
 import com.beer.app.ui.handCursor
 import com.beer.app.ui.settings.SettingsScreen
 import com.beer.app.ui.withBlackBackground
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.tab_chat
-import kai.composeapp.generated.resources.tab_settings
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.tab_chat
+import beer.composeapp.generated.resources.tab_settings
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import nl.marc_apps.tts.TextToSpeechInstance

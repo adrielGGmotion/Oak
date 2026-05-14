@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">నోటిఫికేషన్లను శోధించండి</string>
     <string name="tool_search_notifications_description">యాప్ లేదా టెక్స్ట్ ఆధారంగా నోటిఫికేషన్లను శోధించండి</string>
     <string name="settings_notifications_label">నోటిఫికేషన్లను చదవండి</string>
-    <string name="settings_notifications_description">వచ్చే నోటిఫికేషన్లు బ్యాక్‌గ్రౌండ్‌లో సేకరించబడతాయి మరియు heartbeat వాటిని తీసుకుంటుంది. సిస్టమ్ నోటిఫికేషన్ యాక్సెస్ సెట్టింగ్‌లలో Kai ఏ యాప్‌లను చదవగలదో ఎంచుకోండి.</string>
-    <string name="settings_notifications_access_required">నోటిఫికేషన్ యాక్సెస్ ఇవ్వబడలేదు. సిస్టమ్ సెట్టింగ్‌లలో Kai ని ప్రారంభించడానికి దిగువన నొక్కండి.</string>
+    <string name="settings_notifications_description">వచ్చే నోటిఫికేషన్లు బ్యాక్‌గ్రౌండ్‌లో సేకరించబడతాయి మరియు heartbeat వాటిని తీసుకుంటుంది. సిస్టమ్ నోటిఫికేషన్ యాక్సెస్ సెట్టింగ్‌లలో Beer ఏ యాప్‌లను చదవగలదో ఎంచుకోండి.</string>
+    <string name="settings_notifications_access_required">నోటిఫికేషన్ యాక్సెస్ ఇవ్వబడలేదు. సిస్టమ్ సెట్టింగ్‌లలో Beer ని ప్రారంభించడానికి దిగువన నొక్కండి.</string>
     <string name="settings_notifications_access_button">నోటిఫికేషన్ యాక్సెస్ తెరవండి</string>
     <string name="settings_notifications_manage_apps">యాప్‌లను నిర్వహించండి</string>
     <string name="settings_notifications_listener_bound">శ్రోత యాక్టివ్‌గా ఉంది</string>

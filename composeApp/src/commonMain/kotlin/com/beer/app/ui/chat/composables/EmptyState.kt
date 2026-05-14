@@ -28,11 +28,11 @@ import androidx.compose.ui.unit.dp
 import com.beer.app.ui.components.LogoAnimation
 import com.beer.app.ui.components.animatedGradientBorder
 import com.beer.app.ui.handCursor
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.privacy_agree_prefix
-import kai.composeapp.generated.resources.privacy_policy
-import kai.composeapp.generated.resources.start_interactive_ui
-import kai.composeapp.generated.resources.welcome_message
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.privacy_agree_prefix
+import beer.composeapp.generated.resources.privacy_policy
+import beer.composeapp.generated.resources.start_interactive_ui
+import beer.composeapp.generated.resources.welcome_message
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

@@ -26,8 +26,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.bot_message_copy_content_description
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.bot_message_copy_content_description
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

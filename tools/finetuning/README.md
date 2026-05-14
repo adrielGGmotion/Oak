@@ -1,10 +1,10 @@
-# Mistral Fine-Tuning for Kai Dynamic UI
+# Mistral Fine-Tuning for Beer Dynamic UI
 
-Fine-tune a Mistral model that excels at generating Kai's `kai-ui` JSON DSL — the 29-component system for interactive dynamic UI screens.
+Fine-tune a Mistral model that excels at generating Beer's `beer-ui` JSON DSL — the 29-component system for interactive dynamic UI screens.
 
 ## Overview
 
-Kai's dynamic UI lets the AI generate interactive screens (forms, dashboards, quizzes, etc.) using a custom JSON format wrapped in ` ```kai-ui ` code fences. Different LLM providers vary in how well they handle this format. Fine-tuning teaches a Mistral model the exact component schema, action system, and layout rules.
+Beer's dynamic UI lets the AI generate interactive screens (forms, dashboards, quizzes, etc.) using a custom JSON format wrapped in ` ```beer-ui ` code fences. Different LLM providers vary in how well they handle this format. Fine-tuning teaches a Mistral model the exact component schema, action system, and layout rules.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ Kai's dynamic UI lets the AI generate interactive screens (forms, dashboards, qu
 Golden examples are hand-crafted ideal responses in `golden/*.md`. Each file contains:
 - A frontmatter block with `mode` (dynamic_ui or interactive)
 - A `## User` section with the prompt
-- A `## Assistant` section with the ideal response containing valid kai-ui JSON
+- A `## Assistant` section with the ideal response containing valid beer-ui JSON
 
 **To add more examples**, create a new `.md` file following the same format. The more diverse examples you have, the better the model will learn.
 
@@ -36,7 +36,7 @@ This produces:
 
 ```bash
 KAI_INTEGRATION=1 KAI_OPENAI_KEY=sk-... KAI_ANTHROPIC_KEY=sk-ant-... \
-  ./gradlew :composeApp:desktopTest --tests "*KaiUiValidationTest.validate*" --info
+  ./gradlew :composeApp:desktopTest --tests "*BeerUiValidationTest.validate*" --info
 ```
 
 Then re-run `GenerateTrainingData` to pick up the saved responses.
@@ -73,31 +73,31 @@ KAI_INTEGRATION=1 \
   KAI_MISTRAL_KEY=your-key \
   KAI_MISTRAL_FT_KEY=your-key \
   KAI_MISTRAL_FT_MODEL=ft:open-mistral-7b:your-id:date:hash \
-  ./gradlew :composeApp:desktopTest --tests "*KaiUiValidationTest.validate*" --info
+  ./gradlew :composeApp:desktopTest --tests "*BeerUiValidationTest.validate*" --info
 ```
 
 Compare the success rates in the generated report at `build/reports/kaiui-integration/report.md`.
 
-### Step 4: Use in Kai
+### Step 4: Use in Beer
 
-The fine-tuned model automatically appears in Kai's model dropdown:
+The fine-tuned model automatically appears in Beer's model dropdown:
 
-1. Open Kai Settings > Services
+1. Open Beer Settings > Services
 2. Add or expand the Mistral service
 3. Enter your API key
 4. Select the fine-tuned model from the dropdown (it will have an `ft:` prefix)
 
-No code changes needed — Kai fetches available models from the Mistral API.
+No code changes needed — Beer fetches available models from the Mistral API.
 
 ## Training Data Format
 
 Each JSONL line contains a conversation with system/user/assistant messages:
 
 ```json
-{"messages":[{"role":"system","content":"...kai-ui system prompt..."},{"role":"user","content":"Show me a form..."},{"role":"assistant","content":"Here's the form:\n\n```kai-ui\n{\"type\":\"column\",...}\n```"}]}
+{"messages":[{"role":"system","content":"...beer-ui system prompt..."},{"role":"user","content":"Show me a form..."},{"role":"assistant","content":"Here's the form:\n\n```beer-ui\n{\"type\":\"column\",...}\n```"}]}
 ```
 
-The system prompt matches what Kai sends to the AI at runtime (the kai-ui component definitions, action types, and layout rules).
+The system prompt matches what Beer sends to the AI at runtime (the beer-ui component definitions, action types, and layout rules).
 
 ## Directory Structure
 

@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">اطلاعات تلاش کریں</string>
     <string name="tool_search_notifications_description">ایپ یا متن کے لحاظ سے اطلاعات تلاش کریں</string>
     <string name="settings_notifications_label">اطلاعات پڑھیں</string>
-    <string name="settings_notifications_description">آنے والی اطلاعات پس منظر میں جمع کی جاتی ہیں اور heartbeat انہیں اٹھاتا ہے۔ سسٹم کی اطلاع رسائی ترتیبات میں منتخب کریں کہ Kai کن ایپس کو پڑھ سکتا ہے۔</string>
-    <string name="settings_notifications_access_required">اطلاع رسائی نہیں دی گئی۔ سسٹم ترتیبات میں Kai کو فعال کرنے کے لیے نیچے ٹیپ کریں۔</string>
+    <string name="settings_notifications_description">آنے والی اطلاعات پس منظر میں جمع کی جاتی ہیں اور heartbeat انہیں اٹھاتا ہے۔ سسٹم کی اطلاع رسائی ترتیبات میں منتخب کریں کہ Beer کن ایپس کو پڑھ سکتا ہے۔</string>
+    <string name="settings_notifications_access_required">اطلاع رسائی نہیں دی گئی۔ سسٹم ترتیبات میں Beer کو فعال کرنے کے لیے نیچے ٹیپ کریں۔</string>
     <string name="settings_notifications_access_button">اطلاع رسائی کھولیں</string>
     <string name="settings_notifications_manage_apps">ایپس کا انتظام کریں</string>
     <string name="settings_notifications_listener_bound">سننے والا فعال ہے</string>

@@ -348,8 +348,8 @@
     <string name="tool_search_notifications_name">Hledat v oznámeních</string>
     <string name="tool_search_notifications_description">Hledat oznámení podle aplikace nebo textu</string>
     <string name="settings_notifications_label">Číst oznámení</string>
-    <string name="settings_notifications_description">Příchozí oznámení jsou shromažďována na pozadí a zachycena srdečním tepem. V systémovém nastavení přístupu k oznámením vyberte, které aplikace může Kai číst.</string>
-    <string name="settings_notifications_access_required">Přístup k oznámením nebyl udělen. Klepnutím níže povolte Kai v nastavení systému.</string>
+    <string name="settings_notifications_description">Příchozí oznámení jsou shromažďována na pozadí a zachycena srdečním tepem. V systémovém nastavení přístupu k oznámením vyberte, které aplikace může Beer číst.</string>
+    <string name="settings_notifications_access_required">Přístup k oznámením nebyl udělen. Klepnutím níže povolte Beer v nastavení systému.</string>
     <string name="settings_notifications_access_button">Otevřít přístup k oznámením</string>
     <string name="settings_notifications_manage_apps">Spravovat aplikace</string>
     <string name="settings_notifications_listener_bound">Posluchač aktivní</string>

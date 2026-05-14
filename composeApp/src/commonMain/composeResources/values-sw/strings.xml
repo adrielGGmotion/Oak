@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">Tafuta arifa</string>
     <string name="tool_search_notifications_description">Tafuta arifa kwa programu au maandishi</string>
     <string name="settings_notifications_label">Soma arifa</string>
-    <string name="settings_notifications_description">Arifa zinazoingia hukusanywa nyuma kwenye historia na huchukuliwa na heartbeat. Chagua programu zipi Kai inaweza kusoma katika mipangilio ya ufikiaji wa arifa za mfumo.</string>
-    <string name="settings_notifications_access_required">Ufikiaji wa arifa haujatolewa. Gusa hapa chini ili kuwezesha Kai katika mipangilio ya mfumo.</string>
+    <string name="settings_notifications_description">Arifa zinazoingia hukusanywa nyuma kwenye historia na huchukuliwa na heartbeat. Chagua programu zipi Beer inaweza kusoma katika mipangilio ya ufikiaji wa arifa za mfumo.</string>
+    <string name="settings_notifications_access_required">Ufikiaji wa arifa haujatolewa. Gusa hapa chini ili kuwezesha Beer katika mipangilio ya mfumo.</string>
     <string name="settings_notifications_access_button">Fungua ufikiaji wa arifa</string>
     <string name="settings_notifications_manage_apps">Simamia programu</string>
     <string name="settings_notifications_listener_bound">Msikilizaji yuko hai</string>

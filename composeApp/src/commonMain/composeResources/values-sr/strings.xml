@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">Претражи обавештења</string>
     <string name="tool_search_notifications_description">Претражи обавештења по апликацији или тексту</string>
     <string name="settings_notifications_label">Читај обавештења</string>
-    <string name="settings_notifications_description">Долазна обавештења се прикупљају у позадини, а преузима их heartbeat. У системским подешавањима приступа обавештењима изабери које апликације Kai може да чита.</string>
-    <string name="settings_notifications_access_required">Приступ обавештењима није дозвољен. Додирни испод да би омогућио Kai у системским подешавањима.</string>
+    <string name="settings_notifications_description">Долазна обавештења се прикупљају у позадини, а преузима их heartbeat. У системским подешавањима приступа обавештењима изабери које апликације Beer може да чита.</string>
+    <string name="settings_notifications_access_required">Приступ обавештењима није дозвољен. Додирни испод да би омогућио Beer у системским подешавањима.</string>
     <string name="settings_notifications_access_button">Отвори приступ обавештењима</string>
     <string name="settings_notifications_manage_apps">Управљај апликацијама</string>
     <string name="settings_notifications_listener_bound">Слушалац активан</string>

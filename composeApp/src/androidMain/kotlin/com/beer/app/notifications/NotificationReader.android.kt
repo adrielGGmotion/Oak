@@ -19,7 +19,7 @@ internal fun Context.declaresNotificationListener(): Boolean = try {
 }
 
 private const val NOTIFICATION_LISTENER_FQN =
-    "com.beer.app.notifications.KaiNotificationListenerService"
+    "com.beer.app.notifications.BeerNotificationListenerService"
 
 actual class NotificationReader actual constructor() {
     private val context: Context by inject(Context::class.java)

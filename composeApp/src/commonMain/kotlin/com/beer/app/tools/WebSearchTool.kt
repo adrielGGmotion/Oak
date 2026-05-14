@@ -9,9 +9,9 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.tool_web_search_description
-import kai.composeapp.generated.resources.tool_web_search_name
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.tool_web_search_description
+import beer.composeapp.generated.resources.tool_web_search_name
 
 private const val MAX_RESULTS = 5
 
@@ -44,7 +44,7 @@ object WebSearchTool : Tool {
         return try {
             val encoded = query.encodeURLQueryComponent()
             val response = client.get("https://lite.duckduckgo.com/lite/?q=$encoded") {
-                header("User-Agent", "Mozilla/5.0 (compatible; Kai/1.0)")
+                header("User-Agent", "Mozilla/5.0 (compatible; Beer/1.0)")
             }
             val html = response.bodyAsText()
             val results = parseResults(html)

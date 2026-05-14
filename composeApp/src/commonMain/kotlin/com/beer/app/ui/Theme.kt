@@ -111,7 +111,7 @@ val LightColorScheme = lightColorScheme(
 fun outlineTextFieldColors() = OutlinedTextFieldDefaults.colors()
 
 @Composable
-fun KaiOutlinedTextField(
+fun BeerOutlinedTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -144,7 +144,7 @@ fun KaiOutlinedTextField(
 }
 
 @Composable
-fun KaiClearableTextField(
+fun BeerClearableTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -152,7 +152,7 @@ fun KaiClearableTextField(
     singleLine: Boolean = false,
 ) {
     var focused by remember { mutableStateOf(false) }
-    KaiOutlinedTextField(
+    BeerOutlinedTextField(
         modifier = modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused },
         value = value,
         onValueChange = onValueChange,
