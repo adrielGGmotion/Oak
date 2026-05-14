@@ -10,12 +10,12 @@ import androidx.compose.ui.platform.LocalContext
 @Composable
 actual fun oakColorScheme(useDynamicColors: Boolean, darkTheme: Boolean): ColorScheme {
     if (!useDynamicColors) {
-        return if (darkTheme) greenDarkColorScheme() else greenLightColorScheme()
+        return greenColorScheme(darkTheme)
     }
     val context = LocalContext.current
     return if (Build.VERSION.SDK_INT >= 31) {
         if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else {
-        if (darkTheme) greenDarkColorScheme() else greenLightColorScheme()
+        greenColorScheme(darkTheme)
     }
 }
