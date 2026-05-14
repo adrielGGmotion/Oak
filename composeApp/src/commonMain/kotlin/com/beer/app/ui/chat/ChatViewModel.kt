@@ -11,15 +11,15 @@ import com.beer.app.data.TaskScheduler
 import com.beer.app.data.UiSubmission
 import com.beer.app.getBackgroundDispatcher
 import com.beer.app.network.toUiError
-import com.beer.app.ui.markdown.KaiUiBlock
-import com.beer.app.ui.markdown.KaiUiError
+import com.beer.app.ui.markdown.BeerUiBlock
+import com.beer.app.ui.markdown.BeerUiError
 import com.beer.app.ui.markdown.parseMarkdown
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.extension
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.conversation_untitled
-import kai.composeapp.generated.resources.error_unsupported_file_type
-import kai.composeapp.generated.resources.litert_no_model_warning
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.conversation_untitled
+import beer.composeapp.generated.resources.error_unsupported_file_type
+import beer.composeapp.generated.resources.litert_no_model_warning
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
@@ -194,9 +194,9 @@ class ChatViewModel(
             try {
                 dataRepository.ask(question, files, uiSubmission)
 
-                // Auto-retry in interactive mode if the response has no valid kai-ui
+                // Auto-retry in interactive mode if the response has no valid beer-ui
                 if (_state.value.isInteractiveMode) {
-                    retryIfNoValidKaiUi()
+                    retryIfNoValidBeerUi()
                 }
 
                 _state.update {
@@ -216,24 +216,24 @@ class ChatViewModel(
         }
     }
 
-    private suspend fun retryIfNoValidKaiUi(maxRetries: Int = 2) {
+    private suspend fun retryIfNoValidBeerUi(maxRetries: Int = 2) {
         repeat(maxRetries) {
             currentCoroutineContext().ensureActive()
             val lastAssistant = dataRepository.chatHistory.value.lastRenderedAssistant() ?: return
 
             val blocks = parseMarkdown(lastAssistant.content).blocks
-            val hasValidUi = blocks.any { it is KaiUiBlock }
+            val hasValidUi = blocks.any { it is BeerUiBlock }
             if (hasValidUi) return
 
             // Build error feedback for the AI
-            val errorBlock = blocks.filterIsInstance<KaiUiError>().firstOrNull()
+            val errorBlock = blocks.filterIsInstance<BeerUiError>().firstOrNull()
             val errorDetail = if (errorBlock != null) {
                 "JSON parse error in: ${errorBlock.rawJson.take(200)}"
             } else {
-                "No kai-ui code fence found in your response."
+                "No beer-ui code fence found in your response."
             }
             val retryMessage = "[SYSTEM] Your previous response failed to render as interactive UI. $errorDetail " +
-                "Remember: respond with ONLY a single ```kai-ui code fence containing valid JSON. No text outside the fence."
+                "Remember: respond with ONLY a single ```beer-ui code fence containing valid JSON. No text outside the fence."
 
             dataRepository.ask(retryMessage, emptyList())
         }

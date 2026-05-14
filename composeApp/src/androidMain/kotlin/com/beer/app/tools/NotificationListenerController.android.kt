@@ -9,7 +9,7 @@ import com.beer.app.notifications.declaresNotificationListener
 import org.koin.java.KoinJavaComponent.inject
 
 private const val NOTIFICATION_LISTENER_FQN =
-    "com.beer.app.notifications.KaiNotificationListenerService"
+    "com.beer.app.notifications.BeerNotificationListenerService"
 
 actual class NotificationListenerController actual constructor() {
     private val context: Context by inject(Context::class.java)
@@ -32,7 +32,7 @@ actual class NotificationListenerController actual constructor() {
 
     actual fun openAccessSettings() {
         if (!supported) return
-        // Try the per-component variant on API 30+ first — drops the user directly on Kai's row.
+        // Try the per-component variant on API 30+ first — drops the user directly on Beer's row.
         // Fall back to the global listener-settings list if that intent isn't resolvable.
         val intents = listOf(
             Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS).apply {

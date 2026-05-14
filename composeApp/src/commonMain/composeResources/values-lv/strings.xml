@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">Meklēt paziņojumus</string>
     <string name="tool_search_notifications_description">Meklēt paziņojumus pēc lietotnes vai teksta</string>
     <string name="settings_notifications_label">Lasīt paziņojumus</string>
-    <string name="settings_notifications_description">Ienākošie paziņojumi tiek vākti fonā, un tos paņem heartbeat. Sistēmas paziņojumu piekļuves iestatījumos izvēlies, kuras lietotnes Kai var lasīt.</string>
-    <string name="settings_notifications_access_required">Piekļuve paziņojumiem nav piešķirta. Pieskaries zemāk, lai aktivizētu Kai sistēmas iestatījumos.</string>
+    <string name="settings_notifications_description">Ienākošie paziņojumi tiek vākti fonā, un tos paņem heartbeat. Sistēmas paziņojumu piekļuves iestatījumos izvēlies, kuras lietotnes Beer var lasīt.</string>
+    <string name="settings_notifications_access_required">Piekļuve paziņojumiem nav piešķirta. Pieskaries zemāk, lai aktivizētu Beer sistēmas iestatījumos.</string>
     <string name="settings_notifications_access_button">Atvērt paziņojumu piekļuvi</string>
     <string name="settings_notifications_manage_apps">Pārvaldīt lietotnes</string>
     <string name="settings_notifications_listener_bound">Klausītājs aktīvs</string>

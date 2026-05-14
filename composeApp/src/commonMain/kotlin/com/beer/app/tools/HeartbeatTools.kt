@@ -6,9 +6,9 @@ import com.beer.app.network.tools.ParameterSchema
 import com.beer.app.network.tools.Tool
 import com.beer.app.network.tools.ToolInfo
 import com.beer.app.network.tools.ToolSchema
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.tool_promote_learning_description
-import kai.composeapp.generated.resources.tool_promote_learning_name
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.tool_promote_learning_description
+import beer.composeapp.generated.resources.tool_promote_learning_name
 
 object HeartbeatTools {
 

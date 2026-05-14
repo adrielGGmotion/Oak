@@ -128,8 +128,8 @@
     <string name="tool_search_notifications_name">Search Notifications</string>
     <string name="tool_search_notifications_description">Search notifications by app or text</string>
     <string name="settings_notifications_label">Read notifications</string>
-    <string name="settings_notifications_description">Incoming notifications are picked up by the heartbeat. Pick which apps Kai can read in system Notification access settings.</string>
-    <string name="settings_notifications_access_required">Notification access has not been granted. Tap below to enable Kai under system settings.</string>
+    <string name="settings_notifications_description">Incoming notifications are picked up by the heartbeat. Pick which apps Beer can read in system Notification access settings.</string>
+    <string name="settings_notifications_access_required">Notification access has not been granted. Tap below to enable Beer under system settings.</string>
     <string name="settings_notifications_access_button">Open notification access</string>
     <string name="settings_notifications_manage_apps">Manage apps</string>
     <string name="settings_notifications_listener_bound">Listener active</string>

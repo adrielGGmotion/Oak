@@ -203,14 +203,14 @@ class RunFineTuning {
         if (finalJob.fine_tuned_model != null) {
             println("  Fine-tuned model: ${finalJob.fine_tuned_model}")
             println()
-            println("  To use this model in Kai:")
+            println("  To use this model in Beer:")
             println("  1. Add or select the Mistral service in Settings")
             println("  2. The fine-tuned model will appear in the model dropdown")
             println("  3. Select: ${finalJob.fine_tuned_model}")
             println()
             println("  To validate with the integration test:")
             println("  KAI_INTEGRATION=1 KAI_MISTRAL_FT_KEY=${"$"}MISTRAL_API_KEY KAI_MISTRAL_FT_MODEL=${finalJob.fine_tuned_model} \\")
-            println("    ./gradlew :composeApp:desktopTest --tests \"*KaiUiValidationTest*\" --info")
+            println("    ./gradlew :composeApp:desktopTest --tests \"*BeerUiValidationTest*\" --info")
         } else {
             println("  Fine-tuned model: (not available — job may have failed)")
             if (finalJob.events.isNotEmpty()) {

@@ -5,9 +5,9 @@ import com.beer.app.network.tools.Tool
 import com.beer.app.network.tools.ToolInfo
 import com.beer.app.network.tools.ToolSchema
 import com.beer.app.smartTruncate
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.tool_execute_shell_command_description
-import kai.composeapp.generated.resources.tool_execute_shell_command_name
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.tool_execute_shell_command_description
+import beer.composeapp.generated.resources.tool_execute_shell_command_name
 import java.io.BufferedReader
 import java.io.File
 import java.util.concurrent.CompletableFuture

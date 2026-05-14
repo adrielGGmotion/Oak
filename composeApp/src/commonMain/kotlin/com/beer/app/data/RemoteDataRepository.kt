@@ -54,8 +54,8 @@ import io.github.vinceglb.filekit.mimeType
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.size
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.default_soul
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.default_soul
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.async

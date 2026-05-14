@@ -349,8 +349,8 @@ As iets aandag nodig het (verouderde herinneringe, verskuldigde take, gebruiker-
     <string name="tool_search_notifications_name">Kennisgewings soek</string>
     <string name="tool_search_notifications_description">Soek kennisgewings volgens program of teks</string>
     <string name="settings_notifications_label">Kennisgewings lees</string>
-    <string name="settings_notifications_description">Inkomende kennisgewings word op die agtergrond ingesamel en deur die heartbeat opgepik. Kies in stelselinstellings watter programme Kai mag lees.</string>
-    <string name="settings_notifications_access_required">Kennisgewingtoegang is nie toegestaan nie. Tik hieronder om Kai onder stelselinstellings te aktiveer.</string>
+    <string name="settings_notifications_description">Inkomende kennisgewings word op die agtergrond ingesamel en deur die heartbeat opgepik. Kies in stelselinstellings watter programme Beer mag lees.</string>
+    <string name="settings_notifications_access_required">Kennisgewingtoegang is nie toegestaan nie. Tik hieronder om Beer onder stelselinstellings te aktiveer.</string>
     <string name="settings_notifications_access_button">Maak kennisgewingtoegang oop</string>
     <string name="settings_notifications_manage_apps">Programme bestuur</string>
     <string name="settings_notifications_listener_bound">Luisteraar aktief</string>

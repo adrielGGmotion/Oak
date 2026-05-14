@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">அறிவிப்புகளைத் தேடவும்</string>
     <string name="tool_search_notifications_description">செயலி அல்லது உரை மூலம் அறிவிப்புகளைத் தேடவும்</string>
     <string name="settings_notifications_label">அறிவிப்புகளைப் படிக்கவும்</string>
-    <string name="settings_notifications_description">வரும் அறிவிப்புகள் பின்னணியில் சேகரிக்கப்பட்டு heartbeat இலிருந்து எடுக்கப்படுகின்றன. கணினி அறிவிப்பு அணுகல் அமைப்புகளில் Kai எந்தச் செயலிகளைப் படிக்க முடியும் என்பதைத் தேர்ந்தெடுக்கவும்.</string>
-    <string name="settings_notifications_access_required">அறிவிப்பு அணுகல் வழங்கப்படவில்லை. கணினி அமைப்புகளில் Kai-ஐ இயக்க கீழே தட்டவும்.</string>
+    <string name="settings_notifications_description">வரும் அறிவிப்புகள் பின்னணியில் சேகரிக்கப்பட்டு heartbeat இலிருந்து எடுக்கப்படுகின்றன. கணினி அறிவிப்பு அணுகல் அமைப்புகளில் Beer எந்தச் செயலிகளைப் படிக்க முடியும் என்பதைத் தேர்ந்தெடுக்கவும்.</string>
+    <string name="settings_notifications_access_required">அறிவிப்பு அணுகல் வழங்கப்படவில்லை. கணினி அமைப்புகளில் Beer-ஐ இயக்க கீழே தட்டவும்.</string>
     <string name="settings_notifications_access_button">அறிவிப்பு அணுகலைத் திற</string>
     <string name="settings_notifications_manage_apps">செயலிகளை நிர்வகிக்கவும்</string>
     <string name="settings_notifications_listener_bound">கேட்பவர் செயலில் உள்ளார்</string>

@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">Cari notifikasi</string>
     <string name="tool_search_notifications_description">Cari notifikasi berdasarkan aplikasi atau teks</string>
     <string name="settings_notifications_label">Baca notifikasi</string>
-    <string name="settings_notifications_description">Notifikasi masuk dikumpulkan di latar belakang dan diambil oleh heartbeat. Pilih aplikasi mana yang dapat dibaca Kai di pengaturan akses notifikasi sistem.</string>
-    <string name="settings_notifications_access_required">Akses notifikasi belum diberikan. Ketuk di bawah untuk mengaktifkan Kai di pengaturan sistem.</string>
+    <string name="settings_notifications_description">Notifikasi masuk dikumpulkan di latar belakang dan diambil oleh heartbeat. Pilih aplikasi mana yang dapat dibaca Beer di pengaturan akses notifikasi sistem.</string>
+    <string name="settings_notifications_access_required">Akses notifikasi belum diberikan. Ketuk di bawah untuk mengaktifkan Beer di pengaturan sistem.</string>
     <string name="settings_notifications_access_button">Buka akses notifikasi</string>
     <string name="settings_notifications_manage_apps">Kelola aplikasi</string>
     <string name="settings_notifications_listener_bound">Listener aktif</string>

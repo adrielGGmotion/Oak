@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">ค้นหาการแจ้งเตือน</string>
     <string name="tool_search_notifications_description">ค้นหาการแจ้งเตือนตามแอปหรือข้อความ</string>
     <string name="settings_notifications_label">อ่านการแจ้งเตือน</string>
-    <string name="settings_notifications_description">การแจ้งเตือนที่เข้ามาจะถูกรวบรวมในเบื้องหลังและรับโดย heartbeat เลือกในการตั้งค่าการเข้าถึงการแจ้งเตือนของระบบว่า Kai สามารถอ่านแอปใดได้</string>
-    <string name="settings_notifications_access_required">ยังไม่ได้อนุญาตการเข้าถึงการแจ้งเตือน แตะด้านล่างเพื่อเปิดใช้ Kai ในการตั้งค่าระบบ</string>
+    <string name="settings_notifications_description">การแจ้งเตือนที่เข้ามาจะถูกรวบรวมในเบื้องหลังและรับโดย heartbeat เลือกในการตั้งค่าการเข้าถึงการแจ้งเตือนของระบบว่า Beer สามารถอ่านแอปใดได้</string>
+    <string name="settings_notifications_access_required">ยังไม่ได้อนุญาตการเข้าถึงการแจ้งเตือน แตะด้านล่างเพื่อเปิดใช้ Beer ในการตั้งค่าระบบ</string>
     <string name="settings_notifications_access_button">เปิดการเข้าถึงการแจ้งเตือน</string>
     <string name="settings_notifications_manage_apps">จัดการแอป</string>
     <string name="settings_notifications_listener_bound">ตัวฟังทำงานอยู่</string>

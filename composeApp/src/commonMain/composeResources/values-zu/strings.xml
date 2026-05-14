@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">Sesha izaziso</string>
     <string name="tool_search_notifications_description">Sesha izaziso ngohlelo lokusebenza noma ngombhalo</string>
     <string name="settings_notifications_label">Funda izaziso</string>
-    <string name="settings_notifications_description">Izaziso ezingenayo ziqoqwa ngemuva futhi zithathwa i-heartbeat. Khetha izinhlelo zokusebenza okukhona u-Kai angazifunda kuzilungiselelo zokufinyelela kwezaziso zesistimu.</string>
-    <string name="settings_notifications_access_required">Ukufinyelela kwezaziso akukanikezwa. Thepha ngezansi ukuze unike u-Kai amandla kuzilungiselelo zesistimu.</string>
+    <string name="settings_notifications_description">Izaziso ezingenayo ziqoqwa ngemuva futhi zithathwa i-heartbeat. Khetha izinhlelo zokusebenza okukhona u-Beer angazifunda kuzilungiselelo zokufinyelela kwezaziso zesistimu.</string>
+    <string name="settings_notifications_access_required">Ukufinyelela kwezaziso akukanikezwa. Thepha ngezansi ukuze unike u-Beer amandla kuzilungiselelo zesistimu.</string>
     <string name="settings_notifications_access_button">Vula ukufinyelela kwezaziso</string>
     <string name="settings_notifications_manage_apps">Phatha izinhlelo zokusebenza</string>
     <string name="settings_notifications_listener_bound">Umlaleli usebenza</string>

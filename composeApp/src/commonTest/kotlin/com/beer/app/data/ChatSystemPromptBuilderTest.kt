@@ -54,7 +54,7 @@ class ChatSystemPromptBuilderTest {
 
     private fun build(
         variant: SystemPromptVariant,
-        soul: String = "You are Kai.",
+        soul: String = "You are Beer.",
         memoryInstructions: String? = null,
         generalMemories: List<MemoryEntry> = emptyList(),
         preferenceMemories: List<MemoryEntry> = emptyList(),
@@ -84,7 +84,7 @@ class ChatSystemPromptBuilderTest {
     @Test
     fun `CHAT_REMOTE default emits soul + Structured Learning + Automation + context`() {
         val out = build(SystemPromptVariant.CHAT_REMOTE)
-        assertTrue(out.startsWith("You are Kai."))
+        assertTrue(out.startsWith("You are Beer."))
         assertTrue("## Structured Learning" in out)
         assertTrue("## Automation" in out)
         assertTrue("## Context" in out)
@@ -249,7 +249,7 @@ class ChatSystemPromptBuilderTest {
             uiMode = ChatPromptUiMode.DYNAMIC_UI,
         )
         assertTrue("## Dynamic UI" in out)
-        assertTrue("kai-ui" in out)
+        assertTrue("beer-ui" in out)
         assertFalse("## Interactive UI Mode" in out)
     }
 
@@ -280,7 +280,7 @@ class ChatSystemPromptBuilderTest {
     @Test
     fun `CHAT_LOCAL default emits only soul + context`() {
         val out = build(SystemPromptVariant.CHAT_LOCAL)
-        assertTrue(out.startsWith("You are Kai."))
+        assertTrue(out.startsWith("You are Beer."))
         assertTrue("## Context" in out)
         assertFalse("## Structured Learning" in out)
     }
@@ -435,7 +435,7 @@ class ChatSystemPromptBuilderTest {
             uiMode = ChatPromptUiMode.DYNAMIC_UI,
         )
         assertFalse("## Dynamic UI" in out)
-        assertFalse("kai-ui" in out)
+        assertFalse("beer-ui" in out)
     }
 
     @Test
@@ -454,17 +454,17 @@ class ChatSystemPromptBuilderTest {
     @Test
     fun `golden CHAT_LOCAL with soul + memory instructions + context`() {
         // No memories or tasks — just the minimal CHAT_LOCAL shape. Memory inclusion
-        // with a budget is covered by separate focused tests. Scheduled tasks and kai-ui
+        // with a budget is covered by separate focused tests. Scheduled tasks and beer-ui
         // sections are verified as omitted below.
         val out = build(
             variant = SystemPromptVariant.CHAT_LOCAL,
-            soul = "You are Kai, a helpful assistant.",
+            soul = "You are Beer, a helpful assistant.",
             memoryInstructions = "Save user preferences with memory_store.",
             pendingTasks = listOf(task(description = "ignored task")),
             uiMode = ChatPromptUiMode.DYNAMIC_UI,
         )
         val expected = """
-            You are Kai, a helpful assistant.
+            You are Beer, a helpful assistant.
 
             Save user preferences with memory_store.
 
@@ -483,7 +483,7 @@ class ChatSystemPromptBuilderTest {
     fun `golden CHAT_REMOTE with every section enabled`() {
         val out = build(
             variant = SystemPromptVariant.CHAT_REMOTE,
-            soul = "You are Kai.",
+            soul = "You are Beer.",
             memoryInstructions = "Basic memory guidance.",
             generalMemories = listOf(memory("fact", "value")),
             preferenceMemories = listOf(memory("pref", "val", category = MemoryCategory.PREFERENCE)),
@@ -509,10 +509,10 @@ class ChatSystemPromptBuilderTest {
             ),
             uiMode = ChatPromptUiMode.NONE,
         )
-        // Just assert the section headers are present in order — the full kai-ui sections
+        // Just assert the section headers are present in order — the full beer-ui sections
         // are verified by separate DYNAMIC_UI / INTERACTIVE_UI tests.
         val headerOrder = listOf(
-            "You are Kai.",
+            "You are Beer.",
             "Basic memory guidance.",
             "## Structured Learning",
             "## Your Memories",

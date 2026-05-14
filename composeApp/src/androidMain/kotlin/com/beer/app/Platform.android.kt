@@ -56,15 +56,15 @@ import io.github.vinceglb.filekit.write
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.android.Android
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.tool_create_calendar_event_description
-import kai.composeapp.generated.resources.tool_create_calendar_event_name
-import kai.composeapp.generated.resources.tool_open_file_description
-import kai.composeapp.generated.resources.tool_open_file_name
-import kai.composeapp.generated.resources.tool_send_notification_description
-import kai.composeapp.generated.resources.tool_send_notification_name
-import kai.composeapp.generated.resources.tool_set_alarm_description
-import kai.composeapp.generated.resources.tool_set_alarm_name
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.tool_create_calendar_event_description
+import beer.composeapp.generated.resources.tool_create_calendar_event_name
+import beer.composeapp.generated.resources.tool_open_file_description
+import beer.composeapp.generated.resources.tool_open_file_name
+import beer.composeapp.generated.resources.tool_send_notification_description
+import beer.composeapp.generated.resources.tool_send_notification_name
+import beer.composeapp.generated.resources.tool_set_alarm_description
+import beer.composeapp.generated.resources.tool_set_alarm_name
 import kotlinx.coroutines.Dispatchers
 import org.koin.java.KoinJavaComponent.inject
 import kotlin.coroutines.CoroutineContext
@@ -265,7 +265,7 @@ actual fun getAvailableTools(): List<Tool> {
                     )
 
                     override suspend fun execute(args: Map<String, Any>): Any {
-                        val title = args["title"] as? String ?: "Kai 9000"
+                        val title = args["title"] as? String ?: "Beer"
                         val message = args["message"] as? String
                             ?: return mapOf("success" to false, "error" to "Message is required")
 

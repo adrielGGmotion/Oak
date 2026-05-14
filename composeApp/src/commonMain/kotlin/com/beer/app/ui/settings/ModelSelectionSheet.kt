@@ -39,17 +39,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.beer.app.formatContextWindow
 import com.beer.app.formatReleaseDate
-import com.beer.app.ui.KaiOutlinedTextField
-import com.beer.app.ui.components.KaiSearchField
+import com.beer.app.ui.BeerOutlinedTextField
+import com.beer.app.ui.components.BeerSearchField
 import com.beer.app.ui.components.VerticalScrollbarForGrid
 import com.beer.app.ui.handCursor
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.ic_arrow_drop_down
-import kai.composeapp.generated.resources.model_sort_context
-import kai.composeapp.generated.resources.model_sort_date
-import kai.composeapp.generated.resources.model_sort_score
-import kai.composeapp.generated.resources.settings_model_label
-import kai.composeapp.generated.resources.settings_model_search
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.ic_arrow_drop_down
+import beer.composeapp.generated.resources.model_sort_context
+import beer.composeapp.generated.resources.model_sort_date
+import beer.composeapp.generated.resources.model_sort_score
+import beer.composeapp.generated.resources.settings_model_label
+import beer.composeapp.generated.resources.settings_model_search
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -67,7 +67,7 @@ internal fun ModelSelection(
         Box(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            KaiOutlinedTextField(
+            BeerOutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = currentSelectedModel?.let { it.displayName ?: it.id } ?: "",
                 onValueChange = {},
@@ -113,7 +113,7 @@ internal fun ModelSelection(
                     }
                 }
                 if (models.size > 6) {
-                    KaiSearchField(
+                    BeerSearchField(
                         query = searchQuery,
                         onQueryChange = { searchQuery = it },
                         placeholder = stringResource(Res.string.settings_model_search),

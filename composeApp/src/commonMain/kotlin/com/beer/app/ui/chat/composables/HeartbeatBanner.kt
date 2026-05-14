@@ -21,11 +21,11 @@ import androidx.compose.ui.unit.dp
 import com.beer.app.ui.handCursor
 import com.beer.app.ui.kaiAdaptiveCardBorder
 import com.beer.app.ui.kaiAdaptiveCardColors
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.heartbeat_banner_dismiss
-import kai.composeapp.generated.resources.heartbeat_banner_message
-import kai.composeapp.generated.resources.ic_close
-import kai.composeapp.generated.resources.ic_history
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.heartbeat_banner_dismiss
+import beer.composeapp.generated.resources.heartbeat_banner_message
+import beer.composeapp.generated.resources.ic_close
+import beer.composeapp.generated.resources.ic_history
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 

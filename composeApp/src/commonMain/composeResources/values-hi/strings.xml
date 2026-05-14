@@ -348,8 +348,8 @@
     <string name="tool_search_notifications_name">सूचनाएँ खोजें</string>
     <string name="tool_search_notifications_description">ऐप या पाठ के अनुसार सूचनाएँ खोजें</string>
     <string name="settings_notifications_label">सूचनाएँ पढ़ें</string>
-    <string name="settings_notifications_description">आने वाली सूचनाएँ बैकग्राउंड में एकत्र की जाती हैं और heartbeat द्वारा ली जाती हैं। सिस्टम सूचना एक्सेस सेटिंग्स में चुनें कि Kai कौन-से ऐप पढ़ सकता है।</string>
-    <string name="settings_notifications_access_required">सूचना एक्सेस नहीं दी गई है। सिस्टम सेटिंग्स में Kai सक्रिय करने के लिए नीचे टैप करें।</string>
+    <string name="settings_notifications_description">आने वाली सूचनाएँ बैकग्राउंड में एकत्र की जाती हैं और heartbeat द्वारा ली जाती हैं। सिस्टम सूचना एक्सेस सेटिंग्स में चुनें कि Beer कौन-से ऐप पढ़ सकता है।</string>
+    <string name="settings_notifications_access_required">सूचना एक्सेस नहीं दी गई है। सिस्टम सेटिंग्स में Beer सक्रिय करने के लिए नीचे टैप करें।</string>
     <string name="settings_notifications_access_button">सूचना एक्सेस खोलें</string>
     <string name="settings_notifications_manage_apps">ऐप प्रबंधित करें</string>
     <string name="settings_notifications_listener_bound">लिसनर सक्रिय</string>

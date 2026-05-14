@@ -96,24 +96,24 @@ import com.beer.app.ui.chat.composables.uiErrorText
 import com.beer.app.ui.components.LogoAnimation
 import com.beer.app.ui.components.VerticalScrollbarForList
 import com.beer.app.ui.dynamicui.FrozenSubmission
-import com.beer.app.ui.dynamicui.KaiUiRenderer
+import com.beer.app.ui.dynamicui.BeerUiRenderer
 import com.beer.app.ui.dynamicui.toSpeakableText
 import com.beer.app.ui.handCursor
-import com.beer.app.ui.markdown.KaiUiBlock
+import com.beer.app.ui.markdown.BeerUiBlock
 import com.beer.app.ui.markdown.parseMarkdown
 import com.beer.app.ui.sandbox.SandboxTabsContent
 import com.beer.app.ui.settings.SandboxViewModel
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.fallback_answered_by
-import kai.composeapp.generated.resources.fallback_service_failed
-import kai.composeapp.generated.resources.ic_stop
-import kai.composeapp.generated.resources.interactive_back_content_description
-import kai.composeapp.generated.resources.interactive_exit_content_description
-import kai.composeapp.generated.resources.interactive_title
-import kai.composeapp.generated.resources.interactive_ui_parsing_failed
-import kai.composeapp.generated.resources.interactive_welcome_subtitle
-import kai.composeapp.generated.resources.interactive_welcome_title
-import kai.composeapp.generated.resources.scroll_to_bottom_content_description
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.fallback_answered_by
+import beer.composeapp.generated.resources.fallback_service_failed
+import beer.composeapp.generated.resources.ic_stop
+import beer.composeapp.generated.resources.interactive_back_content_description
+import beer.composeapp.generated.resources.interactive_exit_content_description
+import beer.composeapp.generated.resources.interactive_title
+import beer.composeapp.generated.resources.interactive_ui_parsing_failed
+import beer.composeapp.generated.resources.interactive_welcome_subtitle
+import beer.composeapp.generated.resources.interactive_welcome_title
+import beer.composeapp.generated.resources.scroll_to_bottom_content_description
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
@@ -177,7 +177,7 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
     val hasAssistantResponse = remember(uiState.history) {
         uiState.history.any { it.role == History.Role.ASSISTANT }
     }
-    // Interactive mode drives a tool-calling loop and emits kai-ui JSON, so the
+    // Interactive mode drives a tool-calling loop and emits beer-ui JSON, so the
     // switcher only lists services/models capable of agentic flows.
     val interactiveServices = remember(uiState.availableServices) {
         uiState.availableServices
@@ -385,7 +385,7 @@ private fun InteractiveModeContent(
                 modifier = Modifier.fillMaxSize(),
             ) { _ ->
                 val blocks = remember(lastAssistant.content) { parseMarkdown(lastAssistant.content).blocks }
-                val uiBlocks = blocks.filterIsInstance<KaiUiBlock>()
+                val uiBlocks = blocks.filterIsInstance<BeerUiBlock>()
 
                 if (uiBlocks.isNotEmpty()) {
                     Column(
@@ -396,7 +396,7 @@ private fun InteractiveModeContent(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         for (block in uiBlocks) {
-                            KaiUiRenderer(
+                            BeerUiRenderer(
                                 node = block.node,
                                 isInteractive = !uiState.isLoading,
                                 onCallback = { event, data ->
@@ -407,7 +407,7 @@ private fun InteractiveModeContent(
                         }
                     }
                 } else if (uiState.error == null) {
-                    // AI responded with no valid kai-ui AND there's no API error underneath —
+                    // AI responded with no valid beer-ui AND there's no API error underneath —
                     // this is a genuine parse failure (retries exhausted). When an API error is
                     // set, the ErrorMessage overlay below takes over with the correct message.
                     Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
@@ -576,7 +576,7 @@ private fun ChatModeScreen(
                             ),
                     ) {
                         if (uiState.history.isEmpty()) {
-                            // Interactive UI mode isn't offered on on-device LiteRT: the kai-ui
+                            // Interactive UI mode isn't offered on on-device LiteRT: the beer-ui
                             // component schema is too large for small Gemma models to coherently
                             // attend to, and even the minimal variant we tried was unreliable.
                             val primaryIsOnDevice = uiState.availableServices
@@ -617,7 +617,7 @@ private fun ChatModeScreen(
                             }
 
                             val lastAssistantId = remember(uiState.history) { uiState.history.lastRenderedAssistant()?.id }
-                            // Pair every user submission with its originating assistant so the kai-ui
+                            // Pair every user submission with its originating assistant so the beer-ui
                             // renders once (on the assistant side) with a frozen snapshot — never as a
                             // separate user-side card. pressedEvent + values persist across the loading
                             // transition; isPending is only set for the latest in-flight submission.
@@ -674,7 +674,7 @@ private fun ChatModeScreen(
                                     items(uiState.history, key = { it.id }, contentType = { it.role }) { history ->
                                         when (history.role) {
                                             History.Role.USER -> {
-                                                // Submissions are shown by the paired assistant's frozen kai-ui card
+                                                // Submissions are shown by the paired assistant's frozen beer-ui card
                                                 // above; the "Responded with: …" text bubble would be redundant.
                                                 if (history.uiSubmission == null) {
                                                     UserMessage(
@@ -730,7 +730,7 @@ private fun ChatModeScreen(
                                             }
                                         }
                                     }
-                                    // Skip the generic "thinking" row during a pending kai-ui submission — the
+                                    // Skip the generic "thinking" row during a pending beer-ui submission — the
                                     // pressed button's pulse already signals work in flight. Keep it for tool
                                     // activity so tool feedback isn't lost.
                                     val showWaitingRow = uiState.isLoading &&

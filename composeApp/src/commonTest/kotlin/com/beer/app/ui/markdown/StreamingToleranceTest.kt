@@ -38,14 +38,14 @@ class StreamingToleranceTest {
     }
 
     @Test
-    fun `truncated kai-ui json is repaired into a block`() {
+    fun `truncated beer-ui json is repaired into a block`() {
         val md = """
-            ```kai-ui
+            ```beer-ui
             {"type":"column","children":[{"type":"text","value":"a"
         """.trimIndent()
         val doc = parseMarkdown(md)
         assertEquals(1, doc.blocks.size)
-        assertTrue(doc.blocks[0] is KaiUiBlock || doc.blocks[0] is KaiUiError)
+        assertTrue(doc.blocks[0] is BeerUiBlock || doc.blocks[0] is BeerUiError)
     }
 
     @Test

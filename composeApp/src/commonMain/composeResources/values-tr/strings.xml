@@ -348,8 +348,8 @@ Bir şey dikkat gerektiriyorsa (eski anılar, vadesi geçmiş görevler, kullan�
     <string name="tool_search_notifications_name">Bildirimlerde ara</string>
     <string name="tool_search_notifications_description">Bildirimleri uygulamaya veya metne göre ara</string>
     <string name="settings_notifications_label">Bildirimleri oku</string>
-    <string name="settings_notifications_description">Gelen bildirimler arka planda toplanır ve heartbeat tarafından alınır. Sistem bildirim erişimi ayarlarında Kai\'nin hangi uygulamaları okuyabileceğini seçin.</string>
-    <string name="settings_notifications_access_required">Bildirim erişimi verilmedi. Kai\'yi sistem ayarlarında etkinleştirmek için aşağıya dokunun.</string>
+    <string name="settings_notifications_description">Gelen bildirimler arka planda toplanır ve heartbeat tarafından alınır. Sistem bildirim erişimi ayarlarında Beer\'nin hangi uygulamaları okuyabileceğini seçin.</string>
+    <string name="settings_notifications_access_required">Bildirim erişimi verilmedi. Beer\'yi sistem ayarlarında etkinleştirmek için aşağıya dokunun.</string>
     <string name="settings_notifications_access_button">Bildirim erişimini aç</string>
     <string name="settings_notifications_manage_apps">Uygulamaları yönet</string>
     <string name="settings_notifications_listener_bound">Dinleyici aktif</string>

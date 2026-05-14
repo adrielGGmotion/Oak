@@ -348,8 +348,8 @@
     <string name="tool_search_notifications_name">جستجوی اعلان‌ها</string>
     <string name="tool_search_notifications_description">جستجوی اعلان‌ها بر اساس برنامه یا متن</string>
     <string name="settings_notifications_label">خواندن اعلان‌ها</string>
-    <string name="settings_notifications_description">اعلان‌های ورودی در پس‌زمینه گردآوری می‌شوند و توسط heartbeat برداشت می‌شوند. در تنظیمات دسترسی به اعلان‌های سیستم انتخاب کنید Kai چه برنامه‌هایی را بخواند.</string>
-    <string name="settings_notifications_access_required">دسترسی به اعلان‌ها داده نشده است. برای فعال‌سازی Kai در تنظیمات سیستم، روی گزینه زیر ضربه بزنید.</string>
+    <string name="settings_notifications_description">اعلان‌های ورودی در پس‌زمینه گردآوری می‌شوند و توسط heartbeat برداشت می‌شوند. در تنظیمات دسترسی به اعلان‌های سیستم انتخاب کنید Beer چه برنامه‌هایی را بخواند.</string>
+    <string name="settings_notifications_access_required">دسترسی به اعلان‌ها داده نشده است. برای فعال‌سازی Beer در تنظیمات سیستم، روی گزینه زیر ضربه بزنید.</string>
     <string name="settings_notifications_access_button">باز کردن دسترسی اعلان‌ها</string>
     <string name="settings_notifications_manage_apps">مدیریت برنامه‌ها</string>
     <string name="settings_notifications_listener_bound">شنونده فعال</string>

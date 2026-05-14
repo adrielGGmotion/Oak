@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">Hľadať v upozorneniach</string>
     <string name="tool_search_notifications_description">Hľadať upozornenia podľa aplikácie alebo textu</string>
     <string name="settings_notifications_label">Čítať upozornenia</string>
-    <string name="settings_notifications_description">Prichádzajúce upozornenia sa zhromažďujú na pozadí a zachytáva ich heartbeat. V systémových nastaveniach prístupu k upozorneniam vyber, ktoré aplikácie môže Kai čítať.</string>
-    <string name="settings_notifications_access_required">Prístup k upozorneniam nebol udelený. Klepnutím nižšie povoľ Kai v nastaveniach systému.</string>
+    <string name="settings_notifications_description">Prichádzajúce upozornenia sa zhromažďujú na pozadí a zachytáva ich heartbeat. V systémových nastaveniach prístupu k upozorneniam vyber, ktoré aplikácie môže Beer čítať.</string>
+    <string name="settings_notifications_access_required">Prístup k upozorneniam nebol udelený. Klepnutím nižšie povoľ Beer v nastaveniach systému.</string>
     <string name="settings_notifications_access_button">Otvoriť prístup k upozorneniam</string>
     <string name="settings_notifications_manage_apps">Spravovať aplikácie</string>
     <string name="settings_notifications_listener_bound">Poslucháč aktívny</string>

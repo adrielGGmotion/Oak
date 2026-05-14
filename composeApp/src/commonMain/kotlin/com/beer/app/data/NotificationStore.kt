@@ -6,7 +6,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
- * Persistence for notifications captured by [com.beer.app.notifications.KaiNotificationListenerService].
+ * Persistence for notifications captured by [com.beer.app.notifications.BeerNotificationListenerService].
  *
  * Two collections:
  * - **Pending queue** — capped FIFO that fills as the listener fires and gets snapshotted

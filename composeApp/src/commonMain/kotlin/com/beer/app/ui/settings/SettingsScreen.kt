@@ -130,9 +130,9 @@ import com.beer.app.mcp.PopularMcpServer
 import com.beer.app.network.dtos.SponsorsResponseDto
 import com.beer.app.network.tools.ToolInfo
 import com.beer.app.saveFileToDevice
-import com.beer.app.ui.KaiClearableTextField
-import com.beer.app.ui.KaiOutlinedTextField
-import com.beer.app.ui.components.KaiSlider
+import com.beer.app.ui.BeerClearableTextField
+import com.beer.app.ui.BeerOutlinedTextField
+import com.beer.app.ui.components.BeerSlider
 import com.beer.app.ui.components.SettingsListItem
 import com.beer.app.ui.components.VerticalScrollbarForScroll
 import com.beer.app.ui.handCursor
@@ -147,141 +147,141 @@ import com.beer.app.ui.sandbox.SandboxProgressRow
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.readBytes
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.default_soul
-import kai.composeapp.generated.resources.github_mark
-import kai.composeapp.generated.resources.ic_arrow_drop_down
-import kai.composeapp.generated.resources.litert_cancel
-import kai.composeapp.generated.resources.litert_context_size
-import kai.composeapp.generated.resources.litert_download
-import kai.composeapp.generated.resources.litert_error_download_incomplete
-import kai.composeapp.generated.resources.litert_error_network
-import kai.composeapp.generated.resources.litert_error_not_enough_disk_space
-import kai.composeapp.generated.resources.litert_free_space
-import kai.composeapp.generated.resources.litert_on_device_description
-import kai.composeapp.generated.resources.litert_performance_good
-import kai.composeapp.generated.resources.litert_performance_ok
-import kai.composeapp.generated.resources.litert_performance_poor
-import kai.composeapp.generated.resources.litert_recommended
-import kai.composeapp.generated.resources.litert_tool_support
-import kai.composeapp.generated.resources.settings_add_service
-import kai.composeapp.generated.resources.settings_ai_mistakes_warning
-import kai.composeapp.generated.resources.settings_api_key_label
-import kai.composeapp.generated.resources.settings_api_key_optional_label
-import kai.composeapp.generated.resources.settings_base_url_label
-import kai.composeapp.generated.resources.settings_become_sponsor
-import kai.composeapp.generated.resources.settings_business_partnerships
-import kai.composeapp.generated.resources.settings_business_partnerships_description
-import kai.composeapp.generated.resources.settings_contact_sponsorship
-import kai.composeapp.generated.resources.settings_daemon_mode
-import kai.composeapp.generated.resources.settings_daemon_mode_description
-import kai.composeapp.generated.resources.settings_documentation
-import kai.composeapp.generated.resources.settings_dynamic_ui
-import kai.composeapp.generated.resources.settings_dynamic_ui_description
-import kai.composeapp.generated.resources.settings_export
-import kai.composeapp.generated.resources.settings_export_import_description
-import kai.composeapp.generated.resources.settings_export_import_title
-import kai.composeapp.generated.resources.settings_export_preview_title
-import kai.composeapp.generated.resources.settings_free_fallback
-import kai.composeapp.generated.resources.settings_free_tier_description
-import kai.composeapp.generated.resources.settings_free_tier_title
-import kai.composeapp.generated.resources.settings_heartbeat_recent
-import kai.composeapp.generated.resources.settings_import
-import kai.composeapp.generated.resources.settings_import_error
-import kai.composeapp.generated.resources.settings_import_partial
-import kai.composeapp.generated.resources.settings_import_preview_title
-import kai.composeapp.generated.resources.settings_import_replace_all
-import kai.composeapp.generated.resources.settings_import_replace_all_description
-import kai.composeapp.generated.resources.settings_import_section_conversations
-import kai.composeapp.generated.resources.settings_import_section_email
-import kai.composeapp.generated.resources.settings_import_section_heartbeat
-import kai.composeapp.generated.resources.settings_import_section_mcp
-import kai.composeapp.generated.resources.settings_import_section_memory
-import kai.composeapp.generated.resources.settings_import_section_scheduling
-import kai.composeapp.generated.resources.settings_import_section_services
-import kai.composeapp.generated.resources.settings_import_section_soul
-import kai.composeapp.generated.resources.settings_import_section_tools
-import kai.composeapp.generated.resources.settings_import_success
-import kai.composeapp.generated.resources.settings_mcp_cancel
-import kai.composeapp.generated.resources.settings_memories
-import kai.composeapp.generated.resources.settings_memories_all_title
-import kai.composeapp.generated.resources.settings_memories_delete
-import kai.composeapp.generated.resources.settings_memories_description
-import kai.composeapp.generated.resources.settings_memories_edit_cancel
-import kai.composeapp.generated.resources.settings_memories_edit_save
-import kai.composeapp.generated.resources.settings_memories_edit_title
-import kai.composeapp.generated.resources.settings_memories_show_all
-import kai.composeapp.generated.resources.settings_open_github_issue
-import kai.composeapp.generated.resources.settings_openai_compatible_or_other_service
-import kai.composeapp.generated.resources.settings_openai_compatible_providers
-import kai.composeapp.generated.resources.settings_openai_compatible_setup_ollama
-import kai.composeapp.generated.resources.settings_remove_service
-import kai.composeapp.generated.resources.settings_reorder_content_description
-import kai.composeapp.generated.resources.settings_request_integration_description
-import kai.composeapp.generated.resources.settings_request_integration_title
-import kai.composeapp.generated.resources.settings_sandbox_cancel
-import kai.composeapp.generated.resources.settings_sandbox_description
-import kai.composeapp.generated.resources.settings_sandbox_disk_usage
-import kai.composeapp.generated.resources.settings_sandbox_install
-import kai.composeapp.generated.resources.settings_sandbox_install_packages
-import kai.composeapp.generated.resources.settings_sandbox_subtab_files
-import kai.composeapp.generated.resources.settings_sandbox_subtab_packages
-import kai.composeapp.generated.resources.settings_sandbox_subtab_terminal
-import kai.composeapp.generated.resources.settings_sandbox_uninstall
-import kai.composeapp.generated.resources.settings_sandbox_uninstall_confirm
-import kai.composeapp.generated.resources.settings_scheduled_tasks
-import kai.composeapp.generated.resources.settings_scheduled_tasks_cancel
-import kai.composeapp.generated.resources.settings_scheduled_tasks_description
-import kai.composeapp.generated.resources.settings_sign_in_copy_api_key_from
-import kai.composeapp.generated.resources.settings_sms
-import kai.composeapp.generated.resources.settings_soul
-import kai.composeapp.generated.resources.settings_soul_description
-import kai.composeapp.generated.resources.settings_soul_reset
-import kai.composeapp.generated.resources.settings_soul_reset_cancel
-import kai.composeapp.generated.resources.settings_soul_reset_confirm
-import kai.composeapp.generated.resources.settings_soul_save
-import kai.composeapp.generated.resources.settings_sponsors_monthly
-import kai.composeapp.generated.resources.settings_sponsors_past
-import kai.composeapp.generated.resources.settings_status_checking
-import kai.composeapp.generated.resources.settings_status_connected
-import kai.composeapp.generated.resources.settings_status_error
-import kai.composeapp.generated.resources.settings_status_error_connection_failed
-import kai.composeapp.generated.resources.settings_status_error_invalid_key
-import kai.composeapp.generated.resources.settings_status_error_quota_exhausted
-import kai.composeapp.generated.resources.settings_status_error_rate_limited
-import kai.composeapp.generated.resources.settings_tab_agent
-import kai.composeapp.generated.resources.settings_tab_general
-import kai.composeapp.generated.resources.settings_tab_integrations
-import kai.composeapp.generated.resources.settings_tab_sandbox
-import kai.composeapp.generated.resources.settings_tab_services
-import kai.composeapp.generated.resources.settings_tab_tools
-import kai.composeapp.generated.resources.settings_task_details_consecutive_failures
-import kai.composeapp.generated.resources.settings_task_details_created
-import kai.composeapp.generated.resources.settings_task_details_last_result
-import kai.composeapp.generated.resources.settings_task_details_next_run
-import kai.composeapp.generated.resources.settings_task_details_no_heartbeat_runs
-import kai.composeapp.generated.resources.settings_task_details_no_runs
-import kai.composeapp.generated.resources.settings_task_details_on_every_heartbeat
-import kai.composeapp.generated.resources.settings_task_details_schedule
-import kai.composeapp.generated.resources.settings_task_details_scheduled_for
-import kai.composeapp.generated.resources.settings_task_details_status
-import kai.composeapp.generated.resources.settings_task_details_trigger
-import kai.composeapp.generated.resources.settings_theme
-import kai.composeapp.generated.resources.settings_theme_dark
-import kai.composeapp.generated.resources.settings_theme_description
-import kai.composeapp.generated.resources.settings_theme_light
-import kai.composeapp.generated.resources.settings_theme_oled
-import kai.composeapp.generated.resources.settings_theme_system
-import kai.composeapp.generated.resources.settings_tools_description
-import kai.composeapp.generated.resources.settings_tools_none_available
-import kai.composeapp.generated.resources.settings_ui_scale
-import kai.composeapp.generated.resources.settings_version
-import kai.composeapp.generated.resources.snackbar_email_removed
-import kai.composeapp.generated.resources.snackbar_mcp_server_removed
-import kai.composeapp.generated.resources.snackbar_memory_deleted
-import kai.composeapp.generated.resources.snackbar_service_removed
-import kai.composeapp.generated.resources.snackbar_task_cancelled
-import kai.composeapp.generated.resources.snackbar_undo
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.default_soul
+import beer.composeapp.generated.resources.github_mark
+import beer.composeapp.generated.resources.ic_arrow_drop_down
+import beer.composeapp.generated.resources.litert_cancel
+import beer.composeapp.generated.resources.litert_context_size
+import beer.composeapp.generated.resources.litert_download
+import beer.composeapp.generated.resources.litert_error_download_incomplete
+import beer.composeapp.generated.resources.litert_error_network
+import beer.composeapp.generated.resources.litert_error_not_enough_disk_space
+import beer.composeapp.generated.resources.litert_free_space
+import beer.composeapp.generated.resources.litert_on_device_description
+import beer.composeapp.generated.resources.litert_performance_good
+import beer.composeapp.generated.resources.litert_performance_ok
+import beer.composeapp.generated.resources.litert_performance_poor
+import beer.composeapp.generated.resources.litert_recommended
+import beer.composeapp.generated.resources.litert_tool_support
+import beer.composeapp.generated.resources.settings_add_service
+import beer.composeapp.generated.resources.settings_ai_mistakes_warning
+import beer.composeapp.generated.resources.settings_api_key_label
+import beer.composeapp.generated.resources.settings_api_key_optional_label
+import beer.composeapp.generated.resources.settings_base_url_label
+import beer.composeapp.generated.resources.settings_become_sponsor
+import beer.composeapp.generated.resources.settings_business_partnerships
+import beer.composeapp.generated.resources.settings_business_partnerships_description
+import beer.composeapp.generated.resources.settings_contact_sponsorship
+import beer.composeapp.generated.resources.settings_daemon_mode
+import beer.composeapp.generated.resources.settings_daemon_mode_description
+import beer.composeapp.generated.resources.settings_documentation
+import beer.composeapp.generated.resources.settings_dynamic_ui
+import beer.composeapp.generated.resources.settings_dynamic_ui_description
+import beer.composeapp.generated.resources.settings_export
+import beer.composeapp.generated.resources.settings_export_import_description
+import beer.composeapp.generated.resources.settings_export_import_title
+import beer.composeapp.generated.resources.settings_export_preview_title
+import beer.composeapp.generated.resources.settings_free_fallback
+import beer.composeapp.generated.resources.settings_free_tier_description
+import beer.composeapp.generated.resources.settings_free_tier_title
+import beer.composeapp.generated.resources.settings_heartbeat_recent
+import beer.composeapp.generated.resources.settings_import
+import beer.composeapp.generated.resources.settings_import_error
+import beer.composeapp.generated.resources.settings_import_partial
+import beer.composeapp.generated.resources.settings_import_preview_title
+import beer.composeapp.generated.resources.settings_import_replace_all
+import beer.composeapp.generated.resources.settings_import_replace_all_description
+import beer.composeapp.generated.resources.settings_import_section_conversations
+import beer.composeapp.generated.resources.settings_import_section_email
+import beer.composeapp.generated.resources.settings_import_section_heartbeat
+import beer.composeapp.generated.resources.settings_import_section_mcp
+import beer.composeapp.generated.resources.settings_import_section_memory
+import beer.composeapp.generated.resources.settings_import_section_scheduling
+import beer.composeapp.generated.resources.settings_import_section_services
+import beer.composeapp.generated.resources.settings_import_section_soul
+import beer.composeapp.generated.resources.settings_import_section_tools
+import beer.composeapp.generated.resources.settings_import_success
+import beer.composeapp.generated.resources.settings_mcp_cancel
+import beer.composeapp.generated.resources.settings_memories
+import beer.composeapp.generated.resources.settings_memories_all_title
+import beer.composeapp.generated.resources.settings_memories_delete
+import beer.composeapp.generated.resources.settings_memories_description
+import beer.composeapp.generated.resources.settings_memories_edit_cancel
+import beer.composeapp.generated.resources.settings_memories_edit_save
+import beer.composeapp.generated.resources.settings_memories_edit_title
+import beer.composeapp.generated.resources.settings_memories_show_all
+import beer.composeapp.generated.resources.settings_open_github_issue
+import beer.composeapp.generated.resources.settings_openai_compatible_or_other_service
+import beer.composeapp.generated.resources.settings_openai_compatible_providers
+import beer.composeapp.generated.resources.settings_openai_compatible_setup_ollama
+import beer.composeapp.generated.resources.settings_remove_service
+import beer.composeapp.generated.resources.settings_reorder_content_description
+import beer.composeapp.generated.resources.settings_request_integration_description
+import beer.composeapp.generated.resources.settings_request_integration_title
+import beer.composeapp.generated.resources.settings_sandbox_cancel
+import beer.composeapp.generated.resources.settings_sandbox_description
+import beer.composeapp.generated.resources.settings_sandbox_disk_usage
+import beer.composeapp.generated.resources.settings_sandbox_install
+import beer.composeapp.generated.resources.settings_sandbox_install_packages
+import beer.composeapp.generated.resources.settings_sandbox_subtab_files
+import beer.composeapp.generated.resources.settings_sandbox_subtab_packages
+import beer.composeapp.generated.resources.settings_sandbox_subtab_terminal
+import beer.composeapp.generated.resources.settings_sandbox_uninstall
+import beer.composeapp.generated.resources.settings_sandbox_uninstall_confirm
+import beer.composeapp.generated.resources.settings_scheduled_tasks
+import beer.composeapp.generated.resources.settings_scheduled_tasks_cancel
+import beer.composeapp.generated.resources.settings_scheduled_tasks_description
+import beer.composeapp.generated.resources.settings_sign_in_copy_api_key_from
+import beer.composeapp.generated.resources.settings_sms
+import beer.composeapp.generated.resources.settings_soul
+import beer.composeapp.generated.resources.settings_soul_description
+import beer.composeapp.generated.resources.settings_soul_reset
+import beer.composeapp.generated.resources.settings_soul_reset_cancel
+import beer.composeapp.generated.resources.settings_soul_reset_confirm
+import beer.composeapp.generated.resources.settings_soul_save
+import beer.composeapp.generated.resources.settings_sponsors_monthly
+import beer.composeapp.generated.resources.settings_sponsors_past
+import beer.composeapp.generated.resources.settings_status_checking
+import beer.composeapp.generated.resources.settings_status_connected
+import beer.composeapp.generated.resources.settings_status_error
+import beer.composeapp.generated.resources.settings_status_error_connection_failed
+import beer.composeapp.generated.resources.settings_status_error_invalid_key
+import beer.composeapp.generated.resources.settings_status_error_quota_exhausted
+import beer.composeapp.generated.resources.settings_status_error_rate_limited
+import beer.composeapp.generated.resources.settings_tab_agent
+import beer.composeapp.generated.resources.settings_tab_general
+import beer.composeapp.generated.resources.settings_tab_integrations
+import beer.composeapp.generated.resources.settings_tab_sandbox
+import beer.composeapp.generated.resources.settings_tab_services
+import beer.composeapp.generated.resources.settings_tab_tools
+import beer.composeapp.generated.resources.settings_task_details_consecutive_failures
+import beer.composeapp.generated.resources.settings_task_details_created
+import beer.composeapp.generated.resources.settings_task_details_last_result
+import beer.composeapp.generated.resources.settings_task_details_next_run
+import beer.composeapp.generated.resources.settings_task_details_no_heartbeat_runs
+import beer.composeapp.generated.resources.settings_task_details_no_runs
+import beer.composeapp.generated.resources.settings_task_details_on_every_heartbeat
+import beer.composeapp.generated.resources.settings_task_details_schedule
+import beer.composeapp.generated.resources.settings_task_details_scheduled_for
+import beer.composeapp.generated.resources.settings_task_details_status
+import beer.composeapp.generated.resources.settings_task_details_trigger
+import beer.composeapp.generated.resources.settings_theme
+import beer.composeapp.generated.resources.settings_theme_dark
+import beer.composeapp.generated.resources.settings_theme_description
+import beer.composeapp.generated.resources.settings_theme_light
+import beer.composeapp.generated.resources.settings_theme_oled
+import beer.composeapp.generated.resources.settings_theme_system
+import beer.composeapp.generated.resources.settings_tools_description
+import beer.composeapp.generated.resources.settings_tools_none_available
+import beer.composeapp.generated.resources.settings_ui_scale
+import beer.composeapp.generated.resources.settings_version
+import beer.composeapp.generated.resources.snackbar_email_removed
+import beer.composeapp.generated.resources.snackbar_mcp_server_removed
+import beer.composeapp.generated.resources.snackbar_memory_deleted
+import beer.composeapp.generated.resources.snackbar_service_removed
+import beer.composeapp.generated.resources.snackbar_task_cancelled
+import beer.composeapp.generated.resources.snackbar_undo
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -728,16 +728,6 @@ private fun BottomInfo() {
             tint = MaterialTheme.colorScheme.onBackground,
         )
 
-        Spacer(Modifier.width(12.dp))
-
-        Text(
-            text = stringResource(Res.string.settings_documentation),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .clickable { uriHandler.openUri("https://kai9000.com/docs/") }
-                .handCursor(),
-        )
     }
 
     Spacer(Modifier.height(8.dp))
@@ -1211,7 +1201,7 @@ private fun ServiceSettings(
     connectionStatus: ConnectionStatus,
     testTag: String? = null,
 ) {
-    KaiClearableTextField(
+    BeerClearableTextField(
         modifier = Modifier.let { if (testTag != null) it.testTag(testTag) else it },
         value = apiKey,
         onValueChange = onChangeApiKey,
@@ -1267,7 +1257,7 @@ private fun OpenAICompatibleSettings(
     onSelectModel: (String) -> Unit,
     connectionStatus: ConnectionStatus,
 ) {
-    KaiClearableTextField(
+    BeerClearableTextField(
         value = baseUrl,
         onValueChange = onChangeBaseUrl,
         label = {
@@ -1289,7 +1279,7 @@ private fun OpenAICompatibleSettings(
 
     Spacer(Modifier.height(8.dp))
 
-    KaiClearableTextField(
+    BeerClearableTextField(
         value = apiKey,
         onValueChange = onChangeApiKey,
         label = {
@@ -1457,7 +1447,7 @@ private fun LiteRTSettings(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                KaiSlider(
+                BeerSlider(
                     value = contextSliderValue,
                     onValueChange = { contextSliderValue = it },
                     onValueChangeFinished = {
@@ -2502,7 +2492,7 @@ private fun SoulEditor(
         )
         Spacer(Modifier.height(12.dp))
 
-        KaiOutlinedTextField(
+        BeerOutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
             value = editedText,
             onValueChange = { if (it.length <= maxChars) editedText = it },
@@ -2706,7 +2696,7 @@ private fun EditMemorySheet(
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(Modifier.height(8.dp))
-            KaiOutlinedTextField(
+            BeerOutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = content,
                 onValueChange = { content = it },
@@ -3035,7 +3025,7 @@ private fun ThemeModePicker(
             modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
         )
         Box(modifier = Modifier.fillMaxWidth()) {
-            KaiOutlinedTextField(
+            BeerOutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = selectedLabel,
                 onValueChange = {},
@@ -3125,7 +3115,7 @@ private fun UiScaleSection(
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }
-        KaiSlider(
+        BeerSlider(
             value = sliderValue,
             onValueChange = { sliderValue = it },
             onValueChangeFinished = { onChangeUiScale(sliderValue) },

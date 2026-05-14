@@ -68,7 +68,7 @@ class Requests {
             )
         }
         install(UserAgent) {
-            agent = "Kai/${Version.appVersion} (${currentPlatform.displayName})"
+            agent = "Beer/${Version.appVersion} (${currentPlatform.displayName})"
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 60.seconds.inWholeMilliseconds

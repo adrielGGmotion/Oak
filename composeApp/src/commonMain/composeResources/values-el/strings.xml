@@ -348,8 +348,8 @@
     <string name="tool_search_notifications_name">Αναζήτηση ειδοποιήσεων</string>
     <string name="tool_search_notifications_description">Αναζήτηση ειδοποιήσεων με βάση εφαρμογή ή κείμενο</string>
     <string name="settings_notifications_label">Ανάγνωση ειδοποιήσεων</string>
-    <string name="settings_notifications_description">Οι εισερχόμενες ειδοποιήσεις συλλέγονται στο παρασκήνιο και λαμβάνονται από τον παλμό. Επιλέξτε ποιες εφαρμογές μπορεί να διαβάζει το Kai από τις ρυθμίσεις πρόσβασης σε ειδοποιήσεις του συστήματος.</string>
-    <string name="settings_notifications_access_required">Δεν έχει δοθεί πρόσβαση στις ειδοποιήσεις. Πατήστε παρακάτω για ενεργοποίηση του Kai στις ρυθμίσεις συστήματος.</string>
+    <string name="settings_notifications_description">Οι εισερχόμενες ειδοποιήσεις συλλέγονται στο παρασκήνιο και λαμβάνονται από τον παλμό. Επιλέξτε ποιες εφαρμογές μπορεί να διαβάζει το Beer από τις ρυθμίσεις πρόσβασης σε ειδοποιήσεις του συστήματος.</string>
+    <string name="settings_notifications_access_required">Δεν έχει δοθεί πρόσβαση στις ειδοποιήσεις. Πατήστε παρακάτω για ενεργοποίηση του Beer στις ρυθμίσεις συστήματος.</string>
     <string name="settings_notifications_access_button">Άνοιγμα πρόσβασης ειδοποιήσεων</string>
     <string name="settings_notifications_manage_apps">Διαχείριση εφαρμογών</string>
     <string name="settings_notifications_listener_bound">Ακροατής ενεργός</string>
