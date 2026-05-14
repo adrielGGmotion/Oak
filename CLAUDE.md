@@ -24,3 +24,14 @@ The following platforms/targets have been removed:
 - **Packaging**: flatpak, AUR, fastlane/Play Store, WinGet
 
 Remaining targets: **Android** and **Desktop (JVM)** only.
+
+## Build secrets
+
+| Secret | Purpose |
+|---|---|
+| `DEBUG_KEYSTORE_BASE64` | Base64 of `debug.keystore` — decoded by Gradle for consistent debug signatures |
+| `KEYSTORE_B64` | Base64 of the release keystore |
+| `KEYSTORE_PASSWORD` | Password for the release keystore and key |
+| `KEY_ALIAS` | Alias of the release key inside the keystore |
+
+Keystore files (`debug.keystore`, `release.keystore`) are never committed — they're decoded from secrets in CI or generated locally.

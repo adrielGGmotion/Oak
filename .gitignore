@@ -20,3 +20,6 @@ captures
 android-sdk/
 /screenshotTests/src/test/snapshots/images/
 .build-native/
+# Debug keystore - generated locally or decoded from CI secret
+debug.keystore
+release.keystore
