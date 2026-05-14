@@ -164,12 +164,12 @@ jobs:
       - name: Create tarball
         run: |
           cd composeApp/build/compose/binaries/main-release/app
-          tar czf "$GITHUB_WORKSPACE/Beer-linux-x86_64.tar.gz" Beer
+          tar czf "$GITHUB_WORKSPACE/Oak-linux-x86_64.tar.gz" Oak
       - name: Upload Tarball Artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-tar-package
-          path: Beer-linux-x86_64.tar.gz
+          path: Oak-linux-x86_64.tar.gz
 
   appimage:
     name: Generate AppImage
@@ -203,24 +203,24 @@ jobs:
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
           # Copy distributable contents
-          cp -r composeApp/build/compose/binaries/main-release/app/Beer/* AppDir/usr/lib/
+          cp -r composeApp/build/compose/binaries/main-release/app/Oak/* AppDir/usr/lib/
 
           # Copy icon
-          cp composeApp/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/beer.png
-          cp composeApp/icon.png AppDir/beer.png
+          cp composeApp/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/oak.png
+          cp composeApp/icon.png AppDir/oak.png
 
           # Create desktop file
-          cat > AppDir/beer.desktop << 'EOF'
+          cat > AppDir/oak.desktop << 'EOF'
           [Desktop Entry]
-          Name=Beer
+          Name=Oak
           Comment=AI Assistant Application
-          Exec=beer
-          Icon=beer
+          Exec=oak
+          Icon=oak
           Type=Application
           Categories=Utility;
           Terminal=false
           EOF
-          cp AppDir/beer.desktop AppDir/usr/share/applications/
+          cp AppDir/oak.desktop AppDir/usr/share/applications/
 
           # Create AppRun
           cat > AppDir/AppRun << 'EOF'
@@ -229,17 +229,17 @@ jobs:
           HERE=${SELF%/*}
           export PATH="${HERE}/usr/lib/bin:${PATH}"
           export LD_LIBRARY_PATH="${HERE}/usr/lib/lib/runtime/lib:${LD_LIBRARY_PATH}"
-          exec "${HERE}/usr/lib/bin/Beer" "$@"
+          exec "${HERE}/usr/lib/bin/Oak" "$@"
           EOF
           chmod +x AppDir/AppRun
       - name: Build AppImage
         run: |
-          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir Beer-x86_64.AppImage
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir Oak-x86_64.AppImage
       - name: Upload AppImage Artifact
         uses: actions/upload-artifact@v4
         with:
           name: appimage-package
-          path: Beer-*.AppImage
+          path: Oak-*.AppImage
 
 
 
@@ -295,13 +295,13 @@ jobs:
       - name: Rename assets
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          mv androidApp-release-signed.apk "Beer-${VERSION}-android.apk"
-          mv *.dmg "Beer-${VERSION}-macos.dmg"
-          mv *.msi "Beer-${VERSION}-windows.msi"
-          mv *.deb "Beer-${VERSION}-linux.deb"
-          mv *.rpm "Beer-${VERSION}-linux.rpm"
-          mv *.AppImage "Beer-${VERSION}-linux.AppImage"
-          mv Beer-linux-x86_64.tar.gz "Beer-${VERSION}-linux-x86_64.tar.gz"
+          mv androidApp-release-signed.apk "Oak-${VERSION}-android.apk"
+          mv *.dmg "Oak-${VERSION}-macos.dmg"
+          mv *.msi "Oak-${VERSION}-windows.msi"
+          mv *.deb "Oak-${VERSION}-linux.deb"
+          mv *.rpm "Oak-${VERSION}-linux.rpm"
+          mv *.AppImage "Oak-${VERSION}-linux.AppImage"
+          mv Oak-linux-x86_64.tar.gz "Oak-${VERSION}-linux-x86_64.tar.gz"
 
       - name: Extract changelog
         run: |
@@ -324,4 +324,4 @@ jobs:
         with:
           name: Release ${{ github.ref_name }}
           body_path: changelog.txt
-          files: Beer-*
+          files: Oak-*

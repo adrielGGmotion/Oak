@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.beer.app"
+    namespace = "com.oak.app"
     compileSdk =
         libs.versions.android.compileSdk
             .get()
@@ -15,7 +15,7 @@ android {
     ndkVersion = "29.0.14206865"
 
     defaultConfig {
-        applicationId = "com.beer.app"
+        applicationId = "com.oak.app"
         minSdk =
             libs.versions.android.minSdk
                 .get()

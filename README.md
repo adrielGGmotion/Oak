@@ -1,4 +1,5 @@
-# Beer
+# Oak
+<img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="GPLv3" />
 
 <img src="https://img.shields.io/badge/Platform-Android-34a853.svg?logo=android" alt="Android" /> <img src="https://img.shields.io/badge/Platform-Windows/macOS/Linux-e10707.svg?logo=openjdk" alt="Platform JVM" />
 <div align="center">
@@ -22,13 +23,13 @@ An **open-source AI assistant with persistent memory** that runs on **Android, W
 
 ## AI That Builds Screens, Not Just Text
 
-Beer's Interactive UI lets the AI generate full interactive screens — quizzes, dashboards, recipes, brainstorms, and more. Navigate by tapping buttons instead of scrolling through chat.
+Oak's Interactive UI lets the AI generate full interactive screens — quizzes, dashboards, recipes, brainstorms, and more. Navigate by tapping buttons instead of scrolling through chat.
 
 <img src="screenshots/interactive-survival.png" alt="Survival Game" height="300"> <img src="screenshots/interactive-recipe.png" alt="Recipe Card" height="300"> <img src="screenshots/interactive-ecopulse.png" alt="EcoPulse Brainstorm" height="300"> <img src="screenshots/interactive-memories.png" alt="Memories" height="300">
 
 ## Features
 
-- **Persistent memory** — Beer remembers important details across conversations and uses them automatically
+- **Persistent memory** — Oak remembers important details across conversations and uses them automatically
 - **Customizable soul** — Define the AI's personality and behavior with an editable system prompt
 - **Multi-service fallback** — 24 LLM providers with automatic failover
 - **On-device inference** — Run AI models locally on Android using LiteRT, no internet needed
@@ -43,7 +44,7 @@ Beer's Interactive UI lets the AI generate full interactive screens — quizzes,
 
 ## Linux Sandbox (Android)
 
-On Android, Beer includes a built-in Linux environment that the AI can use to execute shell commands, run scripts, and operate tools on your behalf. This turns Beer from a chat-only assistant into one that can take real action — installing packages, processing data, running Python scripts, and more.
+On Android, Oak includes a built-in Linux environment that the AI can use to execute shell commands, run scripts, and operate tools on your behalf. This turns Oak from a chat-only assistant into one that can take real action — installing packages, processing data, running Python scripts, and more.
 
 - **Powered by Alpine Linux** — A lightweight ~3 MB download sets up a full Linux userland via [proot](https://proot-me.github.io/), no root required
 - **Optional packages** — One tap installs bash, curl, wget, git, jq, python3, pip, and Node.js
@@ -126,7 +127,7 @@ Enable it in **Settings > Linux Sandbox**.
 
 ## MCP Servers
 
-Beer supports the [Model Context Protocol](https://modelcontextprotocol.io/) for connecting to external tool servers. Go to **Settings > Tools > Add MCP Server** to connect to any Streamable HTTP MCP endpoint, or pick from a curated list of popular free servers:
+Oak supports the [Model Context Protocol](https://modelcontextprotocol.io/) for connecting to external tool servers. Go to **Settings > Tools > Add MCP Server** to connect to any Streamable HTTP MCP endpoint, or pick from a curated list of popular free servers:
 
 | Server | Description |
 |--------|-------------|
@@ -145,7 +146,7 @@ All popular servers are free and require no API key. MCP servers auto-reconnect 
 
 ### Splinterlands Auto-Battle (Android & Desktop)
 
-Beer can automatically play [Splinterlands](https://splinterlands.com) Wild Ranked battles. Configure one or more LLM services in priority order, add your Hive account, and hit Start — Beer will continuously find matches, pick teams using LLM-powered strategy, and submit them on-chain. Falls back to a simple greedy picker if all LLM services fail. Available in **Settings > Integrations**.
+Oak can automatically play [Splinterlands](https://splinterlands.com) Wild Ranked battles. Configure one or more LLM services in priority order, add your Hive account, and hit Start — Oak will continuously find matches, pick teams using LLM-powered strategy, and submit them on-chain. Falls back to a simple greedy picker if all LLM services fail. Available in **Settings > Integrations**.
 
 ## Supported Languages
 
@@ -169,10 +170,10 @@ Two separate screenshot pipelines exist, both using Compose screenshot tests:
 ./gradlew :screenshotTests:generateStoreScreenshots
 ```
 
-**Beer UI component screenshots** — Records golden images for `BeerUiScreenshotTest` only. Faster than recording the full suite when iterating on Beer UI components.
+**Oak UI component screenshots** — Records golden images for `OakUiScreenshotTest` only. Faster than recording the full suite when iterating on Oak UI components.
 
 ```bash
-./gradlew :screenshotTests:recordBeerUiScreenshots
+./gradlew :screenshotTests:recordOakUiScreenshots
 ```
 
 ## Sponsors
