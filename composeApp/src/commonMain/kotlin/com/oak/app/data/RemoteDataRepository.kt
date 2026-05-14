@@ -1788,6 +1788,12 @@ class RemoteDataRepository(
         appSettings.setThemeMode(mode)
     }
 
+    override fun isUseDynamicColorsEnabled(): Boolean = appSettings.isUseDynamicColorsEnabled()
+
+    override fun setUseDynamicColorsEnabled(enabled: Boolean) {
+        appSettings.setUseDynamicColorsEnabled(enabled)
+    }
+
     private var interactiveModeFlag = appSettings.getCurrentInteractiveMode()
 
     override fun setInteractiveMode(enabled: Boolean) {

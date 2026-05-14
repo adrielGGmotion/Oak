@@ -4,7 +4,6 @@ package com.oak.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -43,15 +42,13 @@ import com.oak.app.tools.SetupSmsPermissionHandler
 import com.oak.app.tools.SetupSmsSendPermissionHandler
 import com.oak.app.tools.SmsPermissionController
 import com.oak.app.tools.SmsSendPermissionController
-import com.oak.app.ui.DarkColorScheme
-import com.oak.app.ui.LightColorScheme
-import com.oak.app.ui.Theme
+import com.oak.app.ui.OakTheme
 import com.oak.app.ui.chat.ChatScreen
 import com.oak.app.ui.chat.ChatViewModel
 import com.oak.app.ui.components.FullScreenImageHost
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.settings.SettingsScreen
-import com.oak.app.ui.withBlackBackground
+
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.tab_chat
 import oak.composeapp.generated.resources.tab_settings
@@ -76,8 +73,6 @@ object Settings
 @Composable
 fun App(
     navController: NavHostController,
-    lightColorScheme: ColorScheme = LightColorScheme,
-    darkColorScheme: ColorScheme = DarkColorScheme,
     textToSpeech: TextToSpeechInstance? = null,
     isKoinStarted: Boolean = false,
 ) {
@@ -93,14 +88,14 @@ fun App(
     // Reuse global Koin if already started (Android Application class),
     // otherwise create a new instance (iOS, Desktop, Wasm).
     if (isKoinStarted) {
-        AppContent(navController, lightColorScheme, darkColorScheme, textToSpeech)
+        AppContent(navController, textToSpeech)
     } else {
         KoinApplication(
             configuration = koinConfiguration {
                 modules(appModule)
             },
         ) {
-            AppContent(navController, lightColorScheme, darkColorScheme, textToSpeech)
+            AppContent(navController, textToSpeech)
         }
     }
 }
@@ -108,8 +103,6 @@ fun App(
 @Composable
 private fun AppContent(
     navController: NavHostController,
-    lightColorScheme: ColorScheme,
-    darkColorScheme: ColorScheme,
     textToSpeech: TextToSpeechInstance?,
 ) {
     val appSettings = koinInject<AppSettings>()
@@ -147,15 +140,19 @@ private fun AppContent(
 
     val themeMode by appSettings.themeModeFlow.collectAsStateWithLifecycle()
     val systemInDark = isSystemInDarkTheme()
-    val effectiveColorScheme = when (themeMode) {
-        ThemeMode.System -> if (systemInDark) darkColorScheme else lightColorScheme
-        ThemeMode.Light -> lightColorScheme
-        ThemeMode.Dark -> darkColorScheme
-        ThemeMode.OledBlack -> darkColorScheme.withBlackBackground()
+    val isDark = when (themeMode) {
+        ThemeMode.System -> systemInDark
+        ThemeMode.Light -> false
+        ThemeMode.Dark, ThemeMode.OledBlack -> true
     }
+    val useDynamicColors by appSettings.useDynamicColorsFlow.collectAsStateWithLifecycle()
 
     CompositionLocalProvider(LocalDensity provides scaledDensity) {
-        Theme(colorScheme = effectiveColorScheme) {
+        OakTheme(
+            useDynamicColors = useDynamicColors,
+            darkTheme = isDark,
+            isOledBlack = themeMode == ThemeMode.OledBlack,
+        ) {
             FullScreenImageHost {
                 val chatViewModel: ChatViewModel = koinViewModel()
                 val showTabBar = currentPlatform !is Platform.Mobile

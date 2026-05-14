@@ -1,31 +1,24 @@
 package com.oak.app
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.oak.app.data.AppSettings
 import com.oak.app.data.DataRepository
 import com.oak.app.data.ThemeMode
-import com.oak.app.ui.DarkColorScheme
-import com.oak.app.ui.LightColorScheme
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
 import nl.marc_apps.tts.TextToSpeechEngine
@@ -40,7 +33,6 @@ class MainActivity : ComponentActivity() {
         FileKit.init(this)
         handleDeepLinkIntent(intent)
 
-        val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         val appSettings: AppSettings = get()
         setContent {
             val themeMode by appSettings.themeModeFlow.collectAsStateWithLifecycle()
@@ -70,9 +62,6 @@ class MainActivity : ComponentActivity() {
                     },
                 )
             }
-            val context = LocalContext.current
-            val lightScheme: ColorScheme = if (dynamicColor) dynamicLightColorScheme(context) else LightColorScheme
-            val darkScheme: ColorScheme = if (dynamicColor) dynamicDarkColorScheme(context) else DarkColorScheme
             val navController = rememberNavController()
             // Defer TTS initialization until after the first frame
             var ttsReady by remember { mutableStateOf(false) }
@@ -84,8 +73,6 @@ class MainActivity : ComponentActivity() {
             }
             App(
                 navController = navController,
-                lightColorScheme = lightScheme,
-                darkColorScheme = darkScheme,
                 textToSpeech = textToSpeech,
                 isKoinStarted = true,
             )

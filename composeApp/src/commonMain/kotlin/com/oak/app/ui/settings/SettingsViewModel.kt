@@ -72,6 +72,8 @@ class SettingsViewModel(
         soulText = dataRepository.getSoulText(),
         isDynamicUiEnabled = dataRepository.isDynamicUiEnabled(),
         themeMode = dataRepository.getThemeMode(),
+        useDynamicColors = dataRepository.isUseDynamicColorsEnabled(),
+        showDynamicColorsToggle = currentPlatform is Platform.Mobile.Android,
         isMemoryEnabled = dataRepository.isMemoryEnabled(),
         memories = dataRepository.getMemories().toImmutableList(),
         isSchedulingEnabled = dataRepository.isSchedulingEnabled(),
@@ -139,6 +141,7 @@ class SettingsViewModel(
         onSaveSoul = ::onSaveSoul,
         onToggleDynamicUi = ::onToggleDynamicUi,
         onChangeThemeMode = ::onChangeThemeMode,
+        onToggleDynamicColors = ::onToggleDynamicColors,
         onToggleMemory = ::onToggleMemory,
         onDeleteMemory = ::onDeleteMemory,
         onUpdateMemory = ::onUpdateMemory,
@@ -409,6 +412,11 @@ class SettingsViewModel(
     private fun onChangeThemeMode(mode: ThemeMode) {
         dataRepository.setThemeMode(mode)
         _state.update { it.copy(themeMode = mode) }
+    }
+
+    private fun onToggleDynamicColors(enabled: Boolean) {
+        dataRepository.setUseDynamicColorsEnabled(enabled)
+        _state.update { it.copy(useDynamicColors = enabled) }
     }
 
     private fun onToggleMemory(enabled: Boolean) {

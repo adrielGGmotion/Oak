@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.oak.app.ui.chat.ChatActions
 import com.oak.app.ui.chat.ConversationSummary
 import com.oak.app.ui.components.VerticalScrollbarForList
-import com.oak.app.ui.components.animatedGradientBorder
+import com.oak.app.ui.components.oakOutlinedBorder
 import com.oak.app.ui.handCursor
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.chat_history_delete_content_description
@@ -131,7 +131,7 @@ internal fun ChatHistorySheet(
                             items(conversations, key = { it.id }) { conversation ->
                                 val isActive = conversation.id == currentConversationId
                                 val borderModifier = if (conversation.isInteractive) {
-                                    Modifier.animatedGradientBorder(
+                                    Modifier.oakOutlinedBorder(
                                         cornerRadius = 12.dp,
                                         backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow,
                                     )

@@ -264,7 +264,6 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
 
         // Collapsed pill floats over content at the bottom-end
         if (!showFullInput) {
-            val gradientBrush = com.oak.app.ui.gradientBrush
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -273,7 +272,7 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
                     .clip(RoundedCornerShape(28.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(28.dp))
                     .border(
-                        BorderStroke(2.dp, gradientBrush),
+                        BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
                         RoundedCornerShape(28.dp),
                     )
                     .handCursor()
