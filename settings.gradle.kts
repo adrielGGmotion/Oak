@@ -1,7 +1,7 @@
 // WARNING: Changing rootProject.name will cascade into the generated Compose Resources
-// namespace (beer.composeapp.generated.resources). If you rename this, you MUST bulk-update
+// namespace (oak.composeapp.generated.resources). If you rename this, you MUST bulk-update
 // ALL imports matching the old pattern across ~38 source files.
-rootProject.name = "Beer"
+rootProject.name = "Oak"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

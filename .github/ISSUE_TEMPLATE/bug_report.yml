@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in Beer
+description: Report a bug in Oak
 labels: ["bug"]
 body:
   - type: textarea
@@ -23,7 +23,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Beer Version
+      label: Oak Version
       placeholder: e.g. 1.2.3
     validations:
       required: true

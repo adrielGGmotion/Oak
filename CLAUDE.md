@@ -5,15 +5,15 @@ Do NOT hardcode version strings in `build.gradle.kts` files.
 
 # Naming Conventions
 
-This project was renamed from **Kai → Beer**. All code, assets, and documentation should use "Beer" branding.
+This project was renamed from **Kai → Oak**. All code, assets, and documentation should use "Oak" branding.
 
-- **Dynamic UI language**: Use `beer-ui` (not `kai-ui`) as the code fence identifier
-- **Compose components**: Use `Beer` prefix (`BeerChip`, `BeerSlider`, etc.) instead of `Kai`
-- **Generated resources**: Live under `beer.composeapp.generated.resources` (tied to `rootProject.name` in `settings.gradle.kts`)
-- **User-Agent strings**: Use `Beer/<version>` and `Beer/1.0`
-- **Window/tray titles**: Use "Beer", not "Kai 9000" or "Kai"
+- **Dynamic UI language**: Use `oak-ui` (not `kai-ui`) as the code fence identifier
+- **Compose components**: Use `Oak` prefix (`OakChip`, `OakSlider`, etc.) instead of `Kai`
+- **Generated resources**: Live under `oak.composeapp.generated.resources` (tied to `rootProject.name` in `settings.gradle.kts`)
+- **User-Agent strings**: Use `Oak/<version>` and `Oak/1.0`
+- **Window/tray titles**: Use "Oak", not "Kai 9000" or "Kai"
 
-Avoid introducing new "Kai" references. If you encounter leftover ones, rename them to "Beer".
+Avoid introducing new "Kai" references. If you encounter leftover ones, rename them to "Oak".
 
 # Removed Platforms
 

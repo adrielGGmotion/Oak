@@ -11,7 +11,7 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "com.beer.app.shared"
+        namespace = "com.oak.app.shared"
         compileSdk =
             libs.versions.android.compileSdk
                 .get()
@@ -115,7 +115,7 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "com.beer.app.MainKt"
+        mainClass = "com.oak.app.MainKt"
 
         buildTypes.release.proguard {
             configurationFiles.from(
@@ -126,7 +126,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm, TargetFormat.AppImage)
-            packageName = "Beer"
+            packageName = "Oak"
             packageVersion = libs.versions.appVersion.get()
 
             macOS {
@@ -134,7 +134,7 @@ compose.desktop {
             }
             windows {
                 iconFile.set(project.file("icon.ico"))
-                menuGroup = "Beer"
+                menuGroup = "Oak"
             }
             linux {
                 iconFile.set(project.file("icon.png"))
@@ -174,13 +174,13 @@ class VersionGeneratorPlugin : Plugin<Project> {
             // Generate Kotlin version file
             val versionFile =
                 layout.buildDirectory
-                    .file("generated/src/commonMain/kotlin/com/beer/app/Version.kt")
+                    .file("generated/src/commonMain/kotlin/com/oak/app/Version.kt")
                     .get()
                     .asFile
             versionFile.parentFile?.mkdirs()
             versionFile.writeText(
                 """
-                package com.beer.app
+                package com.oak.app
 
                 object Version {
                     const val appVersion = "$appVersion"
