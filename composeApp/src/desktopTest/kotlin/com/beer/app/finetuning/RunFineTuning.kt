@@ -209,7 +209,7 @@ class RunFineTuning {
             println("  3. Select: ${finalJob.fine_tuned_model}")
             println()
             println("  To validate with the integration test:")
-            println("  KAI_INTEGRATION=1 KAI_MISTRAL_FT_KEY=${"$"}MISTRAL_API_KEY KAI_MISTRAL_FT_MODEL=${finalJob.fine_tuned_model} \\")
+            println("  BEER_INTEGRATION=1 BEER_MISTRAL_FT_KEY=${"$"}MISTRAL_API_KEY BEER_MISTRAL_FT_MODEL=${finalJob.fine_tuned_model} \\")
             println("    ./gradlew :composeApp:desktopTest --tests \"*BeerUiValidationTest*\" --info")
         } else {
             println("  Fine-tuned model: (not available — job may have failed)")

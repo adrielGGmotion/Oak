@@ -22,7 +22,7 @@ class NotificationHelper(
     private val notificationIdCounter = AtomicInteger(0)
 
     companion object {
-        private const val CHANNEL_ID = "kai_ai_notifications"
+        private const val CHANNEL_ID = "beer_ai_notifications"
     }
 
     init {

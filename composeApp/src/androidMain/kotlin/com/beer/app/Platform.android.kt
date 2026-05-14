@@ -146,13 +146,31 @@ actual fun getAppFilesDirectory(): String {
 actual fun createSecureSettings(): Settings {
     val context: Context by inject(Context::class.java)
     return try {
+        // One-time migration from legacy "kai" name — rename the file so existing
+        // encrypted data (API keys, etc.) survives the rebrand without re-prompting.
+        // If rename fails, falls through to catch which deletes both and recreates.
+        migrateSecurePrefsFile(context)
         SharedPreferencesSettings(createEncryptedPrefs(context))
     } catch (_: Exception) {
         // AEADBadTagException occurs when Android Auto Backup restores the encrypted
         // prefs file but the Keystore key is hardware-bound and doesn't transfer.
-        // Delete the corrupted file and recreate fresh encrypted prefs.
+        // Delete any corrupted files and recreate fresh encrypted prefs.
+        context.deleteSharedPreferences("beer_secure_prefs")
         context.deleteSharedPreferences("kai_secure_prefs")
         SharedPreferencesSettings(createEncryptedPrefs(context))
+    }
+}
+
+/** Renames legacy kai_secure_prefs → beer_secure_prefs on disk, if the new file
+ *  doesn't already exist. Safe to call every time — no-op after first migration.
+ *  Throws on failure so the caller's catch block can clean up both files and
+ *  recreate fresh encrypted prefs. */
+private fun migrateSecurePrefsFile(context: Context) {
+    val prefsDir = java.io.File(context.applicationInfo.dataDir, "shared_prefs")
+    val oldFile = java.io.File(prefsDir, "kai_secure_prefs.xml")
+    val newFile = java.io.File(prefsDir, "beer_secure_prefs.xml")
+    if (oldFile.exists() && !newFile.exists() && !oldFile.renameTo(newFile)) {
+        throw java.io.IOException("Failed to migrate kai_secure_prefs.xml → beer_secure_prefs.xml")
     }
 }
 
@@ -162,7 +180,7 @@ private fun createEncryptedPrefs(context: Context): android.content.SharedPrefer
         .build()
     return EncryptedSharedPreferences.create(
         context,
-        "kai_secure_prefs",
+        "beer_secure_prefs",
         masterKey,
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,

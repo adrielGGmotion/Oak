@@ -350,7 +350,7 @@ Jos jokin vaatii huomiota (vanhentuneet muistot, erääntyneet tehtävät, käyt
     <string name="tool_search_notifications_description">Etsi ilmoituksia sovelluksen tai tekstin mukaan</string>
     <string name="settings_notifications_label">Lue ilmoituksia</string>
     <string name="settings_notifications_description">Saapuvat ilmoitukset kerätään taustalla ja syke poimii ne. Valitse järjestelmän ilmoitusten käyttöoikeusasetuksista, mitä sovelluksia Beer voi lukea.</string>
-    <string name="settings_notifications_access_required">Ilmoitusten käyttöoikeutta ei ole myönnetty. Napauta alta ottaaksesi Kain käyttöön järjestelmäasetuksissa.</string>
+    <string name="settings_notifications_access_required">Ilmoitusten käyttöoikeutta ei ole myönnetty. Napauta alta ottaaksesi Beerin käyttöön järjestelmäasetuksissa.</string>
     <string name="settings_notifications_access_button">Avaa ilmoitusten käyttöoikeus</string>
     <string name="settings_notifications_manage_apps">Hallinnoi sovelluksia</string>
     <string name="settings_notifications_listener_bound">Kuuntelija aktiivinen</string>

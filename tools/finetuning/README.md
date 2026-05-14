@@ -35,7 +35,7 @@ This produces:
 **Optional: Include curated LLM responses.** If you've run the integration test with API keys, successful responses from strong models (GPT-4o, Claude, etc.) are automatically included as additional training data:
 
 ```bash
-KAI_INTEGRATION=1 KAI_OPENAI_KEY=sk-... KAI_ANTHROPIC_KEY=sk-ant-... \
+BEER_INTEGRATION=1 BEER_OPENAI_KEY=sk-... BEER_ANTHROPIC_KEY=sk-ant-... \
   ./gradlew :composeApp:desktopTest --tests "*BeerUiValidationTest.validate*" --info
 ```
 
@@ -69,14 +69,14 @@ The script will:
 Run the integration test battery against both the base and fine-tuned models:
 
 ```bash
-KAI_INTEGRATION=1 \
-  KAI_MISTRAL_KEY=your-key \
-  KAI_MISTRAL_FT_KEY=your-key \
-  KAI_MISTRAL_FT_MODEL=ft:open-mistral-7b:your-id:date:hash \
+BEER_INTEGRATION=1 \
+  BEER_MISTRAL_KEY=your-key \
+  BEER_MISTRAL_FT_KEY=your-key \
+  BEER_MISTRAL_FT_MODEL=ft:open-mistral-7b:your-id:date:hash \
   ./gradlew :composeApp:desktopTest --tests "*BeerUiValidationTest.validate*" --info
 ```
 
-Compare the success rates in the generated report at `build/reports/kaiui-integration/report.md`.
+Compare the success rates in the generated report at `build/reports/beerui-integration/report.md`.
 
 ### Step 4: Use in Beer
 

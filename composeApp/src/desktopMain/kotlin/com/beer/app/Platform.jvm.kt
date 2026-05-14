@@ -130,11 +130,18 @@ actual suspend fun compressImageBytes(bytes: ByteArray, mimeType: String): ByteA
 
 actual fun getAppFilesDirectory(): String {
     val userHome = System.getProperty("user.home")
-    val kaiDir = File("$userHome/.kai")
-    if (!kaiDir.exists()) {
-        kaiDir.mkdirs()
+    val beerDir = File("$userHome/.beer")
+    val legacyDir = File("$userHome/.kai")
+
+    // One-time migration: rename legacy ~/.kai → ~/.beer if new dir doesn't exist
+    if (!beerDir.exists() && legacyDir.exists()) {
+        legacyDir.renameTo(beerDir)
     }
-    return kaiDir.absolutePath
+
+    if (!beerDir.exists()) {
+        beerDir.mkdirs()
+    }
+    return beerDir.absolutePath
 }
 
 actual fun createSecureSettings(): Settings = EncryptedFileSettings()

@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import com.beer.app.data.SmsDraft
 import com.beer.app.data.SmsDraftStatus
 import com.beer.app.ui.handCursor
-import com.beer.app.ui.kaiAdaptiveCardBorder
-import com.beer.app.ui.kaiAdaptiveCardColors
+import com.beer.app.ui.beerAdaptiveCardBorder
+import com.beer.app.ui.beerAdaptiveCardColors
 import beer.composeapp.generated.resources.Res
 import beer.composeapp.generated.resources.ic_close
 import beer.composeapp.generated.resources.sms_draft_banner_discard
@@ -87,8 +87,8 @@ private fun PendingSmsBanner(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 2.dp),
-        colors = kaiAdaptiveCardColors(),
-        border = kaiAdaptiveCardBorder(),
+        colors = beerAdaptiveCardColors(),
+        border = beerAdaptiveCardBorder(),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),

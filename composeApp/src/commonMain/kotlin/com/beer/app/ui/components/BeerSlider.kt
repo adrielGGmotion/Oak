@@ -33,12 +33,12 @@ fun BeerSlider(
         modifier = modifier.handCursor(),
         valueRange = valueRange,
         steps = steps,
-        colors = kaiSliderColors(),
+        colors = beerSliderColors(),
         thumb = { BeerSliderThumb() },
         track = { sliderState ->
             SliderDefaults.Track(
                 sliderState = sliderState,
-                colors = kaiSliderTrackColors(),
+                colors = beerSliderTrackColors(),
                 drawStopIndicator = null,
                 drawTick = { _, _ -> },
             )
@@ -67,7 +67,7 @@ fun BeerRangeSlider(
         track = { rangeSliderState ->
             SliderDefaults.Track(
                 rangeSliderState = rangeSliderState,
-                colors = kaiSliderTrackColors(),
+                colors = beerSliderTrackColors(),
                 drawStopIndicator = null,
                 drawTick = { _, _ -> },
             )
@@ -85,7 +85,7 @@ private fun BeerSliderThumb() {
 }
 
 @Composable
-private fun kaiSliderColors() = SliderDefaults.colors(
+private fun beerSliderColors() = SliderDefaults.colors(
     thumbColor = MaterialTheme.colorScheme.primary,
     activeTrackColor = MaterialTheme.colorScheme.primary,
     inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -94,7 +94,7 @@ private fun kaiSliderColors() = SliderDefaults.colors(
 )
 
 @Composable
-private fun kaiSliderTrackColors() = SliderDefaults.colors(
+private fun beerSliderTrackColors() = SliderDefaults.colors(
     activeTrackColor = MaterialTheme.colorScheme.primary,
     inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
 )

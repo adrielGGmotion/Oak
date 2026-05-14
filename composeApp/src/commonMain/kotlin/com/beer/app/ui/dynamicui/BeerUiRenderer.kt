@@ -217,8 +217,8 @@ import androidx.compose.ui.unit.sp
 import com.beer.app.ui.BeerOutlinedTextField
 import com.beer.app.ui.components.BeerChip
 import com.beer.app.ui.handCursor
-import com.beer.app.ui.kaiAdaptiveCardBorder
-import com.beer.app.ui.kaiAdaptiveCardColors
+import com.beer.app.ui.beerAdaptiveCardBorder
+import com.beer.app.ui.beerAdaptiveCardColors
 import beer.composeapp.generated.resources.Res
 import beer.composeapp.generated.resources.bot_message_copy_content_description
 import kotlinx.collections.immutable.ImmutableList
@@ -282,8 +282,8 @@ fun BeerUiRenderer(
         if (wrapInCard) {
             Card(
                 modifier = modifier.fillMaxWidth().wrapContentHeight(),
-                colors = kaiAdaptiveCardColors(),
-                border = kaiAdaptiveCardBorder(),
+                colors = beerAdaptiveCardColors(),
+                border = beerAdaptiveCardBorder(),
             ) {
                 Column(Modifier.padding(12.dp).wrapContentHeight()) {
                     RenderNode(
@@ -439,8 +439,8 @@ private fun RenderCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().wrapContentHeight(),
-        colors = kaiAdaptiveCardColors(),
-        border = kaiAdaptiveCardBorder(),
+        colors = beerAdaptiveCardColors(),
+        border = beerAdaptiveCardBorder(),
     ) {
         Column(
             modifier = Modifier.padding(16.dp).wrapContentHeight(),

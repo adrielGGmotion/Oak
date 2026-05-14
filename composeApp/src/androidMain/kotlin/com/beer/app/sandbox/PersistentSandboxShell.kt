@@ -27,7 +27,7 @@ private const val US = ""
 // Marker emitted once at shell startup so we know bash's pid before any user
 // command has finished. Without this, cancel on the first command had nothing
 // to signal (bashPid was null, set only from the sentinel of a completed run).
-private const val PID_PROBE_PREFIX = "${RS}KAIBASHPID$US"
+private const val PID_PROBE_PREFIX = "${RS}BEERBASHPID$US"
 
 class PersistentSandboxShell(
     private val executor: ProotExecutor,
@@ -74,7 +74,7 @@ class PersistentSandboxShell(
         val sink = CommandSink(nonce = nonce, onStdout = onStdout, onStderr = onStderr)
         currentSink.set(sink)
 
-        val cmdFile = File(tmpPath, ".kai_cmd_$nonce")
+        val cmdFile = File(tmpPath, ".beer_cmd_$nonce")
         try {
             cmdFile.writeText(command)
         } catch (e: Exception) {
@@ -85,8 +85,8 @@ class PersistentSandboxShell(
         // Source the user command (preserves cwd/env), capture exit, emit sentinel.
         // Leading \n flushes any partial stderr line (e.g. Python's >>> prompt
         // with no trailing newline) so the sentinel arrives on a clean line.
-        val line = ". /tmp/.kai_cmd_$nonce; __kai_st=\$?; rm -f /tmp/.kai_cmd_$nonce; " +
-            "printf '\\n\\036%s\\037%d\\037%d\\037%s\\036\\n' '$nonce' \"\$__kai_st\" \"\$\$\" \"\$PWD\" >&2"
+        val line = ". /tmp/.beer_cmd_$nonce; __beer_st=\$?; rm -f /tmp/.beer_cmd_$nonce; " +
+            "printf '\\n\\036%s\\037%d\\037%d\\037%s\\036\\n' '$nonce' \"\$__beer_st\" \"\$\$\" \"\$PWD\" >&2"
         handle?.writeInput(line)
 
         val result = withTimeoutOrNull(timeoutSeconds.seconds) { sink.done.await() }
@@ -179,7 +179,7 @@ class PersistentSandboxShell(
         // recognizes this marker on stderr and sets bashPid, so cancel on
         // the very first command has something to signal. Leading \n matches
         // the sentinel pattern below — flushes any partial line first.
-        h.writeInput("printf '\\n\\036KAIBASHPID\\037%d\\036\\n' \"\$\$\" >&2")
+        h.writeInput("printf '\\n\\036BEERBASHPID\\037%d\\036\\n' \"\$\$\" >&2")
         watchdog = scope.launch {
             h.awaitExit()
             // Shell died. Wake up any in-flight command with a shellDied result

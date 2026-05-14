@@ -140,9 +140,9 @@ import com.beer.app.ui.icons.DragIndicator
 import com.beer.app.ui.icons.Replay
 import com.beer.app.ui.icons.Visibility
 import com.beer.app.ui.icons.VisibilityOff
-import com.beer.app.ui.kaiAdaptiveCardBorder
-import com.beer.app.ui.kaiAdaptiveCardColors
-import com.beer.app.ui.kaiAdaptiveCardSurface
+import com.beer.app.ui.beerAdaptiveCardBorder
+import com.beer.app.ui.beerAdaptiveCardColors
+import com.beer.app.ui.beerAdaptiveCardSurface
 import com.beer.app.ui.sandbox.SandboxProgressRow
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
@@ -720,7 +720,7 @@ private fun BottomInfo() {
                 .clip(CircleShape)
                 .size(24.dp)
                 .clickable(onClick = {
-                    uriHandler.openUri("https://github.com/SimonSchubert/Kai")
+                    uriHandler.openUri("https://github.com/adrielGGmotion/Kai")
                 })
                 .handCursor(),
             painter = painterResource(Res.drawable.github_mark),
@@ -743,8 +743,8 @@ private fun FreeSettings(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = kaiAdaptiveCardColors(),
-        border = kaiAdaptiveCardBorder(),
+        colors = beerAdaptiveCardColors(),
+        border = beerAdaptiveCardBorder(),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -1057,7 +1057,7 @@ private fun ConfiguredServiceCardContent(
 ) {
     Column(
         modifier = Modifier
-            .kaiAdaptiveCardSurface()
+            .beerAdaptiveCardSurface()
             .fillMaxWidth()
             .clickable { onExpand() }
             .handCursor(),
@@ -1641,8 +1641,8 @@ internal fun SettingsCard(
 ) {
     Card(
         modifier = modifier,
-        colors = kaiAdaptiveCardColors(),
-        border = kaiAdaptiveCardBorder(),
+        colors = beerAdaptiveCardColors(),
+        border = beerAdaptiveCardBorder(),
     ) {
         Column(
             modifier = Modifier
@@ -2004,7 +2004,7 @@ private fun IntegrationsContent(
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
-                    onClick = { uriHandler.openUri("https://github.com/SimonSchubert/Kai/issues/new?template=integration_request.yml") },
+                    onClick = { uriHandler.openUri("https://github.com/adrielGGmotion/Kai/issues/new?template=integration_request.yml") },
                     modifier = Modifier.handCursor(),
                 ) {
                     Text(stringResource(Res.string.settings_open_github_issue))
@@ -2418,8 +2418,8 @@ private fun ToolItem(
             .clip(CardDefaults.shape)
             .clickable { onToggle(!tool.isEnabled) }
             .handCursor(),
-        colors = kaiAdaptiveCardColors(),
-        border = kaiAdaptiveCardBorder(),
+        colors = beerAdaptiveCardColors(),
+        border = beerAdaptiveCardBorder(),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),

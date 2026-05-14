@@ -14,11 +14,11 @@ An **open-source AI assistant with persistent memory** that runs on **Android, W
 
 | Platform | Format | Download |
 |----------|--------|----------|
-| macOS | DMG | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Windows | MSI | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Linux | DEB | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Linux | RPM | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Linux | AppImage | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
+| macOS | DMG | [GitHub Releases](https://github.com/adrielGGmotion/Kai/releases) |
+| Windows | MSI | [GitHub Releases](https://github.com/adrielGGmotion/Kai/releases) |
+| Linux | DEB | [GitHub Releases](https://github.com/adrielGGmotion/Kai/releases) |
+| Linux | RPM | [GitHub Releases](https://github.com/adrielGGmotion/Kai/releases) |
+| Linux | AppImage | [GitHub Releases](https://github.com/adrielGGmotion/Kai/releases) |
 
 ## AI That Builds Screens, Not Just Text
 
