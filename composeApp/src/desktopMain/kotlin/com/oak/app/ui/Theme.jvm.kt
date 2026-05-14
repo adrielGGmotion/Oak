@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 
 @Composable
 actual fun oakColorScheme(useDynamicColors: Boolean, darkTheme: Boolean): ColorScheme {
-    return if (darkTheme) greenDarkColorScheme() else greenLightColorScheme()
+    return greenColorScheme(darkTheme)
 }

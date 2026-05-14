@@ -100,6 +100,7 @@ kotlin {
             implementation(libs.coil.network.ktor3)
 
             implementation(libs.reorderable)
+            implementation(libs.materialKolor)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
