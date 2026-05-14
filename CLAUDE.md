@@ -35,3 +35,12 @@ Remaining targets: **Android** and **Desktop (JVM)** only.
 | `KEY_ALIAS` | Alias of the release key inside the keystore |
 
 Keystore files (`debug.keystore`, `release.keystore`) are never committed — they're decoded from secrets in CI or generated locally.
+
+## Repo Configuration (added May 14)
+- **Dependabot**: `.github/dependabot.yml` — weekly checks for Gradle + GH Actions deps
+- **CodeQL**: `.github/workflows/codeql.yml` — static analysis on main + PRs + weekly cron
+- **Stale bot**: `.github/workflows/stale.yml` — issues stale at 60d, PRs at 30d, close at 7d
+- **SECURITY.md**: `.github/SECURITY.md` — report vulnerabilities via private advisory
+- **FUNDING.yml**: Updated to adrielGGmotion
+- **CONTRIBUTING.md**: Workflow guidelines
+- **Feature request template**: `.github/ISSUE_TEMPLATE/feature_request.yml`
