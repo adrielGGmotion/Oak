@@ -1,4 +1,4 @@
-Perform a release for Beer. Bump type argument: $ARGUMENTS (default: patch).
+Perform a release for Oak. Bump type argument: $ARGUMENTS (default: patch).
 
 Follow these steps exactly:
 

@@ -10,7 +10,7 @@
    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
     <application
-        android:name="com.beer.app.BeerApplication"
+        android:name="com.oak.app.OakApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -23,7 +23,7 @@
         <activity
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
-            android:name="com.beer.app.MainActivity"
+            android:name="com.oak.app.MainActivity"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -42,11 +42,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
         <service
-            android:name="com.beer.app.DaemonService"
+            android:name="com.oak.app.DaemonService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
         <service
-            android:name="com.beer.app.inference.ModelDownloadService"
+            android:name="com.oak.app.inference.ModelDownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
         <uses-native-library android:name="libvndksupport.so" android:required="false"/>

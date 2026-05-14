@@ -1,4 +1,4 @@
-# Contributing to Beer
+# Contributing to Oak
 
 We welcome contributions! Here's how to get started.
 

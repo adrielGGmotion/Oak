@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">Beer</string>
-    <string name="daemon_channel_name">Beer Background Service</string>
-    <string name="daemon_channel_description">Keeps Beer running for scheduled task execution</string>
+    <string name="app_name">Oak</string>
+    <string name="daemon_channel_name">Oak Background Service</string>
+    <string name="daemon_channel_description">Keeps Oak running for scheduled task execution</string>
     <string name="daemon_notification_text">Daemon is running</string>
     <string name="download_channel_name">Model Downloads</string>
     <string name="download_channel_description">Shows progress while downloading AI models</string>
