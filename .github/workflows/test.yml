@@ -66,9 +66,6 @@ jobs:
       - name: Run spotlessApply
         run: ./gradlew spotlessApply --no-daemon --stacktrace
 
-      - name: Run updateScreenshots
-        run: ./gradlew :screenshotTests:updateScreenshots --no-daemon --stacktrace
-
       - name: Run desktop tests
         run: ./gradlew :composeApp:desktopTest --no-daemon --stacktrace
 
@@ -86,10 +83,9 @@ jobs:
           steps.changes.outputs.has_changes == 'true' &&
           steps.fork-check.outputs.is_fork == 'true'
         run: |
-          echo "::error::This PR from a fork requires formatting or screenshot updates."
+          echo "::error::This PR from a fork requires formatting updates."
           echo "Please run the following commands locally and push the changes:"
           echo "  ./gradlew spotlessApply"
-          echo "  ./gradlew :screenshotTests:updateScreenshots"
           exit 1
 
       - name: Commit and push changes
@@ -100,5 +96,4 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add -A
-          git commit -m "Auto-fix: spotlessApply and updateScreenshots [skip ci]"
           git push
