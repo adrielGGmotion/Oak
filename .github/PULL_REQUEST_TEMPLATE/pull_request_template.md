@@ -18,7 +18,6 @@
 ## Checklist
 
 - [ ] Code builds and runs (`./gradlew :androidApp:assembleDebug`)
-- [ ] No Kai branding remnants (temporary — remove once rebrand is complete)
 - [ ] Changes are focused on a single concern
 - [ ] PR description explains what and why
 
