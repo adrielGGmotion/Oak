@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
@@ -40,22 +42,47 @@ android {
 
     signingConfigs {
         create("release") {
-            val ksFile = System.getenv("KEYSTORE_FILE")
-            if (ksFile != null) {
-                storeFile = file(ksFile)
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEYSTORE_PASSWORD")
+            val releaseKeystore = rootProject.file("release.keystore")
+            if (!releaseKeystore.exists()) {
+                val b64 = System.getenv("KEYSTORE_B64")
+                if (b64 != null) {
+                    releaseKeystore.writeBytes(Base64.getDecoder().decode(b64))
+                }
+            }
+            if (releaseKeystore.exists()) {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
+                keyAlias = System.getenv("KEY_ALIAS") ?: "androiddebugkey"
+                keyPassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
+            }
+        }
+
+        getByName("debug") {
+            val debugKeystore = rootProject.file("debug.keystore")
+            if (!debugKeystore.exists()) {
+                val b64 = System.getenv("DEBUG_KEYSTORE_BASE64")
+                if (b64 != null) {
+                    debugKeystore.writeBytes(Base64.getDecoder().decode(b64))
+                }
+            }
+            if (debugKeystore.exists()) {
+                storeFile = debugKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
             }
         }
     }
 
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         getByName("release") {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "../composeApp/proguard-rules.pro")
             signingConfig =
-                if (System.getenv("KEYSTORE_FILE") != null) {
+                if (rootProject.file("release.keystore").exists()) {
                     signingConfigs.getByName("release")
                 } else {
                     signingConfigs.getByName("debug")
