@@ -33,20 +33,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.beer.app.ui.components.KaiSearchField
+import com.beer.app.ui.components.BeerSearchField
 import com.beer.app.ui.handCursor
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.sandbox_files_dialog_cancel
-import kai.composeapp.generated.resources.sandbox_packages_action_clear_search
-import kai.composeapp.generated.resources.sandbox_packages_action_install
-import kai.composeapp.generated.resources.sandbox_packages_action_uninstall
-import kai.composeapp.generated.resources.sandbox_packages_action_upgrade
-import kai.composeapp.generated.resources.sandbox_packages_empty_installed
-import kai.composeapp.generated.resources.sandbox_packages_empty_results
-import kai.composeapp.generated.resources.sandbox_packages_search_hint
-import kai.composeapp.generated.resources.sandbox_packages_uninstall_confirm
-import kai.composeapp.generated.resources.sandbox_packages_uninstall_message
-import kai.composeapp.generated.resources.sandbox_packages_uninstall_title
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.sandbox_files_dialog_cancel
+import beer.composeapp.generated.resources.sandbox_packages_action_clear_search
+import beer.composeapp.generated.resources.sandbox_packages_action_install
+import beer.composeapp.generated.resources.sandbox_packages_action_uninstall
+import beer.composeapp.generated.resources.sandbox_packages_action_upgrade
+import beer.composeapp.generated.resources.sandbox_packages_empty_installed
+import beer.composeapp.generated.resources.sandbox_packages_empty_results
+import beer.composeapp.generated.resources.sandbox_packages_search_hint
+import beer.composeapp.generated.resources.sandbox_packages_uninstall_confirm
+import beer.composeapp.generated.resources.sandbox_packages_uninstall_message
+import beer.composeapp.generated.resources.sandbox_packages_uninstall_title
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -77,7 +77,7 @@ fun SandboxPackagesContent(
 
     Box(modifier = modifier) {
         Column(Modifier.fillMaxSize()) {
-            KaiSearchField(
+            BeerSearchField(
                 query = state.searchQuery,
                 onQueryChange = viewModel::updateSearchQuery,
                 placeholder = stringResource(Res.string.sandbox_packages_search_hint),

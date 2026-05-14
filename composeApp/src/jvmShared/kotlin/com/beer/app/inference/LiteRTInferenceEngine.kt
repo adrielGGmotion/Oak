@@ -242,7 +242,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
     }
 
     /**
-     * Adapter that exposes a Kai [LocalTool] (suspend execute) to litert-lm's [OpenApiTool]
+     * Adapter that exposes a Beer [LocalTool] (suspend execute) to litert-lm's [OpenApiTool]
      * (synchronous execute). The bridge uses [runBlocking] because the engine calls
      * [execute] on its own worker thread (we're already inside `Dispatchers.IO` from
      * [chat]) and waits for the result before continuing the tool loop.

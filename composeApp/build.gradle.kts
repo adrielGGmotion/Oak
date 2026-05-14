@@ -1,7 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -30,38 +28,7 @@ kotlin {
         }
     }
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64(),
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-            binaryOption("bundleId", "com.beer.app")
-        }
-    }
-
     jvm("desktop")
-
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        outputModuleName = "composeApp"
-        browser {
-            val rootDirPath = project.rootDir.path
-            val projectDirPath = project.projectDir.path
-            commonWebpackConfig {
-                outputFileName = "composeApp.js"
-                devServer =
-                    (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                        // Serve sources to debug inside browser
-                        static(rootDirPath)
-                        static(projectDirPath)
-                    }
-            }
-        }
-        binaries.executable()
-    }
 
     sourceSets {
         val desktopMain by getting
@@ -142,14 +109,7 @@ kotlin {
             implementation(libs.slf4j.nop)
             implementation(libs.litert.lm.jvm)
         }
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
-            implementation(libs.ktor.network)
-            implementation(libs.ktor.network.tls)
-        }
-        wasmJsMain.dependencies {
-            implementation(libs.ktor.client.js)
-        }
+
     }
 }
 
@@ -228,18 +188,7 @@ class VersionGeneratorPlugin : Plugin<Project> {
                 """.trimIndent(),
             )
 
-            // Update iOS Config.xcconfig with version
-            val xcConfigFile = rootProject.file("iosApp/Configuration/Config.xcconfig")
-            if (xcConfigFile.exists()) {
-                val content = xcConfigFile.readText()
-                val updatedContent =
-                    if (content.contains("APP_VERSION=")) {
-                        content.replace(Regex("APP_VERSION=.*"), "APP_VERSION=$appVersion")
-                    } else {
-                        content.trimEnd() + "\nAPP_VERSION=$appVersion\n"
-                    }
-                xcConfigFile.writeText(updatedContent)
-            }
+
         }
     }
 }

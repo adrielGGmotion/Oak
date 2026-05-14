@@ -15,9 +15,9 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.tool_fetch_url_description
-import kai.composeapp.generated.resources.tool_fetch_url_name
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.tool_fetch_url_description
+import beer.composeapp.generated.resources.tool_fetch_url_name
 
 private val ALLOWED_METHODS = setOf("GET", "POST", "HEAD")
 private val HTML_TAG_REGEX = Regex("<[^>]*>")
@@ -86,7 +86,7 @@ object FetchUrlTool : Tool {
         return try {
             val response = client.request(urlArg) {
                 method = HttpMethod.parse(methodArg)
-                header("User-Agent", "Mozilla/5.0 (compatible; Kai/1.0)")
+                header("User-Agent", "Mozilla/5.0 (compatible; Beer/1.0)")
                 if (bodyArg != null && methodArg == "POST") {
                     contentType(
                         contentTypeArg?.let { runCatching { ContentType.parse(it) }.getOrNull() }

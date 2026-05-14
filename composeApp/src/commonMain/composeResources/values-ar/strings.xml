@@ -349,8 +349,8 @@
     <string name="tool_search_notifications_name">البحث في الإشعارات</string>
     <string name="tool_search_notifications_description">البحث في الإشعارات حسب التطبيق أو النص</string>
     <string name="settings_notifications_label">قراءة الإشعارات</string>
-    <string name="settings_notifications_description">تُجمع الإشعارات الواردة في الخلفية ويلتقطها heartbeat. اختر التطبيقات التي يمكن لـ Kai قراءتها من إعدادات وصول الإشعارات في النظام.</string>
-    <string name="settings_notifications_access_required">لم يتم منح الوصول إلى الإشعارات. اضغط أدناه لتفعيل Kai من إعدادات النظام.</string>
+    <string name="settings_notifications_description">تُجمع الإشعارات الواردة في الخلفية ويلتقطها heartbeat. اختر التطبيقات التي يمكن لـ Beer قراءتها من إعدادات وصول الإشعارات في النظام.</string>
+    <string name="settings_notifications_access_required">لم يتم منح الوصول إلى الإشعارات. اضغط أدناه لتفعيل Beer من إعدادات النظام.</string>
     <string name="settings_notifications_access_button">فتح وصول الإشعارات</string>
     <string name="settings_notifications_manage_apps">إدارة التطبيقات</string>
     <string name="settings_notifications_listener_bound">المستمع نشط</string>

@@ -7,13 +7,13 @@ import com.beer.app.network.tools.Tool
 import com.beer.app.network.tools.ToolInfo
 import com.beer.app.network.tools.ToolSchema
 import com.beer.app.notifications.NotificationReader
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.tool_check_notifications_description
-import kai.composeapp.generated.resources.tool_check_notifications_name
-import kai.composeapp.generated.resources.tool_read_notification_description
-import kai.composeapp.generated.resources.tool_read_notification_name
-import kai.composeapp.generated.resources.tool_search_notifications_description
-import kai.composeapp.generated.resources.tool_search_notifications_name
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.tool_check_notifications_description
+import beer.composeapp.generated.resources.tool_check_notifications_name
+import beer.composeapp.generated.resources.tool_read_notification_description
+import beer.composeapp.generated.resources.tool_read_notification_name
+import beer.composeapp.generated.resources.tool_search_notifications_description
+import beer.composeapp.generated.resources.tool_search_notifications_name
 
 object NotificationTools {
 
@@ -43,7 +43,7 @@ object NotificationTools {
             if (!reader.hasAccess()) {
                 return mapOf(
                     "success" to false,
-                    "error" to "Notification access not granted. Ask the user to enable Kai under " +
+                    "error" to "Notification access not granted. Ask the user to enable Beer under " +
                         "system Notification access settings.",
                 )
             }

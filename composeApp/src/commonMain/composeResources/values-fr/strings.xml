@@ -348,8 +348,8 @@ Si quelque chose nécessite de l'attention (souvenirs obsolètes, tâches échue
     <string name="tool_search_notifications_name">Rechercher des notifications</string>
     <string name="tool_search_notifications_description">Rechercher des notifications par application ou texte</string>
     <string name="settings_notifications_label">Lire les notifications</string>
-    <string name="settings_notifications_description">Les notifications entrantes sont récupérées en arrière-plan et prises en charge par le heartbeat. Choisissez les applications que Kai peut lire dans les paramètres système d\'accès aux notifications.</string>
-    <string name="settings_notifications_access_required">L\'accès aux notifications n\'a pas été accordé. Appuyez ci-dessous pour activer Kai dans les paramètres système.</string>
+    <string name="settings_notifications_description">Les notifications entrantes sont récupérées en arrière-plan et prises en charge par le heartbeat. Choisissez les applications que Beer peut lire dans les paramètres système d\'accès aux notifications.</string>
+    <string name="settings_notifications_access_required">L\'accès aux notifications n\'a pas été accordé. Appuyez ci-dessous pour activer Beer dans les paramètres système.</string>
     <string name="settings_notifications_access_button">Ouvrir l\'accès aux notifications</string>
     <string name="settings_notifications_manage_apps">Gérer les applications</string>
     <string name="settings_notifications_listener_bound">Écouteur actif</string>

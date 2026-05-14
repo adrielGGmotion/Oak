@@ -30,8 +30,8 @@ import com.beer.app.data.Attachment
 import com.beer.app.decodeToImageBitmap
 import com.beer.app.ui.components.LocalShowFullScreenImage
 import com.beer.app.ui.handCursor
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.ic_file
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.ic_file
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.painterResource

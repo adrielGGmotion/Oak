@@ -60,13 +60,13 @@ import com.beer.app.splinterlands.BattlePhase
 import com.beer.app.splinterlands.LlmServiceStatus
 import com.beer.app.splinterlands.ModelStats
 import com.beer.app.splinterlands.computeModelStats
-import com.beer.app.ui.KaiOutlinedTextField
+import com.beer.app.ui.BeerOutlinedTextField
 import com.beer.app.ui.components.VerticalScrollbarForScroll
 import com.beer.app.ui.handCursor
 import com.beer.app.ui.icons.DragIndicator
 import com.beer.app.ui.icons.Visibility
 import com.beer.app.ui.icons.VisibilityOff
-import kai.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.Res
 import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableColumn
 import kotlin.time.Duration.Companion.seconds
@@ -586,7 +586,7 @@ private fun SplinterlandsAddAccountForm(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(8.dp))
-        KaiOutlinedTextField(
+        BeerOutlinedTextField(
             value = username,
             onValueChange = { username = it },
             label = { Text("Hive Username") },
@@ -597,7 +597,7 @@ private fun SplinterlandsAddAccountForm(
 
         Spacer(Modifier.height(8.dp))
 
-        KaiOutlinedTextField(
+        BeerOutlinedTextField(
             value = postingKey,
             onValueChange = { postingKey = it },
             label = { Text("Posting Key") },

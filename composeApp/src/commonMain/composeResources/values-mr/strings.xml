@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">सूचना शोधा</string>
     <string name="tool_search_notifications_description">अॅप किंवा मजकूरानुसार सूचना शोधा</string>
     <string name="settings_notifications_label">सूचना वाचा</string>
-    <string name="settings_notifications_description">येणाऱ्या सूचना पार्श्वभूमीत गोळा केल्या जातात आणि heartbeat द्वारे घेतल्या जातात. प्रणालीच्या सूचना प्रवेश सेटिंग्जमध्ये Kai कोणते अॅप वाचू शकेल ते निवडा.</string>
-    <string name="settings_notifications_access_required">सूचना प्रवेश दिलेला नाही. प्रणाली सेटिंग्जमध्ये Kai सक्षम करण्यासाठी खाली टॅप करा.</string>
+    <string name="settings_notifications_description">येणाऱ्या सूचना पार्श्वभूमीत गोळा केल्या जातात आणि heartbeat द्वारे घेतल्या जातात. प्रणालीच्या सूचना प्रवेश सेटिंग्जमध्ये Beer कोणते अॅप वाचू शकेल ते निवडा.</string>
+    <string name="settings_notifications_access_required">सूचना प्रवेश दिलेला नाही. प्रणाली सेटिंग्जमध्ये Beer सक्षम करण्यासाठी खाली टॅप करा.</string>
     <string name="settings_notifications_access_button">सूचना प्रवेश उघडा</string>
     <string name="settings_notifications_manage_apps">अॅप्स व्यवस्थापित करा</string>
     <string name="settings_notifications_listener_bound">श्रोता सक्रिय</string>

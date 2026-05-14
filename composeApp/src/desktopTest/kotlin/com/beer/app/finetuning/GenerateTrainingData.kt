@@ -1,7 +1,7 @@
 package com.beer.app.finetuning
 
-import com.beer.app.ui.markdown.KaiUiBlock
-import com.beer.app.ui.markdown.KaiUiError
+import com.beer.app.ui.markdown.BeerUiBlock
+import com.beer.app.ui.markdown.BeerUiError
 import com.beer.app.ui.markdown.parseMarkdown
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -29,7 +29,7 @@ import kotlin.test.Test
  *
  * 1. **Golden examples** in `tools/finetuning/golden/` (`.md` files) — hand-crafted ideal responses
  * 2. **Saved integration test responses** in `build/reports/kaiui-integration/` — curated
- *    successful responses from strong LLM providers (run KaiUiValidationTest first)
+ *    successful responses from strong LLM providers (run BeerUiValidationTest first)
  */
 class GenerateTrainingData {
 
@@ -62,7 +62,7 @@ class GenerateTrainingData {
             examples.addAll(curatedExamples)
         } else {
             println("[GenerateTrainingData] No integration test reports found at ${reportDir.absolutePath}")
-            println("    Run KaiUiValidationTest first to collect LLM responses for curation.")
+            println("    Run BeerUiValidationTest first to collect LLM responses for curation.")
         }
 
         // Validate all examples
@@ -70,12 +70,12 @@ class GenerateTrainingData {
         var invalidCount = 0
         for (example in examples) {
             val assistantContent = example.messages.last { it.role == "assistant" }.content
-            if (validateKaiUi(assistantContent)) {
+            if (validateBeerUi(assistantContent)) {
                 valid.add(example)
             } else {
                 invalidCount++
                 val userMsg = example.messages.firstOrNull { it.role == "user" }?.content?.take(80) ?: "?"
-                println("  [SKIP] Invalid kai-ui in example: $userMsg")
+                println("  [SKIP] Invalid beer-ui in example: $userMsg")
             }
         }
         println("[GenerateTrainingData] Valid: ${valid.size}, Invalid: $invalidCount")
@@ -176,7 +176,7 @@ class GenerateTrainingData {
     // region Curated integration test responses -----------------------------------------------
 
     /**
-     * Loads successful LLM responses from KaiUiValidationTest report directory.
+     * Loads successful LLM responses from BeerUiValidationTest report directory.
      * Only includes responses that parse cleanly (no error segments).
      */
     private fun loadCuratedResponses(reportDir: File): List<TrainingExample> {
@@ -208,8 +208,8 @@ class GenerateTrainingData {
 
             val raw = file.readText()
             val blocks = parseMarkdown(raw).blocks
-            val hasUi = blocks.any { it is KaiUiBlock }
-            val hasError = blocks.any { it is KaiUiError }
+            val hasUi = blocks.any { it is BeerUiBlock }
+            val hasError = blocks.any { it is BeerUiError }
 
             // Only include clean successes
             if (hasUi && !hasError) {
@@ -234,43 +234,43 @@ class GenerateTrainingData {
     // region Validation -----------------------------------------------------------------------
 
     /**
-     * Validates that an assistant response contains at least one valid kai-ui block
+     * Validates that an assistant response contains at least one valid beer-ui block
      * with no parse errors.
      */
-    private fun validateKaiUi(response: String): Boolean {
+    private fun validateBeerUi(response: String): Boolean {
         val blocks = parseMarkdown(response).blocks
-        val hasUi = blocks.any { it is KaiUiBlock }
-        val hasError = blocks.any { it is KaiUiError }
-        // Allow responses that don't contain kai-ui at all (mixed markdown-only for dynamic mode)
+        val hasUi = blocks.any { it is BeerUiBlock }
+        val hasError = blocks.any { it is BeerUiError }
+        // Allow responses that don't contain beer-ui at all (mixed markdown-only for dynamic mode)
         if (!hasUi && !hasError) return false
         return hasUi && !hasError
     }
 
     // endregion
 
-    // region System prompt (mirrors KaiUiValidationTest) --------------------------------------
+    // region System prompt (mirrors BeerUiValidationTest) --------------------------------------
 
     private enum class Mode { DYNAMIC_UI, INTERACTIVE }
 
     /**
-     * Builds the kai-ui system prompt. Mirrors [KaiUiValidationTest.buildSystemPrompt].
+     * Builds the beer-ui system prompt. Mirrors [BeerUiValidationTest.buildSystemPrompt].
      */
     private fun buildSystemPrompt(mode: Mode): String = buildString {
         val dynamicUiOnly = mode == Mode.DYNAMIC_UI
         if (dynamicUiOnly) {
             append("\n## Dynamic UI\n")
-            append("You can enhance your chat responses with interactive UI elements using kai-ui blocks. ")
+            append("You can enhance your chat responses with interactive UI elements using beer-ui blocks. ")
             append("Proactively use them whenever you need input from the user — don't just ask in plain text if a form, selector, or buttons would be more natural. ")
             append("For example, if the user asks you to help plan a trip, present destination options as buttons; if you need preferences, show a form; if presenting choices, use interactive cards. ")
-            append("Use kai-ui whenever collecting data, offering choices, presenting structured information, or guiding multi-step workflows. ")
-            append("You can mix kai-ui blocks with regular markdown text naturally — use markdown for explanations and kai-ui for interactive elements.\n\n")
+            append("Use beer-ui whenever collecting data, offering choices, presenting structured information, or guiding multi-step workflows. ")
+            append("You can mix beer-ui blocks with regular markdown text naturally — use markdown for explanations and beer-ui for interactive elements.\n\n")
         } else {
             append("\n## Interactive UI Mode (ACTIVE)\n")
-            append("You are in full-screen interactive UI mode. The user ONLY sees rendered kai-ui components — they cannot see markdown, plain text, or anything outside a kai-ui fence.\n")
-            append("Your ENTIRE response must be a single ```kai-ui code fence. No text before it, no text after it, no markdown. If you write anything outside the fence, the user will NOT see it.\n\n")
+            append("You are in full-screen interactive UI mode. The user ONLY sees rendered beer-ui components — they cannot see markdown, plain text, or anything outside a beer-ui fence.\n")
+            append("Your ENTIRE response must be a single ```beer-ui code fence. No text before it, no text after it, no markdown. If you write anything outside the fence, the user will NOT see it.\n\n")
         }
 
-        append("Format: wrap a JSON object in ```kai-ui fences.\n\n")
+        append("Format: wrap a JSON object in ```beer-ui fences.\n\n")
         append("Components: column, row, card, box, text, button, text_input, checkbox, switch, select, radio_group, slider, chip_group, table, list, divider, image, icon, code, progress, countdown, alert, tabs, accordion, quote, badge, stat, avatar.\n")
         append("- text: {\"type\":\"text\",\"value\":\"...\",\"style\":\"headline|title|body|caption\",\"bold\":true,\"color\":\"primary|secondary|error\"} — do NOT use markdown formatting (**, *, #, etc.) in text values; use the bold/italic/style properties instead\n")
         append("- button: {\"type\":\"button\",\"label\":\"...\",\"action\":{...},\"variant\":\"filled|outlined|text|tonal\"}\n")
@@ -305,10 +305,10 @@ class GenerateTrainingData {
             append("- Put buttons INSIDE cards, directly below related content\n")
             append("- Use rows for groups of buttons or chips — rows wrap automatically\n")
             append("- Keep button labels short (1-3 words)\n\n")
-            append("Example:\n```kai-ui\n{\"type\":\"column\",\"children\":[{\"type\":\"text\",\"value\":\"Your name?\",\"style\":\"title\"},{\"type\":\"text_input\",\"id\":\"name\",\"placeholder\":\"Enter name\"},{\"type\":\"button\",\"label\":\"Submit\",\"action\":{\"type\":\"callback\",\"event\":\"submit\",\"collectFrom\":[\"name\"]}}]}\n```\n")
+            append("Example:\n```beer-ui\n{\"type\":\"column\",\"children\":[{\"type\":\"text\",\"value\":\"Your name?\",\"style\":\"title\"},{\"type\":\"text_input\",\"id\":\"name\",\"placeholder\":\"Enter name\"},{\"type\":\"button\",\"label\":\"Submit\",\"action\":{\"type\":\"callback\",\"event\":\"submit\",\"collectFrom\":[\"name\"]}}]}\n```\n")
         } else {
             append("Rules:\n")
-            append("- Each response is a COMPLETE screen layout. Include all content and actions in one kai-ui block.\n")
+            append("- Each response is a COMPLETE screen layout. Include all content and actions in one beer-ui block.\n")
             append("- Always include clear primary action buttons so the user can proceed.\n")
             append("- Every screen MUST have at least one interactive element with a callback action.\n")
             append("- Use headline text for screen titles. Structure screens with cards for grouping related content.\n")
@@ -323,7 +323,7 @@ class GenerateTrainingData {
             append("- Each screen is independent.\n")
             append("- Only use the exact components and properties defined above.\n")
             append("- Start with simple, clean layouts.\n\n")
-            append("Example:\n```kai-ui\n{\"type\":\"column\",\"children\":[{\"type\":\"text\",\"value\":\"Welcome\",\"style\":\"headline\"},{\"type\":\"card\",\"children\":[{\"type\":\"text\",\"value\":\"What would you like to do?\",\"style\":\"title\"},{\"type\":\"button\",\"label\":\"Get Started\",\"action\":{\"type\":\"callback\",\"event\":\"get_started\"}}]}]}\n```\n")
+            append("Example:\n```beer-ui\n{\"type\":\"column\",\"children\":[{\"type\":\"text\",\"value\":\"Welcome\",\"style\":\"headline\"},{\"type\":\"card\",\"children\":[{\"type\":\"text\",\"value\":\"What would you like to do?\",\"style\":\"title\"},{\"type\":\"button\",\"label\":\"Get Started\",\"action\":{\"type\":\"callback\",\"event\":\"get_started\"}}]}]}\n```\n")
         }
     }
 

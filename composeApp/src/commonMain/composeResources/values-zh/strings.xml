@@ -348,8 +348,8 @@
     <string name="tool_search_notifications_name">搜索通知</string>
     <string name="tool_search_notifications_description">按应用或文本搜索通知</string>
     <string name="settings_notifications_label">阅读通知</string>
-    <string name="settings_notifications_description">传入通知会在后台收集并由心跳处理。请在系统的通知访问权限设置中选择 Kai 可以读取哪些应用的通知。</string>
-    <string name="settings_notifications_access_required">尚未授予通知访问权限。点击下方在系统设置中启用 Kai。</string>
+    <string name="settings_notifications_description">传入通知会在后台收集并由心跳处理。请在系统的通知访问权限设置中选择 Beer 可以读取哪些应用的通知。</string>
+    <string name="settings_notifications_access_required">尚未授予通知访问权限。点击下方在系统设置中启用 Beer。</string>
     <string name="settings_notifications_access_button">打开通知访问权限</string>
     <string name="settings_notifications_manage_apps">管理应用</string>
     <string name="settings_notifications_listener_bound">监听器已激活</string>

@@ -7,9 +7,9 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.beer.app.shared.R
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.notification_channel_description
-import kai.composeapp.generated.resources.notification_channel_name
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.notification_channel_description
+import beer.composeapp.generated.resources.notification_channel_name
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import java.util.concurrent.atomic.AtomicInteger

@@ -17,8 +17,6 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 *.aab
+android-sdk/
 /screenshotTests/src/test/snapshots/images/
-fastlane/play-store-key.json
-fastlane/report.xml
-fastlane/README.md
 .build-native/

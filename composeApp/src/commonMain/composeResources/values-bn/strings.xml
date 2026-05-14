@@ -348,8 +348,8 @@
     <string name="tool_search_notifications_name">বিজ্ঞপ্তি অনুসন্ধান করুন</string>
     <string name="tool_search_notifications_description">অ্যাপ বা লেখা অনুসারে বিজ্ঞপ্তি অনুসন্ধান করুন</string>
     <string name="settings_notifications_label">বিজ্ঞপ্তি পড়ুন</string>
-    <string name="settings_notifications_description">ইনকামিং বিজ্ঞপ্তি ব্যাকগ্রাউন্ডে সংগ্রহ করা হয় এবং heartbeat দ্বারা গ্রহণ করা হয়। সিস্টেমের বিজ্ঞপ্তি অ্যাক্সেস সেটিংসে Kai কোন অ্যাপ পড়তে পারবে তা বেছে নিন।</string>
-    <string name="settings_notifications_access_required">বিজ্ঞপ্তি অ্যাক্সেস দেওয়া হয়নি। সিস্টেম সেটিংসে Kai সক্রিয় করতে নিচে ট্যাপ করুন।</string>
+    <string name="settings_notifications_description">ইনকামিং বিজ্ঞপ্তি ব্যাকগ্রাউন্ডে সংগ্রহ করা হয় এবং heartbeat দ্বারা গ্রহণ করা হয়। সিস্টেমের বিজ্ঞপ্তি অ্যাক্সেস সেটিংসে Beer কোন অ্যাপ পড়তে পারবে তা বেছে নিন।</string>
+    <string name="settings_notifications_access_required">বিজ্ঞপ্তি অ্যাক্সেস দেওয়া হয়নি। সিস্টেম সেটিংসে Beer সক্রিয় করতে নিচে ট্যাপ করুন।</string>
     <string name="settings_notifications_access_button">বিজ্ঞপ্তি অ্যাক্সেস খুলুন</string>
     <string name="settings_notifications_manage_apps">অ্যাপ পরিচালনা</string>
     <string name="settings_notifications_listener_bound">শ্রোতা সক্রিয়</string>

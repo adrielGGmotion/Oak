@@ -14,8 +14,8 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.navigation.compose.rememberNavController
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.logo
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.logo
 import nl.marc_apps.tts.TextToSpeechEngine
 import nl.marc_apps.tts.TextToSpeechInstance
 import nl.marc_apps.tts.experimental.ExperimentalDesktopTarget
@@ -37,7 +37,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             state = windowState,
-            title = "Kai 9000",
+            title = "Beer",
             icon = painterResource(Res.drawable.logo),
         ) {
             // Defer TTS initialization until after the first frame

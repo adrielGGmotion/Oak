@@ -348,8 +348,8 @@
     <string name="tool_search_notifications_name">Пошук апавяшчэнняў</string>
     <string name="tool_search_notifications_description">Пошук апавяшчэнняў па дадатку або тэксце</string>
     <string name="settings_notifications_label">Чытанне апавяшчэнняў</string>
-    <string name="settings_notifications_description">Уваходныя апавяшчэнні збіраюцца ў фоне і апрацоўваюцца heartbeat. Абярыце прыкладанні, якія можа чытаць Kai, у сістэмных наладах доступу да апавяшчэнняў.</string>
-    <string name="settings_notifications_access_required">Доступ да апавяшчэнняў не нададзены. Націсніце ніжэй, каб уключыць Kai у сістэмных наладах.</string>
+    <string name="settings_notifications_description">Уваходныя апавяшчэнні збіраюцца ў фоне і апрацоўваюцца heartbeat. Абярыце прыкладанні, якія можа чытаць Beer, у сістэмных наладах доступу да апавяшчэнняў.</string>
+    <string name="settings_notifications_access_required">Доступ да апавяшчэнняў не нададзены. Націсніце ніжэй, каб уключыць Beer у сістэмных наладах.</string>
     <string name="settings_notifications_access_button">Адкрыць доступ да апавяшчэнняў</string>
     <string name="settings_notifications_manage_apps">Кіраванне прыкладаннямі</string>
     <string name="settings_notifications_listener_bound">Слухач актыўны</string>

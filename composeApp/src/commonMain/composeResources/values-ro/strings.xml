@@ -347,8 +347,8 @@
     <string name="tool_search_notifications_name">Caută notificări</string>
     <string name="tool_search_notifications_description">Caută notificări după aplicație sau text</string>
     <string name="settings_notifications_label">Citește notificările</string>
-    <string name="settings_notifications_description">Notificările primite sunt colectate în fundal și preluate de heartbeat. Alege ce aplicații poate citi Kai din setările de acces la notificări ale sistemului.</string>
-    <string name="settings_notifications_access_required">Accesul la notificări nu a fost acordat. Atinge mai jos pentru a activa Kai din setările sistemului.</string>
+    <string name="settings_notifications_description">Notificările primite sunt colectate în fundal și preluate de heartbeat. Alege ce aplicații poate citi Beer din setările de acces la notificări ale sistemului.</string>
+    <string name="settings_notifications_access_required">Accesul la notificări nu a fost acordat. Atinge mai jos pentru a activa Beer din setările sistemului.</string>
     <string name="settings_notifications_access_button">Deschide accesul la notificări</string>
     <string name="settings_notifications_manage_apps">Gestionează aplicațiile</string>
     <string name="settings_notifications_listener_bound">Ascultător activ</string>

@@ -349,7 +349,7 @@
     <string name="tool_search_notifications_name">ማሳወቂያዎችን ፈልግ</string>
     <string name="tool_search_notifications_description">ማሳወቂያዎችን በመተግበሪያ ወይም በጽሑፍ ፈልግ</string>
     <string name="settings_notifications_label">ማሳወቂያዎችን አንብብ</string>
-    <string name="settings_notifications_description">የሚገቡ ማሳወቂያዎች በከባቢ ይነሱና በheartbeat ይጨበጣሉ። Kai ሊያነበው የሚችለውን መተግበሪያ በስርዓት ቅንብሮች ይምረጡ።</string>
+    <string name="settings_notifications_description">የሚገቡ ማሳወቂያዎች በከባቢ ይነሱና በheartbeat ይጨበጣሉ። Beer ሊያነበው የሚችለውን መተግበሪያ በስርዓት ቅንብሮች ይምረጡ።</string>
     <string name="settings_notifications_access_required">የማሳወቂያ ድርሻ አልተሰጠም። Kaiን በስርዓት ቅንብሮች ለማንቃት ከታች ይንኩ።</string>
     <string name="settings_notifications_access_button">የማሳወቂያ ድርሻ ክፈት</string>
     <string name="settings_notifications_manage_apps">መተግበሪያዎችን ያስተዳድሩ</string>

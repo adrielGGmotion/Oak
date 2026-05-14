@@ -44,29 +44,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.beer.app.mcp.PopularMcpServer
 import com.beer.app.mcp.popularMcpServers
-import com.beer.app.ui.KaiOutlinedTextField
+import com.beer.app.ui.BeerOutlinedTextField
 import com.beer.app.ui.components.VerticalScrollbarForScroll
 import com.beer.app.ui.handCursor
 import com.beer.app.ui.kaiAdaptiveCardBorder
 import com.beer.app.ui.kaiAdaptiveCardColors
-import kai.composeapp.generated.resources.Res
-import kai.composeapp.generated.resources.ic_arrow_drop_down
-import kai.composeapp.generated.resources.settings_mcp_add
-import kai.composeapp.generated.resources.settings_mcp_add_header
-import kai.composeapp.generated.resources.settings_mcp_add_server
-import kai.composeapp.generated.resources.settings_mcp_header_key
-import kai.composeapp.generated.resources.settings_mcp_header_value
-import kai.composeapp.generated.resources.settings_mcp_no_tools
-import kai.composeapp.generated.resources.settings_mcp_popular_servers
-import kai.composeapp.generated.resources.settings_mcp_refresh
-import kai.composeapp.generated.resources.settings_mcp_remove
-import kai.composeapp.generated.resources.settings_mcp_server_name
-import kai.composeapp.generated.resources.settings_mcp_server_url
-import kai.composeapp.generated.resources.settings_mcp_servers
-import kai.composeapp.generated.resources.settings_mcp_servers_description
-import kai.composeapp.generated.resources.settings_mcp_status_connected
-import kai.composeapp.generated.resources.settings_mcp_status_connecting
-import kai.composeapp.generated.resources.settings_mcp_status_error
+import beer.composeapp.generated.resources.Res
+import beer.composeapp.generated.resources.ic_arrow_drop_down
+import beer.composeapp.generated.resources.settings_mcp_add
+import beer.composeapp.generated.resources.settings_mcp_add_header
+import beer.composeapp.generated.resources.settings_mcp_add_server
+import beer.composeapp.generated.resources.settings_mcp_header_key
+import beer.composeapp.generated.resources.settings_mcp_header_value
+import beer.composeapp.generated.resources.settings_mcp_no_tools
+import beer.composeapp.generated.resources.settings_mcp_popular_servers
+import beer.composeapp.generated.resources.settings_mcp_refresh
+import beer.composeapp.generated.resources.settings_mcp_remove
+import beer.composeapp.generated.resources.settings_mcp_server_name
+import beer.composeapp.generated.resources.settings_mcp_server_url
+import beer.composeapp.generated.resources.settings_mcp_servers
+import beer.composeapp.generated.resources.settings_mcp_servers_description
+import beer.composeapp.generated.resources.settings_mcp_status_connected
+import beer.composeapp.generated.resources.settings_mcp_status_connecting
+import beer.composeapp.generated.resources.settings_mcp_status_error
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -296,7 +296,7 @@ private fun AddMcpServerDialog(
                 )
                 Spacer(Modifier.height(16.dp))
 
-                KaiOutlinedTextField(
+                BeerOutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(Res.string.settings_mcp_server_name)) },
@@ -304,7 +304,7 @@ private fun AddMcpServerDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(8.dp))
-                KaiOutlinedTextField(
+                BeerOutlinedTextField(
                     value = url,
                     onValueChange = { url = it },
                     label = { Text(stringResource(Res.string.settings_mcp_server_url)) },
@@ -318,7 +318,7 @@ private fun AddMcpServerDialog(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        KaiOutlinedTextField(
+                        BeerOutlinedTextField(
                             value = entry.key,
                             onValueChange = { headers[index] = entry.copy(key = it) },
                             label = { Text(stringResource(Res.string.settings_mcp_header_key)) },
@@ -326,7 +326,7 @@ private fun AddMcpServerDialog(
                             modifier = Modifier.weight(0.4f),
                         )
                         Spacer(Modifier.width(8.dp))
-                        KaiOutlinedTextField(
+                        BeerOutlinedTextField(
                             value = entry.value,
                             onValueChange = { headers[index] = entry.copy(value = it) },
                             label = { Text(stringResource(Res.string.settings_mcp_header_value)) },
