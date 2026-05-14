@@ -5,13 +5,38 @@ on:
     branches:
       - 'oak/**'
   workflow_dispatch:
+    inputs:
+      build-type:
+        description: 'Android build type (debug, release, or both)'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+          - both
+      platform:
+        description: 'Target platform (android, desktop, or all)'
+        required: true
+        default: 'android'
+        type: choice
+        options:
+          - android
+          - desktop
+          - all
 
 permissions:
   contents: read
 
 jobs:
-  build-apk:
+  android-debug:
     name: Build Debug APK
+    if: >
+      github.event_name == 'push' || (
+        github.event_name == 'workflow_dispatch' &&
+        (github.event.inputs.build-type == 'debug' || github.event.inputs.build-type == 'both') &&
+        (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all')
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,3 +65,72 @@ jobs:
         with:
           name: oak-debug
           path: androidApp/build/outputs/apk/debug/*.apk
+
+  android-release:
+    name: Build Release APK
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.build-type == 'release' || github.event.inputs.build-type == 'both') &&
+      (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Set execution flag for gradlew
+        run: chmod +x gradlew
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android Build Tools
+        run: |
+          sdkmanager "build-tools;36.0.0"
+          sdkmanager "build-tools;29.0.3"
+      - name: Build Release APK
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: bash ./gradlew :androidApp:assembleRelease --stacktrace
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: oak-release
+          path: androidApp/build/outputs/apk/release/*.apk
+
+  desktop:
+    name: Build Desktop Distribution
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.platform == 'desktop' || github.event.inputs.platform == 'all')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Set execution flag for gradlew
+        run: chmod +x gradlew
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android Build Tools
+        run: |
+          sdkmanager "build-tools;36.0.0"
+          sdkmanager "build-tools;29.0.3"
+      - name: Build Desktop Distribution
+        run: bash ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace
+      - name: Upload Desktop Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: oak-desktop
+          path: composeApp/build/compose/binaries/main/**
