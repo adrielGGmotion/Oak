@@ -19,8 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.beer.app.ui.handCursor
-import com.beer.app.ui.kaiAdaptiveCardBorder
-import com.beer.app.ui.kaiAdaptiveCardColors
+import com.beer.app.ui.beerAdaptiveCardBorder
+import com.beer.app.ui.beerAdaptiveCardColors
 import beer.composeapp.generated.resources.Res
 import beer.composeapp.generated.resources.heartbeat_banner_dismiss
 import beer.composeapp.generated.resources.heartbeat_banner_message
@@ -46,8 +46,8 @@ internal fun HeartbeatBanner(
                 .padding(horizontal = 12.dp, vertical = 4.dp)
                 .handCursor()
                 .clickable { onTap() },
-            colors = kaiAdaptiveCardColors(),
-            border = kaiAdaptiveCardBorder(),
+            colors = beerAdaptiveCardColors(),
+            border = beerAdaptiveCardBorder(),
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),

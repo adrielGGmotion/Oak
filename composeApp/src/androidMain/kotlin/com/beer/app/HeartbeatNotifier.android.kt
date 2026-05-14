@@ -22,7 +22,7 @@ import org.koin.java.KoinJavaComponent.inject
 const val EXTRA_OPEN_HEARTBEAT = "com.beer.app.OPEN_HEARTBEAT"
 
 /** Shared with the AI `send_notification` tool — ensures the channel is created once. */
-private const val CHANNEL_ID = "kai_ai_notifications"
+private const val CHANNEL_ID = "beer_ai_notifications"
 
 /**
  * Fixed ID so a new heartbeat report replaces any earlier unread one in the tray

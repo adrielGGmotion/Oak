@@ -65,7 +65,7 @@ fun ColorScheme.withBlackBackground(): ColorScheme = copy(
 val ColorScheme.isOledFlavor: Boolean get() = background == Color.Black
 
 @Composable
-fun kaiAdaptiveCardColors(): CardColors = CardDefaults.cardColors(
+fun beerAdaptiveCardColors(): CardColors = CardDefaults.cardColors(
     containerColor = if (MaterialTheme.colorScheme.isOledFlavor) {
         Color.Transparent
     } else {
@@ -74,14 +74,14 @@ fun kaiAdaptiveCardColors(): CardColors = CardDefaults.cardColors(
 )
 
 @Composable
-fun kaiAdaptiveCardBorder(): BorderStroke? = if (MaterialTheme.colorScheme.isOledFlavor) {
+fun beerAdaptiveCardBorder(): BorderStroke? = if (MaterialTheme.colorScheme.isOledFlavor) {
     BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
 } else {
     null
 }
 
 @Composable
-fun Modifier.kaiAdaptiveCardSurface(shape: Shape = CardDefaults.shape): Modifier = this
+fun Modifier.beerAdaptiveCardSurface(shape: Shape = CardDefaults.shape): Modifier = this
     .clip(shape)
     .background(
         if (MaterialTheme.colorScheme.isOledFlavor) {

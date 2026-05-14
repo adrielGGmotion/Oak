@@ -12,7 +12,7 @@ import com.beer.app.shared.R
 class ModelDownloadService : Service() {
 
     companion object {
-        private const val CHANNEL_ID = "kai_model_download_channel"
+        private const val CHANNEL_ID = "beer_model_download_channel"
         const val NOTIFICATION_ID = 9002
     }
 

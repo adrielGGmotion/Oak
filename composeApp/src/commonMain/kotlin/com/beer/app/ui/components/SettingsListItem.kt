@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.beer.app.ui.handCursor
-import com.beer.app.ui.kaiAdaptiveCardSurface
+import com.beer.app.ui.beerAdaptiveCardSurface
 
 @Composable
 fun SettingsListItem(
@@ -37,7 +37,7 @@ fun SettingsListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .kaiAdaptiveCardSurface(RoundedCornerShape(8.dp))
+            .beerAdaptiveCardSurface(RoundedCornerShape(8.dp))
             .then(if (onClick != null) Modifier.clickable(onClick = onClick).handCursor() else Modifier)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,

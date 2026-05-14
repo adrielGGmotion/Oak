@@ -46,7 +46,7 @@ actual fun stopDownloadNotificationService() {
 actual fun updateDownloadNotificationProgress(percent: Int) {
     try {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val builder = android.app.Notification.Builder(context, "kai_model_download_channel")
+        val builder = android.app.Notification.Builder(context, "beer_model_download_channel")
         val notification = builder
             .setContentTitle(context.getString(com.beer.app.shared.R.string.app_name))
             .setContentText("$percent%")

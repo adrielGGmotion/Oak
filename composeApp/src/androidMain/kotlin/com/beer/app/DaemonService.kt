@@ -14,7 +14,7 @@ import org.koin.android.ext.android.inject
 class DaemonService : Service() {
 
     companion object {
-        private const val CHANNEL_ID = "kai_daemon_channel"
+        private const val CHANNEL_ID = "beer_daemon_channel"
         private const val NOTIFICATION_ID = 9001
     }
 

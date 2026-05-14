@@ -47,8 +47,8 @@ import com.beer.app.mcp.popularMcpServers
 import com.beer.app.ui.BeerOutlinedTextField
 import com.beer.app.ui.components.VerticalScrollbarForScroll
 import com.beer.app.ui.handCursor
-import com.beer.app.ui.kaiAdaptiveCardBorder
-import com.beer.app.ui.kaiAdaptiveCardColors
+import com.beer.app.ui.beerAdaptiveCardBorder
+import com.beer.app.ui.beerAdaptiveCardColors
 import beer.composeapp.generated.resources.Res
 import beer.composeapp.generated.resources.ic_arrow_drop_down
 import beer.composeapp.generated.resources.settings_mcp_add
@@ -139,8 +139,8 @@ private fun McpServerCard(
     Card(
         onClick = { expanded = !expanded },
         modifier = Modifier.fillMaxWidth().handCursor(),
-        colors = kaiAdaptiveCardColors(),
-        border = kaiAdaptiveCardBorder(),
+        colors = beerAdaptiveCardColors(),
+        border = beerAdaptiveCardBorder(),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(

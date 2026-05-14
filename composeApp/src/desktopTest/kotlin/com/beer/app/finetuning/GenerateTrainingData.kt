@@ -28,7 +28,7 @@ import kotlin.test.Test
  * ## Sources
  *
  * 1. **Golden examples** in `tools/finetuning/golden/` (`.md` files) — hand-crafted ideal responses
- * 2. **Saved integration test responses** in `build/reports/kaiui-integration/` — curated
+ * 2. **Saved integration test responses** in `build/reports/beerui-integration/` — curated
  *    successful responses from strong LLM providers (run BeerUiValidationTest first)
  */
 class GenerateTrainingData {
@@ -46,7 +46,7 @@ class GenerateTrainingData {
         val projectRoot = findProjectRoot()
         val goldenDir = File(projectRoot, "tools/finetuning/golden")
         val outputDir = File(projectRoot, "tools/finetuning/output").apply { mkdirs() }
-        val reportDir = File(projectRoot, "build/reports/kaiui-integration")
+        val reportDir = File(projectRoot, "build/reports/beerui-integration")
 
         val examples = mutableListOf<TrainingExample>()
 
