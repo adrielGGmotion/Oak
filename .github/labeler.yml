@@ -1,0 +1,25 @@
+android:
+  - changed-files:
+      - any-glob-to-any-file: "androidApp/**"
+      - any-glob-to-any-file: "composeApp/**"
+      - any-glob-to-any-file: "shared/**"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: ".github/**"
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file: "*.md"
+      - any-glob-to-any-file: "docs/**"
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: "gradle/libs.versions.toml"
+      - any-glob-to-any-file: "**/build.gradle.kts"
+      - any-glob-to-any-file: "gradle/**"
+
+kotlin:
+  - changed-files:
+      - any-glob-to-any-file: "**/*.kt"
+      - any-glob-to-any-file: "**/*.kts"
