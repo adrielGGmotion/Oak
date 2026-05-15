@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import com.oak.app.getBackgroundDispatcher
@@ -37,11 +36,9 @@ import com.oak.app.ui.markdown.MarkdownContent
 import com.oak.app.ui.markdown.parseMarkdown
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.bot_message_copy_content_description
-import oak.composeapp.generated.resources.bot_message_flag_content_description
 import oak.composeapp.generated.resources.bot_message_regenerate_content_description
 import oak.composeapp.generated.resources.bot_message_speech_content_description
 import oak.composeapp.generated.resources.ic_copy
-import oak.composeapp.generated.resources.ic_flag
 import oak.composeapp.generated.resources.ic_refresh
 import oak.composeapp.generated.resources.ic_stop
 import oak.composeapp.generated.resources.ic_volume_up
@@ -150,16 +147,6 @@ internal fun BotMessage(
                 clipboardManager.setText(buildAnnotatedString { append(message) })
             },
         )
-        run {
-            val uriHandler = LocalUriHandler.current
-            SmallIconButton(
-                iconResource = Res.drawable.ic_flag,
-                contentDescription = stringResource(Res.string.bot_message_flag_content_description),
-                onClick = {
-                    uriHandler.openUri("https://form.jotform.com/250014908169355")
-                },
-            )
-        }
         if (onRegenerate != null) {
             SmallIconButton(
                 iconResource = Res.drawable.ic_refresh,
