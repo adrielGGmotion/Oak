@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="120" height="120">
+  <defs>
+    <style>
+      @keyframes sway {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-3deg); }
+        75% { transform: rotate(3deg); }
+      }
+      @keyframes fadeIn {
+        0% { opacity: 0; transform: scale(0.8); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      .leaf { animation: sway 3s ease-in-out infinite, fadeIn 0.6s ease-out; transform-origin: 24px 40px; }
+      .stem { animation: fadeIn 0.6s ease-out; }
+    </style>
+  </defs>
+  <g class="leaf">
+    <path d="M24 2 C24 2 14 10 12 18 C10 26 14 32 18 34 C16 36 14 40 16 42 C18 44 22 42 24 40 C26 42 30 44 32 42 C34 40 32 36 30 34 C34 32 38 26 36 18 C34 10 24 2 24 2Z"
+          fill="#4A7C59" stroke="#3A6B48" stroke-width="0.8"/>
+    <path d="M24 6 C24 6 17 13 16 20 C15 27 18 32 22 34 C20 36 19 39 20 40 C22 41 24 39 24 38"
+          fill="none" stroke="#5B8C6A" stroke-width="1.2" opacity="0.6"/>
+    <path d="M24 4 L24 20" stroke="#3A6B48" stroke-width="1" opacity="0.4"/>
+    <line x1="20" y1="14" x2="18" y2="18" stroke="#5B8C6A" stroke-width="0.8" opacity="0.5"/>
+    <line x1="28" y1="14" x2="30" y2="18" stroke="#5B8C6A" stroke-width="0.8" opacity="0.5"/>
+    <line x1="22" y1="20" x2="20" y2="24" stroke="#5B8C6A" stroke-width="0.8" opacity="0.5"/>
+    <line x1="26" y1="20" x2="28" y2="24" stroke="#5B8C6A" stroke-width="0.8" opacity="0.5"/>
+  </g>
+  <path class="stem" d="M24 40 C24 42 23 44 22 46" fill="none" stroke="#5B8C6A" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
