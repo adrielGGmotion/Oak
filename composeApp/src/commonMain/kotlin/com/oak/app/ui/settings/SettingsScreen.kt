@@ -720,7 +720,7 @@ private fun BottomInfo() {
                 .clip(CircleShape)
                 .size(24.dp)
                 .clickable(onClick = {
-                    uriHandler.openUri("https://github.com/adrielGGmotion/Kai")
+                    uriHandler.openUri("https://github.com/adrielGGmotion/Oak")
                 })
                 .handCursor(),
             painter = painterResource(Res.drawable.github_mark),
@@ -2018,7 +2018,7 @@ private fun IntegrationsContent(
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
-                    onClick = { uriHandler.openUri("https://github.com/adrielGGmotion/Kai/issues/new?template=integration_request.yml") },
+                    onClick = { uriHandler.openUri("https://github.com/adrielGGmotion/Oak/issues/new?template=integration_request.yml") },
                     modifier = Modifier.handCursor(),
                 ) {
                     Text(stringResource(Res.string.settings_open_github_issue))
@@ -2082,7 +2082,7 @@ private fun ExportImportSection(
                 scope.launch {
                     saveFileToDevice(
                         bytes = json.encodeToByteArray(),
-                        baseName = "kai-settings",
+                        baseName = "oak-settings",
                         extension = "json",
                     )
                 }
