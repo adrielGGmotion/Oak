@@ -71,7 +71,6 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.oak.app.BackIcon
@@ -80,7 +79,6 @@ import com.oak.app.data.supportsAgenticFlows
 import com.oak.app.getBackgroundDispatcher
 import com.oak.app.onDragAndDropEventDropped
 import com.oak.app.ui.chat.composables.BotMessage
-import com.oak.app.ui.chat.composables.ChatHistorySheet
 import com.oak.app.ui.chat.composables.CircleIconButton
 import com.oak.app.ui.chat.composables.EmptyState
 import com.oak.app.ui.chat.composables.ErrorMessage
@@ -130,6 +128,7 @@ fun ChatScreen(
     onNavigateToSettings: () -> Unit,
     isSandboxAvailable: Boolean = false,
     navigationTabBar: (@Composable () -> Unit)? = null,
+    onToggleDrawer: () -> Unit = {},
 ) {
     val uiState by viewModel.state.collectAsStateWithLifecycle()
 
@@ -139,6 +138,7 @@ fun ChatScreen(
         onNavigateToSettings = onNavigateToSettings,
         isSandboxAvailable = isSandboxAvailable,
         navigationTabBar = navigationTabBar,
+        onToggleDrawer = onToggleDrawer,
     )
 }
 
@@ -149,6 +149,7 @@ fun ChatScreenContent(
     onNavigateToSettings: () -> Unit = {},
     isSandboxAvailable: Boolean = false,
     navigationTabBar: (@Composable () -> Unit)? = null,
+    onToggleDrawer: () -> Unit = {},
 ) {
     if (uiState.isInteractiveMode && !uiState.isRestoring) {
         InteractiveModeScreen(uiState = uiState)
@@ -159,6 +160,7 @@ fun ChatScreenContent(
             onNavigateToSettings = onNavigateToSettings,
             isSandboxAvailable = isSandboxAvailable,
             navigationTabBar = navigationTabBar,
+            onToggleDrawer = onToggleDrawer,
         )
     }
 }
@@ -440,10 +442,9 @@ private fun ChatModeScreen(
     onNavigateToSettings: () -> Unit,
     isSandboxAvailable: Boolean,
     navigationTabBar: (@Composable () -> Unit)?,
+    onToggleDrawer: () -> Unit = {},
 ) {
-    var showHistorySheet by remember { mutableStateOf(false) }
     var isSandboxOpen by rememberSaveable { mutableStateOf(false) }
-    val keyboardController = LocalSoftwareKeyboardController.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     // When the active conversation changes (e.g. user starts a new chat from the
@@ -465,11 +466,6 @@ private fun ChatModeScreen(
         uiState.actions.clearSnackbar()
     }
 
-    val filteredConversations = remember(uiState.savedConversations, uiState.pendingConversationDeletion) {
-        val pendingId = uiState.pendingConversationDeletion
-        if (pendingId != null) uiState.savedConversations.filter { it.id != pendingId }.toImmutableList() else uiState.savedConversations
-    }
-
     val historyState = rememberUpdatedState(uiState.history)
     val isShellExecuting by remember {
         derivedStateOf {
@@ -484,17 +480,12 @@ private fun ChatModeScreen(
                 isSpeechOutputEnabled = uiState.isSpeechOutputEnabled,
                 isSpeaking = uiState.isSpeaking,
                 actions = uiState.actions,
-                isChatHistoryEmpty = uiState.history.isEmpty(),
-                hasSavedConversations = filteredConversations.any { it.id != uiState.currentConversationId },
                 onNavigateToSettings = onNavigateToSettings,
                 isSandboxAvailable = isSandboxAvailable,
                 isSandboxOpen = isSandboxOpen,
                 isShellExecuting = isShellExecuting,
                 onToggleSandbox = { isSandboxOpen = !isSandboxOpen },
-                onShowHistory = {
-                    keyboardController?.hide()
-                    showHistorySheet = true
-                },
+                onToggleDrawer = onToggleDrawer,
                 navigationTabBar = navigationTabBar,
             )
 
@@ -804,16 +795,6 @@ private fun ChatModeScreen(
         }
     }
 
-    if (showHistorySheet) {
-        ChatHistorySheet(
-            conversations = filteredConversations,
-            currentConversationId = uiState.currentConversationId,
-            pendingConversationDeletion = uiState.pendingConversationDeletion,
-            actions = uiState.actions,
-            onDismiss = { showHistorySheet = false },
-            onConversationSelected = { isSandboxOpen = false },
-        )
-    }
 }
 
 private data class ExecutingToolsState(
