@@ -16,7 +16,7 @@ on:
           - release
           - both
       platform:
-        description: 'Target platform (android, desktop, or all)'
+        description: 'Target platform'
         required: true
         default: 'android'
         type: choice
@@ -103,8 +103,8 @@ jobs:
           name: oak-release
           path: androidApp/build/outputs/apk/release/*.apk
 
-  desktop:
-    name: Build Desktop Distribution
+  desktop-linux:
+    name: Build Linux Desktop Packages
     if: >
       github.event_name == 'workflow_dispatch' &&
       (github.event.inputs.platform == 'desktop' || github.event.inputs.platform == 'all')
@@ -121,16 +121,61 @@ jobs:
           java-version: "21"
       - name: Set execution flag for gradlew
         run: chmod +x gradlew
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Install Android Build Tools
-        run: |
-          sdkmanager "build-tools;36.0.0"
-          sdkmanager "build-tools;29.0.3"
-      - name: Build Desktop Distribution
+      - name: Build Linux Packages
         run: bash ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace
-      - name: Upload Desktop Artifacts
+      - name: Upload Linux Packages
         uses: actions/upload-artifact@v4
         with:
-          name: oak-desktop
-          path: composeApp/build/compose/binaries/main/**
+          name: oak-desktop-linux
+          path: composeApp/build/compose/binaries/main/**/*
+
+  desktop-macos:
+    name: Build macOS Desktop Package
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.platform == 'desktop' || github.event.inputs.platform == 'all')
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Set execution flag for gradlew
+        run: chmod +x gradlew
+      - name: Build macOS Package
+        run: bash ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace
+      - name: Upload macOS Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: oak-desktop-macos
+          path: composeApp/build/compose/binaries/main/**/*
+
+  desktop-windows:
+    name: Build Windows Desktop Package
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.platform == 'desktop' || github.event.inputs.platform == 'all')
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Build Windows Package
+        shell: bash
+        run: ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace
+      - name: Upload Windows Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: oak-desktop-windows
+          path: composeApp/build/compose/binaries/main/**/*
