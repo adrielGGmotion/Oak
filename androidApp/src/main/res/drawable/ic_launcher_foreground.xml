@@ -1,17 +1,68 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="90"
-    android:viewportHeight="90">
-  <group android:scaleX="0.59"
-      android:scaleY="0.59"
-      android:translateX="18.45"
-      android:translateY="18.45">
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+  <group
+      android:translateX="6"
+      android:translateY="6">
+    <!-- Leaf body -->
     <path
-        android:pathData="M35,45m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0"
-        android:fillColor="#6200ee"/>
+        android:pathData="M 48 4 C 24 18 12 44 18 64 C 24 82 36 88 48 88 C 60 88 72 82 78 64 C 84 44 72 18 48 4 Z"
+        android:fillColor="#5b8c5b"
+        android:strokeColor="#7ab87a"
+        android:strokeWidth="2.5"
+        android:strokeLineJoin="round"/>
+    <!-- Stem -->
     <path
-        android:pathData="M55,45m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0"
-        android:fillColor="#8063C5"/>
+        android:pathData="M 46 88 L 46 94 L 50 94 L 50 88 Z"
+        android:fillColor="#4a7a4a"
+        android:strokeColor="#7ab87a"
+        android:strokeWidth="2.5"
+        android:strokeLineJoin="round"/>
+    <!-- Center vein -->
+    <path
+        android:pathData="M 48 8 L 48 82"
+        android:strokeColor="#7ab87a"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:alpha="0.6"/>
+    <!-- Side veins -->
+    <path
+        android:pathData="M 48 26 Q 38 22 26 26"
+        android:strokeColor="#7ab87a"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:alpha="0.6"/>
+    <path
+        android:pathData="M 48 26 Q 58 22 70 26"
+        android:strokeColor="#7ab87a"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:alpha="0.6"/>
+    <path
+        android:pathData="M 48 44 Q 32 40 18 44"
+        android:strokeColor="#7ab87a"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:alpha="0.6"/>
+    <path
+        android:pathData="M 48 44 Q 64 40 78 44"
+        android:strokeColor="#7ab87a"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:alpha="0.6"/>
+    <path
+        android:pathData="M 48 62 Q 34 60 24 64"
+        android:strokeColor="#7ab87a"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:alpha="0.6"/>
+    <path
+        android:pathData="M 48 62 Q 62 60 72 64"
+        android:strokeColor="#7ab87a"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:alpha="0.6"/>
   </group>
 </vector>
