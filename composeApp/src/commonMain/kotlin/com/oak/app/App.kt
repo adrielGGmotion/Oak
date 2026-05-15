@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -56,6 +57,60 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import nl.marc_apps.tts.TextToSpeechInstance
 import nl.marc_apps.tts.experimental.ExperimentalVoiceApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.oak.app.ui.chat.ConversationSummary
+import com.oak.app.ui.components.LogoAnimation
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
+import kotlinx.datetime.format
+import kotlinx.datetime.format.DateTimeComponents.Companion.Format
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
@@ -155,6 +210,19 @@ private fun AppContent(
         ) {
             FullScreenImageHost {
                 val chatViewModel: ChatViewModel = koinViewModel()
+                val drawerState = rememberDrawerState(DrawerValue.Closed)
+                val scope = rememberCoroutineScope()
+                val chatState by chatViewModel.state.collectAsStateWithLifecycle()
+                val filteredConversations = remember(chatState.savedConversations, chatState.pendingConversationDeletion) {
+                    val pendingId = chatState.pendingConversationDeletion
+                    if (pendingId != null) chatState.savedConversations.filter { it.id != pendingId }.toImmutableList() else chatState.savedConversations
+                }
+                val keyboardController = LocalSoftwareKeyboardController.current
+                LaunchedEffect(drawerState.targetValue) {
+                    if (drawerState.targetValue == DrawerValue.Open) {
+                        keyboardController?.hide()
+                    }
+                }
                 val showTabBar = currentPlatform !is Platform.Mobile
                 val currentBackStackEntry by navController.currentBackStackEntryAsState()
                 val isHome = currentBackStackEntry?.destination?.route == "home"
@@ -192,40 +260,325 @@ private fun AppContent(
                     }
                 }
 
-                NavHost(
-                    navController,
-                    startDestination = Home,
-                    modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                ) {
-                    composable<Home> {
-                        ChatScreen(
-                            viewModel = chatViewModel,
-                            textToSpeech = textToSpeech,
-                            onNavigateToSettings = {
-                                navController.navigate(Settings)
-                            },
-                            isSandboxAvailable = currentPlatform is Platform.Mobile.Android,
-                            navigationTabBar = if (showTabBar) navigationTabBar else null,
-                        )
-                    }
-                    composable<Settings> {
-                        if (showTabBar) {
-                            DisposableEffect(Unit) {
-                                onDispose {
-                                    chatViewModel.refreshSettings()
+                ModalNavigationDrawer(
+                    drawerState = drawerState,
+                    gesturesEnabled = isHome,
+                    drawerContent = {
+                        ModalDrawerSheet {
+                            var deleteTarget by remember { mutableStateOf<ConversationSummary?>(null) }
+
+                            Column(Modifier.fillMaxSize()) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 20.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    LogoAnimation(size = 36.dp)
+                                    Spacer(Modifier.width(12.dp))
+                                    Text(
+                                        text = "Oak",
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
+
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    label = { Text("New Chat") },
+                                    selected = false,
+                                    onClick = {
+                                        scope.launch { drawerState.close() }
+                                        chatState.actions.startNewChat()
+                                    },
+                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                    colors = NavigationDrawerItemDefaults.colors(
+                                        unselectedContainerColor = MaterialTheme.colorScheme.surface,
+                                    ),
+                                )
+
+                                Spacer(Modifier.height(4.dp))
+
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            Icons.Default.Folder,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    label = { Text("Projects") },
+                                    selected = false,
+                                    onClick = {},
+                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                    colors = NavigationDrawerItemDefaults.colors(
+                                        unselectedContainerColor = MaterialTheme.colorScheme.surface,
+                                    ),
+                                )
+
+                                Spacer(Modifier.height(4.dp))
+
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            Icons.Default.Description,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    label = { Text("Artifacts") },
+                                    selected = false,
+                                    onClick = {},
+                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                    colors = NavigationDrawerItemDefaults.colors(
+                                        unselectedContainerColor = MaterialTheme.colorScheme.surface,
+                                    ),
+                                )
+
+                                Spacer(Modifier.height(8.dp))
+
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
+
+                                LazyColumn(
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                                ) {
+                                    item {
+                                        Text(
+                                            text = "Chats",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                                        )
+                                    }
+
+                                    if (filteredConversations.isEmpty()) {
+                                        item {
+                                            Text(
+                                                text = "No conversations yet",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                                            )
+                                        }
+                                    } else {
+                                        items(filteredConversations, key = { it.id }) { conversation ->
+                                            val isActive = conversation.id == chatState.currentConversationId
+                                            NavigationDrawerItem(
+                                                icon = if (conversation.isHeartbeat) {
+                                                    {
+                                                        Icon(
+                                                            Icons.Default.History,
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(18.dp),
+                                                            tint = MaterialTheme.colorScheme.tertiary,
+                                                        )
+                                                    }
+                                                } else null,
+                                                label = {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                    ) {
+                                                        Column(modifier = Modifier.weight(1f)) {
+                                                            Text(
+                                                                text = conversation.title.ifEmpty { "New Chat" },
+                                                                style = MaterialTheme.typography.bodyMedium,
+                                                                fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
+                                                                color = if (isActive) MaterialTheme.colorScheme.primary
+                                                                        else MaterialTheme.colorScheme.onSurface,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis,
+                                                            )
+                                                            Text(
+                                                                text = formatDate(conversation.updatedAt),
+                                                                style = MaterialTheme.typography.bodySmall,
+                                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                            )
+                                                        }
+                                                        var showMenu by remember { mutableStateOf(false) }
+                                                        Box {
+                                                            IconButton(
+                                                                onClick = { showMenu = true },
+                                                                modifier = Modifier.size(36.dp),
+                                                            ) {
+                                                                Icon(
+                                                                    Icons.Default.MoreVert,
+                                                                    contentDescription = "More options",
+                                                                    modifier = Modifier.size(18.dp),
+                                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                )
+                                                            }
+                                                            DropdownMenu(
+                                                                expanded = showMenu,
+                                                                onDismissRequest = { showMenu = false },
+                                                            ) {
+                                                                DropdownMenuItem(
+                                                                    text = { Text("Delete") },
+                                                                    onClick = {
+                                                                        showMenu = false
+                                                                        deleteTarget = conversation
+                                                                    },
+                                                                    leadingIcon = {
+                                                                        Icon(
+                                                                            Icons.Default.Delete,
+                                                                            contentDescription = null,
+                                                                            modifier = Modifier.size(18.dp),
+                                                                        )
+                                                                    },
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                selected = isActive,
+                                                onClick = {
+                                                    scope.launch { drawerState.close() }
+                                                    chatState.actions.loadConversation(conversation.id)
+                                                },
+                                            )
+                                        }
+                                    }
+
+
+                                }
+
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Person,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        )
+                                    }
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "User",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                        Text(
+                                            text = "Free plan",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                    IconButton(
+                                        modifier = Modifier.handCursor(),
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate(Settings)
+                                        },
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Settings,
+                                            contentDescription = "Settings",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
                                 }
                             }
+
+                            deleteTarget?.let { target ->
+                                AlertDialog(
+                                    onDismissRequest = { deleteTarget = null },
+                                    title = { Text("Delete conversation?") },
+                                    text = { Text("This action cannot be undone.") },
+                                    confirmButton = {
+                                        TextButton(onClick = {
+                                            chatState.actions.deleteConversation(target.id)
+                                            deleteTarget = null
+                                        }) {
+                                            Text("Delete")
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(onClick = { deleteTarget = null }) {
+                                            Text("Cancel")
+                                        }
+                                    },
+                                )
+                            }
                         }
-                        SettingsScreen(
-                            onNavigateBack = {
-                                chatViewModel.refreshSettings()
-                                navController.navigateUp()
-                            },
-                            navigationTabBar = if (showTabBar) navigationTabBar else null,
-                        )
+                    },
+                ) {
+                    NavHost(
+                        navController,
+                        startDestination = Home,
+                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                    ) {
+                        composable<Home> {
+                            ChatScreen(
+                                viewModel = chatViewModel,
+                                textToSpeech = textToSpeech,
+                                onNavigateToSettings = {
+                                    navController.navigate(Settings)
+                                },
+                                isSandboxAvailable = currentPlatform is Platform.Mobile.Android,
+                                navigationTabBar = if (showTabBar) navigationTabBar else null,
+                                onToggleDrawer = {
+                                    keyboardController?.hide()
+                                    scope.launch {
+                                        if (drawerState.isClosed) drawerState.open() else drawerState.close()
+                                    }
+                                },
+                            )
+                        }
+                        composable<Settings> {
+                            if (showTabBar) {
+                                DisposableEffect(Unit) {
+                                    onDispose {
+                                        chatViewModel.refreshSettings()
+                                    }
+                                }
+                            }
+                            SettingsScreen(
+                                onNavigateBack = {
+                                    chatViewModel.refreshSettings()
+                                    navController.navigateUp()
+                                },
+                                navigationTabBar = if (showTabBar) navigationTabBar else null,
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
+
+private fun formatDate(epochMillis: Long): String = try {
+    kotlin.time.Instant.fromEpochMilliseconds(epochMillis).format(
+        Format {
+            day()
+            char(' ')
+            monthName(MonthNames.ENGLISH_ABBREVIATED)
+            char(' ')
+            year()
+        }
+    )
+} catch (_: Exception) {
+    ""
 }
