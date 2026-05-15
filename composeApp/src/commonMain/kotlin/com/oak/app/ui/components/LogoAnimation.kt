@@ -1,49 +1,52 @@
 package com.oak.app.ui.components
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.oak_leaf_loop
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun LogoAnimation(
     modifier: Modifier = Modifier,
-    size: Dp = 52.dp,
+    size: Dp = 64.dp,
 ) {
-    val animatable = remember { Animatable(1f) }
-    var drawDarkFirst by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            animatable.animateTo(-1f, tween(767, easing = EaseInOut))
-            drawDarkFirst = !drawDarkFirst
-            animatable.animateTo(1f, tween(767, easing = EaseInOut))
-            drawDarkFirst = !drawDarkFirst
-        }
-    }
-    Canvas(modifier = modifier.size(size)) {
-        val center = this.center
-        val radius = center.y
-        val displacement = radius * animatable.value
-        val darkCenter = Offset(center.x + displacement, center.y)
-        val lightCenter = Offset(center.x - displacement, center.y)
-        if (drawDarkFirst) {
-            drawCircle(Color(0xFF582FB7), radius, darkCenter)
-            drawCircle(Color(0xFF8063C5), radius, lightCenter)
-        } else {
-            drawCircle(Color(0xFF8063C5), radius, lightCenter)
-            drawCircle(Color(0xFF582FB7), radius, darkCenter)
-        }
-    }
+    val infiniteTransition = rememberInfiniteTransition()
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = -7f,
+        targetValue = 7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse,
+        ),
+    )
+
+    Icon(
+        painter = painterResource(Res.drawable.oak_leaf_loop),
+        contentDescription = null,
+        modifier = modifier
+            .size(size)
+            .graphicsLayer {
+                transformOrigin = TransformOrigin(
+                    pivotFractionX = 0.5f,
+                    pivotFractionY = 1f,
+                )
+                rotationZ = rotation
+            },
+        tint = MaterialTheme.colorScheme.primary,
+    )
 }

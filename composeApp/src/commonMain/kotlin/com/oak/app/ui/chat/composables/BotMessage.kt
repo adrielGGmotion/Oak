@@ -3,6 +3,7 @@ package com.oak.app.ui.chat.composables
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -74,35 +75,44 @@ internal fun BotMessage(
         onUiCallback ?: { _, _ -> }
     }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
-        SelectionContainer {
-            MarkdownContent(
-                document = document,
-                isInteractive = effectiveInteractive,
-                onUiCallback = oakUiCallback,
-                frozen = effectiveFrozen,
-                modifier = Modifier.fillMaxWidth()
-                    .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
-            )
-        }
-        if (frozen != null && onResubmit != null) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
-                    .handCursor()
-                    .clickable { isEditing = !isEditing },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = if (isEditing) Icons.Default.Close else Icons.Default.Edit,
-                    contentDescription = if (isEditing) "Cancel edit" else "Edit submission",
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+    Row(modifier = Modifier.fillMaxWidth()) {
+        BotAvatar(
+            modifier = Modifier
+                .align(Alignment.Top)
+                .padding(top = 16.dp, start = 16.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Box {
+                SelectionContainer {
+                    MarkdownContent(
+                        document = document,
+                        isInteractive = effectiveInteractive,
+                        onUiCallback = oakUiCallback,
+                        frozen = effectiveFrozen,
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(start = 8.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
+                    )
+                }
+                if (frozen != null && onResubmit != null) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceContainer)
+                            .handCursor()
+                            .clickable { isEditing = !isEditing },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = if (isEditing) Icons.Default.Close else Icons.Default.Edit,
+                            contentDescription = if (isEditing) "Cancel edit" else "Edit submission",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
     }
