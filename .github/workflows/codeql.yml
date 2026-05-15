@@ -26,11 +26,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          build-mode: none
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform Analysis
         uses: github/codeql-action/analyze@v3
