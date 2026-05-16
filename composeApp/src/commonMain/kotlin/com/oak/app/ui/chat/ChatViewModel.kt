@@ -407,7 +407,7 @@ class ChatViewModel(
     }
 
     private fun regenerate() {
-        val id = activeSessionId ?: return
+        val id = ensureActiveSession()
         sessionManager.cancelGeneration(id)
         dataRepository.regenerate()
         ask(null)

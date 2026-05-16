@@ -138,6 +138,7 @@ class ChatViewModelFileAttachmentTest {
             awaitItem()
 
             viewModel.state.value.actions.ask("describe this")
+            testDispatcher.scheduler.advanceUntilIdle()
             // drain states until files is empty (ask clears them on dispatch)
             var filesCleared = false
             while (true) {
@@ -150,6 +151,7 @@ class ChatViewModelFileAttachmentTest {
             assertTrue(filesCleared)
             assertEquals(1, fakeRepository.askCalls.size)
             assertEquals(listOf(pngFile), fakeRepository.askCalls.first().second.toList())
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
