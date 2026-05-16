@@ -104,6 +104,7 @@ class ChatViewModelTest {
 
             assertFalse(finalState.isLoading)
             assertTrue(finalState.history.isNotEmpty())
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -128,6 +129,7 @@ class ChatViewModelTest {
             assertEquals(History.Role.USER, finalState.history[0].role)
             assertEquals("Hello", finalState.history[0].content)
             assertEquals(History.Role.ASSISTANT, finalState.history[1].role)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -185,6 +187,7 @@ class ChatViewModelTest {
 
             assertNotNull(errorState.error)
             assertFalse(errorState.isLoading)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -205,6 +208,7 @@ class ChatViewModelTest {
 
             assertNotNull(errorState.error)
             assertFalse(errorState.isLoading)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -225,6 +229,7 @@ class ChatViewModelTest {
 
             assertNotNull(errorState.error)
             assertFalse(errorState.isLoading)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -245,6 +250,7 @@ class ChatViewModelTest {
 
             assertNotNull(errorState.error)
             assertFalse(errorState.isLoading)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -265,6 +271,7 @@ class ChatViewModelTest {
 
             assertNotNull(errorState.error)
             assertFalse(errorState.isLoading)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -285,6 +292,7 @@ class ChatViewModelTest {
 
             assertNotNull(errorState.error)
             assertFalse(errorState.isLoading)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -305,6 +313,7 @@ class ChatViewModelTest {
 
             assertNotNull(errorState.error)
             assertFalse(errorState.isLoading)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -325,6 +334,7 @@ class ChatViewModelTest {
 
             assertNotNull(errorState.error)
             assertFalse(errorState.isLoading)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -358,6 +368,7 @@ class ChatViewModelTest {
             assertNull(clearedState.error)
             assertTrue(clearedState.history.isEmpty())
             assertEquals(1, fakeRepository.clearHistoryCalls)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -426,6 +437,7 @@ class ChatViewModelTest {
 
             // Verify ask was called with null
             assertTrue(fakeRepository.askCalls.any { it.first == null })
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
