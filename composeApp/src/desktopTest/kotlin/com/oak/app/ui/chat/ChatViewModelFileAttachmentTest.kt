@@ -46,7 +46,8 @@ class ChatViewModelFileAttachmentTest {
 
     private fun createViewModel(): ChatViewModel {
         val noOpScheduler = TaskScheduler(fakeRepository, enabled = false)
-        return ChatViewModel(fakeRepository, noOpScheduler, unconfinedDispatcher)
+        val sessionManager = ChatSessionManager(fakeRepository)
+        return ChatViewModel(fakeRepository, noOpScheduler, sessionManager, unconfinedDispatcher)
     }
 
     private fun tempPlatformFile(extension: String): PlatformFile {

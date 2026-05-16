@@ -170,6 +170,8 @@ class RemoteDataRepository(
     private val _currentConversationId = MutableStateFlow<String?>(null)
     override val currentConversationId: StateFlow<String?> = _currentConversationId
 
+    private var askForConversationId: String? = null
+
     private val _fallbackStatus = MutableStateFlow<FallbackStatus?>(null)
     override val fallbackStatus: StateFlow<FallbackStatus?> = _fallbackStatus
 
@@ -777,6 +779,40 @@ class RemoteDataRepository(
             throw lastException ?: OpenAICompatibleEmptyResponseException()
         } finally {
             _fallbackStatus.value = null
+        }
+    }
+
+    override suspend fun askForConversation(
+        conversationId: String,
+        question: String?,
+        files: List<PlatformFile>,
+        uiSubmission: UiSubmission?,
+    ) {
+        val previousConversationId = _currentConversationId.value
+        val previousHistory = chatHistory.value.toList()
+
+        // Load the target conversation or set fresh state
+        if (savedConversations.value.any { it.id == conversationId }) {
+            loadConversation(conversationId)
+        } else {
+            setCurrentConversationId(conversationId)
+            chatHistory.value = emptyList()
+        }
+
+        askForConversationId = conversationId
+
+        try {
+            ask(question, files, uiSubmission)
+        } finally {
+            askForConversationId = null
+
+            // Restore previous context
+            if (previousConversationId != null && savedConversations.value.any { it.id == previousConversationId }) {
+                loadConversation(previousConversationId)
+            } else {
+                _currentConversationId.value = previousConversationId
+                chatHistory.value = previousHistory
+            }
         }
     }
 
@@ -1479,13 +1515,14 @@ class RemoteDataRepository(
     }
 
     private suspend fun saveCurrentConversation() {
+        val conversationId = askForConversationId ?: _currentConversationId.value ?: Uuid.random().toString().also {
+            setCurrentConversationId(it)
+        }
+
         val history = trimToRecentExchanges(chatHistory.value, 20)
         if (history.isEmpty()) return
 
         val now = Clock.System.now().toEpochMilliseconds()
-        val conversationId = _currentConversationId.value ?: Uuid.random().toString().also {
-            setCurrentConversationId(it)
-        }
 
         val existingConversation = savedConversations.value.find { it.id == conversationId }
 
@@ -1550,6 +1587,9 @@ class RemoteDataRepository(
     }
 
     override fun loadConversation(id: String) {
+        // Never swap chatHistory while a generation is writing to it
+        if (id != askForConversationId && askForConversationId != null) return
+
         val conversation = savedConversations.value.find { it.id == id } ?: return
 
         setCurrentConversationId(id)

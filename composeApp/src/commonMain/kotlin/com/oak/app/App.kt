@@ -5,6 +5,7 @@ package com.oak.app
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -372,7 +373,9 @@ private fun AppContent(
                                     } else {
                                         items(filteredConversations, key = { it.id }) { conversation ->
                                             val isActive = conversation.id == chatState.currentConversationId
-                                            NavigationDrawerItem(
+                                            val isGenerating = conversation.id in chatState.generatingSessionIds
+                                            Column {
+                                                NavigationDrawerItem(
                                                 icon = if (conversation.isHeartbeat) {
                                                     {
                                                         Icon(
@@ -444,6 +447,12 @@ private fun AppContent(
                                                     chatState.actions.loadConversation(conversation.id)
                                                 },
                                             )
+                                                if (isGenerating) {
+                                                    LinearProgressIndicator(
+                                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
 

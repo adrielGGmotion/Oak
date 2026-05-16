@@ -29,6 +29,7 @@ import com.oak.app.tools.NotificationListenerController
 import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.SmsPermissionController
 import com.oak.app.tools.SmsSendPermissionController
+import com.oak.app.ui.chat.ChatSessionManager
 import com.oak.app.ui.chat.ChatViewModel
 import com.oak.app.ui.sandbox.SandboxFileBrowserViewModel
 import com.oak.app.ui.sandbox.SandboxPackagesViewModel
@@ -142,11 +143,12 @@ val appModule = module {
     }
     single<DaemonController> { createDaemonController() }
     single<SandboxController> { createSandboxController() }
+    single { ChatSessionManager(get<DataRepository>()) }
     viewModel { SettingsViewModel(get<DataRepository>(), get<DaemonController>(), get<NotificationPermissionController>(), get<TaskScheduler>()) }
     viewModel { SandboxViewModel(get<DataRepository>(), get<SandboxController>()) }
     viewModel { SandboxFileBrowserViewModel(get<SandboxController>()) }
     viewModel { SandboxPackagesViewModel(get<SandboxController>()) }
     viewModel { SandboxSessionViewModel(get<SandboxController>(), get<DataRepository>()) }
     viewModel { SplinterlandsViewModel(get<DataRepository>(), get(), get(), get<SplinterlandsApi>()) }
-    viewModel { ChatViewModel(get<DataRepository>(), get<TaskScheduler>()) }
+    viewModel { ChatViewModel(get<DataRepository>(), get<TaskScheduler>(), get<ChatSessionManager>()) }
 }

@@ -94,6 +94,8 @@ fun QuestionInput(
     cancel: () -> Unit = {},
     availableServices: ImmutableList<ServiceEntry> = persistentListOf(),
     onSelectService: (String) -> Unit = {},
+    initialText: String = "",
+    onTextChanged: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -135,13 +137,17 @@ fun QuestionInput(
             }
         }
 
-        var textState by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
+        var textState by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue(initialText)) }
 
         fun submitQuestion() {
             val text = textState.text
             if (text.isNotBlank()) {
                 ask(text.trim())
-                textState = TextFieldValue("")
+                // Text is NOT cleared here. On successful send, the ViewModel
+                // increments sendVersion which changes the parent's key(), causing
+                // this composable to be recreated with initialText="" (draft cleared).
+                // On blocked send (concurrent generation), the key doesn't change
+                // and the input keeps its text — no data loss.
             }
         }
 
@@ -161,6 +167,7 @@ fun QuestionInput(
             value = textState,
             onValueChange = {
                 textState = it
+                onTextChanged(it.text)
             },
             modifier = Modifier
                 .focusRequester(focusRequester)

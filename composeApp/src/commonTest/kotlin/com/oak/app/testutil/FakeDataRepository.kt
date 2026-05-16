@@ -185,6 +185,10 @@ class FakeDataRepository : DataRepository {
         instanceModels.getOrPut(instanceId) { MutableStateFlow(emptyList()) }.value = models
     }
 
+    override suspend fun askForConversation(conversationId: String, question: String?, files: List<PlatformFile>, uiSubmission: com.oak.app.data.UiSubmission?) {
+        ask(question, files, uiSubmission)
+    }
+
     override suspend fun ask(question: String?, files: List<PlatformFile>, uiSubmission: com.oak.app.data.UiSubmission?) {
         askCalls.add(question to files)
         askGate?.await()

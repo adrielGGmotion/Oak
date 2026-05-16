@@ -29,12 +29,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import org.jetbrains.compose.resources.getString
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
@@ -42,6 +45,7 @@ import kotlin.time.Duration.Companion.seconds
 class ChatViewModel(
     private val dataRepository: DataRepository,
     private val taskScheduler: TaskScheduler,
+    private val sessionManager: ChatSessionManager,
     private val backgroundDispatcher: CoroutineContext = getBackgroundDispatcher(),
 ) : ViewModel() {
 
@@ -71,7 +75,8 @@ class ChatViewModel(
         discardSmsDraft = ::discardSmsDraft,
     )
     private val freeModeNames: Map<FreeMode, String> = FreeMode.entries.associateWith { "Free ${it.modelId.replaceFirstChar { c -> c.uppercase() }}" }
-    private var currentJob: Job? = null
+    @Volatile
+    private var activeSessionId: String? = null
     private var pendingConversationDeleteJob: Job? = null
     private val _state = MutableStateFlow(
         ChatUiState(
@@ -79,16 +84,19 @@ class ChatViewModel(
             showPrivacyInfo = dataRepository.isUsingSharedKey(),
         ),
     )
+    private var sendVersion = 0
 
     init {
         updateAvailableServices()
 
-        // Keep restoreCurrentConversation off the main thread; see issue #197 (large persisted
-        // tool outputs caused ANRs when JSON-decoded synchronously during VM construction).
-        // ChatScreen gates the interactive-mode branch on !isRestoring to avoid a flash.
         viewModelScope.launch(backgroundDispatcher) {
             dataRepository.loadConversations()
             dataRepository.restoreCurrentConversation()
+            val convId = dataRepository.currentConversationId.value
+            if (convId != null) {
+                activeSessionId = convId
+                sessionManager.getOrCreateSession(convId)
+            }
             presetInteractiveModeForCurrentConversation()
             _state.update { it.copy(isRestoring = false) }
         }
@@ -122,6 +130,12 @@ class ChatViewModel(
                     }
                     dataRepository.consumeOpenHeartbeatRequest()
                 }
+        }
+
+        viewModelScope.launch {
+            sessionManager.generatingSessionIds.collectLatest { ids ->
+                _state.update { it.copy(generatingSessionIds = ids) }
+            }
         }
     }
 
@@ -176,47 +190,83 @@ class ChatViewModel(
         askInternal(question, null)
     }
 
+    @OptIn(ExperimentalUuidApi::class)
+    private fun ensureActiveSession(): String {
+        val existing = activeSessionId
+        if (existing != null) return existing
+        val id = Uuid.random().toString()
+        activeSessionId = id
+        sessionManager.getOrCreateSession(id)
+        return id
+    }
+
     private fun askInternal(question: String?, uiSubmission: UiSubmission?) {
-        // Prevent concurrent requests
         if (_state.value.isLoading) return
+        val id = ensureActiveSession()
 
-        // Capture files before launching coroutine to avoid race with files being cleared
+        // Only one session may generate at a time — concurrent askForConversation
+        // calls for different sessions corrupt each other's context tracking.
+        if (sessionManager.getGeneratingSessionIds().any { it != id }) {
+            val otherId = sessionManager.getGeneratingSessionIds().first { it != id }
+            val otherTitle = sessionManager.getSession(otherId)
+                ?.conversation?.title?.ifEmpty { "another chat" } ?: "another chat"
+            _state.update { it.copy(snackbarText = "Generation already in progress on $otherTitle") }
+            return
+        }
+
         val files = _state.value.files
+        val interactiveModeAtSend = _state.value.isInteractiveMode
 
-        currentJob = viewModelScope.launch(backgroundDispatcher) {
-            _state.update {
-                it.copy(
-                    isLoading = true,
-                    error = null,
-                    files = persistentListOf(),
-                )
-            }
+        sessionManager.setChatboxDraft(id, "")
+
+        sendVersion++
+        _state.update {
+            it.copy(
+                isLoading = true,
+                error = null,
+                files = persistentListOf(),
+                sendVersion = sendVersion,
+            )
+        }
+
+        sessionManager.startGeneration(id) {
             try {
-                dataRepository.ask(question, files, uiSubmission)
+                sessionManager.setSessionError(id, null)
 
-                // Auto-retry in interactive mode if the response has no valid oak-ui
-                if (_state.value.isInteractiveMode) {
-                    retryIfNoValidOakUi()
+                dataRepository.askForConversation(id, question, files, uiSubmission)
+
+                // askForConversation restores the previous context in its finally
+                // block — for a new chat this means _currentConversationId goes back
+                // to null. Reload if the conversation was persisted under this ID.
+                if (activeSessionId == id &&
+                    dataRepository.currentConversationId.value != id &&
+                    dataRepository.savedConversations.value.any { it.id == id }) {
+                    dataRepository.loadConversation(id)
                 }
 
-                _state.update {
-                    it.copy(isLoading = false)
+                if (interactiveModeAtSend) {
+                    dataRepository.loadConversation(id)
+                    retryIfNoValidOakUi(id)
+                    if (activeSessionId != id && activeSessionId != null) {
+                        dataRepository.loadConversation(activeSessionId!!)
+                    }
                 }
-            } catch (exception: Exception) {
-                // CancellationException must be re-thrown to properly propagate coroutine cancellation
-                if (exception is CancellationException) throw exception
 
-                _state.update {
-                    it.copy(
-                        error = exception.toUiError(),
-                        isLoading = false,
-                    )
+                if (activeSessionId == id) {
+                    _state.update { it.copy(isLoading = false) }
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                if (activeSessionId == id) {
+                    _state.update { it.copy(error = e.toUiError(), isLoading = false) }
+                } else {
+                    sessionManager.setSessionError(id, e.toUiError())
                 }
             }
         }
     }
 
-    private suspend fun retryIfNoValidOakUi(maxRetries: Int = 2) {
+    private suspend fun retryIfNoValidOakUi(sessionId: String, maxRetries: Int = 2) {
         repeat(maxRetries) {
             currentCoroutineContext().ensureActive()
             val lastAssistant = dataRepository.chatHistory.value.lastRenderedAssistant() ?: return
@@ -225,7 +275,6 @@ class ChatViewModel(
             val hasValidUi = blocks.any { it is OakUiBlock }
             if (hasValidUi) return
 
-            // Build error feedback for the AI
             val errorBlock = blocks.filterIsInstance<OakUiError>().firstOrNull()
             val errorDetail = if (errorBlock != null) {
                 "JSON parse error in: ${errorBlock.rawJson.take(200)}"
@@ -235,7 +284,7 @@ class ChatViewModel(
             val retryMessage = "[SYSTEM] Your previous response failed to render as interactive UI. $errorDetail " +
                 "Remember: respond with ONLY a single ```oak-ui code fence containing valid JSON. No text outside the fence."
 
-            dataRepository.ask(retryMessage, emptyList())
+            dataRepository.askForConversation(sessionId, retryMessage, emptyList())
         }
     }
 
@@ -281,7 +330,7 @@ class ChatViewModel(
 
     private fun clearSnackbar() {
         _state.update {
-            it.copy(snackbarMessage = null)
+            it.copy(snackbarMessage = null, snackbarText = null)
         }
     }
 
@@ -298,8 +347,8 @@ class ChatViewModel(
     }
 
     private fun cancel() {
-        currentJob?.cancel()
-        currentJob = null
+        val id = activeSessionId
+        if (id != null) sessionManager.cancelGeneration(id)
         _state.update {
             it.copy(isLoading = false)
         }
@@ -358,19 +407,36 @@ class ChatViewModel(
     }
 
     private fun regenerate() {
+        val id = activeSessionId ?: return
+        sessionManager.cancelGeneration(id)
         dataRepository.regenerate()
         ask(null)
     }
 
     private fun loadConversation(id: String) {
-        currentJob?.cancel()
-        currentJob = null
         val conversation = dataRepository.savedConversations.value.find { it.id == id }
         val isInteractive = conversation?.type == Conversation.TYPE_INTERACTIVE
         dataRepository.setInteractiveMode(isInteractive)
         dataRepository.loadConversation(id)
+
+        // If loadConversation was deferred (generation in progress for another
+        // session), currentConversationId won't match — alert the user.
+        if (dataRepository.currentConversationId.value != id) {
+            val currentId = dataRepository.currentConversationId.value
+            val title = currentId?.let { sessionManager.getSession(it)?.conversation?.title?.ifEmpty { null } }
+                ?: "current conversation"
+            _state.update { it.copy(snackbarText = "Please wait — generation in progress on $title") }
+            return
+        }
+
+        activeSessionId = id
+        val session = sessionManager.getOrCreateSession(id)
         _state.update {
-            it.copy(error = null, isInteractiveMode = isInteractive, isLoading = false)
+            it.copy(
+                error = session.lastError,
+                isInteractiveMode = isInteractive,
+                isLoading = id in _state.value.generatingSessionIds,
+            )
         }
     }
 
@@ -380,6 +446,7 @@ class ChatViewModel(
         pendingConversationDeleteJob = viewModelScope.launch(backgroundDispatcher) {
             delay(4.seconds)
             dataRepository.deleteConversation(id)
+            sessionManager.removeSession(id)
             _state.update { it.copy(pendingConversationDeletion = null) }
         }
     }
@@ -397,16 +464,12 @@ class ChatViewModel(
         _state.update { it.copy(pendingConversationDeletion = null) }
         viewModelScope.launch(backgroundDispatcher) {
             dataRepository.deleteConversation(pendingId)
+            sessionManager.removeSession(pendingId)
         }
     }
 
     override fun onCleared() {
         commitPendingConversationDeletion()
-        // The scheduler lives longer than this ViewModel (it's a singleton driving the
-        // Android foreground service). Reset the predicate so the daemon path keeps
-        // running without a stale reference to a dead state flow. The foreground-visible
-        // signal (`appInForeground`) is tracked separately via `ProcessLifecycleOwner`
-        // on Android — ViewModel lifecycle is too narrow (survives backgrounding).
         taskScheduler.isLoadingCheck = { false }
         super.onCleared()
     }
@@ -427,9 +490,16 @@ class ChatViewModel(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     private fun startNewChat() {
-        currentJob?.cancel()
-        currentJob = null
+        val prevId = activeSessionId
+        if (prevId != null) {
+            sessionManager.cancelGeneration(prevId)
+            sessionManager.removeSession(prevId)
+        }
+        val id = Uuid.random().toString()
+        activeSessionId = id
+        sessionManager.getOrCreateSession(id)
         dataRepository.startNewChat()
         dataRepository.setInteractiveMode(false)
         _state.update {
@@ -437,7 +507,11 @@ class ChatViewModel(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     private fun enterInteractiveMode() {
+        val id = Uuid.random().toString()
+        activeSessionId = id
+        sessionManager.getOrCreateSession(id)
         dataRepository.startNewChat()
         dataRepository.setInteractiveMode(true)
         _state.update {
@@ -445,9 +519,16 @@ class ChatViewModel(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     private fun exitInteractiveMode() {
-        currentJob?.cancel()
-        currentJob = null
+        val prevId = activeSessionId
+        if (prevId != null) {
+            sessionManager.cancelGeneration(prevId)
+            sessionManager.removeSession(prevId)
+        }
+        val id = Uuid.random().toString()
+        activeSessionId = id
+        sessionManager.getOrCreateSession(id)
         dataRepository.startNewChat()
         dataRepository.setInteractiveMode(false)
         _state.update {
@@ -464,11 +545,18 @@ class ChatViewModel(
     private fun goBackInteractiveMode() {
         val userCount = dataRepository.chatHistory.value.count { it.role == History.Role.USER }
         if (userCount <= 1) {
-            // Go back to initial prompt — clear history but stay in interactive mode
             dataRepository.clearHistory()
         } else {
             dataRepository.popLastExchange()
         }
+    }
+
+    fun getDraft(): String {
+        return sessionManager.getChatboxDraft(ensureActiveSession())
+    }
+
+    fun saveDraft(text: String) {
+        sessionManager.setChatboxDraft(ensureActiveSession(), text)
     }
 
     fun refreshSettings() {
@@ -479,10 +567,6 @@ class ChatViewModel(
         }
     }
 
-    /**
-     * Resolves the interactive mode flag from the currently-loaded conversation, or — when
-     * there is no loaded conversation (new empty chat) — falls back to the persisted flag.
-     */
     private fun presetInteractiveModeForCurrentConversation() {
         val currentId = dataRepository.currentConversationId.value
         val conversation = dataRepository.savedConversations.value.find { it.id == currentId }
