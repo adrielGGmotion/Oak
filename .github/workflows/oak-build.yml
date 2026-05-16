@@ -123,11 +123,21 @@ jobs:
         run: chmod +x gradlew
       - name: Build Linux Packages
         run: bash ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace
-      - name: Upload Linux Packages
+      - name: Upload raw app directory
         uses: actions/upload-artifact@v4
         with:
-          name: oak-desktop-linux
-          path: composeApp/build/compose/binaries/main/**/*
+          name: oak-linux-app
+          path: composeApp/build/compose/binaries/main/app/**/*
+      - name: Upload DEB package
+        uses: actions/upload-artifact@v4
+        with:
+          name: oak-linux-deb
+          path: composeApp/build/compose/binaries/main/deb/*.deb
+      - name: Upload RPM package
+        uses: actions/upload-artifact@v4
+        with:
+          name: oak-linux-rpm
+          path: composeApp/build/compose/binaries/main/rpm/*.rpm
 
   desktop-macos:
     name: Build macOS Desktop Package
