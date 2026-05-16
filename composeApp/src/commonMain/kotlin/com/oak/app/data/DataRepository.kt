@@ -40,6 +40,7 @@ interface DataRepository {
     suspend fun validateConnection(service: Service, instanceId: String)
 
     suspend fun ask(question: String?, files: List<PlatformFile>, uiSubmission: UiSubmission? = null)
+    suspend fun askForConversation(conversationId: String, question: String?, files: List<PlatformFile>, uiSubmission: UiSubmission? = null)
     fun clearHistory()
     fun currentService(): Service
     fun isUsingSharedKey(): Boolean

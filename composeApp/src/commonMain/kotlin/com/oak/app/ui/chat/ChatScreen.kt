@@ -56,6 +56,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -139,6 +140,8 @@ fun ChatScreen(
         isSandboxAvailable = isSandboxAvailable,
         navigationTabBar = navigationTabBar,
         onToggleDrawer = onToggleDrawer,
+        onSaveDraft = viewModel::saveDraft,
+        onGetDraft = viewModel::getDraft,
     )
 }
 
@@ -150,6 +153,8 @@ fun ChatScreenContent(
     isSandboxAvailable: Boolean = false,
     navigationTabBar: (@Composable () -> Unit)? = null,
     onToggleDrawer: () -> Unit = {},
+    onSaveDraft: (String) -> Unit = {},
+    onGetDraft: () -> String = { "" },
 ) {
     if (uiState.isInteractiveMode && !uiState.isRestoring) {
         InteractiveModeScreen(uiState = uiState)
@@ -161,6 +166,8 @@ fun ChatScreenContent(
             isSandboxAvailable = isSandboxAvailable,
             navigationTabBar = navigationTabBar,
             onToggleDrawer = onToggleDrawer,
+            onSaveDraft = onSaveDraft,
+            onGetDraft = onGetDraft,
         )
     }
 }
@@ -443,6 +450,8 @@ private fun ChatModeScreen(
     isSandboxAvailable: Boolean,
     navigationTabBar: (@Composable () -> Unit)?,
     onToggleDrawer: () -> Unit = {},
+    onSaveDraft: (String) -> Unit = {},
+    onGetDraft: () -> String = { "" },
 ) {
     var isSandboxOpen by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -460,10 +469,16 @@ private fun ChatModeScreen(
         }
     }
 
-    LaunchedEffect(uiState.snackbarMessage) {
-        val resource = uiState.snackbarMessage ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(getString(resource))
-        uiState.actions.clearSnackbar()
+    LaunchedEffect(uiState.snackbarMessage, uiState.snackbarText) {
+        val resource = uiState.snackbarMessage
+        val text = uiState.snackbarText
+        if (resource != null) {
+            snackbarHostState.showSnackbar(getString(resource))
+            uiState.actions.clearSnackbar()
+        } else if (text != null) {
+            snackbarHostState.showSnackbar(text)
+            uiState.actions.clearSnackbar()
+        }
     }
 
     val historyState = rememberUpdatedState(uiState.history)
@@ -774,17 +789,21 @@ private fun ChatModeScreen(
             }
 
             if (!isSandboxOpen) {
-                QuestionInput(
-                    files = uiState.files,
-                    addFile = uiState.actions.addFile,
-                    removeFile = uiState.actions.removeFile,
-                    ask = uiState.actions.ask,
-                    supportedFileExtensions = uiState.supportedFileExtensions,
-                    isLoading = uiState.isLoading,
-                    cancel = uiState.actions.cancel,
-                    availableServices = uiState.availableServices,
-                    onSelectService = uiState.actions.selectService,
-                )
+                key(uiState.currentConversationId to uiState.sendVersion) {
+                    QuestionInput(
+                        files = uiState.files,
+                        addFile = uiState.actions.addFile,
+                        removeFile = uiState.actions.removeFile,
+                        ask = uiState.actions.ask,
+                        supportedFileExtensions = uiState.supportedFileExtensions,
+                        isLoading = uiState.isLoading,
+                        cancel = uiState.actions.cancel,
+                        availableServices = uiState.availableServices,
+                        onSelectService = uiState.actions.selectService,
+                        initialText = onGetDraft(),
+                        onTextChanged = onSaveDraft,
+                    )
+                }
             }
         }
         SnackbarHost(

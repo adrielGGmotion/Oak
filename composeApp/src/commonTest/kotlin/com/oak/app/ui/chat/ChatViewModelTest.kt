@@ -49,7 +49,8 @@ class ChatViewModelTest {
 
     private fun createViewModel(): ChatViewModel {
         val noOpScheduler = TaskScheduler(fakeRepository, enabled = false)
-        return ChatViewModel(fakeRepository, noOpScheduler, unconfinedDispatcher)
+        val sessionManager = ChatSessionManager(fakeRepository)
+        return ChatViewModel(fakeRepository, noOpScheduler, sessionManager, unconfinedDispatcher)
     }
 
     @Test
@@ -57,7 +58,8 @@ class ChatViewModelTest {
         // Isolated paused dispatcher so the launched restore coroutine doesn't run synchronously.
         val backgroundDispatcher = StandardTestDispatcher()
         val noOpScheduler = TaskScheduler(fakeRepository, enabled = false)
-        val viewModel = ChatViewModel(fakeRepository, noOpScheduler, backgroundDispatcher)
+        val sessionManager = ChatSessionManager(fakeRepository)
+        val viewModel = ChatViewModel(fakeRepository, noOpScheduler, sessionManager, backgroundDispatcher)
 
         viewModel.state.test {
             // Restore hasn't run yet — initial state still has isRestoring=true.

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Snackbar
@@ -78,6 +79,7 @@ internal fun ChatHistorySheet(
     conversations: ImmutableList<ConversationSummary>,
     currentConversationId: String?,
     pendingConversationDeletion: String?,
+    generatingSessionIds: Set<String>,
     actions: ChatActions,
     onDismiss: () -> Unit,
     onConversationSelected: () -> Unit = {},
@@ -130,6 +132,7 @@ internal fun ChatHistorySheet(
                         ) {
                             items(conversations, key = { it.id }) { conversation ->
                                 val isActive = conversation.id == currentConversationId
+                                val isGenerating = conversation.id in generatingSessionIds
                                 val borderModifier = if (conversation.isInteractive) {
                                     Modifier.oakOutlinedBorder(
                                         cornerRadius = 12.dp,
@@ -144,72 +147,79 @@ internal fun ChatHistorySheet(
                                             RoundedCornerShape(12.dp),
                                         )
                                 }
-                                Row(
-                                    modifier = borderModifier
-                                        .fillMaxWidth()
-                                        .handCursor()
-                                        .clickable {
-                                            onConversationSelected()
-                                            actions.loadConversation(conversation.id)
-                                            onDismiss()
-                                        }
-                                        .padding(vertical = 8.dp, horizontal = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        if (conversation.isHeartbeat) {
-                                            Row(
-                                                modifier = Modifier
-                                                    .padding(bottom = 4.dp)
-                                                    .background(
-                                                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                                                        shape = RoundedCornerShape(4.dp),
+                                Column {
+                                    Row(
+                                        modifier = borderModifier
+                                            .fillMaxWidth()
+                                            .handCursor()
+                                            .clickable {
+                                                onConversationSelected()
+                                                actions.loadConversation(conversation.id)
+                                                onDismiss()
+                                            }
+                                            .padding(vertical = 8.dp, horizontal = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            if (conversation.isHeartbeat) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .padding(bottom = 4.dp)
+                                                        .background(
+                                                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                                                            shape = RoundedCornerShape(4.dp),
+                                                        )
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                ) {
+                                                    Icon(
+                                                        imageVector = vectorResource(Res.drawable.ic_history),
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                        modifier = Modifier.size(12.dp),
                                                     )
-                                                    .padding(horizontal = 6.dp, vertical = 2.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                Icon(
-                                                    imageVector = vectorResource(Res.drawable.ic_history),
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                                    modifier = Modifier.size(12.dp),
-                                                )
-                                                Spacer(Modifier.width(4.dp))
+                                                    Spacer(Modifier.width(4.dp))
+                                                    Text(
+                                                        text = stringResource(Res.string.chat_history_heartbeat_label),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                    )
+                                                }
+                                            }
+                                            if (conversation.title.isNotEmpty()) {
                                                 Text(
-                                                    text = stringResource(Res.string.chat_history_heartbeat_label),
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                    text = conversation.title,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = if (isActive) {
+                                                        MaterialTheme.colorScheme.primary
+                                                    } else {
+                                                        MaterialTheme.colorScheme.onBackground
+                                                    },
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
                                                 )
                                             }
-                                        }
-                                        if (conversation.title.isNotEmpty()) {
                                             Text(
-                                                text = conversation.title,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = if (isActive) {
-                                                    MaterialTheme.colorScheme.primary
-                                                } else {
-                                                    MaterialTheme.colorScheme.onBackground
-                                                },
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
+                                                text = formatDate(conversation.updatedAt),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
                                         }
-                                        Text(
-                                            text = formatDate(conversation.updatedAt),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
+                                        IconButton(
+                                            modifier = Modifier.handCursor(),
+                                            onClick = { actions.deleteConversation(conversation.id) },
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = stringResource(Res.string.chat_history_delete_content_description),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
                                     }
-                                    IconButton(
-                                        modifier = Modifier.handCursor(),
-                                        onClick = { actions.deleteConversation(conversation.id) },
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = stringResource(Res.string.chat_history_delete_content_description),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    if (isGenerating) {
+                                        LinearProgressIndicator(
+                                            modifier = Modifier.fillMaxWidth(),
                                         )
                                     }
                                 }
