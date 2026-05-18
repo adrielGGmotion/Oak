@@ -42,7 +42,7 @@ jobs:
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEYSTORE_PASSWORD }}
       - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: signed-apk
           path: androidApp/build/outputs/apk/release/androidApp-release-signed.apk
@@ -66,7 +66,7 @@ jobs:
       - name: Build DMG
         run: bash ./gradlew packageReleaseDmg --stacktrace
       - name: Upload DMG Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dmg-package
           path: composeApp/build/compose/binaries/main-release/dmg/*.dmg
@@ -88,7 +88,7 @@ jobs:
       - name: Build MSI
         run: ./gradlew packageReleaseMsi --stacktrace
       - name: Upload MSI Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: msi-package
           path: composeApp/build/compose/binaries/main-release/msi/*.msi
@@ -112,7 +112,7 @@ jobs:
       - name: Build DEB
         run: ./gradlew packageReleaseDeb --stacktrace
       - name: Upload DEB Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deb-package
           path: composeApp/build/compose/binaries/main-release/deb/*.deb
@@ -138,7 +138,7 @@ jobs:
       - name: Build RPM
         run: ./gradlew packageReleaseRpm --stacktrace
       - name: Upload RPM Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rpm-package
           path: composeApp/build/compose/binaries/main-release/rpm/*.rpm
@@ -166,7 +166,7 @@ jobs:
           cd composeApp/build/compose/binaries/main-release/app
           tar czf "$GITHUB_WORKSPACE/Oak-linux-x86_64.tar.gz" Oak
       - name: Upload Tarball Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-tar-package
           path: Oak-linux-x86_64.tar.gz
@@ -236,7 +236,7 @@ jobs:
         run: |
           ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir Oak-x86_64.AppImage
       - name: Upload AppImage Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: appimage-package
           path: Oak-*.AppImage
