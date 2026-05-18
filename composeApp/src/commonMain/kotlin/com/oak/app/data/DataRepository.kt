@@ -9,15 +9,14 @@ import com.oak.app.network.tools.ToolInfo
 import com.oak.app.ui.chat.History
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
-    val streamingReasoning: StateFlow<String?>
-    val streamingContent: StateFlow<String?>
-
 import kotlinx.coroutines.flow.StateFlow
 
 interface DataRepository {
     val chatHistory: StateFlow<List<History>>
     val currentConversationId: StateFlow<String?>
     val fallbackStatus: StateFlow<FallbackStatus?>
+    val streamingReasoning: StateFlow<String?>
+    val streamingContent: StateFlow<String?>
 
     // Configured services management
     fun getConfiguredServiceInstances(): List<ServiceInstance>

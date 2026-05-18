@@ -15,6 +15,7 @@ import com.oak.app.network.dtos.gemini.GeminiChatResponseDto
 import com.oak.app.network.dtos.gemini.GeminiModelsResponseDto
 import com.oak.app.network.dtos.gemini.GeminiTool
 import com.oak.app.network.dtos.gemini.PropertySchema
+import com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatChunkDto
 import com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatRequestDto
 import com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatResponseDto
 import com.oak.app.network.dtos.openaicompatible.OpenAICompatibleModelResponseDto
@@ -88,6 +89,11 @@ class Requests {
                 level = LogLevel.NONE
             }
         }
+    }
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
     }
 
     class DebugKtorLogger : Logger {
@@ -255,7 +261,7 @@ class Requests {
         try {
             statement.execute { response ->
                 if (!response.status.isSuccess()) {
-                    close(OpenAICompatibleApiException("Stream request failed: ${response.status}"))
+                    close(OpenAICompatibleGenericException("Stream request failed: ${response.status}"))
                     return@execute
                 }
 

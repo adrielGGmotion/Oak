@@ -176,10 +176,10 @@ class RemoteDataRepository(
     override val fallbackStatus: StateFlow<FallbackStatus?> = _fallbackStatus
 
     private val _streamingReasoning = MutableStateFlow<String?>(null)
-    override val streamingReasoning: StateFlow<String?> = _streamingReasoning.asStateFlow()
+    override val streamingReasoning: StateFlow<String?> = _streamingReasoning
 
     private val _streamingContent = MutableStateFlow<String?>(null)
-    override val streamingContent: StateFlow<String?> = _streamingContent.asStateFlow()
+    override val streamingContent: StateFlow<String?> = _streamingContent
 
     override val savedConversations: StateFlow<List<Conversation>> = conversationStorage.conversations
 
@@ -668,6 +668,7 @@ class RemoteDataRepository(
                     askWithServiceStreaming(service, messages, systemPrompt, instanceId, history)
                 }
             }
+        }
     }
 
     private fun hasValidInstanceApiKey(instanceId: String, service: Service): Boolean {
