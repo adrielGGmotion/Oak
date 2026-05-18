@@ -145,7 +145,9 @@ class ChatViewModel(
         dataRepository.savedConversations,
         dataRepository.currentConversationId,
         dataRepository.hasUnreadHeartbeat,
-    ) { state, history, conversations, conversationId, hasUnreadHeartbeat ->
+        dataRepository.streamingReasoning,
+        dataRepository.streamingContent,
+    ) { state, history, conversations, conversationId, hasUnreadHeartbeat, streamingReasoning, streamingContent ->
         val summaries = conversations
             .sortedByDescending { it.updatedAt }
             .map {
@@ -165,6 +167,8 @@ class ChatViewModel(
             savedConversations = summaries.toImmutableList(),
             currentConversationId = conversationId,
             hasUnreadHeartbeat = hasUnreadHeartbeat,
+            streamingReasoning = streamingReasoning,
+            streamingContent = streamingContent,
         )
     }.distinctUntilChanged().stateIn(
         scope = viewModelScope,

@@ -36,6 +36,12 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.client.request.preparePost
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.utils.io.readUTF8Line
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
@@ -213,6 +219,66 @@ class Requests {
         Result.failure(OpenAICompatibleConnectionException())
     } catch (e: Exception) {
         Result.failure(OpenAICompatibleConnectionException())
+    }
+
+
+    /**
+     * SSE-streaming variant of [openAICompatibleChat].
+     * Emits each parsed chunk via a Flow. Closes when [OpenAICompatibleChatChunkDto.DONE_MARKER]
+     * is received or the connection drops.
+     */
+    suspend fun openAICompatibleChatStream(
+        service: Service,
+        credentials: ServiceCredentials,
+        messages: List<OpenAICompatibleChatRequestDto.Message>,
+        tools: List<Tool> = emptyList(),
+        customHeaders: Map<String, String> = emptyMap(),
+    ): Flow<OpenAICompatibleChatChunkDto> = callbackFlow {
+        val apiKey = getApiKeyOrThrow(service, credentials)
+        val model = credentials.modelId.ifEmpty { null }
+        val url = resolveUrl(service, credentials, service.chatUrl)
+
+        val statement = defaultClient.preparePost(url) {
+            contentType(ContentType.Application.Json)
+            apiKey?.let { bearerAuth(it) }
+            customHeaders.forEach { (k, v) -> header(k, v) }
+            setBody(
+                OpenAICompatibleChatRequestDto(
+                    messages = messages,
+                    model = model,
+                    tools = tools.map { it.toRequestTool() }.ifEmpty { null },
+                    stream = true,
+                ),
+            )
+        }
+
+        try {
+            statement.execute { response ->
+                if (!response.status.isSuccess()) {
+                    close(OpenAICompatibleApiException("Stream request failed: ${response.status}"))
+                    return@execute
+                }
+
+                val channel = response.bodyAsChannel()
+                while (!channel.isClosedForRead) {
+                    val line = channel.readUTF8Line() ?: break
+                    if (!line.startsWith("data: ")) continue
+                    val data = line.removePrefix("data: ").trim()
+                    if (data == OpenAICompatibleChatChunkDto.DONE_MARKER) break
+                    if (data.isEmpty()) continue
+                    try {
+                        val chunk = json.decodeFromString<OpenAICompatibleChatChunkDto>(data)
+                        trySend(chunk)
+                    } catch (_: Exception) {
+                        /* Skip malformed chunks */
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            close(e)
+        }
+
+        awaitClose { }
     }
 
     suspend fun getOpenAICompatibleModels(

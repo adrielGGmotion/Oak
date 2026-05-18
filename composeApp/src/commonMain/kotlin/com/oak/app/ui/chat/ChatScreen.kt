@@ -46,6 +46,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Snackbar
@@ -92,6 +93,10 @@ import com.oak.app.ui.chat.composables.TrailingIcon
 import com.oak.app.ui.chat.composables.UserMessage
 import com.oak.app.ui.chat.composables.WaitingResponseRow
 import com.oak.app.ui.chat.composables.uiErrorText
+import com.oak.app.ui.chat.composables.BotAvatar
+import com.oak.app.ui.markdown.MarkdownContent
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.ExpandLess
 import com.oak.app.ui.components.LogoAnimation
 import com.oak.app.ui.components.VerticalScrollbarForList
 import com.oak.app.ui.dynamicui.FrozenSubmission
@@ -735,6 +740,16 @@ private fun ChatModeScreen(
                                             }
                                         }
                                     }
+
+                                    uiState.streamingContent?.let { content ->
+                                        item(key = "streaming") {
+                                            StreamingMessage(
+                                                content = content,
+                                                reasoningContent = uiState.streamingReasoning,
+                                            )
+                                        }
+                                    }
+
                                     // Skip the generic "thinking" row during a pending oak-ui submission — the
                                     // pressed button's pulse already signals work in flight. Keep it for tool
                                     // activity so tool feedback isn't lost.
@@ -815,6 +830,74 @@ private fun ChatModeScreen(
     }
 
 }
+
+
+@Composable
+private fun StreamingMessage(
+    content: String,
+    reasoningContent: String?,
+) {
+    var reasoningExpanded by remember { mutableStateOf(false) }
+
+    Row(modifier = Modifier.fillMaxWidth()) {
+        BotAvatar(
+            modifier = Modifier
+                .align(Alignment.Top)
+                .padding(top = 16.dp, start = 16.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            if (!reasoningContent.isNullOrBlank()) {
+                Surface(
+                    modifier = Modifier
+                        .padding(start = 8.dp, top = 8.dp, end = 16.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { reasoningExpanded = !reasoningExpanded },
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = if (reasoningExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "Thought",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        if (reasoningExpanded) {
+                            MarkdownContent(
+                                content = reasoningContent,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
+                    }
+                }
+            }
+            Box {
+                MarkdownContent(
+                    content = content,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+                )
+                Text(
+                    text = "▌",
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+    }
+}
+
 
 private data class ExecutingToolsState(
     val tools: ImmutableList<Pair<String, String>>,

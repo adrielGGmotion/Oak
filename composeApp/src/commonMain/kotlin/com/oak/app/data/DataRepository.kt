@@ -9,6 +9,9 @@ import com.oak.app.network.tools.ToolInfo
 import com.oak.app.ui.chat.History
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
+    val streamingReasoning: StateFlow<String?>
+    val streamingContent: StateFlow<String?>
+
 import kotlinx.coroutines.flow.StateFlow
 
 interface DataRepository {

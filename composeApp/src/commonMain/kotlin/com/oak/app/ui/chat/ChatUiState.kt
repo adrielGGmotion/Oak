@@ -88,6 +88,8 @@ data class ChatUiState(
     val pendingConversationDeletion: String? = null,
     val isInteractiveMode: Boolean = false,
     val fallbackStatus: FallbackStatus? = null,
+    val streamingReasoning: String? = null,
+    val streamingContent: String? = null,
     val isRestoring: Boolean = true,
     val generatingSessionIds: Set<String> = emptySet(),
     val snackbarText: String? = null,
@@ -191,7 +193,11 @@ fun History.toGroqMessageDto(): OpenAICompatibleChatRequestDto.Message = when (r
                 reasoningContent = reasoningContent,
             )
         } else {
-            OpenAICompatibleChatRequestDto.Message(role = "assistant", content = JsonPrimitive(content))
+            OpenAICompatibleChatRequestDto.Message(
+                role = "assistant",
+                content = JsonPrimitive(content),
+                reasoningContent = reasoningContent,
+            )
         }
     }
 

@@ -175,6 +175,12 @@ class RemoteDataRepository(
     private val _fallbackStatus = MutableStateFlow<FallbackStatus?>(null)
     override val fallbackStatus: StateFlow<FallbackStatus?> = _fallbackStatus
 
+    private val _streamingReasoning = MutableStateFlow<String?>(null)
+    override val streamingReasoning: StateFlow<String?> = _streamingReasoning.asStateFlow()
+
+    private val _streamingContent = MutableStateFlow<String?>(null)
+    override val streamingContent: StateFlow<String?> = _streamingContent.asStateFlow()
+
     override val savedConversations: StateFlow<List<Conversation>> = conversationStorage.conversations
 
     override fun getConfiguredServiceInstances(): List<ServiceInstance> = appSettings.getConfiguredServiceInstances().filter { Service.fromId(it.serviceId) != Service.Free }
@@ -571,6 +577,51 @@ class RemoteDataRepository(
         return result
     }
 
+    private suspend fun askWithServiceStreaming(
+        service: Service,
+        messages: List<History>,
+        systemPrompt: String?,
+        instanceId: String,
+        history: MutableStateFlow<List<History>> = chatHistory,
+    ): String {
+        val creds = instanceCredentials(instanceId, service)
+        val openAIMessages = buildOpenAIMessages(messages, systemPrompt)
+        val tools = if (supportsTools(creds.modelId)) getAvailableTools() else emptyList()
+
+        _streamingReasoning.value = ""
+        _streamingContent.value = ""
+
+        val fullContent = StringBuilder()
+        val fullReasoning = StringBuilder()
+
+        try {
+            requests
+                .openAICompatibleChatStream(service, creds, openAIMessages, tools)
+                .collect { chunk ->
+                    val choice = chunk.choices?.firstOrNull()
+                    val delta = choice?.delta
+                    delta?.reasoningContent?.let { r ->
+                        if (r.isNotEmpty()) {
+                            fullReasoning.append(r)
+                            _streamingReasoning.value = fullReasoning.toString()
+                        }
+                    }
+                    delta?.content?.let { c ->
+                        if (c.isNotEmpty()) {
+                            fullContent.append(c)
+                            _streamingContent.value = fullContent.toString()
+                        }
+                    }
+                }
+        } catch (e: Exception) {
+            _streamingReasoning.value = null
+            _streamingContent.value = null
+            throw e
+        }
+
+        return fullContent.toString()
+    }
+
     private suspend fun askWithService(
         service: Service,
         messages: List<History>,
@@ -614,12 +665,9 @@ class RemoteDataRepository(
                 if (tools.isNotEmpty()) {
                     handleOpenAICompatibleChatWithTools(service, creds, messages, tools, systemPrompt, history)
                 } else {
-                    val openAIMessages = buildOpenAIMessages(messages, systemPrompt)
-                    val response = requests.openAICompatibleChat(service, creds, openAIMessages).getOrThrow()
-                    response.choices.firstOrNull()?.message?.effectiveContent ?: throw OpenAICompatibleEmptyResponseException()
+                    askWithServiceStreaming(service, messages, systemPrompt, instanceId, history)
                 }
             }
-        }
     }
 
     private fun hasValidInstanceApiKey(instanceId: String, service: Service): Boolean {
@@ -769,7 +817,7 @@ class RemoteDataRepository(
                 }
                 chatHistory.update {
                     it.toMutableList().apply {
-                        add(History(role = History.Role.ASSISTANT, content = responseText, fallbackServiceName = fallbackServiceName))
+                        add(History(role = History.Role.ASSISTANT, content = responseText, reasoningContent = _streamingReasoning.value, fallbackServiceName = fallbackServiceName))
                     }
                 }
                 saveCurrentConversation()
@@ -779,6 +827,8 @@ class RemoteDataRepository(
             throw lastException ?: OpenAICompatibleEmptyResponseException()
         } finally {
             _fallbackStatus.value = null
+            _streamingContent.value = null
+            _streamingReasoning.value = null
         }
     }
 
