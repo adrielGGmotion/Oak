@@ -35,13 +35,16 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Set execution flag for gradlew
+        run: chmod +x gradlew
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Build with Gradle
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Perform Analysis
         uses: github/codeql-action/analyze@v3
