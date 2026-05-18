@@ -140,31 +140,40 @@ class ChatViewModel(
     }
 
     val state = combine(
-        _state,
-        dataRepository.chatHistory,
-        dataRepository.savedConversations,
-        dataRepository.currentConversationId,
-        dataRepository.hasUnreadHeartbeat,
-    ) { state, history, conversations, conversationId, hasUnreadHeartbeat ->
-        val summaries = conversations
-            .sortedByDescending { it.updatedAt }
-            .map {
-                val isHeartbeat = it.type == Conversation.TYPE_HEARTBEAT
-                val isInteractive = it.type == Conversation.TYPE_INTERACTIVE
-                ConversationSummary(
-                    id = it.id,
-                    title = if (isHeartbeat) "" else it.title.ifEmpty { getString(Res.string.conversation_untitled) },
-                    updatedAt = it.updatedAt,
-                    isHeartbeat = isHeartbeat,
-                    isInteractive = isInteractive,
-                )
-            }
-        state.copy(
-            history = history.toImmutableList(),
-            supportedFileExtensions = dataRepository.supportedFileExtensions().toImmutableList(),
-            savedConversations = summaries.toImmutableList(),
-            currentConversationId = conversationId,
-            hasUnreadHeartbeat = hasUnreadHeartbeat,
+        combine(
+            _state,
+            dataRepository.chatHistory,
+            dataRepository.savedConversations,
+            dataRepository.currentConversationId,
+            dataRepository.hasUnreadHeartbeat,
+        ) { state, history, conversations, conversationId, hasUnreadHeartbeat ->
+            val summaries = conversations
+                .sortedByDescending { it.updatedAt }
+                .map {
+                    val isHeartbeat = it.type == Conversation.TYPE_HEARTBEAT
+                    val isInteractive = it.type == Conversation.TYPE_INTERACTIVE
+                    ConversationSummary(
+                        id = it.id,
+                        title = if (isHeartbeat) "" else it.title.ifEmpty { getString(Res.string.conversation_untitled) },
+                        updatedAt = it.updatedAt,
+                        isHeartbeat = isHeartbeat,
+                        isInteractive = isInteractive,
+                    )
+                }
+            state.copy(
+                history = history.toImmutableList(),
+                supportedFileExtensions = dataRepository.supportedFileExtensions().toImmutableList(),
+                savedConversations = summaries.toImmutableList(),
+                currentConversationId = conversationId,
+                hasUnreadHeartbeat = hasUnreadHeartbeat,
+            )
+        },
+        dataRepository.streamingReasoning,
+        dataRepository.streamingContent,
+    ) { base, streamingReasoning, streamingContent ->
+        base.copy(
+            streamingReasoning = streamingReasoning,
+            streamingContent = streamingContent,
         )
     }.distinctUntilChanged().stateIn(
         scope = viewModelScope,

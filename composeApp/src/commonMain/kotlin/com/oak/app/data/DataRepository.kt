@@ -15,6 +15,8 @@ interface DataRepository {
     val chatHistory: StateFlow<List<History>>
     val currentConversationId: StateFlow<String?>
     val fallbackStatus: StateFlow<FallbackStatus?>
+    val streamingReasoning: StateFlow<String?>
+    val streamingContent: StateFlow<String?>
 
     // Configured services management
     fun getConfiguredServiceInstances(): List<ServiceInstance>
