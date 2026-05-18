@@ -195,3 +195,11 @@ class VersionGeneratorPlugin : Plugin<Project> {
 }
 
 apply<VersionGeneratorPlugin>()
+
+// Workaround for Gradle 9.x strict dependency validation:
+// packageDmg uses the output of packageAppImage but the Compose
+// plugin doesn't declare an explicit dependency, which causes:
+// "A problem was found with the configuration of task ':composeApp:packageDmg'"
+tasks.matching { it.name == "packageDmg" }.configureEach {
+    dependsOn(tasks.matching { it.name == "packageAppImage" })
+}
