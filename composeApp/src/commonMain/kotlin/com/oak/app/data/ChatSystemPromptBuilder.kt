@@ -67,7 +67,7 @@ internal data class EmailAccountSummary(
  * to cover a typical user's memory set (~20-40 entries) without starving the model's
  * attention budget on a 16K-context local model.
  */
-private const val LOCAL_MEMORY_BUDGET_CHARS = 2_000
+private const val LOCAL_MEMORY_BUDGET_CHARS = 800
 
 /**
  * Advanced memory guidance — references `memory_learn` (not in `LOCAL_TOOL_ALLOWLIST`)

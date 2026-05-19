@@ -10,7 +10,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "com.oak.app.shared"
         compileSdk =
             libs.versions.android.compileSdk

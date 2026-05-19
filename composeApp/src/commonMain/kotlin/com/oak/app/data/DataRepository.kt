@@ -212,4 +212,9 @@ interface DataRepository {
     fun startLocalModelDownload(model: LocalModel)
     fun cancelLocalModelDownload()
     suspend fun deleteLocalModel(modelId: String)
+    fun getLocalActiveBackend(): StateFlow<String?>?
+    fun getHfToken(): String
+    fun setHfToken(token: String)
+    fun getBackendPreference(): String
+    fun setBackendPreference(pref: String)
 }
