@@ -2,7 +2,6 @@ android:
   - changed-files:
       - any-glob-to-any-file: "androidApp/**"
       - any-glob-to-any-file: "composeApp/**"
-      - any-glob-to-any-file: "shared/**"
 
 ci:
   - changed-files:

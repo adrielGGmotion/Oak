@@ -49,4 +49,3 @@ Keystore files (`debug.keystore`, `release.keystore`) are never committed — th
 - **PR Template**: `.github/PULL_REQUEST_TEMPLATE/pull_request_template.md` — checklist for every PR
 - **Auto-labeler**: `.github/workflows/labeler.yml` + `.github/labeler.yml` — tags PRs by area (android, ci, docs, deps, kotlin)
 - **PR Title Check**: `.github/workflows/pr-title.yml` — enforces conventional commits format (`feat:`, `fix:`, `chore:`, etc.)
-- **Release Please**: `.github/workflows/release-please.yml` — auto-creates releases from conventional commits on main
