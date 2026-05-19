@@ -606,6 +606,18 @@ class AppSettings(private val settings: Settings) {
         settings.putString(KEY_MCP_SERVERS, json)
     }
 
+    fun getHfToken(): String = settings.getString(KEY_HF_TOKEN, "")
+
+    fun setHfToken(token: String) {
+        settings.putString(KEY_HF_TOKEN, token)
+    }
+
+    fun getBackendPreference(): String = settings.getString(KEY_BACKEND_PREFERENCE, "auto")
+
+    fun setBackendPreference(pref: String) {
+        settings.putString(KEY_BACKEND_PREFERENCE, pref)
+    }
+
     // UI Scale
     private val _uiScaleFlow = MutableStateFlow(settings.getFloat(KEY_UI_SCALE, defaultUiScale))
     val uiScaleFlow: StateFlow<Float> = _uiScaleFlow
@@ -1277,6 +1289,8 @@ class AppSettings(private val settings: Settings) {
         const val KEY_SPLINTERLANDS_INSTANCE_ID = "splinterlands_instance_id"
         const val KEY_SPLINTERLANDS_INSTANCE_IDS = "splinterlands_instance_ids"
 
+        const val KEY_HF_TOKEN = "hf_token"
+        const val KEY_BACKEND_PREFERENCE = "litert_backend"
         const val KEY_MODEL_CONTEXT_PREFIX = "model_context_"
 
         const val KEY_SANDBOX_ENABLED = "sandbox_enabled"

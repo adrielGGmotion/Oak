@@ -102,11 +102,10 @@ private const val COMPACTION_THRESHOLD = 0.7 // Compact when history exceeds 70%
 private const val COMPACTION_KEEP_RECENT = 4 // Number of recent user exchanges to keep verbatim
 
 // Explicit allowlist of tools exposed to the on-device (LiteRT) model. We use a
-// hardcoded name list rather than a structural filter because small Gemma models hit
-// litert-lm's strict ANTLR function-call parser hard on anything more complex than
-// a couple of string parameters. Excluded by design: memory_learn (4 params + enum),
-// schedule_task / list_tasks / cancel_task (datetime + cron), the entire email family,
-// the heartbeat config tools, and MCP tools.
+// hardcoded name list rather than a structural filter because small on-device models
+// struggle with complex schemas via prompt injection. Excluded by design:
+// memory_learn (4 params + enum), schedule_task / list_tasks / cancel_task
+// (datetime + cron), the entire email family, the heartbeat config tools, and MCP tools.
 internal val LOCAL_TOOL_ALLOWLIST = setOf(
     "get_local_time",
     "get_location_from_ip",
@@ -418,7 +417,8 @@ class RemoteDataRepository(
         val storedContext = appSettings.getModelContextTokens(model.id)
         val contextTokens = if (storedContext > 0) storedContext else catalogModel?.defaultContextTokens ?: 0
 
-        val needsInit = engine.engineState.value != EngineState.READY || engine.currentModelId != model.id
+        val backendPref = appSettings.getBackendPreference()
+        val needsInit = engine.engineState.value != EngineState.READY || engine.currentModelId != model.id || engine.currentBackendPref != backendPref
         if (needsInit) {
             val statusEntry = History(
                 role = History.Role.TOOL_EXECUTING,
@@ -428,25 +428,24 @@ class RemoteDataRepository(
             )
             history.update { it + statusEntry }
             try {
-                engine.initialize(model, contextTokens)
+                engine.initialize(model, contextTokens, backendPref)
             } finally {
                 history.update { h -> h.filter { it.id != statusEntry.id } }
             }
         } else {
-            engine.initialize(model, contextTokens)
+            engine.initialize(model, contextTokens, backendPref)
         }
 
-        // Callers pass either a CHAT_LOCAL system prompt (chat + silent paths) or null
-        // (Splinterlands via `askSilentlyWithInstance`, where the caller owns the full
-        // prompt shape). We hand whichever one through to the engine unchanged.
-        // Native litert-lm `automaticToolCalling` owns the tool loop — our allowlisted
-        // tools are passed once via [localToolDescriptionJson] and the engine drives them.
-        val localTools: List<LocalTool> = getLocalSafeTools().map { tool ->
-            LocalTool(
-                name = tool.schema.name,
-                descriptionJsonString = localToolDescriptionJson(tool),
-                execute = { jsonArgs -> runLocalToolWithUiFeedback(tool.schema.name, jsonArgs, history) },
-            )
+        // Tool descriptions are injected into the system prompt as text instead of
+        // relying on LiteRT-LM's automaticToolCalling / ANTLR parser, which is too
+        // strict for small on-device models. The model either follows the format
+        // and we execute the tool, or it ignores it and we return plain text.
+        val localTools = getLocalSafeTools()
+        val toolPrompt = buildLocalToolPrompt(localTools)
+        val promptWithTools = if (toolPrompt != null) {
+            if (systemPrompt != null) "$systemPrompt\n\n$toolPrompt" else toolPrompt
+        } else {
+            systemPrompt
         }
 
         val inferenceMessages = messages.mapNotNull { msg ->
@@ -457,59 +456,98 @@ class RemoteDataRepository(
             }
         }
 
-        return try {
-            engine.chat(messages = inferenceMessages, systemPrompt = systemPrompt, tools = localTools)
-        } catch (e: RuntimeException) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
-            // litert-lm's strict ANTLR function-call parser sometimes rejects malformed
-            // tool-call output from small Gemma models, throwing INVALID_ARGUMENT from JNI.
-            // Retry once without tools so the user gets *some* answer rather than a hard
-            // error in the UI. With an empty tool list, LiteRTInferenceEngine sets
-            // automaticToolCalling = false, so the parser is bypassed entirely on the retry.
-            println("LiteRT: tool-call parser failed (${e.message?.take(200)}). Falling back to plain chat.")
-            engine.chat(messages = inferenceMessages, systemPrompt = systemPrompt, tools = emptyList())
-        }
+        return stripThinkBlocks(engine.chat(
+            messages = inferenceMessages,
+            systemPrompt = promptWithTools,
+            tools = emptyList(),
+        ))
     }
 
     /**
-     * Cached OpenAPI/OpenAI-style JSON descriptions for local tools, keyed by tool name.
-     * Schemas are static for allowlisted tools, so serializing them once per tool avoids
-     * re-running the JSON builder on every message.
+     * Builds a text description of available tools for injection into the local model's
+     * system prompt. Returns null when there are no tools to expose.
      */
-    private val localToolDescriptionJsonCache = mutableMapOf<String, String>()
-
-    /**
-     * Returns the cached OpenAPI/OpenAI-style JSON description for [tool], building it on
-     * first request. Shape mirrors `Tool.toRequestTool()` in `Requests.kt` without the
-     * OpenAI `{type: "function", function: {…}}` wrapper, so litert-lm's `OpenApiTool`
-     * adapter can forward it straight to the model. If a parameter has a `rawSchema`,
-     * it's passed through verbatim — that preserves array/enum/nested-object shapes the
-     * simple `{type, description}` form would lose.
-     */
-    private fun localToolDescriptionJson(tool: Tool): String = localToolDescriptionJsonCache.getOrPut(tool.schema.name) {
-        buildJsonObject {
-            put("name", tool.schema.name)
-            put("description", tool.schema.description)
-            putJsonObject("parameters") {
-                put("type", "object")
-                putJsonObject("properties") {
-                    for ((paramName, param) in tool.schema.parameters) {
+    private fun buildLocalToolPrompt(tools: List<Tool>): String? {
+        if (tools.isEmpty()) return null
+        return buildString {
+            append("## Available Tools\n\n")
+            append("When you need to use a tool, output a JSON block on its own line:\n")
+            append("""{"function": "name", "arguments": {"param": "value"}}""")
+            append("\n\n")
+            for (tool in tools) {
+                append("- **").append(tool.schema.name).append("**")
+                if (tool.schema.description.isNotEmpty()) {
+                    append(": ").append(tool.schema.description)
+                }
+                append('\n')
+                val params = tool.schema.parameters
+                if (params.isNotEmpty()) {
+                    append("  Parameters:\n")
+                    for ((name, param) in params) {
+                        val paramDesc = if (param.description.isNotEmpty()) " — ${param.description}" else ""
                         val raw = param.rawSchema
                         if (raw != null) {
-                            put(paramName, raw)
+                            append("    - `$name` (${param.type}$paramDesc): ${raw}\n")
                         } else {
-                            putJsonObject(paramName) {
-                                put("type", param.type)
-                                put("description", param.description)
-                            }
+                            val required = if (param.required) " (required)" else ""
+                            append("    - `$name`: ${param.type}$required$paramDesc\n")
                         }
                     }
                 }
-                putJsonArray("required") {
-                    tool.schema.parameters.filter { it.value.required }.keys.forEach { add(it) }
+            }
+        }
+    }
+
+    private val THINK_BLOCK_REGEX = Regex("<think>.*?</think>", RegexOption.DOT_MATCHES_ALL)
+
+    private fun stripThinkBlocks(text: String): String = THINK_BLOCK_REGEX.replace(text, "").trim()
+
+    /**
+     * Attempts to parse a tool call JSON block from the model's output.
+     * Handles "function" and "arguments" in any order, and nested braces
+     * in arguments via brace counting.
+     */
+    private data class LocalToolCall(val name: String, val arguments: String)
+
+    private fun parseLocalToolCall(text: String): LocalToolCall? {
+        val fnMatch = TOOL_CALL_FN_REGEX.find(text) ?: return null
+        val fnName = fnMatch.groupValues[1]
+        val fnEnd = fnMatch.range.last + 1
+        val afterFn = text.substring(fnEnd)
+
+        val argsMatch = TOOL_CALL_ARGS_REGEX.find(afterFn) ?: return null
+        val rawArgs = argsMatch.groupValues[1]
+        val balancedArgs = extractBalancedBraceBlock(rawArgs, 0) ?: return null
+        return LocalToolCall(name = fnName, arguments = balancedArgs)
+    }
+
+    private val TOOL_CALL_FN_REGEX = Regex(""""function"\s*:\s*"([^"]+)"""")
+    private val TOOL_CALL_ARGS_REGEX = Regex(""""arguments"\s*:\s*(\{.*)""", RegexOption.DOT_MATCHES_ALL)
+
+    /**
+     * Extracts a balanced JSON object string starting at [startIdx] in [s].
+     * Counts brace depth to correctly handle nested objects.
+     */
+    private fun extractBalancedBraceBlock(s: String, startIdx: Int): String? {
+        if (startIdx >= s.length || s[startIdx] != '{') return null
+        var depth = 0
+        var idx = startIdx
+        var inString = false
+        while (idx < s.length) {
+            val c = s[idx]
+            if (c == '"' && (idx == 0 || s[idx - 1] != '\\')) inString = !inString
+            if (!inString) {
+                when (c) {
+                    '{' -> depth++
+                    '}' -> {
+                        depth--
+                        if (depth == 0) return s.substring(startIdx, idx + 1)
+                    }
                 }
             }
-        }.toString()
+            idx++
+        }
+        return null
     }
 
     /**
@@ -2273,7 +2311,7 @@ class RemoteDataRepository(
     }
 
     override fun startLocalModelDownload(model: LocalModel) {
-        localInferenceEngine?.startDownload(model)
+        localInferenceEngine?.startDownload(model, appSettings.getHfToken())
     }
 
     override fun cancelLocalModelDownload() {
@@ -2282,5 +2320,19 @@ class RemoteDataRepository(
 
     override suspend fun deleteLocalModel(modelId: String) {
         localInferenceEngine?.deleteModel(modelId)
+    }
+
+    override fun getLocalActiveBackend(): StateFlow<String?>? = localInferenceEngine?.activeBackend
+
+    override fun getHfToken(): String = appSettings.getHfToken()
+
+    override fun setHfToken(token: String) {
+        appSettings.setHfToken(token)
+    }
+
+    override fun getBackendPreference(): String = appSettings.getBackendPreference()
+
+    override fun setBackendPreference(pref: String) {
+        appSettings.setBackendPreference(pref)
     }
 }

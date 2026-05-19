@@ -924,6 +924,9 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
                     onRemove = { actions.onRemoveService(entry.instanceId) },
                     isDragging = isDragging,
                     dragHandleModifier = if (entries.size >= 2) Modifier.draggableHandle() else null,
+                    localActiveBackend = uiState.localActiveBackend,
+                    backendPreference = uiState.backendPreference,
+                    hfToken = uiState.hfToken,
                     localAvailableModels = uiState.localAvailableModels,
                     totalDeviceMemoryBytes = uiState.totalDeviceMemoryBytes,
                     localFreeSpaceBytes = uiState.localFreeSpaceBytes,
@@ -934,6 +937,8 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
                     onCancelLocalModelDownload = actions.onCancelLocalModelDownload,
                     onDeleteLocalModel = actions.onDeleteLocalModel,
                     onChangeModelContextTokens = actions.onChangeModelContextTokens,
+                    onChangeHfToken = actions.onChangeHfToken,
+                    onChangeBackendPreference = actions.onChangeBackendPreference,
                     modelContextTokens = uiState.modelContextTokens,
                 )
             }
@@ -1043,6 +1048,7 @@ private fun ConfiguredServiceCardContent(
     onRemove: () -> Unit,
     isDragging: Boolean = false,
     dragHandleModifier: Modifier? = null,
+    localActiveBackend: String? = null,
     localAvailableModels: ImmutableList<LocalModel> = persistentListOf(),
     totalDeviceMemoryBytes: Long = Long.MAX_VALUE,
     localFreeSpaceBytes: Long = 0L,
@@ -1053,6 +1059,10 @@ private fun ConfiguredServiceCardContent(
     onCancelLocalModelDownload: () -> Unit = {},
     onDeleteLocalModel: (String) -> Unit = {},
     onChangeModelContextTokens: (String, Int) -> Unit = { _, _ -> },
+    backendPreference: String = "auto",
+    hfToken: String = "",
+    onChangeHfToken: (String) -> Unit = {},
+    onChangeBackendPreference: (String) -> Unit = {},
     modelContextTokens: Map<String, Int> = emptyMap(),
 ) {
     Column(
@@ -1132,6 +1142,9 @@ private fun ConfiguredServiceCardContent(
                         availableModels = localAvailableModels,
                         totalDeviceMemoryBytes = totalDeviceMemoryBytes,
                         freeSpaceBytes = localFreeSpaceBytes,
+                        activeBackend = localActiveBackend,
+                        backendPreference = backendPreference,
+                        hfToken = hfToken,
                         downloadingModelId = localDownloadingModelId,
                         downloadProgress = localDownloadProgress,
                         downloadError = localDownloadError,
@@ -1140,6 +1153,8 @@ private fun ConfiguredServiceCardContent(
                         onCancelDownload = onCancelLocalModelDownload,
                         onDeleteModel = onDeleteLocalModel,
                         onChangeModelContextTokens = onChangeModelContextTokens,
+                        onChangeHfToken = onChangeHfToken,
+                        onChangeBackendPreference = onChangeBackendPreference,
                         modelContextTokens = modelContextTokens,
                     )
                 } else if (entry.service is Service.OpenAICompatible) {
@@ -1340,6 +1355,9 @@ private fun LiteRTSettings(
     availableModels: ImmutableList<LocalModel>,
     totalDeviceMemoryBytes: Long,
     freeSpaceBytes: Long,
+    activeBackend: String? = null,
+    backendPreference: String = "auto",
+    hfToken: String = "",
     downloadingModelId: String?,
     downloadProgress: Float?,
     downloadError: DownloadError?,
@@ -1348,6 +1366,8 @@ private fun LiteRTSettings(
     onCancelDownload: () -> Unit,
     onDeleteModel: (String) -> Unit,
     onChangeModelContextTokens: (String, Int) -> Unit,
+    onChangeHfToken: (String) -> Unit = {},
+    onChangeBackendPreference: (String) -> Unit = {},
     modelContextTokens: Map<String, Int>,
 ) {
     val downloadedIds = remember(downloadedModels) { downloadedModels.map { it.id }.toSet() }
@@ -1359,6 +1379,72 @@ private fun LiteRTSettings(
     )
 
     Spacer(Modifier.height(4.dp))
+
+    Text(
+        text = if (activeBackend != null) "Backend: ${activeBackend.uppercase()}" else "Backend: ? (check after first message)",
+        style = MaterialTheme.typography.bodySmall,
+        color = if (activeBackend == "gpu") StatusColorConnected else if (activeBackend == "cpu") StatusColorError else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(4.dp))
+
+    Text(
+        text = "Backend: ${activeBackend?.uppercase() ?: "?"} (${if (activeBackend != null) "active" else "unknown — send a message first"})",
+        style = MaterialTheme.typography.bodySmall,
+        color = if (activeBackend == "gpu") StatusColorConnected else if (activeBackend == "cpu") StatusColorError else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
+    Spacer(Modifier.height(4.dp))
+
+    Text(
+        text = "Preference:",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        listOf("auto" to "Auto", "gpu" to "GPU", "cpu" to "CPU").forEach { (value, label) ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.handCursor().clickable { onChangeBackendPreference(value) },
+            ) {
+                RadioButton(
+                    selected = backendPreference == value,
+                    onClick = { onChangeBackendPreference(value) },
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(label, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.width(12.dp))
+            }
+        }
+    }
+    Text(
+        text = if (backendPreference != "auto") "Changes apply on next message" else "Auto: tries GPU, falls back to CPU",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
+    Spacer(Modifier.height(12.dp))
+
+    var showHfToken by remember { mutableStateOf(false) }
+    OakOutlinedTextField(
+        value = hfToken,
+        onValueChange = onChangeHfToken,
+        label = { Text("HuggingFace Token") },
+        placeholder = { Text("hf_... (for gated models)") },
+        singleLine = true,
+        visualTransformation = if (showHfToken) VisualTransformation.None else PasswordVisualTransformation(),
+        trailingIcon = {
+            IconButton(onClick = { showHfToken = !showHfToken }) {
+                Icon(
+                    imageVector = if (showHfToken) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                    contentDescription = if (showHfToken) "Hide token" else "Show token",
+                )
+            }
+        },
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    Spacer(Modifier.height(8.dp))
 
     Text(
         text = stringResource(Res.string.litert_tool_support),

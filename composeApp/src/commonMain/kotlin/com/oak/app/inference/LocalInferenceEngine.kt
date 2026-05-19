@@ -91,7 +91,13 @@ interface LocalInferenceEngine {
 
     val currentModelId: String?
 
-    suspend fun initialize(model: DownloadedModel, contextTokens: Int = 0)
+    /** "gpu" or "cpu" — which backend is running inference, or null before init. */
+    val activeBackend: StateFlow<String?>
+
+    /** "auto", "gpu", or "cpu" — the backend preference used at last init. */
+    val currentBackendPref: String
+
+    suspend fun initialize(model: DownloadedModel, contextTokens: Int = 0, backendPreference: String = "auto")
     suspend fun release()
 
     /**
@@ -110,7 +116,7 @@ interface LocalInferenceEngine {
     fun getDownloadedModels(): List<DownloadedModel>
     fun getAvailableModels(): List<LocalModel>
     fun getFreeSpaceBytes(): Long
-    fun startDownload(model: LocalModel)
+    fun startDownload(model: LocalModel, hfToken: String = "")
     fun cancelDownload()
     suspend fun deleteModel(modelId: String)
 }

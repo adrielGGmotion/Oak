@@ -118,6 +118,9 @@ class SettingsViewModel(
         uiScale = dataRepository.getUiScale(),
         showUiScale = currentPlatform is Platform.Desktop,
         mcpServers = buildMcpServerEntries().toImmutableList(),
+        localActiveBackend = dataRepository.getLocalActiveBackend()?.value,
+        hfToken = dataRepository.getHfToken(),
+        backendPreference = dataRepository.getBackendPreference(),
         localAvailableModels = dataRepository.getLocalAvailableModels().toImmutableList(),
         totalDeviceMemoryBytes = dataRepository.getTotalDeviceMemoryBytes(),
         localFreeSpaceBytes = dataRepository.getLocalFreeSpaceBytes(),
@@ -177,6 +180,8 @@ class SettingsViewModel(
         onCancelLocalModelDownload = ::onCancelLocalModelDownload,
         onDeleteLocalModel = ::onDeleteLocalModel,
         onChangeModelContextTokens = ::onChangeModelContextTokens,
+        onChangeHfToken = ::onChangeHfToken,
+        onChangeBackendPreference = ::onChangeBackendPreference,
         onExportSettings = ::onExportSettings,
         onPrepareExport = ::onPrepareExport,
         onImportSettings = ::onImportSettings,
@@ -196,6 +201,7 @@ class SettingsViewModel(
         val downloadingFlow = dataRepository.getLocalDownloadingModelId() ?: flowOf(null)
         val progressFlow = dataRepository.getLocalDownloadProgress() ?: flowOf(null)
         val errorFlow = dataRepository.getLocalDownloadError() ?: flowOf(null)
+        val backendFlow = dataRepository.getLocalActiveBackend() ?: flowOf(null)
         viewModelScope.launch {
             combine(downloadingFlow, progressFlow, errorFlow) { modelId, progress, error ->
                 Triple(modelId, progress, error)
@@ -216,6 +222,11 @@ class SettingsViewModel(
                         .filter { it.service.isOnDevice }
                         .forEach { checkConnection(it.instanceId, it.service) }
                 }
+            }
+        }
+        viewModelScope.launch {
+            backendFlow.collect { backend ->
+                _state.update { it.copy(localActiveBackend = backend) }
             }
         }
     }
@@ -654,6 +665,16 @@ class SettingsViewModel(
         val stored = dataRepository.getModelContextTokens(model.id)
         model.id to if (stored > 0) stored else model.defaultContextTokens
     }.toImmutableMap()
+
+    private fun onChangeHfToken(token: String) {
+        dataRepository.setHfToken(token)
+        _state.update { it.copy(hfToken = token) }
+    }
+
+    private fun onChangeBackendPreference(pref: String) {
+        dataRepository.setBackendPreference(pref)
+        _state.update { it.copy(backendPreference = pref) }
+    }
 
     private fun onDeleteLocalModel(modelId: String) {
         viewModelScope.launch(backgroundDispatcher) {

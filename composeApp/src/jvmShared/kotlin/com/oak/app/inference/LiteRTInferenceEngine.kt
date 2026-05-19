@@ -6,9 +6,7 @@ import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
-import com.google.ai.edge.litertlm.OpenApiTool
 import com.google.ai.edge.litertlm.SamplerConfig
-import com.google.ai.edge.litertlm.tool
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +19,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.io.File
@@ -62,8 +59,19 @@ val MODEL_CATALOG = listOf(
         downloadUrl = "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/main/Qwen3-0.6B.litertlm",
         gpuMemoryMb = 300,
         defaultContextTokens = 4_096,
-        maxContextTokens = 32_768,
+        maxContextTokens = 8_192,
         kvPerTokenBytes = 35_000,
+    ),
+    LocalModel(
+        id = "gemma3-1b-it",
+        displayName = "Gemma 3 1B IT",
+        fileName = "gemma3-1b-it-int4.litertlm",
+        sizeBytes = 554_661_246L,
+        downloadUrl = "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.litertlm",
+        gpuMemoryMb = 350,
+        defaultContextTokens = 2_048,
+        maxContextTokens = 4_096,
+        kvPerTokenBytes = 25_000,
     ),
 )
 
@@ -77,7 +85,13 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
     private var conversation: com.google.ai.edge.litertlm.Conversation? = null
     override var currentModelId: String? = null
         private set
+    override var currentBackendPref: String = "auto"
+        private set
     private var currentContextTokens: Int = 0
+
+    // Conversation tracking — avoids closing + recreating on every turn.
+    private var lastSystemPrompt: String? = null
+    private var sentMessageCount: Int = 0
 
     private val _engineState = MutableStateFlow(EngineState.UNINITIALIZED)
     override val engineState: StateFlow<EngineState> = _engineState
@@ -91,10 +105,13 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
     private val _downloadError = MutableStateFlow<DownloadError?>(null)
     override val downloadError: StateFlow<DownloadError?> = _downloadError
 
-    override suspend fun initialize(model: DownloadedModel, contextTokens: Int) {
+    private val _activeBackend = MutableStateFlow<String?>(null)
+    override val activeBackend: StateFlow<String?> = _activeBackend
+
+    override suspend fun initialize(model: DownloadedModel, contextTokens: Int, backendPreference: String) {
         withContext(Dispatchers.IO) {
             idleReleaseJob?.cancel()
-            if (currentModelId == model.id && currentContextTokens == contextTokens && _engineState.value == EngineState.READY) return@withContext
+            if (currentModelId == model.id && currentContextTokens == contextTokens && currentBackendPref == backendPreference && _engineState.value == EngineState.READY) return@withContext
             _engineState.value = EngineState.INITIALIZING
             try {
                 val modelFile = File(model.filePath)
@@ -102,18 +119,11 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                     throw IllegalStateException("Model file missing or too small: ${model.filePath}")
                 }
 
-                // Release any currently-loaded engine before measuring available memory,
-                // otherwise its GPU/CPU working set counts against the headroom check and
-                // switching between models spuriously fails (e.g. Qwen -> Gemma 4).
                 val hadExistingEngine = engine != null
                 release()
                 _engineState.value = EngineState.INITIALIZING
 
                 if (hadExistingEngine) {
-                    // engine.close() returns before the OpenCL driver actually reclaims the
-                    // previous model's GPU buffers, so loading a second model on top would
-                    // briefly hold both resident and trip Android's LMK. Give the driver a
-                    // beat to drain before allocating ~GB of new GPU buffers.
                     System.gc()
                     delay(GPU_DRAIN_DELAY_MS.milliseconds)
                 }
@@ -136,34 +146,54 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                 }
 
                 val requestedTokens = if (contextTokens > 0) contextTokens else null
-                println("LiteRT: initializing model=${model.id} maxNumTokens=$requestedTokens")
+                println("LiteRT: initializing model=${model.id} maxNumTokens=$requestedTokens backendPref=$backendPreference")
 
-                val newEngine = try {
-                    try {
-                        initWithBackend(Backend.GPU(), requestedTokens)
-                    } catch (e: Exception) {
-                        initWithBackend(Backend.CPU(), requestedTokens)
-                    }
-                } catch (e: Exception) {
-                    // Context size not supported — retry with model default
-                    println("LiteRT: init failed with maxNumTokens=$requestedTokens, falling back to default: ${e.message}")
-                    if (requestedTokens != null) {
+                val newEngine = when (backendPreference) {
+                    "gpu" -> {
                         try {
-                            initWithBackend(Backend.GPU(), null)
-                        } catch (e2: Exception) {
-                            initWithBackend(Backend.CPU(), null)
+                            initWithBackend(Backend.GPU(), requestedTokens).also { _activeBackend.value = "gpu" }
+                        } catch (e: Exception) {
+                            println("LiteRT: GPU init failed (${e.message}), cannot fall back because user chose GPU")
+                            throw e
                         }
-                    } else {
-                        throw e
+                    }
+                    "cpu" -> {
+                        initWithBackend(Backend.CPU(), requestedTokens).also { _activeBackend.value = "cpu" }
+                    }
+                    else -> {
+                        try {
+                            try {
+                                initWithBackend(Backend.GPU(), requestedTokens).also { _activeBackend.value = "gpu" }
+                            } catch (e: Exception) {
+                                println("LiteRT: GPU init failed (${e.message}), falling back to CPU")
+                                initWithBackend(Backend.CPU(), requestedTokens).also { _activeBackend.value = "cpu" }
+                            }
+                        } catch (e: Exception) {
+                            println("LiteRT: init failed with maxNumTokens=$requestedTokens, falling back to default: ${e.message}")
+                            if (requestedTokens != null) {
+                                try {
+                                    initWithBackend(Backend.GPU(), null).also { _activeBackend.value = "gpu" }
+                                } catch (e2: Exception) {
+                                    println("LiteRT: GPU init with default tokens failed too, falling back to CPU")
+                                    initWithBackend(Backend.CPU(), null).also { _activeBackend.value = "cpu" }
+                                }
+                            } else {
+                                throw e
+                            }
+                        }
                     }
                 }
 
                 engine = newEngine
-                conversation = newEngine.createConversation()
+                conversation = null
                 currentModelId = model.id
                 currentContextTokens = contextTokens
+                currentBackendPref = backendPreference
+                sentMessageCount = 0
+                lastSystemPrompt = null
                 _engineState.value = EngineState.READY
             } catch (e: Exception) {
+                _activeBackend.value = null
                 _engineState.value = EngineState.ERROR
                 throw e
             }
@@ -172,13 +202,15 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
 
     override suspend fun release() {
         withContext(Dispatchers.IO) {
-            // Null before close so a concurrent release() sees null and skips —
-            // Conversation.close() / Engine.close() throw IllegalStateException on double-close.
             val convToClose = conversation
             val engineToClose = engine
             conversation = null
             engine = null
             currentModelId = null
+            currentBackendPref = "auto"
+            sentMessageCount = 0
+            lastSystemPrompt = null
+            _activeBackend.value = null
             _engineState.value = EngineState.UNINITIALIZED
             runCatching { convToClose?.close() }
             runCatching { engineToClose?.close() }
@@ -199,81 +231,83 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
         try {
             val currentEngine = engine ?: throw IllegalStateException("Engine not initialized")
 
-            val lastUserIndex = messages.indexOfLast { it.role == "user" }
-            if (lastUserIndex < 0) throw IllegalStateException("No user message found")
+            val sanitizedSP = sanitizeForLiteRt(systemPrompt)
 
-            val sanitizedSystemPrompt = sanitizeForLiteRt(systemPrompt)
-            val initialMessages = messages.subList(0, lastUserIndex).map { msg ->
+            val needsReset = conversation == null ||
+                sanitizedSP != lastSystemPrompt ||
+                sentMessageCount != messages.size
+
+            if (needsReset) {
+                buildConversation(currentEngine, messages, sanitizedSP)
+            }
+
+            val conv = conversation ?: throw IllegalStateException("Conversation not initialized")
+
+            // Send any new user messages that arrived since the last call.
+            // The Conversation already holds the prior exchanges internally.
+            val newMessages = messages.drop(sentMessageCount)
+            if (newMessages.isEmpty()) {
+                // Should not happen, but guard against it.
+                val fallback = messages.lastOrNull { it.role == "user" }?.content ?: ""
+                val content = sanitizeForLiteRt(fallback) ?: ""
+                return@withContext withTimeout(INFERENCE_TIMEOUT_MS.milliseconds) { conv.sendMessage(content).toString() }
+            }
+
+            var lastResponse = ""
+            for (msg in newMessages) {
+                val content = sanitizeForLiteRt(msg.content) ?: ""
+                if (msg.role == "user") {
+                    lastResponse = withTimeout(INFERENCE_TIMEOUT_MS.milliseconds) {
+                        conv.sendMessage(content).toString()
+                    }
+                }
+                // "assistant" role messages are the model's own prior responses —
+                // they're already in the Conversation's internal state from the
+                // previous `sendMessage()` call, so we skip them here.
+            }
+            sentMessageCount = messages.size
+            lastResponse
+        } catch (e: TimeoutCancellationException) {
+            throw InferenceTimeoutException()
+        } finally {
+            scheduleIdleRelease()
+        }
+    }
+
+    private fun buildConversation(
+        engine: Engine,
+        messages: List<InferenceMessage>,
+        systemPrompt: String?,
+    ) {
+        val lastUserIndex = messages.indexOfLast { it.role == "user" }
+        val initialMessages = if (lastUserIndex > 0) {
+            messages.subList(0, lastUserIndex).map { msg ->
                 val sanitized = sanitizeForLiteRt(msg.content) ?: ""
                 when (msg.role) {
                     "user" -> Message.user(sanitized)
                     else -> Message.model(sanitized)
                 }
             }
+        } else emptyList()
 
-            val toolProviders = tools.map { tool(LocalToolOpenApiAdapter(it)) }
-            val config = ConversationConfig(
-                systemInstruction = sanitizedSystemPrompt?.let { Contents.of(it) },
-                initialMessages = initialMessages,
-                tools = toolProviders,
-                samplerConfig = SamplerConfig(topK = 40, topP = 0.95, temperature = 0.8),
-                // automaticToolCalling = true drives the parser; only enable when we
-                // actually have tools, otherwise plain-text responses get parsed as FCs.
-                automaticToolCalling = toolProviders.isNotEmpty(),
-            )
-            val prev = conversation
-            conversation = null
-            runCatching { prev?.close() }
-            val conv = currentEngine.createConversation(config)
-            conversation = conv
+        val config = ConversationConfig(
+            systemInstruction = systemPrompt?.let { Contents.of(it) },
+            initialMessages = initialMessages,
+            samplerConfig = SamplerConfig(topK = 40, topP = 0.95, temperature = 0.8),
+            automaticToolCalling = false,
+        )
 
-            val lastMessage = sanitizeForLiteRt(messages[lastUserIndex].content) ?: ""
-            val response = try {
-                withTimeout(INFERENCE_TIMEOUT_MS.milliseconds) {
-                    conv.sendMessage(lastMessage)
-                }
-            } catch (e: TimeoutCancellationException) {
-                throw InferenceTimeoutException()
-            }
-            stripThinkBlocks(response.toString())
-        } finally {
-            scheduleIdleRelease()
-        }
+        runCatching { conversation?.close() }
+        conversation = engine.createConversation(config)
+        sentMessageCount = if (lastUserIndex >= 0) lastUserIndex else messages.size
+        lastSystemPrompt = systemPrompt
     }
 
-    /**
-     * Adapter that exposes a Oak [LocalTool] (suspend execute) to litert-lm's [OpenApiTool]
-     * (synchronous execute). The bridge uses [runBlocking] because the engine calls
-     * [execute] on its own worker thread (we're already inside `Dispatchers.IO` from
-     * [chat]) and waits for the result before continuing the tool loop.
-     */
-    private class LocalToolOpenApiAdapter(private val localTool: LocalTool) : OpenApiTool {
-        override fun getToolDescriptionJsonString(): String = localTool.descriptionJsonString
-        override fun execute(paramsJsonString: String): String = runBlocking { localTool.execute(paramsJsonString) }
-    }
-
-    /**
-     * Drops UTF-16 surrogate halves from the string. The litert-lm JNI layer passes
-     * strings to the native runtime as *modified* UTF-8, which encodes supplementary-plane
-     * characters (U+10000–U+10FFFF — most emoji like 🗺️, 🎉, 🔥) as surrogate-pair
-     * sequences where each half becomes a 3-byte block. That is invalid as *standard*
-     * UTF-8, and the native runtime's `nlohmann::json` parser crashes with "ill-formed
-     * UTF-8 byte" the moment it hits one.
-     *
-     * Filtering surrogates drops every supplementary character (both halves are surrogate
-     * code units in UTF-16) while leaving BMP characters — including BMP-only emoji like
-     * ⚔️, ♻️, ❤️, and all CJK / extended Latin / accented characters — untouched.
-     * No-op for strings that don't contain any supplementary character.
-     */
     private fun sanitizeForLiteRt(s: String?): String? {
         if (s == null) return null
         if (s.none { it.isSurrogate() }) return s
         return s.filter { !it.isSurrogate() }
     }
-
-    // Qwen3 emits a <think>…</think> block as part of its chat template; strip it before
-    // the user sees it. Safe for Gemma 4, which never emits these tags.
-    private fun stripThinkBlocks(s: String): String = THINK_BLOCK_REGEX.replace(s, "").trim()
 
     private fun scheduleIdleRelease() {
         idleReleaseJob?.cancel()
@@ -284,12 +318,11 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
     }
 
     companion object {
-        private const val IDLE_RELEASE_MS = 5L * 60 * 1000 // 5 minutes
-        private const val INFERENCE_TIMEOUT_MS = 120_000L // 2 minutes
-        private const val MIN_MEMORY_HEADROOM_BYTES = 512L * 1024 * 1024 // 512 MB
-        private const val DOWNLOAD_SPACE_BUFFER_BYTES = 500L * 1024 * 1024 // 500 MB
+        private const val IDLE_RELEASE_MS = 5L * 60 * 1000
+        private const val INFERENCE_TIMEOUT_MS = 120_000L
+        private const val MIN_MEMORY_HEADROOM_BYTES = 512L * 1024 * 1024
+        private const val DOWNLOAD_SPACE_BUFFER_BYTES = 500L * 1024 * 1024
         private const val GPU_DRAIN_DELAY_MS = 750L
-        private val THINK_BLOCK_REGEX = Regex("<think>.*?</think>", RegexOption.DOT_MATCHES_ALL)
     }
 
     override fun getDownloadedModels(): List<DownloadedModel> {
@@ -315,7 +348,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
 
     override fun getFreeSpaceBytes(): Long = getAvailableDiskSpaceBytes(getModelStorageDirectory())
 
-    override fun startDownload(model: LocalModel) {
+    override fun startDownload(model: LocalModel, hfToken: String) {
         cancelDownload()
         downloadJob = scope.launch {
             _downloadingModelId.value = model.id
@@ -343,6 +376,9 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                 connection.instanceFollowRedirects = true
                 connection.connectTimeout = 30_000
                 connection.readTimeout = 60_000
+                if (hfToken.isNotBlank()) {
+                    connection.setRequestProperty("Authorization", "Bearer $hfToken")
+                }
                 connection.connect()
 
                 val responseCode = connection.responseCode
@@ -351,9 +387,6 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                     throw IOException("Download failed: HTTP $responseCode")
                 }
 
-                // Only start the foreground service once we have a live connection.
-                // Starting it earlier risks ForegroundServiceDidNotStartInTimeException if
-                // the connect() above fails fast (e.g. offline) before the service can run.
                 startDownloadNotificationService()
                 notificationStarted = true
 
@@ -409,7 +442,6 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
 
     override suspend fun deleteModel(modelId: String) {
         withContext(Dispatchers.IO) {
-            // Wait for any in-flight idle release so its native teardown doesn't race with deleteRecursively().
             idleReleaseJob?.cancelAndJoin()
             idleReleaseJob = null
             if (currentModelId == modelId) {
