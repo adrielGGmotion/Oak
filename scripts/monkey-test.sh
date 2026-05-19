@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PACKAGE="com.beer.app"
-ACTIVITY="com.beer.app.MainActivity"
+PACKAGE="com.oak.app"
+ACTIVITY="com.oak.app.MainActivity"
 EVENT_COUNT="${1:-10000}"
 THROTTLE="${2:-50}"
 
-echo "=== Beer Monkey Test ==="
+echo "=== Oak Monkey Test ==="
 echo "Events: $EVENT_COUNT | Throttle: ${THROTTLE}ms"
 echo ""
 

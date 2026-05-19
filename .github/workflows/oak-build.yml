@@ -39,23 +39,12 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Setup JDK
-        uses: actions/setup-java@v5
+      - uses: ./.github/actions/setup
         with:
-          distribution: temurin
-          java-version: "21"
-      - name: Set execution flag for gradlew
-        run: chmod +x gradlew
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Install Android Build Tools
-        run: |
-          sdkmanager "build-tools;36.0.0"
-          sdkmanager "build-tools;29.0.3"
+          setup-android: 'true'
       - name: Build Debug APK
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
@@ -74,25 +63,15 @@ jobs:
       (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Setup JDK
-        uses: actions/setup-java@v5
+      - uses: ./.github/actions/setup
         with:
-          distribution: temurin
-          java-version: "21"
-      - name: Set execution flag for gradlew
-        run: chmod +x gradlew
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Install Android Build Tools
-        run: |
-          sdkmanager "build-tools;36.0.0"
-          sdkmanager "build-tools;29.0.3"
+          setup-android: 'true'
       - name: Build Release APK
         env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -110,17 +89,10 @@ jobs:
       (github.event.inputs.platform == 'desktop' || github.event.inputs.platform == 'all')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Setup JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "21"
-      - name: Set execution flag for gradlew
-        run: chmod +x gradlew
+      - uses: ./.github/actions/setup
       - name: Build Linux Packages
         run: bash ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace
       - name: Upload raw app directory
@@ -146,17 +118,10 @@ jobs:
       (github.event.inputs.platform == 'desktop' || github.event.inputs.platform == 'all')
     runs-on: macos-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Setup JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "21"
-      - name: Set execution flag for gradlew
-        run: chmod +x gradlew
+      - uses: ./.github/actions/setup
       - name: Build macOS Package
         run: bash ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace
       - name: Upload macOS Package
@@ -172,15 +137,10 @@ jobs:
       (github.event.inputs.platform == 'desktop' || github.event.inputs.platform == 'all')
     runs-on: windows-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Setup JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "21"
+      - uses: ./.github/actions/setup
       - name: Build Windows Package
         shell: bash
         run: ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace
