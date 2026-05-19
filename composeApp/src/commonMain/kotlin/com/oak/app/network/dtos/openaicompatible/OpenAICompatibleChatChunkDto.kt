@@ -17,6 +17,21 @@ data class OpenAICompatibleChatChunkDto(
     data class Delta(
         val content: String? = null,
         @SerialName("reasoning_content") val reasoningContent: String? = null,
+        @SerialName("tool_calls") val toolCalls: List<ToolCallDelta>? = null,
+    )
+
+    @Serializable
+    data class ToolCallDelta(
+        val index: Int,
+        val id: String? = null,
+        val type: String? = null,
+        val function: FunctionDelta? = null,
+    )
+
+    @Serializable
+    data class FunctionDelta(
+        val name: String? = null,
+        val arguments: String? = null,
     )
 
     companion object {

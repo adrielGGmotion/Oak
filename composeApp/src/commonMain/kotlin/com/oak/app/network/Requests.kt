@@ -266,18 +266,22 @@ class Requests {
                 }
 
                 val channel = response.bodyAsChannel()
-                while (!channel.isClosedForRead) {
-                    val line = channel.readUTF8Line() ?: break
-                    if (!line.startsWith("data: ")) continue
-                    val data = line.removePrefix("data: ").trim()
-                    if (data == OpenAICompatibleChatChunkDto.DONE_MARKER) break
-                    if (data.isEmpty()) continue
-                    try {
-                        val chunk = json.decodeFromString<OpenAICompatibleChatChunkDto>(data)
-                        trySend(chunk)
-                    } catch (_: Exception) {
-                        /* Skip malformed chunks */
+                try {
+                    while (!channel.isClosedForRead) {
+                        val line = channel.readUTF8Line() ?: break
+                        if (!line.startsWith("data: ")) continue
+                        val data = line.removePrefix("data: ").trim()
+                        if (data == OpenAICompatibleChatChunkDto.DONE_MARKER) break
+                        if (data.isEmpty()) continue
+                        try {
+                            val chunk = json.decodeFromString<OpenAICompatibleChatChunkDto>(data)
+                            trySend(chunk)
+                        } catch (_: Exception) {
+                            /* Skip malformed chunks */
+                        }
                     }
+                } finally {
+                    close()
                 }
             }
         } catch (e: Exception) {
