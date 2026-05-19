@@ -1380,48 +1380,87 @@ private fun LiteRTSettings(
 
     Spacer(Modifier.height(4.dp))
 
-    Text(
-        text = if (activeBackend != null) "Backend: ${activeBackend.uppercase()}" else "Backend: ? (check after first message)",
-        style = MaterialTheme.typography.bodySmall,
-        color = if (activeBackend == "gpu") StatusColorConnected else if (activeBackend == "cpu") StatusColorError else MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(4.dp))
-
-    Text(
-        text = "Backend: ${activeBackend?.uppercase() ?: "?"} (${if (activeBackend != null) "active" else "unknown — send a message first"})",
-        style = MaterialTheme.typography.bodySmall,
-        color = if (activeBackend == "gpu") StatusColorConnected else if (activeBackend == "cpu") StatusColorError else MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-
-    Spacer(Modifier.height(4.dp))
-
-    Text(
-        text = "Preference:",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        listOf("auto" to "Auto", "gpu" to "GPU", "cpu" to "CPU").forEach { (value, label) ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.handCursor().clickable { onChangeBackendPreference(value) },
-            ) {
-                RadioButton(
-                    selected = backendPreference == value,
-                    onClick = { onChangeBackendPreference(value) },
-                    modifier = Modifier.size(20.dp),
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when (activeBackend) {
+                                "gpu" -> StatusColorConnected
+                                "cpu" -> StatusColorError
+                                else -> StatusColorUnknown
+                            },
+                        ),
                 )
-                Spacer(Modifier.width(4.dp))
-                Text(label, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "Backend: ${activeBackend?.uppercase() ?: "?"}",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = if (activeBackend == "gpu") StatusColorConnected else if (activeBackend == "cpu") StatusColorError else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = if (activeBackend != null) "(active)" else "(unknown — send a message first)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "Compute preference:",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(0.dp),
+            ) {
+                listOf("auto" to "Auto", "gpu" to "GPU", "cpu" to "CPU").forEach { (value, label) ->
+                    val isSelected = backendPreference == value
+                    Surface(
+                        onClick = { onChangeBackendPreference(value) },
+                        modifier = Modifier.weight(1f).handCursor(),
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = null,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = if (backendPreference != "auto") "Changes apply on next message" else "Auto: tries GPU, falls back to CPU",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
-    Text(
-        text = if (backendPreference != "auto") "Changes apply on next message" else "Auto: tries GPU, falls back to CPU",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
 
     Spacer(Modifier.height(12.dp))
 
