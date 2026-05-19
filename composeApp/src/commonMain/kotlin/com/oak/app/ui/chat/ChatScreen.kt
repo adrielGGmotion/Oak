@@ -602,6 +602,16 @@ private fun ChatModeScreen(
                             val listState = rememberLazyListState()
                             val componentScope = rememberCoroutineScope()
 
+                            LaunchedEffect(uiState.streamingContent) {
+                                if (uiState.streamingContent != null && uiState.history.isNotEmpty()) {
+                                    val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+                                    val atBottom = lastVisible != null && lastVisible.index >= listState.layoutInfo.totalItemsCount - 2
+                                    if (atBottom) {
+                                        listState.animateScrollToItem(uiState.history.size)
+                                    }
+                                }
+                            }
+
                             LaunchedEffect(uiState.history.size) {
                                 // Capture history at effect start to prevent race conditions
                                 val history = uiState.history
@@ -703,6 +713,7 @@ private fun ChatModeScreen(
                                                     val pairedUserId = userIdByAssistantId[history.id]
                                                     BotMessage(
                                                         message = history.content,
+                                                        reasoningContent = history.reasoningContent,
                                                         textToSpeech = textToSpeech,
                                                         isSpeaking = uiState.isSpeaking && uiState.isSpeakingContentId == history.id,
                                                         setIsSpeaking = {
@@ -750,10 +761,12 @@ private fun ChatModeScreen(
                                         }
                                     }
 
-                                    // Skip the generic "thinking" row during a pending oak-ui submission — the
-                                    // pressed button's pulse already signals work in flight. Keep it for tool
-                                    // activity so tool feedback isn't lost.
+                                    // Skip the generic "thinking" row while streaming content is visible
+                                    // (the streaming message itself is the progress indicator). Also skip it
+                                    // during a pending oak-ui submission — the pressed button's pulse already
+                                    // signals work in flight. Keep it for tool activity so tool feedback isn't lost.
                                     val showWaitingRow = uiState.isLoading &&
+                                        uiState.streamingContent == null &&
                                         (frozenByAssistantId.values.none { it.isPending } || executingToolsState.tools.isNotEmpty())
                                     if (showWaitingRow) {
                                         item(key = "loading") {
@@ -878,22 +891,12 @@ private fun StreamingMessage(
                     }
                 }
             }
-            Box {
-                MarkdownContent(
-                    content = content,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 8.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
-                )
-                Text(
-                    text = "▌",
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+            MarkdownContent(
+                content = content,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+            )
         }
     }
 }

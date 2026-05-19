@@ -25,6 +25,8 @@ import com.oak.app.network.AnthropicInsufficientCreditsException
 import com.oak.app.network.ContextWindowExceededException
 import com.oak.app.network.FileTooLargeException
 import com.oak.app.network.OpenAICompatibleEmptyResponseException
+import com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatResponseDto
+import com.oak.app.network.dtos.openaicompatible.toolCallMarkerRegex
 import com.oak.app.network.OpenAICompatibleQuotaExhaustedException
 import com.oak.app.network.Requests
 import com.oak.app.network.ServiceCredentials
@@ -577,51 +579,6 @@ class RemoteDataRepository(
         return result
     }
 
-    private suspend fun askWithServiceStreaming(
-        service: Service,
-        messages: List<History>,
-        systemPrompt: String?,
-        instanceId: String,
-        history: MutableStateFlow<List<History>> = chatHistory,
-    ): String {
-        val creds = instanceCredentials(instanceId, service)
-        val openAIMessages = buildOpenAIMessages(messages, systemPrompt)
-        val tools = if (supportsTools(creds.modelId)) getAvailableTools() else emptyList()
-
-        _streamingReasoning.value = ""
-        _streamingContent.value = ""
-
-        val fullContent = StringBuilder()
-        val fullReasoning = StringBuilder()
-
-        try {
-            requests
-                .openAICompatibleChatStream(service, creds, openAIMessages, tools)
-                .collect { chunk ->
-                    val choice = chunk.choices?.firstOrNull()
-                    val delta = choice?.delta
-                    delta?.reasoningContent?.let { r ->
-                        if (r.isNotEmpty()) {
-                            fullReasoning.append(r)
-                            _streamingReasoning.value = fullReasoning.toString()
-                        }
-                    }
-                    delta?.content?.let { c ->
-                        if (c.isNotEmpty()) {
-                            fullContent.append(c)
-                            _streamingContent.value = fullContent.toString()
-                        }
-                    }
-                }
-        } catch (e: Exception) {
-            _streamingReasoning.value = null
-            _streamingContent.value = null
-            throw e
-        }
-
-        return fullContent.toString()
-    }
-
     private suspend fun askWithService(
         service: Service,
         messages: List<History>,
@@ -662,11 +619,7 @@ class RemoteDataRepository(
             }
 
             else -> {
-                if (tools.isNotEmpty()) {
-                    handleOpenAICompatibleChatWithTools(service, creds, messages, tools, systemPrompt, history)
-                } else {
-                    askWithServiceStreaming(service, messages, systemPrompt, instanceId, history)
-                }
+                handleOpenAICompatibleChatWithTools(service, creds, messages, tools, systemPrompt, history)
             }
         }
     }
@@ -816,9 +769,11 @@ class RemoteDataRepository(
                 if (index > 0) {
                     fallbackServiceName = entry.service.displayName
                 }
+                val reasoning = _streamingReasoning.value
+                val isReasoningOnly = responseText.isBlank() && !reasoning.isNullOrBlank()
                 chatHistory.update {
                     it.toMutableList().apply {
-                        add(History(role = History.Role.ASSISTANT, content = responseText, reasoningContent = _streamingReasoning.value, fallbackServiceName = fallbackServiceName))
+                        add(History(role = History.Role.ASSISTANT, content = responseText, isThinking = isReasoningOnly, reasoningContent = reasoning, fallbackServiceName = fallbackServiceName))
                     }
                 }
                 saveCurrentConversation()
@@ -887,57 +842,102 @@ class RemoteDataRepository(
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
 
-        // Loop until AI returns a final response (no more tool calls)
         while (true) {
             iteration++
-
-            // Bail out if too many iterations
             if (iteration > MAX_TOOL_ITERATIONS) {
                 return makeFinalCallWithoutTools(service, credentials, currentMessages)
             }
 
-            val response = retryApiCall {
-                requests.openAICompatibleChat(service, credentials, currentMessages, tools).getOrThrow()
-            }
-            val message = response.choices.firstOrNull()?.message ?: throw OpenAICompatibleEmptyResponseException()
+            _streamingContent.value = null
+            _streamingReasoning.value = null
 
-            val toolCalls = message.toolCalls
-            if (toolCalls.isNullOrEmpty()) {
-                // No more tool calls - return the final response
-                return message.effectiveContent ?: ""
+            val (textContent, fullReasoning, toolCalls) = try {
+                retryApiCall {
+                    _streamingContent.value = null
+                    _streamingReasoning.value = null
+                    val contentBuilder = StringBuilder()
+                    val reasoningBuilder = StringBuilder()
+                    val toolCallAccumulators = mutableMapOf<Int, MutableMap<String, String>>()
+
+                    requests.openAICompatibleChatStream(service, credentials, currentMessages, tools)
+                        .collect { chunk ->
+                            val choice = chunk.choices?.firstOrNull()
+                            val delta = choice?.delta ?: return@collect
+
+                            delta.content?.let { c ->
+                                contentBuilder.append(c)
+                                _streamingContent.value = contentBuilder.toString()
+                            }
+                            delta.reasoningContent?.let { r ->
+                                reasoningBuilder.append(r)
+                                _streamingReasoning.value = reasoningBuilder.toString()
+                            }
+                            delta.toolCalls?.forEach { tc ->
+                                val acc = toolCallAccumulators.getOrPut(tc.index) { mutableMapOf() }
+                                tc.id?.let { acc["id"] = it }
+                                tc.type?.let { acc["type"] = it }
+                                tc.function?.name?.let { acc["function_name"] = (acc["function_name"] ?: "") + it }
+                                tc.function?.arguments?.let { acc["function_arguments"] = (acc["function_arguments"] ?: "") + it }
+                            }
+                        }
+
+                    val calls = toolCallAccumulators.entries.map { (_, acc) ->
+                        OpenAICompatibleChatResponseDto.ToolCall(
+                            id = acc["id"] ?: "",
+                            type = acc["type"] ?: "function",
+                            function = OpenAICompatibleChatResponseDto.FunctionCall(
+                                name = acc["function_name"] ?: "",
+                                arguments = acc["function_arguments"] ?: "",
+                            ),
+                        )
+                    }
+
+                    Triple(
+                        contentBuilder.toString().ifEmpty { null },
+                        reasoningBuilder.toString().ifEmpty { null },
+                        calls,
+                    )
+                }
+            } catch (e: Exception) {
+                _streamingContent.value = null
+                _streamingReasoning.value = null
+                throw e
             }
 
-            // Check for repetition
+            if (toolCalls.isEmpty()) {
+                if (textContent != null) {
+                    val stripped = textContent.replace(toolCallMarkerRegex, "").trim()
+                    return stripped.takeIf { it.isNotBlank() } ?: textContent
+                }
+                return ""
+            }
+
             val signatures = toolCalls.map { "${it.function.name}:${it.function.arguments.hashCode()}" }
             if (isRepeatingToolCalls(recentSignatures, signatures)) {
                 return makeFinalCallWithoutTools(service, credentials, currentMessages)
             }
             recentSignatures.addAll(signatures)
 
-            // Add assistant message with tool calls to history
             history.update {
                 it.toMutableList().apply {
                     add(
                         History(
                             role = History.Role.ASSISTANT,
-                            content = message.effectiveContent ?: "",
-                            isThinking = message.isContentFromReasoning,
+                            content = textContent?.replace(toolCallMarkerRegex, "")?.trim() ?: "",
+                            isThinking = textContent == null && fullReasoning != null,
                             toolCalls = toolCalls.map { tc ->
                                 ToolCallInfo(id = tc.id, name = tc.function.name, arguments = tc.function.arguments)
                             }.toImmutableList(),
-                            reasoningContent = message.effectiveReasoning,
+                            reasoningContent = fullReasoning,
                         ),
                     )
                 }
             }
 
-            // Execute all tool calls in parallel
             val toolResults = executeToolCallsInParallel(toolCalls.map { Triple(it.id, it.function.name, it.function.arguments) })
 
-            // Add all tool results to history
             history.update { h ->
                 buildList(h.size + toolResults.size) {
-                    // Remove any TOOL_EXECUTING entries
                     for (entry in h) {
                         if (entry.role != History.Role.TOOL_EXECUTING) add(entry)
                     }
@@ -954,7 +954,6 @@ class RemoteDataRepository(
                 }
             }
 
-            // Update messages for next iteration with context trimming
             currentMessages = trimMessagesForContext(
                 buildOpenAIMessages(
                     history.value.filter { it.role != History.Role.TOOL_EXECUTING },
@@ -1593,6 +1592,7 @@ class RemoteDataRepository(
                             History.Role.TOOL_EXECUTING -> "tool" // Should not happen due to filter
                         },
                         content = h.content,
+                        reasoningContent = h.reasoningContent,
                         attachments = h.attachments,
                         uiSubmission = h.uiSubmission,
                         isThinking = h.isThinking,
@@ -1663,6 +1663,7 @@ class RemoteDataRepository(
                     else -> History.Role.ASSISTANT
                 },
                 content = m.content,
+                reasoningContent = m.reasoningContent,
                 attachments = attachments,
                 uiSubmission = m.uiSubmission,
                 isThinking = m.isThinking,

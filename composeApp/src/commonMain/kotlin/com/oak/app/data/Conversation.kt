@@ -37,6 +37,7 @@ data class Conversation(
         val id: String,
         val role: String,
         val content: String,
+        val reasoningContent: String? = null,
         val attachments: List<Attachment> = emptyList(),
         val uiSubmission: UiSubmission? = null,
         val isThinking: Boolean = false,

@@ -9,13 +9,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +56,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun BotMessage(
     message: String,
+    reasoningContent: String? = null,
     textToSpeech: TextToSpeechInstance?,
     isSpeaking: Boolean,
     setIsSpeaking: (Boolean) -> Unit,
@@ -61,6 +68,7 @@ internal fun BotMessage(
 ) {
     val document = remember(message) { parseMarkdown(message) }
     var isEditing by remember(frozen) { mutableStateOf(false) }
+    var reasoningExpanded by remember { mutableStateOf(false) }
     val effectiveFrozen = if (isEditing && frozen != null) frozen.copy(pressedEvent = null) else frozen
     val effectiveInteractive = if (frozen != null) (onResubmit != null && isEditing) else isInteractive
     val oakUiCallback: (String, Map<String, String>) -> Unit = if (onResubmit != null) {
@@ -79,6 +87,38 @@ internal fun BotMessage(
                 .padding(top = 16.dp, start = 16.dp),
         )
         Column(modifier = Modifier.weight(1f)) {
+            if (!reasoningContent.isNullOrBlank()) {
+                Surface(
+                    modifier = Modifier
+                        .padding(start = 8.dp, top = 8.dp, end = 16.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { reasoningExpanded = !reasoningExpanded },
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = if (reasoningExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "Thought",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        if (reasoningExpanded) {
+                            MarkdownContent(
+                                content = reasoningContent,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
+                    }
+                }
+            }
             Box {
                 SelectionContainer {
                     MarkdownContent(
