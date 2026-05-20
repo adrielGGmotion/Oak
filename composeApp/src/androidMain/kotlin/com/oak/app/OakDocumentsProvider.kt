@@ -43,7 +43,7 @@ class OakDocumentsProvider : DocumentsProvider() {
                 "Oak",
                 summary,
                 FLAG_ROOT,
-                root.totalSpace,
+                root.usableSpace,
             )
         )
         return c
