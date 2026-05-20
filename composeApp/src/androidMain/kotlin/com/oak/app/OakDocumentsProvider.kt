@@ -10,10 +10,13 @@ import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract
 import android.provider.DocumentsProvider
 import android.webkit.MimeTypeMap
+import com.oak.app.shared.R
 import java.io.File
 import java.io.FileNotFoundException
 
 class OakDocumentsProvider : DocumentsProvider() {
+
+    private val res get() = requireNotNull(context).resources
 
     private val baseDir: File
         get() = File(Environment.getExternalStorageDirectory(), "Oak")
@@ -32,15 +35,15 @@ class OakDocumentsProvider : DocumentsProvider() {
         val totalItems = root.listFiles()?.count { !it.name.startsWith('.') } ?: 0
 
         val summary = buildString {
-            append("$totalItems folders")
-            if (modelCount > 0) append(", $modelCount models")
+            append(res.getString(R.string.documents_provider_summary_folders, totalItems))
+            if (modelCount > 0) append(res.getString(R.string.documents_provider_summary_models, modelCount))
         }
 
         c.addRow(
             arrayOf(
                 ROOT_ID,
                 root.absolutePath,
-                "Oak",
+                res.getString(R.string.documents_provider_root_title),
                 summary,
                 FLAG_ROOT,
                 root.usableSpace,
