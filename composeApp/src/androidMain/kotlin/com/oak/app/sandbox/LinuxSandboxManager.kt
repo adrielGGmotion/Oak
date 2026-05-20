@@ -49,7 +49,7 @@ class LinuxSandboxManager(
         val oakRoot = getExternalOakRoot()
         if (oakRoot != null) {
             val dir = File(oakRoot, "sandbox-home")
-            if (dir.exists() || dir.mkdirs()) {
+            if (dir.isDirectory || dir.mkdirs()) {
                 migrateLegacyHome(dir)
                 return dir.absolutePath
             }
@@ -63,7 +63,9 @@ class LinuxSandboxManager(
             }
         }
         val internalTarget = File(sandboxDir, "home")
-        internalTarget.mkdirs()
+        if (!internalTarget.isDirectory && !internalTarget.mkdirs()) {
+            throw IllegalStateException("Cannot create sandbox home directory: ${internalTarget.absolutePath}")
+        }
         migrateLegacyHome(internalTarget)
         return internalTarget.absolutePath
     }

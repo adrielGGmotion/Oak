@@ -13,7 +13,7 @@ actual fun ensureExternalOakDirectories(): Boolean {
     val root = getExternalOakRoot() ?: return false
     File(root, "models").mkdirs()
     File(root, "sandbox-home").mkdirs()
-    val ok = File(root, "models").exists() && File(root, "sandbox-home").exists()
+    val ok = File(root, "models").isDirectory && File(root, "sandbox-home").isDirectory
     if (ok) writeOakLocationMarker()
     return ok
 }
