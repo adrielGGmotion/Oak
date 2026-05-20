@@ -20,8 +20,10 @@ actual fun ensureExternalOakDirectories(): Boolean {
 
 actual fun writeOakLocationMarker() {
     val root = getExternalOakRoot() ?: return
+    val marker = File(root, ".oak-location")
+    if (marker.exists()) return
     try {
-        File(root, ".oak-location").writeText("Oak data directory\n")
+        marker.writeText("Oak data directory\n")
     } catch (_: Exception) { }
 }
 
