@@ -6,11 +6,11 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.runBlocking
 import com.oak.app.shared.R
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.notification_channel_description
 import oak.composeapp.generated.resources.notification_channel_name
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import org.koin.java.KoinJavaComponent.inject
 
