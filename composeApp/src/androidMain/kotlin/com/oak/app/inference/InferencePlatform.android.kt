@@ -6,20 +6,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.StatFs
 import androidx.core.content.ContextCompat
-import com.oak.app.getExternalOakRoot
 import org.koin.java.KoinJavaComponent.inject
-import java.io.File
 
 private val context: Context by inject(Context::class.java)
 
-actual fun getModelStorageDirectory(): String {
-    val externalRoot = getExternalOakRoot()
-    if (externalRoot != null) {
-        val dir = File(externalRoot, "models/litert_models")
-        if (dir.exists() || dir.mkdirs()) return dir.absolutePath
-    }
-    return context.filesDir.absolutePath + "/litert_models"
-}
+actual fun getModelStorageDirectory(): String = context.filesDir.absolutePath + "/litert_models"
 
 actual fun getModelCacheDirectory(): String = context.cacheDir.absolutePath
 
