@@ -55,14 +55,17 @@ class LinuxSandboxManager(
             }
         }
         val external = context.getExternalFilesDir(null)
-        val target = if (external != null) {
-            File(external, "sandbox-home")
-        } else {
-            File(sandboxDir, "home")
+        if (external != null) {
+            val externalTarget = File(external, "sandbox-home")
+            if (externalTarget.isDirectory || externalTarget.mkdirs()) {
+                migrateLegacyHome(externalTarget)
+                return externalTarget.absolutePath
+            }
         }
-        target.mkdirs()
-        migrateLegacyHome(target)
-        return target.absolutePath
+        val internalTarget = File(sandboxDir, "home")
+        internalTarget.mkdirs()
+        migrateLegacyHome(internalTarget)
+        return internalTarget.absolutePath
     }
 
     private fun migrateLegacyHome(target: File) {
@@ -114,6 +117,9 @@ class LinuxSandboxManager(
         if (currentJob?.isActive == true) return
         currentJob = scope.launch {
             try {
+                // Resolve homePath on IO so the lazy init + legacy migration
+                // never blocks the UI thread via shellFor/transcriptFor.
+                homePath
                 setupInternal()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 checkExistingInstallation()
