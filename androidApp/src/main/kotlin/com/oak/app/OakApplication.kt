@@ -20,6 +20,8 @@ class OakApplication : Application() {
             androidContext(this@OakApplication)
             modules(appModule, sandboxModule)
         }
+        // Ensure external storage directories exist for models + sandbox home
+        ensureExternalOakDirectories()
         // Track app foreground state so the scheduler only pushes a heartbeat notification
         // when the in-app banner isn't visible. ViewModel lifecycle is the wrong signal —
         // it survives backgrounding and only clears on Activity destruction.
