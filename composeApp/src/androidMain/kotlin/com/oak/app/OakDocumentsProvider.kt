@@ -107,8 +107,8 @@ class OakDocumentsProvider : DocumentsProvider() {
     }
 
     override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean {
-        return File(documentId).absolutePath.startsWith(
-            File(parentDocumentId).absolutePath + File.separator
+        return File(documentId).canonicalPath.startsWith(
+            File(parentDocumentId).canonicalPath + File.separator
         )
     }
 
@@ -129,8 +129,8 @@ class OakDocumentsProvider : DocumentsProvider() {
     }
 
     private fun isUnderOak(file: File): Boolean {
-        return file.absolutePath == baseDir.absolutePath ||
-            file.absolutePath.startsWith(baseDir.absolutePath + File.separator)
+        return file.canonicalPath == baseDir.canonicalPath ||
+            file.canonicalPath.startsWith(baseDir.canonicalPath + File.separator)
     }
 
     companion object {
