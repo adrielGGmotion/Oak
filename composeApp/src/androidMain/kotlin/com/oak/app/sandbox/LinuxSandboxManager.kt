@@ -6,6 +6,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.oak.app.SandboxSessions
 import com.oak.app.TerminalLine
 import com.oak.app.data.ConversationStorage
+import com.oak.app.getExternalOakRoot
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import kotlinx.coroutines.CoroutineScope
@@ -37,11 +38,22 @@ class LinuxSandboxManager(
 
     val rootfsPath: String get() = File(sandboxDir, "rootfs").absolutePath
 
-    // Sandbox /root is bind-mounted from externally-visible app storage so files
-    // produced by the agent can be opened via FileProvider Intents. Computed
-    // lazily on first access; mkdirs and the one-time legacy-home migration run
-    // once per process, then the cached path is reused for every shell call.
-    val homePath: String by lazy {
+    // Sandbox /root is bind-mounted from externally-visible storage so agent
+    // files survive uninstall and can be opened via FileProvider Intents.
+    // Tries external shared storage first (/sdcard/Oak/sandbox-home/),
+    // falls back to Android/data/<pkg>/sandbox-home/, then sandboxDir/home.
+    // Computed lazily; directories created + legacy migration happen once.
+    val homePath: String by lazy { resolveHome() }
+
+    private fun resolveHome(): String {
+        val oakRoot = getExternalOakRoot()
+        if (oakRoot != null) {
+            val dir = File(oakRoot, "sandbox-home")
+            if (dir.exists() || dir.mkdirs()) {
+                migrateLegacyHome(dir)
+                return dir.absolutePath
+            }
+        }
         val external = context.getExternalFilesDir(null)
         val target = if (external != null) {
             File(external, "sandbox-home")
@@ -49,19 +61,22 @@ class LinuxSandboxManager(
             File(sandboxDir, "home")
         }
         target.mkdirs()
+        migrateLegacyHome(target)
+        return target.absolutePath
+    }
+
+    private fun migrateLegacyHome(target: File) {
         val legacy = File(sandboxDir, "home")
-        val newHomeIsEmpty = target.listFiles().isNullOrEmpty()
-        if (legacy.isDirectory && legacy.absolutePath != target.absolutePath && newHomeIsEmpty) {
-            try {
-                legacy.listFiles()?.forEach { entry ->
-                    val dest = File(target, entry.name)
-                    if (!dest.exists()) entry.copyRecursively(dest, overwrite = false)
-                }
-            } catch (e: Exception) {
-                android.util.Log.w("LinuxSandbox", "Legacy home migration failed: ${e.message}")
+        if (!legacy.isDirectory || legacy.absolutePath == target.absolutePath) return
+        if (!target.listFiles().isNullOrEmpty()) return
+        try {
+            legacy.listFiles()?.forEach { entry ->
+                val dest = File(target, entry.name)
+                if (!dest.exists()) entry.copyRecursively(dest, overwrite = false)
             }
+        } catch (e: Exception) {
+            android.util.Log.w("LinuxSandbox", "Legacy home migration failed: ${e.message}")
         }
-        target.absolutePath
     }
 
     val tmpPath: String get() = File(sandboxDir, "tmp").absolutePath
