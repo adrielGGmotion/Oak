@@ -56,7 +56,6 @@ import io.github.vinceglb.filekit.write
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.android.Android
-import kotlinx.coroutines.Dispatchers
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.tool_create_calendar_event_description
 import oak.composeapp.generated.resources.tool_create_calendar_event_name
@@ -66,6 +65,7 @@ import oak.composeapp.generated.resources.tool_send_notification_description
 import oak.composeapp.generated.resources.tool_send_notification_name
 import oak.composeapp.generated.resources.tool_set_alarm_description
 import oak.composeapp.generated.resources.tool_set_alarm_name
+import kotlinx.coroutines.Dispatchers
 import org.koin.java.KoinJavaComponent.inject
 import kotlin.coroutines.CoroutineContext
 
