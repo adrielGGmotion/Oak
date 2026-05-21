@@ -122,6 +122,12 @@
     <string name="tool_send_sms_description">Draft an SMS for the user to review and send</string>
     <string name="tool_reply_sms_name">Reply SMS</string>
     <string name="tool_reply_sms_description">Draft a reply to an SMS for the user to review and send</string>
+    <string name="tool_read_file_name">Read File</string>
+    <string name="tool_read_file_description">Read a file from the filesystem with line numbers</string>
+    <string name="tool_edit_file_name">Edit File</string>
+    <string name="tool_edit_file_description">Edit a file by finding and replacing exact text, or write new content</string>
+    <string name="tool_compress_context_name">Compress Context</string>
+    <string name="tool_compress_context_description">Compress older conversation history to free up context window space</string>
     <string name="tool_check_notifications_name">Check Notifications</string>
     <string name="tool_check_notifications_description">List recent unread notifications</string>
     <string name="tool_read_notification_name">Read Notification</string>

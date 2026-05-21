@@ -177,6 +177,9 @@ interface DataRepository {
     // Background ask with tools (no chat history update, supports tool-calling loop)
     suspend fun askWithTools(prompt: String, instanceId: String? = null): String
 
+    // Context compression
+    suspend fun triggerCompaction(keepRecent: Int = 5, focus: String? = null): Map<String, Any>
+
     // Silent ask (no tools, no chat history update)
     suspend fun askSilently(question: String): String
     suspend fun askSilentlyWithInstance(instanceId: String, prompt: String, timeoutMs: Long = 0L): String

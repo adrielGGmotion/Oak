@@ -8,6 +8,7 @@ import com.oak.app.currentPlatform
 import com.oak.app.email.EmailPoller
 import com.oak.app.formatFileSize
 import com.oak.app.getAvailableTools
+import com.oak.app.smartTruncate
 import com.oak.app.getPlatformToolDefinitions
 import com.oak.app.inference.DownloadError
 import com.oak.app.inference.DownloadedModel
@@ -1537,52 +1538,113 @@ class RemoteDataRepository(
     }
 
     /**
-     * Compacts chat history by summarizing older messages via an LLM call when the history
-     * exceeds a percentage of the context window. Keeps recent exchanges verbatim and replaces
-     * older ones with a single summary. Falls back to simple drop-oldest trimming on failure.
+     * Auto-trigger compaction when history exceeds the threshold.
+     * Delegates to [compactHistory] with defaults.
      */
     private suspend fun compactHistoryIfNeeded() {
-        // Use primary service's context window for compaction decisions
-        val firstInstance = getConfiguredServiceInstances().firstOrNull() ?: return
-        val service = Service.fromId(firstInstance.serviceId)
-        val modelId = appSettings.getSelectedModelId(service)
-        val contextWindowTokens = ModelCatalog.estimateContextWindow(modelId)
+        compactHistory(keepRecent = COMPACTION_KEEP_RECENT, focus = null)
+    }
 
-        val history = chatHistory.value.filter { it.role != History.Role.TOOL_EXECUTING }
+    /**
+     * Compacts chat history by summarizing older messages via an LLM call.
+     * Keeps recent exchanges verbatim and replaces older ones with a summary.
+     * Also compresses oversized tool outputs before summarization.
+     * Falls back to dropping old messages if summarization fails.
+     *
+     * @param keepRecent Number of recent user exchanges to keep verbatim.
+     * @param focus What to emphasize in the summary ('all', 'decisions', 'code', 'facts', or null for 'all').
+     * @return A map describing the result.
+     */
+    private suspend fun compactHistory(
+        keepRecent: Int = COMPACTION_KEEP_RECENT,
+        focus: String? = null,
+    ): Map<String, Any> {
+        val firstInstance = getConfiguredServiceInstances().firstOrNull()
+        if (firstInstance == null) {
+            return mapOf("success" to false, "error" to "No service configured")
+        }
+        val contextWindowTokens = ModelCatalog.estimateContextWindow(
+            appSettings.getSelectedModelId(Service.fromId(firstInstance.serviceId)),
+        )
+
+        var history = chatHistory.value.filter { it.role != History.Role.TOOL_EXECUTING }
         val systemPromptChars = getActiveSystemPrompt()?.length ?: 0
         val totalChars = history.sumOf { it.content.length } + systemPromptChars
         val maxChars = contextWindowTokens * ESTIMATED_CHARS_PER_TOKEN
-        if (totalChars <= (maxChars * COMPACTION_THRESHOLD).toInt()) return
+
+        // If auto-triggered, check threshold; manual calls always proceed
+        if (focus == null && totalChars <= (maxChars * COMPACTION_THRESHOLD).toInt()) {
+            return mapOf("success" to true, "compacted" to false, "reason" to "Below compaction threshold")
+        }
+
+        // Step 1: Compress oversized tool outputs (>5K chars) to short summaries
+        val TOOL_RESULT_COMPRESS_THRESHOLD = 5_000
+        var toolOutputsCompressed = 0
+        history = history.map { msg ->
+            if (msg.role == History.Role.TOOL && msg.content.length > TOOL_RESULT_COMPRESS_THRESHOLD) {
+                toolOutputsCompressed++
+                val toolLabel = msg.toolName?.let { " ($it)" } ?: ""
+                val compressed = msg.content.smartTruncate(500)
+                msg.copy(
+                    content = "[Tool result$toolLabel compressed: ${msg.content.length} chars → ${compressed.length} chars]\n$compressed",
+                )
+            } else {
+                msg
+            }
+        }
 
         // Split history: older messages to summarize, recent to keep verbatim
         val userIndices = history.mapIndexedNotNull { index, h ->
             if (h.role == History.Role.USER) index else null
         }
-        if (userIndices.size <= COMPACTION_KEEP_RECENT) return
-        val cutoffIndex = userIndices[userIndices.size - COMPACTION_KEEP_RECENT]
+        if (userIndices.isEmpty()) {
+            return mapOf("success" to true, "compacted" to false, "reason" to "No user messages to compact")
+        }
+        val effectiveKeepRecent = keepRecent.coerceIn(1, userIndices.size)
+        val cutoffIndex = userIndices[userIndices.size - effectiveKeepRecent]
         val olderMessages = history.subList(0, cutoffIndex)
         val recentMessages = history.subList(cutoffIndex, history.size)
 
-        if (olderMessages.isEmpty()) return
+        if (olderMessages.isEmpty()) {
+            return mapOf("success" to true, "compacted" to false, "reason" to "No old messages to compact")
+        }
 
         // Build a transcript of the older messages for summarization
         val transcript = buildString {
             for (msg in olderMessages) {
-                if (msg.role == History.Role.USER || msg.role == History.Role.ASSISTANT) {
-                    val role = if (msg.role == History.Role.USER) "User" else "Assistant"
-                    appendLine("$role: ${msg.content}")
+                when (msg.role) {
+                    History.Role.USER -> appendLine("User: ${msg.content}")
+                    History.Role.ASSISTANT -> appendLine("Assistant: ${msg.content}")
+                    History.Role.TOOL -> {
+                        val preview = msg.content.take(200).replace('\n', ' ')
+                        appendLine("Tool${msg.toolName?.let { " ($it)" } ?: ""}: $preview")
+                    }
+                    else -> {}
                 }
             }
         }
 
-        val summaryPrompt = "Summarize this conversation concisely, preserving key facts, decisions, and any information the assistant would need to continue helping. Be brief but complete:\n\n$transcript"
+        val focusInstruction = when (focus) {
+            "decisions" -> "Focus on key decisions made and why."
+            "code" -> "Focus on code changes, file modifications, and technical details."
+            "facts" -> "Focus on facts, user preferences, and important information."
+            else -> "Preserve key facts, decisions, code changes, and any information the assistant would need to continue helping."
+        }
+
+        val summaryPrompt = "Summarize this conversation concisely. $focusInstruction Be brief but complete:\n\n$transcript"
 
         val summary = try {
             askSilently(summaryPrompt)
         } catch (_: Exception) {
             // Summarization failed — fall back to dropping old messages
             chatHistory.value = recentMessages
-            return
+            return mapOf(
+                "success" to true,
+                "compacted" to true,
+                "method" to "drop",
+                "dropped_messages" to olderMessages.size,
+                "tool_outputs_compressed" to toolOutputsCompressed,
+            )
         }
 
         val summaryEntry = History(
@@ -1591,6 +1653,19 @@ class RemoteDataRepository(
         )
 
         chatHistory.value = listOf(summaryEntry) + recentMessages
+
+        return mapOf(
+            "success" to true,
+            "compacted" to true,
+            "method" to "summarize",
+            "summarized_messages" to olderMessages.size,
+            "tool_outputs_compressed" to toolOutputsCompressed,
+            "kept_recent" to effectiveKeepRecent,
+        )
+    }
+
+    override suspend fun triggerCompaction(keepRecent: Int, focus: String?): Map<String, Any> {
+        return compactHistory(keepRecent = keepRecent, focus = focus)
     }
 
     private fun trimToRecentExchanges(history: List<History>, maxExchanges: Int): List<History> {
