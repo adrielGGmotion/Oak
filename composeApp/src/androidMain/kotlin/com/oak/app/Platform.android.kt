@@ -22,6 +22,8 @@ import com.oak.app.mcp.McpServerManager
 import com.oak.app.network.tools.ParameterSchema
 import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
+import com.oak.app.ssh.SshClient
+import com.oak.app.ssh.SshClientImpl
 import com.oak.app.network.tools.ToolSchema
 import com.oak.app.notifications.NotificationReader
 import com.oak.app.notifications.declaresNotificationListener
@@ -43,6 +45,7 @@ import com.oak.app.tools.ProcessManagerTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
 import com.oak.app.tools.SmsTools
+import com.oak.app.tools.SshTools
 import com.oak.app.tools.WebSearchTool
 import com.russhwolf.settings.BuildConfig
 import com.russhwolf.settings.Settings
@@ -234,6 +237,9 @@ actual fun getPlatformToolDefinitions(): List<ToolInfo> = buildList {
     // master toggles (isSmsEnabled / isSmsSendEnabled) plus the FOSS-only `isSmsSupported`
     // check in `getAvailableTools()`. Listing per-tool toggles in the Tools tab was dead
     // UI — `getAvailableTools()` never consulted them.
+
+    // SSH tools
+    addAll(SshTools.toolDefinitions)
 }
 
 actual fun getAvailableTools(): List<Tool> {
@@ -483,6 +489,11 @@ actual fun getAvailableTools(): List<Tool> {
 
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)
         addAll(mcpServerManager.getEnabledMcpTools())
+
+        // SSH tools (always available, tools handle no-connection state gracefully)
+        if (appSettings.isToolEnabled("ssh_connect")) {
+            addAll(SshTools.getTools())
+        }
     }
 }
 
@@ -523,6 +534,8 @@ actual fun decodeToImageBitmap(bytes: ByteArray): ImageBitmap? = try {
 actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler(enabled = enabled, onBack = onBack)
 }
+
+actual fun createSshClient(): SshClient = SshClientImpl()
 
 actual suspend fun saveFileToDevice(bytes: ByteArray, baseName: String, extension: String) {
     val file = FileKit.openFileSaver(suggestedName = baseName, defaultExtension = extension)

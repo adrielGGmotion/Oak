@@ -1,6 +1,7 @@
 [versions]
 agp = "9.2.1"
 appVersion = "2.5.1"
+sshd = "2.16.0"
 android-versionCode = "102"
 android-compileSdk = "36"
 android-minSdk = "26"
@@ -89,6 +90,9 @@ litert-lm = { module = "com.google.ai.edge.litertlm:litertlm-android", version.r
 litert-lm-jvm = { module = "com.google.ai.edge.litertlm:litertlm-jvm", version.ref = "litert-lm" }
 
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
+
+sshd-core = { module = "org.apache.sshd:sshd-core", version.ref = "sshd" }
+sshd-sftp = { module = "org.apache.sshd:sshd-sftp", version.ref = "sshd" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
