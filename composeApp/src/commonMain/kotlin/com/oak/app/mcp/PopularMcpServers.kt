@@ -26,11 +26,6 @@ val popularMcpServers = listOf(
         description = "Prediction market data and odds",
     ),
     PopularMcpServer(
-        name = "Fetch",
-        url = "https://remote.mcpservers.org/fetch/mcp",
-        description = "Fetch web content and convert HTML to markdown",
-    ),
-    PopularMcpServer(
         name = "DeepWiki",
         url = "https://mcp.deepwiki.com/mcp",
         description = "AI-powered docs for any GitHub repo",
