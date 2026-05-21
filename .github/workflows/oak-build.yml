@@ -122,6 +122,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup
+        with:
+          setup-android: 'true'
       - name: Build macOS Package
         run: bash ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace
       - name: Upload macOS Package
@@ -141,6 +143,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup
+        with:
+          setup-android: 'true'
       - name: Build Windows Package
         shell: bash
         run: ./gradlew :composeApp:packageDistributionForCurrentOS --stacktrace

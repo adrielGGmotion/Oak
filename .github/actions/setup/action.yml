@@ -37,9 +37,10 @@ runs:
       if: ${{ inputs.setup-android == 'true' }}
       uses: android-actions/setup-android@v3
 
-    - name: Install Android Build Tools
+    - name: Install Android SDK Platform and Build Tools
       if: ${{ inputs.setup-android == 'true' }}
       shell: bash
       run: |
+        sdkmanager "platforms;android-36"
         sdkmanager "build-tools;36.0.0"
         sdkmanager "build-tools;29.0.3"
