@@ -9,6 +9,7 @@ import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.network.tools.ToolSchema
 import com.oak.app.openUrl
+import kotlinx.coroutines.delay
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -29,12 +30,16 @@ import oak.composeapp.generated.resources.tool_memory_store_description
 import oak.composeapp.generated.resources.tool_memory_store_name
 import oak.composeapp.generated.resources.tool_open_url_description
 import oak.composeapp.generated.resources.tool_open_url_name
+import oak.composeapp.generated.resources.tool_wait_description
+import oak.composeapp.generated.resources.tool_wait_name
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 private data class IpLocationResponse(
@@ -232,11 +237,50 @@ object CommonTools {
         descriptionRes = Res.string.tool_open_url_description,
     )
 
+    val waitTool = object : Tool {
+        override val schema = ToolSchema(
+            name = "wait",
+            description = "Pause execution for a specified duration in seconds (max 300s / 5 minutes). Each call counts toward the tool call limit, so prefer a single longer wait over repeated short waits. Call this tool alone — do not batch it with other tools in the same request.",
+            parameters = mapOf(
+                "duration_seconds" to ParameterSchema(type = "number", description = "Duration to wait in seconds (clamped to 300 max)", required = true),
+            ),
+        )
+
+        override val timeout: Duration get() = 360.seconds
+
+        override suspend fun execute(args: Map<String, Any>): Any {
+            val rawDuration = args["duration_seconds"]
+                ?: return mapOf("success" to false, "error" to "duration_seconds is required")
+            val requested = (rawDuration as? Number)?.toInt()
+                ?: return mapOf("success" to false, "error" to "duration_seconds must be a number")
+            val effective = requested.coerceIn(0, 300)
+            if (effective > 0) {
+                delay(effective * 1000L)
+            }
+            return mapOf(
+                "success" to true,
+                "waited_seconds" to effective,
+                "requested_seconds" to requested,
+                "clamped" to (requested != effective),
+                "max_allowed_seconds" to 300,
+            )
+        }
+    }
+
+    val waitToolInfo = ToolInfo(
+        id = "wait",
+        name = "Wait",
+        description = "Pause execution for a specified number of seconds (max 300)",
+        nameRes = Res.string.tool_wait_name,
+        descriptionRes = Res.string.tool_wait_description,
+    )
+
     val commonToolDefinitions = listOf(
         WebSearchTool.toolInfo,
         localTimeToolInfo,
         ipLocationToolInfo,
         openUrlToolInfo,
+        waitToolInfo,
         FetchUrlTool.toolInfo,
     ) +
         listOf(memoryStoreToolInfo, memoryForgetToolInfo, memoryLearnToolInfo, memoryReinforceToolInfo) +
@@ -275,6 +319,9 @@ object CommonTools {
         }
         if (appSettings.isToolEnabled(FetchUrlTool.schema.name)) {
             add(FetchUrlTool)
+        }
+        if (appSettings.isToolEnabled(waitTool.schema.name)) {
+            add(waitTool)
         }
     }
 
