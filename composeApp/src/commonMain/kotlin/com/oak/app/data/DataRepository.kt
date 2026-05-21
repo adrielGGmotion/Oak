@@ -6,6 +6,8 @@ import com.oak.app.inference.EngineState
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.McpServerConfig
 import com.oak.app.network.tools.ToolInfo
+import com.oak.app.ssh.SshServerConfig
+import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.ui.chat.History
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
@@ -108,6 +110,16 @@ interface DataRepository {
     // Daemon mode
     fun isDaemonEnabled(): Boolean
     fun setDaemonEnabled(enabled: Boolean)
+
+    // SSH Servers
+    fun getSshServers(): List<SshServerConfig>
+    suspend fun addSshServer(name: String, host: String, port: Int, username: String, password: String, privateKey: String, passphrase: String): SshServerConfig
+    fun removeSshServer(serverId: String)
+    fun setSshServerEnabled(serverId: String, enabled: Boolean)
+    suspend fun connectSshServer(serverId: String): Result<Unit>
+    fun isSshServerConnected(serverId: String): Boolean
+    suspend fun disconnectSshServer(serverId: String)
+    suspend fun connectEnabledSshServers()
 
     // Linux Sandbox
     fun isSandboxEnabled(): Boolean

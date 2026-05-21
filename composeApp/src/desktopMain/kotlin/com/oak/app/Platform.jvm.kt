@@ -19,12 +19,15 @@ import com.oak.app.data.TaskStore
 import com.oak.app.mcp.McpServerManager
 import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
+import com.oak.app.ssh.SshClient
+import com.oak.app.ssh.SshClientImpl
 import com.oak.app.tools.CommonTools
 import com.oak.app.tools.EmailTools
 import com.oak.app.tools.HeartbeatTools
 import com.oak.app.tools.ProcessManagerTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
+import com.oak.app.tools.SshTools
 import com.russhwolf.settings.Settings
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
@@ -146,7 +149,7 @@ actual fun createSecureSettings(): Settings = EncryptedFileSettings()
 
 actual fun createLegacySettings(): Settings? = null // Same storage location, no migration needed
 
-actual fun getPlatformToolDefinitions(): List<ToolInfo> = listOf(ShellCommandTool.toolInfo, ProcessManagerTool.toolInfo) + CommonTools.commonToolDefinitions
+actual fun getPlatformToolDefinitions(): List<ToolInfo> = listOf(ShellCommandTool.toolInfo, ProcessManagerTool.toolInfo) + CommonTools.commonToolDefinitions + SshTools.toolDefinitions
 
 actual fun getAvailableTools(): List<Tool> {
     val appSettings: AppSettings by inject(AppSettings::class.java)
@@ -172,6 +175,10 @@ actual fun getAvailableTools(): List<Tool> {
 
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)
         addAll(mcpServerManager.getEnabledMcpTools())
+
+        if (appSettings.isToolEnabled("ssh_connect")) {
+            addAll(SshTools.getTools())
+        }
     }
 }
 
@@ -243,3 +250,5 @@ actual fun sendHeartbeatNotification(title: String, body: String) {
         // notify-send missing, AWT headless, sandboxed osascript, etc. — fall back silently.
     }
 }
+
+actual fun createSshClient(): SshClient = SshClientImpl()

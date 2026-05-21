@@ -14,6 +14,8 @@ import com.oak.app.inference.DownloadError
 import com.oak.app.inference.LocalModel
 import com.oak.app.network.dtos.SponsorsResponseDto
 import com.oak.app.network.tools.ToolInfo
+import com.oak.app.ssh.SshAuthType
+import com.oak.app.ssh.SshConnectionStatus
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
@@ -106,6 +108,8 @@ data class SettingsUiState(
     val showUiScale: Boolean = false,
     val mcpServers: ImmutableList<McpServerUiState> = persistentListOf(),
     val showAddMcpServerDialog: Boolean = false,
+    val sshServers: ImmutableList<SshServerUiState> = persistentListOf(),
+    val showAddSshServerDialog: Boolean = false,
     val localAvailableModels: ImmutableList<LocalModel> = persistentListOf(),
     val totalDeviceMemoryBytes: Long = Long.MAX_VALUE,
     val localFreeSpaceBytes: Long = 0L,
@@ -119,6 +123,18 @@ data class SettingsUiState(
     val currentSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
     val pastSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
     val pendingDeletion: PendingDeletion? = null,
+)
+
+@Immutable
+data class SshServerUiState(
+    val id: String,
+    val name: String,
+    val host: String,
+    val port: Int,
+    val username: String,
+    val authType: SshAuthType,
+    val isEnabled: Boolean,
+    val connectionStatus: SshConnectionStatus,
 )
 
 @Immutable
@@ -144,6 +160,7 @@ sealed interface PendingDeletion {
     data class EmailAccount(val id: String) : PendingDeletion
     data class Service(val instanceId: String) : PendingDeletion
     data class McpServer(val serverId: String) : PendingDeletion
+    data class SshServer(val serverId: String) : PendingDeletion
 }
 
 sealed interface ImportResult {
