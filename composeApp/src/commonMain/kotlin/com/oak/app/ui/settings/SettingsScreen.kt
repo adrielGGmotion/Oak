@@ -196,6 +196,7 @@ import oak.composeapp.generated.resources.settings_import_section_conversations
 import oak.composeapp.generated.resources.settings_import_section_email
 import oak.composeapp.generated.resources.settings_import_section_heartbeat
 import oak.composeapp.generated.resources.settings_import_section_mcp
+import oak.composeapp.generated.resources.settings_import_section_ssh
 import oak.composeapp.generated.resources.settings_import_section_memory
 import oak.composeapp.generated.resources.settings_import_section_scheduling
 import oak.composeapp.generated.resources.settings_import_section_services
@@ -278,6 +279,7 @@ import oak.composeapp.generated.resources.settings_ui_scale
 import oak.composeapp.generated.resources.settings_version
 import oak.composeapp.generated.resources.snackbar_email_removed
 import oak.composeapp.generated.resources.snackbar_mcp_server_removed
+import oak.composeapp.generated.resources.snackbar_ssh_server_removed
 import oak.composeapp.generated.resources.snackbar_memory_deleted
 import oak.composeapp.generated.resources.snackbar_service_removed
 import oak.composeapp.generated.resources.snackbar_task_cancelled
@@ -361,6 +363,7 @@ fun SettingsScreenContent(
     val emailRemovedMsg = stringResource(Res.string.snackbar_email_removed)
     val serviceRemovedMsg = stringResource(Res.string.snackbar_service_removed)
     val mcpServerRemovedMsg = stringResource(Res.string.snackbar_mcp_server_removed)
+    val sshServerRemovedMsg = stringResource(Res.string.snackbar_ssh_server_removed)
 
     LaunchedEffect(uiState.pendingDeletion) {
         val deletion = uiState.pendingDeletion ?: return@LaunchedEffect
@@ -371,6 +374,7 @@ fun SettingsScreenContent(
             is PendingDeletion.EmailAccount -> emailRemovedMsg
             is PendingDeletion.Service -> serviceRemovedMsg
             is PendingDeletion.McpServer -> mcpServerRemovedMsg
+            is PendingDeletion.SshServer -> sshServerRemovedMsg
         }
         val result = snackbarHostState.showSnackbar(
             message = message,
@@ -463,7 +467,7 @@ fun SettingsScreenContent(
                             }
 
                             SettingsTab.Integrations -> {
-                                IntegrationsContent()
+                                SettingsContent(state = filteredUiState, actions = actions)
                             }
 
                             SettingsTab.Tools -> {
@@ -2099,27 +2103,44 @@ private fun AgentContent(uiState: SettingsUiState, actions: SettingsActions) {
 }
 
 @Composable
-private fun IntegrationsContent() {
-    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    SettingsCard {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = stringResource(Res.string.settings_request_integration_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
+private fun SettingsContent(state: SettingsUiState, actions: SettingsActions) {
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+        // SSH Servers section
+        SettingsCard {
+            SshServersSection(
+                sshServers = state.sshServers,
+                onAddSshServer = actions.onAddSshServer,
+                onRemoveSshServer = actions.onRemoveSshServer,
+                onToggleSshServer = actions.onToggleSshServer,
+                onConnectSshServer = actions.onConnectSshServer,
+                showAddDialog = state.showAddSshServerDialog,
+                onShowAddDialog = actions.onShowAddSshServerDialog,
             )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(Res.string.settings_request_integration_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = { uriHandler.openUri("https://github.com/adrielGGmotion/Oak") },
-                modifier = Modifier.handCursor(),
-            ) {
-                Text(stringResource(Res.string.settings_open_github_issue))
+        }
+        Spacer(Modifier.height(16.dp))
+
+        // Request integration section
+        val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+        SettingsCard {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(Res.string.settings_request_integration_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(Res.string.settings_request_integration_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { uriHandler.openUri("https://github.com/adrielGGmotion/Oak") },
+                    modifier = Modifier.handCursor(),
+                ) {
+                    Text(stringResource(Res.string.settings_open_github_issue))
+                }
             }
         }
     }
@@ -2437,6 +2458,7 @@ private fun sectionDisplayName(section: ImportSection): String = when (section) 
     ImportSection.SMS -> stringResource(Res.string.settings_sms)
     ImportSection.TOOLS -> stringResource(Res.string.settings_import_section_tools)
     ImportSection.MCP -> stringResource(Res.string.settings_import_section_mcp)
+    ImportSection.SSH -> stringResource(Res.string.settings_import_section_ssh)
     ImportSection.CONVERSATIONS -> stringResource(Res.string.settings_import_section_conversations)
 }
 

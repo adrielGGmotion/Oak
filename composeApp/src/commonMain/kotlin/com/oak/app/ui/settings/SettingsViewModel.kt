@@ -19,6 +19,8 @@ import com.oak.app.isNotificationsSupported
 import com.oak.app.isSmsSupported
 import com.oak.app.mcp.PopularMcpServer
 import com.oak.app.network.AnthropicInsufficientCreditsException
+import com.oak.app.ssh.SshAuthType
+import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.network.AnthropicInvalidApiKeyException
 import com.oak.app.network.AnthropicOverloadedException
 import com.oak.app.network.AnthropicRateLimitExceededException
@@ -118,6 +120,7 @@ class SettingsViewModel(
         uiScale = dataRepository.getUiScale(),
         showUiScale = currentPlatform is Platform.Desktop,
         mcpServers = buildMcpServerEntries().toImmutableList(),
+        sshServers = buildSshServerEntries().toImmutableList(),
         localActiveBackend = dataRepository.getLocalActiveBackend()?.value,
         hfToken = dataRepository.getHfToken(),
         backendPreference = dataRepository.getBackendPreference(),
@@ -176,6 +179,11 @@ class SettingsViewModel(
         onRefreshMcpServer = ::onRefreshMcpServer,
         onShowAddMcpServerDialog = ::onShowAddMcpServerDialog,
         onAddPopularMcpServer = ::onAddPopularMcpServer,
+        onAddSshServer = ::onAddSshServer,
+        onRemoveSshServer = ::onRemoveSshServer,
+        onToggleSshServer = ::onToggleSshServer,
+        onConnectSshServer = ::onConnectSshServer,
+        onShowAddSshServerDialog = ::onShowAddSshServerDialog,
         onDownloadLocalModel = ::onDownloadLocalModel,
         onCancelLocalModelDownload = ::onCancelLocalModelDownload,
         onDeleteLocalModel = ::onDeleteLocalModel,
@@ -236,6 +244,12 @@ class SettingsViewModel(
             hasCheckedInitialConnection = true
             checkAllConnections()
             connectEnabledMcpServers()
+            viewModelScope.launch(backgroundDispatcher) {
+                val enabledServers = dataRepository.getSshServers().filter { it.isEnabled }
+                enabledServers.forEach { server ->
+                    connectSshServerWithStatus(server.id)
+                }
+            }
             fetchSponsors()
         }
         // Re-read notification listener state every time the screen becomes visible:
@@ -830,6 +844,108 @@ class SettingsViewModel(
         }
     }
 
+    // SSH server management
+    private fun buildSshServerEntries(): List<SshServerUiState> = dataRepository.getSshServers().map { config ->
+        SshServerUiState(
+            id = config.id,
+            name = config.name,
+            host = config.host,
+            port = config.port,
+            username = config.username,
+            authType = config.authType,
+            isEnabled = config.isEnabled,
+            connectionStatus = if (dataRepository.isSshServerConnected(config.id)) {
+                SshConnectionStatus.Connected
+            } else {
+                SshConnectionStatus.Disconnected
+            },
+        )
+    }
+
+    private fun refreshSshServers() {
+        _state.update { current ->
+            val existingStatuses = current.sshServers.associate { it.id to it.connectionStatus }
+            current.copy(
+                sshServers = buildSshServerEntries().map { entry ->
+                    val preservedStatus = existingStatuses[entry.id]
+                    if (preservedStatus == SshConnectionStatus.Connecting || preservedStatus == SshConnectionStatus.Error) {
+                        entry.copy(connectionStatus = preservedStatus)
+                    } else {
+                        entry
+                    }
+                }.toImmutableList(),
+            )
+        }
+    }
+
+    private fun onAddSshServer(
+        name: String,
+        host: String,
+        port: Int,
+        username: String,
+        password: String,
+        privateKey: String,
+        passphrase: String,
+        authType: SshAuthType,
+    ) {
+        viewModelScope.launch(backgroundDispatcher) {
+            val config = dataRepository.addSshServer(name, host, port, username, authType, password, privateKey, passphrase)
+            refreshSshServers()
+            connectSshServerWithStatus(config.id)
+        }
+        _state.update { it.copy(showAddSshServerDialog = false) }
+    }
+
+    private fun onRemoveSshServer(serverId: String) {
+        commitPendingDeletion()
+        _state.update { it.copy(pendingDeletion = PendingDeletion.SshServer(serverId)) }
+        pendingDeleteJob = viewModelScope.launch(backgroundDispatcher) {
+            delay(4.seconds)
+            executeDeletion(PendingDeletion.SshServer(serverId))
+        }
+    }
+
+    private fun onToggleSshServer(serverId: String, enabled: Boolean) {
+        viewModelScope.launch(backgroundDispatcher) {
+            dataRepository.setSshServerEnabled(serverId, enabled)
+            refreshSshServers()
+            if (enabled) {
+                connectSshServerWithStatus(serverId)
+            }
+        }
+    }
+
+    private fun onConnectSshServer(serverId: String) {
+        viewModelScope.launch(backgroundDispatcher) {
+            connectSshServerWithStatus(serverId)
+        }
+    }
+
+    private fun onShowAddSshServerDialog(show: Boolean) {
+        _state.update { it.copy(showAddSshServerDialog = show) }
+    }
+
+    private suspend fun connectSshServerWithStatus(serverId: String) {
+        updateSshConnectionStatus(serverId, SshConnectionStatus.Connecting)
+        val result = dataRepository.connectSshServer(serverId)
+        if (result.isSuccess) {
+            updateSshConnectionStatus(serverId, SshConnectionStatus.Connected)
+            refreshSshServers()
+        } else {
+            updateSshConnectionStatus(serverId, SshConnectionStatus.Error)
+        }
+    }
+
+    private fun updateSshConnectionStatus(serverId: String, status: SshConnectionStatus) {
+        _state.update { state ->
+            state.copy(
+                sshServers = state.sshServers.map { entry ->
+                    if (entry.id == serverId) entry.copy(connectionStatus = status) else entry
+                }.toImmutableList(),
+            )
+        }
+    }
+
     private fun commitPendingDeletion() {
         pendingDeleteJob?.cancel()
         pendingDeleteJob = null
@@ -887,6 +1003,11 @@ class SettingsViewModel(
                 dataRepository.removeMcpServer(deletion.serverId)
                 _state.update { it.copy(pendingDeletion = null) }
                 refreshMcpServers()
+            }
+            is PendingDeletion.SshServer -> {
+                dataRepository.removeSshServer(deletion.serverId)
+                _state.update { it.copy(pendingDeletion = null) }
+                refreshSshServers()
             }
         }
     }
