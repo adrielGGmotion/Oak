@@ -2099,55 +2099,27 @@ private fun AgentContent(uiState: SettingsUiState, actions: SettingsActions) {
 }
 
 @Composable
-private fun IntegrationsContent(
-    splinterlandsViewModel: SplinterlandsViewModel = koinViewModel(),
-) {
-    val splinterlandsState by splinterlandsViewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { splinterlandsViewModel.onScreenVisible() }
-
+private fun IntegrationsContent() {
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (splinterlandsState.showSplinterlandsSection) {
-            SettingsCard {
-                SplinterlandsSection(
-                    isEnabled = splinterlandsState.isSplinterlandsEnabled,
-                    accounts = splinterlandsState.splinterlandsAccounts,
-                    instanceIds = splinterlandsState.splinterlandsInstanceIds,
-                    addStatus = splinterlandsState.splinterlandsAddStatus,
-                    battleLog = splinterlandsState.splinterlandsBattleLog,
-                    availableServices = splinterlandsState.splinterlandsAvailableServices,
-                    onToggle = splinterlandsState.onToggleSplinterlands,
-                    onTestAndAddAccount = splinterlandsState.onTestAndAddSplinterlandsAccount,
-                    onRemoveAccount = splinterlandsState.onRemoveSplinterlandsAccount,
-                    onAddService = splinterlandsState.onAddSplinterlandsService,
-                    onRemoveService = splinterlandsState.onRemoveSplinterlandsService,
-                    onReorderServices = splinterlandsState.onReorderSplinterlandsServices,
-                    onStartBattle = splinterlandsState.onStartSplinterlandsBattle,
-                    onStopBattle = splinterlandsState.onStopSplinterlandsBattle,
-                    onClearBattleLog = splinterlandsState.onClearSplinterlandsBattleLog,
-                )
-            }
-        }
-        SettingsCard {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(Res.string.settings_request_integration_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = stringResource(Res.string.settings_request_integration_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = { uriHandler.openUri("https://github.com/adrielGGmotion/Oak/issues/new?template=integration_request.yml") },
-                    modifier = Modifier.handCursor(),
-                ) {
-                    Text(stringResource(Res.string.settings_open_github_issue))
-                }
+    SettingsCard {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = stringResource(Res.string.settings_request_integration_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(Res.string.settings_request_integration_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { uriHandler.openUri("https://github.com/adrielGGmotion/Oak") },
+                modifier = Modifier.handCursor(),
+            ) {
+                Text(stringResource(Res.string.settings_open_github_issue))
             }
         }
     }
@@ -2463,7 +2435,6 @@ private fun sectionDisplayName(section: ImportSection): String = when (section) 
     ImportSection.HEARTBEAT -> stringResource(Res.string.settings_import_section_heartbeat)
     ImportSection.EMAIL -> stringResource(Res.string.settings_import_section_email)
     ImportSection.SMS -> stringResource(Res.string.settings_sms)
-    ImportSection.SPLINTERLANDS -> "Splinterlands"
     ImportSection.TOOLS -> stringResource(Res.string.settings_import_section_tools)
     ImportSection.MCP -> stringResource(Res.string.settings_import_section_mcp)
     ImportSection.CONVERSATIONS -> stringResource(Res.string.settings_import_section_conversations)
