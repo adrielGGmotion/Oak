@@ -5,6 +5,8 @@ import com.oak.app.getPlatformToolDefinitions
 import com.oak.app.smartTruncate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
@@ -24,10 +26,30 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.compose.resources.getString
 
 private const val MAX_TOOL_RESULT_LENGTH = 20_000
+private const val MAX_TOOL_CALLS_SINCE_READ = 10
 
 class ToolExecutor {
 
     private val jsonParser = Json { ignoreUnknownKeys = true }
+
+    // Per-conversation read-before-edit tracking: conversationId -> (normalizedPath -> toolCallNumberAtLastRead)
+    private val conversationReads = mutableMapOf<String, MutableMap<String, Int>>()
+    private val conversationCounters = mutableMapOf<String, Int>()
+    private val mutex = Mutex()
+
+    /** Resolves simple "." and ".." path segments. Symlinks are NOT resolved (JVM-only). */
+    private fun normalizePath(raw: String): String {
+        val isAbsolute = raw.startsWith("/")
+        val parts = mutableListOf<String>()
+        for (segment in raw.split("/")) {
+            when (segment) {
+                "", "." -> { /* skip */ }
+                ".." -> { if (parts.isNotEmpty() && parts.last() != "..") parts.removeLast() else parts.add(segment) }
+                else -> parts.add(segment)
+            }
+        }
+        return if (isAbsolute) "/${parts.joinToString("/")}" else parts.joinToString("/")
+    }
 
     fun formatJsonElement(element: JsonElement): String = when {
         element is JsonNull -> "null"
@@ -52,6 +74,25 @@ class ToolExecutor {
         }
 
         return try {
+            val rawPath = args["path"]?.toString()
+            val normPath = rawPath?.let { normalizePath(it) }
+
+            // Read-before-edit enforcement (under mutex to prevent concurrent-tool races)
+            if (name == "edit_file" && conversationId != null && normPath != null) {
+                mutex.withLock {
+                    val convReads = conversationReads[conversationId]
+                    val lastReadCall = convReads?.get(normPath)
+                    if (lastReadCall == null) {
+                        return@executeTool """{"success": false, "error": "You must read '$rawPath' with read_file first before editing it."}"""
+                    }
+                    val convCounter = conversationCounters[conversationId] ?: 0
+                    val staleCount = convCounter - lastReadCall
+                    if (staleCount > MAX_TOOL_CALLS_SINCE_READ) {
+                        return@executeTool """{"success": false, "error": "Your last read of '$rawPath' was $staleCount tool calls ago. Call read_file('$rawPath') again to refresh before editing."}"""
+                    }
+                }
+            }
+
             val result = withTimeout(tool.timeout) {
                 if (conversationId != null) {
                     withContext(ConversationIdElement(conversationId)) { tool.execute(args) }
@@ -59,6 +100,22 @@ class ToolExecutor {
                     tool.execute(args)
                 }
             }
+
+            // Track reads + increment counter (under mutex)
+            if (conversationId != null) {
+                mutex.withLock {
+                    conversationCounters[conversationId] = (conversationCounters[conversationId] ?: 0) + 1
+
+                    if (name == "read_file" && normPath != null) {
+                        val resultPath = if (result is Map<*, *>) result["path"]?.toString() else null
+                        val trackedPath = resultPath ?: normPath
+                        conversationReads
+                            .getOrPut(conversationId) { mutableMapOf() }[trackedPath] =
+                            conversationCounters[conversationId] ?: 0
+                    }
+                }
+            }
+
             val resultString = when (result) {
                 is Map<*, *> -> {
                     val jsonObject = JsonObject(
@@ -81,6 +138,12 @@ class ToolExecutor {
         } catch (e: Exception) {
             """{"success": false, "error": "Tool execution failed: ${e.message}"}"""
         }
+    }
+
+    /** Resets read tracking for a conversation. Used when switching conversations. */
+    fun resetReadTracking(conversationId: String) {
+        conversationReads.remove(conversationId)
+        conversationCounters.remove(conversationId)
     }
 
     private fun truncateResult(result: String): String = result.smartTruncate(MAX_TOOL_RESULT_LENGTH)

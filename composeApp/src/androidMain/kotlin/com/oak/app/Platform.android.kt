@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import com.oak.app.data.AppSettings
+import com.oak.app.data.DataRepository
 import com.oak.app.data.EmailStore
 import com.oak.app.data.MemoryStore
 import com.oak.app.data.NotificationStore
@@ -32,6 +33,8 @@ import com.oak.app.tools.CalendarPermissionController
 import com.oak.app.tools.CalendarRepository
 import com.oak.app.tools.CalendarResult
 import com.oak.app.tools.CommonTools
+import com.oak.app.tools.compressContextTool
+import com.oak.app.tools.EditFileTool
 import com.oak.app.tools.EmailTools
 import com.oak.app.tools.HeartbeatTools
 import com.oak.app.tools.NotificationHelper
@@ -39,6 +42,7 @@ import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.NotificationResult
 import com.oak.app.tools.NotificationTools
 import com.oak.app.tools.OpenFileTool
+import com.oak.app.tools.ReadFileTool
 import com.oak.app.tools.ProcessManagerTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
@@ -230,6 +234,8 @@ actual fun getPlatformToolDefinitions(): List<ToolInfo> = buildList {
             descriptionRes = Res.string.tool_open_file_description,
         ),
     )
+    add(ReadFileTool.toolInfo)
+    add(EditFileTool.toolInfo)
     // SMS tools are intentionally absent here: availability is driven by the Agent-tab
     // master toggles (isSmsEnabled / isSmsSendEnabled) plus the FOSS-only `isSmsSupported`
     // check in `getAvailableTools()`. Listing per-tool toggles in the Tools tab was dead
@@ -483,6 +489,21 @@ actual fun getAvailableTools(): List<Tool> {
                 val notificationStore: NotificationStore by inject(NotificationStore::class.java)
                 addAll(NotificationTools.getNotificationTools(notificationStore, notificationReader))
             }
+        }
+
+        if (appSettings.isToolEnabled(ReadFileTool.schema.name, defaultEnabled = true)) {
+            add(ReadFileTool)
+        }
+
+        if (appSettings.isToolEnabled(EditFileTool.schema.name, defaultEnabled = true)) {
+            add(EditFileTool)
+        }
+
+        if (appSettings.isToolEnabled(CommonTools.compressContextToolInfo.id, defaultEnabled = true)) {
+            val dataRepository: com.oak.app.data.DataRepository by inject(com.oak.app.data.DataRepository::class.java)
+            add(compressContextTool { keepRecent, focus ->
+                dataRepository.triggerCompaction(keepRecent, focus)
+            })
         }
 
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)

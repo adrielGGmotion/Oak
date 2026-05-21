@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.oak.app.data.AppSettings
+import com.oak.app.data.DataRepository
 import com.oak.app.data.EmailStore
 import com.oak.app.data.EncryptedFileSettings
 import com.oak.app.data.MemoryStore
@@ -20,9 +21,12 @@ import com.oak.app.mcp.McpServerManager
 import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.tools.CommonTools
+import com.oak.app.tools.compressContextTool
+import com.oak.app.tools.EditFileTool
 import com.oak.app.tools.EmailTools
 import com.oak.app.tools.HeartbeatTools
 import com.oak.app.tools.ProcessManagerTool
+import com.oak.app.tools.ReadFileTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
 import com.russhwolf.settings.Settings
@@ -146,7 +150,12 @@ actual fun createSecureSettings(): Settings = EncryptedFileSettings()
 
 actual fun createLegacySettings(): Settings? = null // Same storage location, no migration needed
 
-actual fun getPlatformToolDefinitions(): List<ToolInfo> = listOf(ShellCommandTool.toolInfo, ProcessManagerTool.toolInfo) + CommonTools.commonToolDefinitions
+actual fun getPlatformToolDefinitions(): List<ToolInfo> = listOf(
+    ShellCommandTool.toolInfo,
+    ProcessManagerTool.toolInfo,
+    ReadFileTool.toolInfo,
+    EditFileTool.toolInfo,
+) + CommonTools.commonToolDefinitions
 
 actual fun getAvailableTools(): List<Tool> {
     val appSettings: AppSettings by inject(AppSettings::class.java)
@@ -168,6 +177,21 @@ actual fun getAvailableTools(): List<Tool> {
         }
         if (appSettings.isEmailEnabled()) {
             addAll(EmailTools.getEmailTools(emailStore))
+        }
+
+        if (appSettings.isToolEnabled(ReadFileTool.schema.name, defaultEnabled = true)) {
+            add(ReadFileTool)
+        }
+
+        if (appSettings.isToolEnabled(EditFileTool.schema.name, defaultEnabled = true)) {
+            add(EditFileTool)
+        }
+
+        if (appSettings.isToolEnabled(CommonTools.compressContextToolInfo.id, defaultEnabled = true)) {
+            val dataRepository: DataRepository by inject(DataRepository::class.java)
+            add(compressContextTool { keepRecent, focus ->
+                dataRepository.triggerCompaction(keepRecent, focus)
+            })
         }
 
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)
