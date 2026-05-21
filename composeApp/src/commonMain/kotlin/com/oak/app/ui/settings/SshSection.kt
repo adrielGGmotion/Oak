@@ -50,8 +50,12 @@ import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.common_cancel
 import oak.composeapp.generated.resources.settings_ssh_add
 import oak.composeapp.generated.resources.settings_ssh_add_server
+import oak.composeapp.generated.resources.settings_ssh_auth_type
+import oak.composeapp.generated.resources.settings_ssh_auth_type_label
+import oak.composeapp.generated.resources.settings_ssh_connect
 import oak.composeapp.generated.resources.settings_ssh_description
 import oak.composeapp.generated.resources.settings_ssh_host
 import oak.composeapp.generated.resources.settings_ssh_name
@@ -218,7 +222,7 @@ private fun SshServerCard(
                 }
 
                 Text(
-                    text = "Auth: ${server.authType.name}",
+                    text = stringResource(Res.string.settings_ssh_auth_type, server.authType.name),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -237,7 +241,7 @@ private fun SshServerCard(
                             modifier = Modifier.size(16.dp),
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text("Connect")
+                        Text(stringResource(Res.string.settings_ssh_connect))
                     }
                     TextButton(onClick = onRemove, modifier = Modifier.handCursor()) {
                         Icon(
@@ -273,9 +277,9 @@ private fun AddSshServerDialog(
     var privateKey by remember { mutableStateOf("") }
     var passphrase by remember { mutableStateOf("") }
 
-    val fieldsValid = name.isNotBlank() && host.isNotBlank() && username.isNotBlank() &&
-        (authType == SshAuthType.Password && password.isNotBlank()) ||
-        (authType == SshAuthType.Key && privateKey.isNotBlank())
+    val fieldsValid = (name.isNotBlank() && host.isNotBlank() && username.isNotBlank()) &&
+        ((authType == SshAuthType.Password && password.isNotBlank()) ||
+            (authType == SshAuthType.Key && privateKey.isNotBlank()))
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -335,7 +339,7 @@ private fun AddSshServerDialog(
                     value = authType.name,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Auth Type") },
+                    label = { Text(stringResource(Res.string.settings_ssh_auth_type_label)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = authTypeExpanded) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                 )
@@ -393,7 +397,7 @@ private fun AddSshServerDialog(
                     onClick = onDismiss,
                     modifier = Modifier.handCursor(),
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.common_cancel))
                 }
                 Spacer(Modifier.width(8.dp))
                 TextButton(

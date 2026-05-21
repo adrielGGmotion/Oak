@@ -245,7 +245,10 @@ class SettingsViewModel(
             checkAllConnections()
             connectEnabledMcpServers()
             viewModelScope.launch(backgroundDispatcher) {
-                dataRepository.connectEnabledSshServers()
+                val enabledServers = dataRepository.getSshServers().filter { it.isEnabled }
+                enabledServers.forEach { server ->
+                    connectSshServerWithStatus(server.id)
+                }
             }
             fetchSponsors()
         }
@@ -886,7 +889,7 @@ class SettingsViewModel(
         authType: SshAuthType,
     ) {
         viewModelScope.launch(backgroundDispatcher) {
-            val config = dataRepository.addSshServer(name, host, port, username, password, privateKey, passphrase)
+            val config = dataRepository.addSshServer(name, host, port, username, authType, password, privateKey, passphrase)
             refreshSshServers()
             connectSshServerWithStatus(config.id)
         }
@@ -903,10 +906,10 @@ class SettingsViewModel(
     }
 
     private fun onToggleSshServer(serverId: String, enabled: Boolean) {
-        dataRepository.setSshServerEnabled(serverId, enabled)
-        refreshSshServers()
-        if (enabled) {
-            viewModelScope.launch(backgroundDispatcher) {
+        viewModelScope.launch(backgroundDispatcher) {
+            dataRepository.setSshServerEnabled(serverId, enabled)
+            refreshSshServers()
+            if (enabled) {
                 connectSshServerWithStatus(serverId)
             }
         }
