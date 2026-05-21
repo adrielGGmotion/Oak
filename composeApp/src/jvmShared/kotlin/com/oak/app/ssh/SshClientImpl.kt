@@ -4,6 +4,7 @@ import org.apache.sshd.client.SshClient as MinaSshClient
 import org.apache.sshd.client.channel.ClientChannelEvent
 import org.apache.sshd.client.session.ClientSession
 import org.apache.sshd.common.config.keys.FilePasswordProvider
+import org.apache.sshd.common.util.security.SecurityUtils
 import org.apache.sshd.sftp.client.SftpClient
 import org.apache.sshd.sftp.client.SftpClientFactory
 import java.io.ByteArrayOutputStream
@@ -26,6 +27,7 @@ class SshClientImpl : SshClient {
         disconnect()
 
         val sshClient = MinaSshClient.setUpDefaultClient()
+        sshClient.setServerKeyVerifier { _, _, _ -> true }
 
         if (config.authType == SshAuthType.Key && config.privateKey.isNotBlank()) {
             val passwordProvider = if (config.passphrase.isNotBlank()) {
@@ -38,26 +40,37 @@ class SshClientImpl : SshClient {
             )
         }
 
-        sshClient.start()
+        var sshSession: ClientSession? = null
+        try {
+            sshClient.start()
 
-        val sshSession = sshClient
-            .connect(config.username, config.host, config.port)
-            .verify(15, TimeUnit.SECONDS)
-            .session
+            sshSession = sshClient
+                .connect(config.username, config.host, config.port)
+                .verify(15, TimeUnit.SECONDS)
+                .session
 
-        if (config.authType == SshAuthType.Password && config.password.isNotBlank()) {
-            sshSession.addPasswordIdentity(config.password)
+            if (config.authType == SshAuthType.Password && config.password.isNotBlank()) {
+                sshSession.addPasswordIdentity(config.password)
+            }
+
+            sshSession.auth().verify(15, TimeUnit.SECONDS)
+
+            val info = SshConnectionInfo(
+                host = config.host,
+                port = config.port,
+                username = config.username,
+            )
+
+            this.client = sshClient
+            this.session = sshSession
+            connectionInfo = info
+        } catch (e: Exception) {
+            if (sshSession != null) {
+                try { sshSession.close(true) } catch (_: Exception) {}
+            }
+            try { sshClient.stop() } catch (_: Exception) {}
+            throw e
         }
-
-        sshSession.auth().verify(15, TimeUnit.SECONDS)
-
-        this.client = sshClient
-        this.session = sshSession
-        connectionInfo = SshConnectionInfo(
-            host = config.host,
-            port = config.port,
-            username = config.username,
-        )
     }
 
     override fun disconnect() {

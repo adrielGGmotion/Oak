@@ -154,7 +154,8 @@ fun detectImportSections(json: JsonObject): Map<ImportSection, String?> {
         sections[ImportSection.MCP] = count?.let { "$it" }
     }
     if (json["ssh_servers"] != null) {
-        val count = json["ssh_servers"]?.jsonArray?.size
+        val elem = json["ssh_servers"]
+        val count = if (elem is kotlinx.serialization.json.JsonArray) elem.size else null
         sections[ImportSection.SSH] = count?.let { "$it" }
     }
     if (json["conversations"] != null) {

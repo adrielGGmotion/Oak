@@ -322,6 +322,10 @@
     <string name="settings_ssh_status_error">Connection failed</string>
     <string name="settings_import_section_ssh">Remote SSH</string>
     <string name="snackbar_ssh_server_removed">SSH server removed</string>
+    <string name="settings_ssh_auth_type_label">Auth Type</string>
+    <string name="settings_ssh_auth_type">Auth: %s</string>
+    <string name="settings_ssh_connect">Connect</string>
+    <string name="common_cancel">Cancel</string>
     <string name="settings_request_integration_title">Request an Integration</string>
     <string name="settings_request_integration_description">Have an idea for an automation or integration? Let us know by opening a GitHub issue.</string>
     <string name="settings_open_github_issue">Open GitHub Issue</string>

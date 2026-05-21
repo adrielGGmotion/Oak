@@ -81,14 +81,14 @@ class SshServerManager(
         return config
     }
 
-    fun removeServer(serverId: String) {
+    suspend fun removeServer(serverId: String) {
         val servers = getServers().toMutableList()
         servers.removeAll { it.id == serverId }
         saveServers(servers)
         disconnectClient(serverId)
     }
 
-    fun setServerEnabled(serverId: String, enabled: Boolean) {
+    suspend fun setServerEnabled(serverId: String, enabled: Boolean) {
         val servers = getServers().toMutableList()
         val index = servers.indexOfFirst { it.id == serverId }
         if (index >= 0) {
@@ -100,24 +100,31 @@ class SshServerManager(
         }
     }
 
-    suspend fun connectServer(serverId: String): Result<Unit> = mutex.withLock {
-        val server = getServers().find { it.id == serverId }
-            ?: return@withLock Result.failure(Exception("Server not found: $serverId"))
+    suspend fun connectServer(serverId: String): Result<Unit> {
+        val server = mutex.withLock { getServers().find { it.id == serverId } }
+            ?: return Result.failure(Exception("Server not found: $serverId"))
 
-        clients.remove(serverId)?.disconnect()
+        val existingClient = mutex.withLock { clients.remove(serverId) }
+        existingClient?.disconnect()
 
         val client = clientFactory()
-        return@withLock try {
+        val connectResult = try {
             client.connect(server)
-            clients[serverId] = client
-            Result.success(Unit)
         } catch (e: Exception) {
             client.disconnect()
-            Result.failure(e)
+            return Result.failure(e)
+        }
+
+        return if (connectResult.isSuccess) {
+            mutex.withLock { clients[serverId] = client }
+            Result.success(Unit)
+        } else {
+            client.disconnect()
+            connectResult
         }
     }
 
-    fun registerAdhocClient(id: String, client: SshClient) = runBlocking {
+    suspend fun registerAdhocClient(id: String, client: SshClient) {
         mutex.withLock {
             clients.remove(id)?.disconnect()
             clients[id] = client
@@ -128,10 +135,8 @@ class SshServerManager(
         mutex.withLock { clients[serverId]?.isConnected == true }
     }
 
-    fun disconnectClient(serverId: String) {
-        val client = runBlocking {
-            mutex.withLock { clients.remove(serverId) }
-        }
+    suspend fun disconnectClient(serverId: String) {
+        val client = mutex.withLock { clients.remove(serverId) }
         client?.disconnect()
     }
 
@@ -153,10 +158,10 @@ class SshServerManager(
     ): Result<Unit> {
         val client = mutex.withLock { clients[serverId] }
             ?: return Result.failure(Exception("Not connected to server"))
-        return if (direction == "upload") {
-            client.uploadFile(localPath, remotePath)
-        } else {
-            client.downloadFile(remotePath, localPath)
+        return when (direction) {
+            "upload" -> client.uploadFile(localPath, remotePath)
+            "download" -> client.downloadFile(remotePath, localPath)
+            else -> Result.failure(Exception("Invalid direction: '$direction'. Must be 'upload' or 'download'"))
         }
     }
 

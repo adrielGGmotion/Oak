@@ -8,6 +8,8 @@ import com.oak.app.network.tools.ToolSchema
 import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshServerConfig
 import com.oak.app.ssh.SshServerManager
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 object SshTools {
 
@@ -90,8 +92,11 @@ object SshTools {
             }
 
             val client = createSshClient()
+            @OptIn(ExperimentalUuidApi::class)
+            val adhocId = "_adhoc_${host}_${port}_${Uuid.random()}"
+
             val tempConfig = SshServerConfig(
-                id = "_adhoc_${host}_$port",
+                id = adhocId,
                 name = host,
                 host = host,
                 port = port,
@@ -168,7 +173,9 @@ object SshTools {
                 return mapOf("success" to false, "error" to "No active SSH connections. Use ssh_connect first.")
             }
 
-            val targetId = serverId ?: activeIds.first()
+            val targetId = serverId ?: if (activeIds.size == 1) activeIds.first() else {
+                return mapOf("success" to false, "error" to "Multiple active SSH connections. Please specify server_id. Active: ${activeIds.joinToString()}")
+            }
             if (targetId !in activeIds) {
                 return mapOf("success" to false, "error" to "Not connected to: $targetId. Active: ${activeIds.joinToString()}")
             }
@@ -266,7 +273,9 @@ object SshTools {
             if (activeIds.isEmpty()) {
                 return mapOf("success" to false, "error" to "No active SSH connections")
             }
-            val targetId = serverId ?: activeIds.first()
+            val targetId = serverId ?: if (activeIds.size == 1) activeIds.first() else {
+                return mapOf("success" to false, "error" to "Multiple active SSH connections. Please specify server_id. Active: ${activeIds.joinToString()}")
+            }
 
             val result = when (direction.lowercase()) {
                 "upload" -> requireManager().transferFile(targetId, "upload", localPath, remotePath)

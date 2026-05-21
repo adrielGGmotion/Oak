@@ -6,6 +6,7 @@ import com.oak.app.inference.EngineState
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.McpServerConfig
 import com.oak.app.network.tools.ToolInfo
+import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshServerConfig
 import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.ui.chat.History
@@ -113,9 +114,9 @@ interface DataRepository {
 
     // SSH Servers
     fun getSshServers(): List<SshServerConfig>
-    suspend fun addSshServer(name: String, host: String, port: Int, username: String, password: String, privateKey: String, passphrase: String): SshServerConfig
-    fun removeSshServer(serverId: String)
-    fun setSshServerEnabled(serverId: String, enabled: Boolean)
+    suspend fun addSshServer(name: String, host: String, port: Int, username: String, authType: SshAuthType, password: String, privateKey: String, passphrase: String): SshServerConfig
+    suspend fun removeSshServer(serverId: String)
+    suspend fun setSshServerEnabled(serverId: String, enabled: Boolean)
     suspend fun connectSshServer(serverId: String): Result<Unit>
     fun isSshServerConnected(serverId: String): Boolean
     suspend fun disconnectSshServer(serverId: String)

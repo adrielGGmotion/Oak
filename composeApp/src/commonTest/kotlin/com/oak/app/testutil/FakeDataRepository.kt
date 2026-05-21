@@ -344,6 +344,7 @@ class FakeDataRepository : DataRepository {
         host: String,
         port: Int,
         username: String,
+        authType: SshAuthType,
         password: String,
         privateKey: String,
         passphrase: String,
@@ -361,7 +362,7 @@ class FakeDataRepository : DataRepository {
             host = host,
             port = port,
             username = username,
-            authType = if (privateKey.isNotBlank()) SshAuthType.Key else SshAuthType.Password,
+            authType = authType,
             password = password,
             privateKey = privateKey,
             passphrase = passphrase,
@@ -370,12 +371,12 @@ class FakeDataRepository : DataRepository {
         return config
     }
 
-    override fun removeSshServer(serverId: String) {
+    override suspend fun removeSshServer(serverId: String) {
         sshServers.removeAll { it.id == serverId }
         sshConnected.remove(serverId)
     }
 
-    override fun setSshServerEnabled(serverId: String, enabled: Boolean) {
+    override suspend fun setSshServerEnabled(serverId: String, enabled: Boolean) {
         val index = sshServers.indexOfFirst { it.id == serverId }
         if (index >= 0) {
             sshServers[index] = sshServers[index].copy(isEnabled = enabled)
