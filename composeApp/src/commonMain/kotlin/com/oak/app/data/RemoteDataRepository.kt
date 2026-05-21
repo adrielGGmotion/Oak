@@ -44,6 +44,9 @@ import com.oak.app.sms.SmsSendResult
 import com.oak.app.sms.SmsSender
 import com.oak.app.tools.CommonTools
 import com.oak.app.tools.NotificationListenerController
+import com.oak.app.ssh.SshAuthType
+import com.oak.app.ssh.SshServerConfig
+import com.oak.app.ssh.SshServerManager
 import com.oak.app.tools.SmsPermissionController
 import com.oak.app.tools.SmsSendPermissionController
 import com.oak.app.ui.chat.History
@@ -138,6 +141,7 @@ class RemoteDataRepository(
     private val notificationStore: NotificationStore,
     private val notificationListenerController: NotificationListenerController,
     private val mcpServerManager: McpServerManager,
+    private val sshServerManager: SshServerManager,
     private val sandboxController: SandboxController,
     private val localInferenceEngine: LocalInferenceEngine? = null,
 ) : DataRepository {
@@ -1887,6 +1891,43 @@ class RemoteDataRepository(
     override suspend fun connectEnabledMcpServers() {
         mcpServerManager.connectEnabledServers()
     }
+
+    // SSH Servers
+    override fun getSshServers(): List<SshServerConfig> = sshServerManager.getServers()
+
+    override suspend fun addSshServer(
+        name: String,
+        host: String,
+        port: Int,
+        username: String,
+        authType: SshAuthType,
+        password: String,
+        privateKey: String,
+        passphrase: String,
+    ): SshServerConfig = sshServerManager.addServer(
+        name = name,
+        host = host,
+        port = port,
+        username = username,
+        authType = authType,
+        password = password,
+        privateKey = privateKey,
+        passphrase = passphrase,
+    )
+
+    override suspend fun removeSshServer(serverId: String) = sshServerManager.removeServer(serverId)
+
+    override suspend fun setSshServerEnabled(serverId: String, enabled: Boolean) = sshServerManager.setServerEnabled(serverId, enabled)
+
+    override suspend fun connectSshServer(serverId: String): Result<Unit> = sshServerManager.connectServer(serverId)
+
+    override fun isSshServerConnected(serverId: String): Boolean = sshServerManager.isConnected(serverId)
+
+    override suspend fun disconnectSshServer(serverId: String) {
+        sshServerManager.disconnectClient(serverId)
+    }
+
+    override suspend fun connectEnabledSshServers() = sshServerManager.connectEnabledServers()
 
     // Soul (system prompt)
     override fun getSoulText(): String = appSettings.getSoulText()
