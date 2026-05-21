@@ -433,6 +433,10 @@ actual fun getAvailableTools(): List<Tool> {
             add(CommonTools.openUrlTool)
         }
 
+        if (appSettings.isToolEnabled(CommonTools.waitTool.schema.name)) {
+            add(CommonTools.waitTool)
+        }
+
         if (appSettings.isToolEnabled(OpenFileTool.schema.name)) {
             add(OpenFileTool)
         }

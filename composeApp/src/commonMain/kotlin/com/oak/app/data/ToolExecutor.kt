@@ -3,6 +3,7 @@ package com.oak.app.data
 import com.oak.app.getAvailableTools
 import com.oak.app.getPlatformToolDefinitions
 import com.oak.app.smartTruncate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -75,6 +76,8 @@ class ToolExecutor {
             truncateResult(resultString)
         } catch (e: TimeoutCancellationException) {
             """{"success": false, "error": "Tool '$name' timed out after ${tool.timeout}"}"""
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             """{"success": false, "error": "Tool execution failed: ${e.message}"}"""
         }
