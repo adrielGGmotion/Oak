@@ -453,7 +453,7 @@ class RemoteDataRepository(
             systemPrompt
         }
 
-        val inferenceMessages = messages.mapNotNull { msg ->
+        var inferenceMessages = messages.mapNotNull { msg ->
             when (msg.role) {
                 History.Role.USER -> InferenceMessage(role = "user", content = msg.content)
                 History.Role.ASSISTANT -> InferenceMessage(role = "assistant", content = msg.content)
@@ -461,11 +461,64 @@ class RemoteDataRepository(
             }
         }
 
-        return stripThinkBlocks(engine.chat(
+        var response = stripThinkBlocks(engine.chat(
             messages = inferenceMessages,
             systemPrompt = promptWithTools,
             tools = emptyList(),
         ))
+
+        var iteration = 0
+        while (iteration < MAX_TOOL_ITERATIONS) {
+            iteration++
+            // Try XML invoke blocks first, then fall back to JSON format
+            var inlineResult = parseInlineToolCalls(response)
+            if (inlineResult == null) {
+                val jsonCalls = parseJsonToolCalls(response)
+                if (jsonCalls.isNotEmpty()) {
+                    val cleanContent = response.replace(JSON_TOOL_CALL_REGEX, "").trim()
+                    inlineResult = InlineToolCallResult(
+                        toolCalls = jsonCalls.map { ToolCallInfo(id = "invoke-${Uuid.random()}", name = it.name, arguments = it.arguments) },
+                        cleanContent = cleanContent,
+                    )
+                }
+            }
+            if (inlineResult == null) break
+
+            history.update {
+                it.toMutableList().apply {
+                    add(History(role = History.Role.ASSISTANT, content = inlineResult.cleanContent, toolCalls = inlineResult.toolCalls.toImmutableList()))
+                }
+            }
+
+            val toolResults = executeToolCallsInParallel(inlineResult.toolCalls.map { Triple(it.id, it.name, it.arguments) })
+
+            history.update { h ->
+                buildList(h.size + toolResults.size) {
+                    for (entry in h) {
+                        if (entry.role != History.Role.TOOL_EXECUTING) add(entry)
+                    }
+                    for ((callId, name, result) in toolResults) {
+                        add(History(role = History.Role.TOOL, content = result, toolCallId = callId, toolName = name))
+                    }
+                }
+            }
+
+            inferenceMessages = history.value.mapNotNull { msg ->
+                when (msg.role) {
+                    History.Role.USER -> InferenceMessage(role = "user", content = msg.content)
+                    History.Role.ASSISTANT -> InferenceMessage(role = "assistant", content = msg.content)
+                    else -> null
+                }
+            }
+
+            response = stripThinkBlocks(engine.chat(
+                messages = inferenceMessages,
+                systemPrompt = promptWithTools,
+                tools = emptyList(),
+            ))
+        }
+
+        return response
     }
 
     /**
@@ -476,7 +529,9 @@ class RemoteDataRepository(
         if (tools.isEmpty()) return null
         return buildString {
             append("## Available Tools\n\n")
-            append("When you need to use a tool, output a JSON block on its own line:\n")
+            append("When you need to use a tool, output an XML block:\n")
+            append("""<invoke name="tool_name"><parameter name="param_name">value</parameter></invoke>""")
+            append("\n\nOr alternatively, a JSON block on its own line:\n")
             append("""{"function": "name", "arguments": {"param": "value"}}""")
             append("\n\n")
             for (tool in tools) {
@@ -508,28 +563,6 @@ class RemoteDataRepository(
     private fun stripThinkBlocks(text: String): String = THINK_BLOCK_REGEX.replace(text, "").trim()
 
     /**
-     * Attempts to parse a tool call JSON block from the model's output.
-     * Handles "function" and "arguments" in any order, and nested braces
-     * in arguments via brace counting.
-     */
-    private data class LocalToolCall(val name: String, val arguments: String)
-
-    private fun parseLocalToolCall(text: String): LocalToolCall? {
-        val fnMatch = TOOL_CALL_FN_REGEX.find(text) ?: return null
-        val fnName = fnMatch.groupValues[1]
-        val fnEnd = fnMatch.range.last + 1
-        val afterFn = text.substring(fnEnd)
-
-        val argsMatch = TOOL_CALL_ARGS_REGEX.find(afterFn) ?: return null
-        val rawArgs = argsMatch.groupValues[1]
-        val balancedArgs = extractBalancedBraceBlock(rawArgs, 0) ?: return null
-        return LocalToolCall(name = fnName, arguments = balancedArgs)
-    }
-
-    private val TOOL_CALL_FN_REGEX = Regex(""""function"\s*:\s*"([^"]+)"""")
-    private val TOOL_CALL_ARGS_REGEX = Regex(""""arguments"\s*:\s*(\{.*)""", RegexOption.DOT_MATCHES_ALL)
-
-    /**
      * Extracts a balanced JSON object string starting at [startIdx] in [s].
      * Counts brace depth to correctly handle nested objects.
      */
@@ -555,71 +588,71 @@ class RemoteDataRepository(
         return null
     }
 
-    /**
-     * Runs a single tool invocation requested by the on-device engine, mirroring the UI
-     * flow used by [executeToolCallsInParallel]: write the assistant tool-call row, show a
-     * TOOL_EXECUTING indicator (with a 2 s minimum so it's visible), execute the tool, then
-     * replace the indicator with a TOOL result row. Returns the raw result string for the
-     * engine to feed back to the model.
-     */
-    private suspend fun runLocalToolWithUiFeedback(
-        name: String,
-        arguments: String,
-        history: MutableStateFlow<List<History>>,
-    ): String {
-        val callId = "local-${Uuid.random()}"
-        val executingId = Uuid.random().toString()
-        val displayName = toolExecutor.getToolDisplayName(name)
-        // Append the assistant tool-call row and the executing indicator in a single
-        // StateFlow update so the UI doesn't flash twice before the tool even starts.
-        history.update {
-            it.toMutableList().apply {
-                add(
-                    History(
-                        role = History.Role.ASSISTANT,
-                        content = "",
-                        toolCalls = persistentListOf(
-                            ToolCallInfo(id = callId, name = name, arguments = arguments),
-                        ),
-                    ),
-                )
-                add(
-                    History(
-                        id = executingId,
-                        role = History.Role.TOOL_EXECUTING,
-                        content = name,
-                        toolName = displayName,
-                    ),
-                )
-            }
-        }
-        val startTime = Clock.System.now().toEpochMilliseconds()
-        val result = try {
-            toolExecutor.executeTool(name, arguments, _currentConversationId.value)
-        } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
-            """{"success": false, "error": "${e.message ?: "Tool execution failed"}"}"""
-        }
-        val elapsed = Clock.System.now().toEpochMilliseconds() - startTime
-        if (elapsed < MIN_TOOL_DISPLAY_MS) {
-            delay(MIN_TOOL_DISPLAY_MS.milliseconds - elapsed.milliseconds)
-        }
-        history.update { h ->
-            buildList(h.size) {
-                for (entry in h) {
-                    if (entry.id != executingId) add(entry)
+    private data class ParsedInvokeCall(val name: String, val arguments: String)
+
+    private val INVOKE_BLOCK_REGEX = Regex(
+        """<invoke\s+(?:[^>]*\s)?name\s*=\s*"([^"]+)"(?:[^>]*)>([\s\S]*?)</invoke>""",
+        RegexOption.DOT_MATCHES_ALL,
+    )
+
+    private val PARAMETER_REGEX = Regex(
+        """<parameter\s+(?:[^>]*\s)?name\s*=\s*"([^"]+)"(?:[^>]*)>([\s\S]*?)</parameter>""",
+        RegexOption.DOT_MATCHES_ALL,
+    )
+
+    private fun coerceValue(raw: String): JsonElement {
+        val trimmed = raw.trim()
+        if (trimmed.equals("true", ignoreCase = true)) return JsonPrimitive(true)
+        if (trimmed.equals("false", ignoreCase = true)) return JsonPrimitive(false)
+        val asInt = trimmed.toIntOrNull()
+        if (asInt != null) return JsonPrimitive(asInt)
+        val asDouble = trimmed.toDoubleOrNull()
+        if (asDouble != null) return JsonPrimitive(asDouble)
+        return JsonPrimitive(trimmed)
+    }
+
+    private fun parseInvokeBlocks(text: String): List<ParsedInvokeCall> {
+        return INVOKE_BLOCK_REGEX.findAll(text).map { match ->
+            val name = match.groupValues[1]
+            val body = match.groupValues[2]
+            val params = buildJsonObject {
+                PARAMETER_REGEX.findAll(body).forEach { paramMatch ->
+                    val paramName = paramMatch.groupValues[1]
+                    val paramValue = paramMatch.groupValues[2].trim()
+                    put(paramName, coerceValue(paramValue))
                 }
-                add(
-                    History(
-                        role = History.Role.TOOL,
-                        content = result,
-                        toolCallId = callId,
-                        toolName = name,
-                    ),
-                )
             }
-        }
-        return result
+            ParsedInvokeCall(name = name, arguments = params.toString())
+        }.toList()
+    }
+
+    private data class InlineToolCallResult(
+        val toolCalls: List<ToolCallInfo>,
+        val cleanContent: String,
+    )
+
+    private fun parseInlineToolCalls(text: String): InlineToolCallResult? {
+        val cleaned = text.replace(toolCallMarkerRegex, "").trim()
+        val calls = parseInvokeBlocks(cleaned)
+        if (calls.isEmpty()) return null
+        return InlineToolCallResult(
+            toolCalls = calls.map { ToolCallInfo(id = "invoke-${Uuid.random()}", name = it.name, arguments = it.arguments) },
+            cleanContent = cleaned.replace(INVOKE_BLOCK_REGEX, "").trim(),
+        )
+    }
+
+    private val JSON_TOOL_CALL_REGEX = Regex(
+        """\{"function"\s*:\s*"([^"]+)"\s*,\s*"arguments"\s*:\s*(\{.*?\})\s*\}""",
+        RegexOption.DOT_MATCHES_ALL,
+    )
+
+    private fun parseJsonToolCalls(text: String): List<ParsedInvokeCall> {
+        return JSON_TOOL_CALL_REGEX.findAll(text).mapNotNull { match ->
+            val name = match.groupValues[1]
+            val rawArgs = match.groupValues[2]
+            val balanced = extractBalancedBraceBlock(rawArgs, 0) ?: return@mapNotNull null
+            ParsedInvokeCall(name = name, arguments = balanced)
+        }.toList()
     }
 
     private suspend fun askWithService(
@@ -894,7 +927,7 @@ class RemoteDataRepository(
             _streamingContent.value = null
             _streamingReasoning.value = null
 
-            val (textContent, fullReasoning, toolCalls) = try {
+            var (textContent, fullReasoning, toolCalls) = try {
                 retryApiCall {
                     _streamingContent.value = null
                     _streamingReasoning.value = null
@@ -949,10 +982,26 @@ class RemoteDataRepository(
 
             if (toolCalls.isEmpty()) {
                 if (textContent != null) {
-                    val stripped = textContent.replace(toolCallMarkerRegex, "").trim()
-                    return stripped.takeIf { it.isNotBlank() } ?: textContent
+                    val inlineResult = parseInlineToolCalls(textContent)
+                    if (inlineResult != null) {
+                        toolCalls = inlineResult.toolCalls.map { tc ->
+                            OpenAICompatibleChatResponseDto.ToolCall(
+                                id = tc.id,
+                                type = "function",
+                                function = OpenAICompatibleChatResponseDto.FunctionCall(
+                                    name = tc.name,
+                                    arguments = tc.arguments,
+                                ),
+                            )
+                        }
+                        textContent = inlineResult.cleanContent.ifEmpty { null }
+                    } else {
+                        val stripped = textContent.replace(toolCallMarkerRegex, "").trim()
+                        return stripped.ifEmpty { "" }
+                    }
+                } else {
+                    return ""
                 }
-                return ""
             }
 
             val signatures = toolCalls.map { "${it.function.name}:${it.function.arguments.hashCode()}" }
@@ -1040,22 +1089,30 @@ class RemoteDataRepository(
 
             // Check for function calls in the response (parts that have functionCall)
             val partsWithFunctionCalls = parts.filter { it.functionCall != null }
-            if (partsWithFunctionCalls.isEmpty()) {
-                // No function calls - return the text response (skip thought parts)
-                return parts.filterNot { it.isThought }.joinToString("\n") { it.text ?: "" }
-            }
+            val toolCallInfos: List<ToolCallInfo>
+            val textContent: String
 
-            // Convert Gemini function calls to ToolCallInfo with synthetic IDs
-            // Include thoughtSignature from the Part (required for Gemini 3 models)
-            val toolCallInfos = partsWithFunctionCalls.map { part ->
-                val fc = part.functionCall!!
-                val argsJson = fc.args?.let { JsonObject(it).toString() } ?: "{}"
-                ToolCallInfo(
-                    id = "gemini-${Uuid.random()}",
-                    name = fc.name,
-                    arguments = argsJson,
-                    thoughtSignature = part.thoughtSignature,
-                )
+            if (partsWithFunctionCalls.isEmpty()) {
+                val text = parts.filterNot { it.isThought }.joinToString("\n") { it.text ?: "" }
+                val inlineResult = parseInlineToolCalls(text)
+                if (inlineResult == null) {
+                    return text
+                }
+                toolCallInfos = inlineResult.toolCalls
+                textContent = inlineResult.cleanContent
+            } else {
+                toolCallInfos = partsWithFunctionCalls.map { part ->
+                    val fc = part.functionCall!!
+                    val argsJson = fc.args?.let { JsonObject(it).toString() } ?: "{}"
+                    ToolCallInfo(
+                        id = "gemini-${Uuid.random()}",
+                        name = fc.name,
+                        arguments = argsJson,
+                        thoughtSignature = part.thoughtSignature,
+                    )
+                }
+                textContent = parts.filterNot { it.isThought }.mapNotNull { it.text }.joinToString("\n")
+                    .replace(INVOKE_BLOCK_REGEX, "").trim()
             }
 
             // Check for repetition
@@ -1074,7 +1131,6 @@ class RemoteDataRepository(
             recentSignatures.addAll(signatures)
 
             // Add assistant message with tool calls to history (skip thought parts)
-            val textContent = parts.filterNot { it.isThought }.mapNotNull { it.text }.joinToString("\n")
             history.update {
                 it.toMutableList().apply {
                     add(
@@ -1274,17 +1330,28 @@ class RemoteDataRepository(
             }
 
             val toolUseBlocks = response.content.filter { it.type == "tool_use" }
-            if (toolUseBlocks.isEmpty()) {
-                return response.extractText()
-            }
+            val toolCallInfos: List<ToolCallInfo>
+            val textContent: String
 
-            val toolCallInfos = toolUseBlocks.map { block ->
-                val argsJson = block.input?.toString() ?: "{}"
-                ToolCallInfo(
-                    id = block.id ?: "anthropic-${Uuid.random()}",
-                    name = block.name ?: "unknown",
-                    arguments = argsJson,
-                )
+            if (toolUseBlocks.isEmpty()) {
+                val text = response.extractText()
+                val inlineResult = parseInlineToolCalls(text)
+                if (inlineResult == null) {
+                    return text
+                }
+                toolCallInfos = inlineResult.toolCalls
+                textContent = inlineResult.cleanContent
+            } else {
+                toolCallInfos = toolUseBlocks.map { block ->
+                    val argsJson = block.input?.toString() ?: "{}"
+                    ToolCallInfo(
+                        id = block.id ?: "anthropic-${Uuid.random()}",
+                        name = block.name ?: "unknown",
+                        arguments = argsJson,
+                    )
+                }
+                textContent = response.content.filter { it.type == "text" }.mapNotNull { it.text }.joinToString("\n")
+                    .replace(INVOKE_BLOCK_REGEX, "").trim()
             }
 
             // Check for repetition
@@ -1302,7 +1369,6 @@ class RemoteDataRepository(
             recentSignatures.addAll(signatures)
 
             // Add assistant message with tool calls to history
-            val textContent = response.content.filter { it.type == "text" }.mapNotNull { it.text }.joinToString("\n")
             history.update {
                 it.toMutableList().apply {
                     add(
@@ -1713,6 +1779,11 @@ class RemoteDataRepository(
                         attachments = h.attachments,
                         uiSubmission = h.uiSubmission,
                         isThinking = h.isThinking,
+                        toolCalls = h.toolCalls?.map { tc ->
+                            Conversation.ToolCallInfoData(tc.id, tc.name, tc.arguments, tc.thoughtSignature)
+                        },
+                        toolCallId = h.toolCallId,
+                        toolName = h.toolName,
                     )
                 },
             createdAt = existingConversation?.createdAt ?: now,
@@ -1784,6 +1855,11 @@ class RemoteDataRepository(
                 attachments = attachments,
                 uiSubmission = m.uiSubmission,
                 isThinking = m.isThinking,
+                toolCalls = m.toolCalls?.map { tc ->
+                    ToolCallInfo(id = tc.id, name = tc.name, arguments = tc.arguments, thoughtSignature = tc.thoughtSignature)
+                }?.toImmutableList(),
+                toolCallId = m.toolCallId,
+                toolName = m.toolName,
             )
         }
     }

@@ -46,6 +46,17 @@ data class Conversation(
         val mimeType: String? = null,
         val data: String? = null,
         val fileName: String? = null,
+        val toolCalls: List<ToolCallInfoData>? = null,
+        val toolCallId: String? = null,
+        val toolName: String? = null,
+    )
+
+    @Serializable
+    data class ToolCallInfoData(
+        val id: String,
+        val name: String,
+        val arguments: String,
+        val thoughtSignature: String? = null,
     )
 }
 
