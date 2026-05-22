@@ -97,6 +97,7 @@ import com.oak.app.ui.chat.composables.BotAvatar
 import com.oak.app.ui.markdown.MarkdownContent
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.Stop
 import com.oak.app.ui.components.LogoAnimation
 import com.oak.app.ui.components.VerticalScrollbarForList
 import com.oak.app.ui.dynamicui.FrozenSubmission
@@ -110,7 +111,6 @@ import com.oak.app.ui.settings.SandboxViewModel
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.fallback_answered_by
 import oak.composeapp.generated.resources.fallback_service_failed
-import oak.composeapp.generated.resources.ic_stop
 import oak.composeapp.generated.resources.interactive_back_content_description
 import oak.composeapp.generated.resources.interactive_exit_content_description
 import oak.composeapp.generated.resources.interactive_title
@@ -296,7 +296,7 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
             ) {
                 if (uiState.isLoading) {
                     TrailingIcon(
-                        icon = Res.drawable.ic_stop,
+                        icon = Icons.Filled.Stop,
                         onClick = { uiState.actions.cancel() },
                         isPulsing = true,
                     )

@@ -136,10 +136,11 @@ import com.oak.app.ui.components.OakSlider
 import com.oak.app.ui.components.SettingsListItem
 import com.oak.app.ui.components.VerticalScrollbarForScroll
 import com.oak.app.ui.handCursor
-import com.oak.app.ui.icons.DragIndicator
-import com.oak.app.ui.icons.Replay
-import com.oak.app.ui.icons.Visibility
-import com.oak.app.ui.icons.VisibilityOff
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.rounded.DragIndicator
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import com.oak.app.ui.oakAdaptiveCardSurface
@@ -150,7 +151,6 @@ import io.github.vinceglb.filekit.readBytes
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.default_soul
 import oak.composeapp.generated.resources.github_mark
-import oak.composeapp.generated.resources.ic_arrow_drop_down
 import oak.composeapp.generated.resources.litert_cancel
 import oak.composeapp.generated.resources.litert_context_size
 import oak.composeapp.generated.resources.litert_download
@@ -1129,7 +1129,7 @@ private fun ConfiguredServiceCardContent(
 
                 // Expand/collapse chevron
                 Icon(
-                    imageVector = vectorResource(Res.drawable.ic_arrow_drop_down),
+                    imageVector = Icons.Filled.ArrowDropDown,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -3203,7 +3203,7 @@ private fun ThemeModePicker(
                 trailingIcon = {
                     Icon(
                         modifier = Modifier.handCursor(),
-                        imageVector = vectorResource(Res.drawable.ic_arrow_drop_down),
+                        imageVector = Icons.Filled.ArrowDropDown,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onBackground,
                     )

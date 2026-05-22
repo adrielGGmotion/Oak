@@ -18,16 +18,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.heartbeat_banner_dismiss
 import oak.composeapp.generated.resources.heartbeat_banner_message
-import oak.composeapp.generated.resources.ic_close
-import oak.composeapp.generated.resources.ic_history
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 internal fun HeartbeatBanner(
@@ -54,7 +54,7 @@ internal fun HeartbeatBanner(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = vectorResource(Res.drawable.ic_history),
+                    imageVector = Icons.Filled.History,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp),
@@ -72,7 +72,7 @@ internal fun HeartbeatBanner(
                     onClick = onDismiss,
                 ) {
                     Icon(
-                        imageVector = vectorResource(Res.drawable.ic_close),
+                        imageVector = Icons.Filled.Close,
                         contentDescription = stringResource(Res.string.heartbeat_banner_dismiss),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp),

@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Card
@@ -44,7 +46,6 @@ import com.oak.app.ui.components.OakSearchField
 import com.oak.app.ui.components.VerticalScrollbarForGrid
 import com.oak.app.ui.handCursor
 import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.ic_arrow_drop_down
 import oak.composeapp.generated.resources.model_sort_context
 import oak.composeapp.generated.resources.model_sort_date
 import oak.composeapp.generated.resources.model_sort_score
@@ -53,7 +54,7 @@ import oak.composeapp.generated.resources.settings_model_search
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +82,7 @@ internal fun ModelSelection(
                 trailingIcon = {
                     Icon(
                         modifier = Modifier.handCursor(),
-                        imageVector = vectorResource(Res.drawable.ic_arrow_drop_down),
+                        imageVector = Icons.Filled.ArrowDropDown,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onBackground,
                     )

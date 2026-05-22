@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -25,15 +28,12 @@ import androidx.compose.ui.unit.dp
 import com.oak.app.ui.chat.ChatActions
 import com.oak.app.ui.handCursor
 import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.ic_settings
-import oak.composeapp.generated.resources.ic_volume_off
-import oak.composeapp.generated.resources.ic_volume_up
 import oak.composeapp.generated.resources.sandbox_content_description
 import oak.composeapp.generated.resources.settings_content_description
 import oak.composeapp.generated.resources.toggle_speech_output_content_description
 import nl.marc_apps.tts.TextToSpeechInstance
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
+
 
 @Composable
 internal fun TopBar(
@@ -79,9 +79,9 @@ internal fun TopBar(
                     modifier = Modifier.handCursor(),
                     onClick = onNavigateToSettings,
                 ) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_settings),
-                        contentDescription = stringResource(Res.string.settings_content_description),
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = stringResource(Res.string.settings_content_description),
                         tint = MaterialTheme.colorScheme.onBackground,
                     )
                 }
@@ -186,9 +186,9 @@ private fun SpeechToggleButton(
     ) {
         Icon(
             imageVector = if (isSpeechOutputEnabled) {
-                vectorResource(Res.drawable.ic_volume_up)
+                Icons.AutoMirrored.Filled.VolumeUp
             } else {
-                vectorResource(Res.drawable.ic_volume_off)
+                Icons.AutoMirrored.Filled.VolumeOff
             },
             contentDescription = stringResource(Res.string.toggle_speech_output_content_description),
             tint = MaterialTheme.colorScheme.onBackground,

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,7 +51,6 @@ import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.ic_arrow_drop_down
 import oak.composeapp.generated.resources.settings_mcp_add
 import oak.composeapp.generated.resources.settings_mcp_add_header
 import oak.composeapp.generated.resources.settings_mcp_add_server
@@ -69,7 +69,7 @@ import oak.composeapp.generated.resources.settings_mcp_status_connecting
 import oak.composeapp.generated.resources.settings_mcp_status_error
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
+
 
 @Composable
 internal fun McpServersSection(
@@ -184,7 +184,7 @@ private fun McpServerCard(
                 Spacer(Modifier.width(8.dp))
 
                 Icon(
-                    imageVector = vectorResource(Res.drawable.ic_arrow_drop_down),
+                    imageVector = Icons.Filled.ArrowDropDown,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

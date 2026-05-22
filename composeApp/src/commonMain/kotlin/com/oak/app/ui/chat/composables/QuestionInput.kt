@@ -27,6 +27,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.DisableSelection
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
@@ -70,17 +76,10 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.name
 import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.ic_attach
-import oak.composeapp.generated.resources.ic_file
-import oak.composeapp.generated.resources.ic_image
-import oak.composeapp.generated.resources.ic_stop
-import oak.composeapp.generated.resources.ic_up
 import oak.composeapp.generated.resources.prompt_ask_question
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -109,9 +108,9 @@ fun QuestionInput(
             ) {
                 for (file in files) {
                     val icon = if (file.extension.lowercase() in imageExtensions) {
-                        Res.drawable.ic_image
+                        Icons.Filled.Image
                     } else {
-                        Res.drawable.ic_file
+                        Icons.AutoMirrored.Filled.InsertDriveFile
                     }
                     SuggestionChip(
                         modifier = Modifier.handCursor(),
@@ -119,7 +118,7 @@ fun QuestionInput(
                         icon = {
                             Icon(
                                 modifier = Modifier.size(16.dp),
-                                painter = painterResource(icon),
+                                imageVector = icon,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onBackground,
                             )
@@ -224,9 +223,9 @@ fun QuestionInput(
                         )
                     }
                     if (isLoading) {
-                        TrailingIcon(icon = Res.drawable.ic_stop, onClick = cancel, isPulsing = true)
+                        TrailingIcon(icon = Icons.Filled.Stop, onClick = cancel, isPulsing = true)
                     } else if (textState.text.isNotBlank()) {
-                        TrailingIcon(icon = Res.drawable.ic_up, onClick = { submitQuestion() })
+                        TrailingIcon(icon = Icons.Filled.ArrowUpward, onClick = { submitQuestion() })
                     }
                 }
             },
@@ -238,7 +237,7 @@ fun QuestionInput(
             leadingIcon = if (filePickerLauncher != null) {
                 {
                     CircleIconButton(
-                        icon = vectorResource(Res.drawable.ic_attach),
+                        icon = Icons.Filled.AttachFile,
                         onClick = { filePickerLauncher.launch() },
                         modifier = Modifier.padding(start = 7.dp),
                         tint = MaterialTheme.colorScheme.onBackground,
@@ -277,7 +276,7 @@ internal fun truncateFileName(name: String, maxChars: Int = 16): String {
 
 @Composable
 internal fun TrailingIcon(
-    icon: org.jetbrains.compose.resources.DrawableResource = Res.drawable.ic_up,
+    icon: ImageVector = Icons.Filled.ArrowUpward,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isPulsing: Boolean = false,
@@ -320,7 +319,7 @@ internal fun TrailingIcon(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            vectorResource(icon),
+            imageVector = icon,
             modifier = Modifier.size(32.dp).then(pulseModifier),
             contentDescription = null,
             tint = Color.White,
