@@ -23,19 +23,20 @@ import com.oak.app.mcp.McpServerManager
 import com.oak.app.network.tools.ParameterSchema
 import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
-import com.oak.app.ssh.SshClient
-import com.oak.app.ssh.SshClientImpl
 import com.oak.app.network.tools.ToolSchema
 import com.oak.app.notifications.NotificationReader
 import com.oak.app.notifications.declaresNotificationListener
 import com.oak.app.sms.SmsReader
 import com.oak.app.sms.SmsSender
 import com.oak.app.sms.declaresReadSms
+import com.oak.app.ssh.SshClient
+import com.oak.app.ssh.SshClientImpl
+import org.apache.sshd.common.util.io.PathUtils
+import java.nio.file.Paths
 import com.oak.app.tools.CalendarPermissionController
 import com.oak.app.tools.CalendarRepository
 import com.oak.app.tools.CalendarResult
 import com.oak.app.tools.CommonTools
-import com.oak.app.tools.compressContextTool
 import com.oak.app.tools.EditFileTool
 import com.oak.app.tools.EmailTools
 import com.oak.app.tools.HeartbeatTools
@@ -44,13 +45,14 @@ import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.NotificationResult
 import com.oak.app.tools.NotificationTools
 import com.oak.app.tools.OpenFileTool
-import com.oak.app.tools.ReadFileTool
 import com.oak.app.tools.ProcessManagerTool
+import com.oak.app.tools.ReadFileTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
 import com.oak.app.tools.SmsTools
 import com.oak.app.tools.SshTools
 import com.oak.app.tools.WebSearchTool
+import com.oak.app.tools.compressContextTool
 import com.russhwolf.settings.BuildConfig
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
@@ -507,9 +509,11 @@ actual fun getAvailableTools(): List<Tool> {
 
         if (appSettings.isToolEnabled(CommonTools.compressContextToolInfo.id, defaultEnabled = true)) {
             val dataRepository: com.oak.app.data.DataRepository by inject(com.oak.app.data.DataRepository::class.java)
-            add(compressContextTool { keepRecent, focus ->
-                dataRepository.triggerCompaction(keepRecent, focus)
-            })
+            add(
+                compressContextTool { keepRecent, focus ->
+                    dataRepository.triggerCompaction(keepRecent, focus)
+                },
+            )
         }
 
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)
@@ -560,7 +564,12 @@ actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler(enabled = enabled, onBack = onBack)
 }
 
-actual fun createSshClient(): SshClient = SshClientImpl()
+actual fun createSshClient(): SshClient {
+    PathUtils.setUserHomeFolderResolver {
+        Paths.get(System.getProperty("java.io.tmpdir") ?: "/data/local/tmp")
+    }
+    return SshClientImpl()
+}
 
 actual suspend fun saveFileToDevice(bytes: ByteArray, baseName: String, extension: String) {
     val file = FileKit.openFileSaver(suggestedName = baseName, defaultExtension = extension)
