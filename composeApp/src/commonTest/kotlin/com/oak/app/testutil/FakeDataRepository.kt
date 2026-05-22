@@ -505,9 +505,12 @@ class FakeDataRepository : DataRepository {
     override fun setSandboxEnabled(enabled: Boolean) {
     }
 
-    override fun isStorageAccessEnabled(): Boolean = false
+    private var storageAccessEnabled = false
+
+    override fun isStorageAccessEnabled(): Boolean = storageAccessEnabled
 
     override fun setStorageAccessEnabled(enabled: Boolean) {
+        storageAccessEnabled = enabled
     }
 
     override fun getHeartbeatConfig(): HeartbeatConfig = HeartbeatConfig()

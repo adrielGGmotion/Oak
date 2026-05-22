@@ -111,6 +111,19 @@ import kotlinx.serialization.Serializable
 import nl.marc_apps.tts.TextToSpeechInstance
 import nl.marc_apps.tts.experimental.ExperimentalVoiceApi
 import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.drawer_artifacts
+import oak.composeapp.generated.resources.drawer_cancel
+import oak.composeapp.generated.resources.drawer_chats
+import oak.composeapp.generated.resources.drawer_delete
+import oak.composeapp.generated.resources.drawer_delete_conversation_text
+import oak.composeapp.generated.resources.drawer_delete_conversation_title
+import oak.composeapp.generated.resources.drawer_free_plan
+import oak.composeapp.generated.resources.drawer_more_options
+import oak.composeapp.generated.resources.drawer_new_chat
+import oak.composeapp.generated.resources.drawer_no_conversations
+import oak.composeapp.generated.resources.drawer_projects
+import oak.composeapp.generated.resources.drawer_settings
+import oak.composeapp.generated.resources.drawer_user
 import oak.composeapp.generated.resources.tab_chat
 import oak.composeapp.generated.resources.tab_settings
 import org.jetbrains.compose.resources.stringResource
@@ -297,7 +310,7 @@ private fun AppContent(
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                     },
-                                    label = { Text("New Chat") },
+                                    label = { Text(stringResource(Res.string.drawer_new_chat)) },
                                     selected = false,
                                     onClick = {
                                         scope.launch { drawerState.close() }
@@ -319,7 +332,7 @@ private fun AppContent(
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                     },
-                                    label = { Text("Projects") },
+                                    label = { Text(stringResource(Res.string.drawer_projects)) },
                                     selected = false,
                                     onClick = {},
                                     modifier = Modifier.padding(horizontal = 12.dp),
@@ -338,7 +351,7 @@ private fun AppContent(
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                     },
-                                    label = { Text("Artifacts") },
+                                    label = { Text(stringResource(Res.string.drawer_artifacts)) },
                                     selected = false,
                                     onClick = {},
                                     modifier = Modifier.padding(horizontal = 12.dp),
@@ -358,7 +371,7 @@ private fun AppContent(
                                 ) {
                                     item {
                                         Text(
-                                            text = "Chats",
+                                            text = stringResource(Res.string.drawer_chats),
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
@@ -368,7 +381,7 @@ private fun AppContent(
                                     if (filteredConversations.isEmpty()) {
                                         item {
                                             Text(
-                                                text = "No conversations yet",
+                                                text = stringResource(Res.string.drawer_no_conversations),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
@@ -396,9 +409,10 @@ private fun AppContent(
                                                         Row(
                                                             verticalAlignment = Alignment.CenterVertically,
                                                         ) {
-                                                            Column(modifier = Modifier.weight(1f)) {
-                                                                Text(
-                                                                    text = conversation.title.ifEmpty { "New Chat" },
+                                                    val fallbackTitle = stringResource(Res.string.drawer_new_chat)
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                            Text(
+                                                                text = conversation.title.ifEmpty { fallbackTitle },
                                                                     style = MaterialTheme.typography.bodyMedium,
                                                                     fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
                                                                     color = if (isActive) {
@@ -423,7 +437,7 @@ private fun AppContent(
                                                                 ) {
                                                                     Icon(
                                                                         Icons.Default.MoreVert,
-                                                                        contentDescription = "More options",
+                                                                        contentDescription = stringResource(Res.string.drawer_more_options),
                                                                         modifier = Modifier.size(18.dp),
                                                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                                                     )
@@ -433,11 +447,11 @@ private fun AppContent(
                                                                     onDismissRequest = { showMenu = false },
                                                                 ) {
                                                                     DropdownMenuItem(
-                                                                        text = { Text("Delete") },
-                                                                        onClick = {
-                                                                            showMenu = false
-                                                                            deleteTarget = conversation
-                                                                        },
+                                                                text = { Text(stringResource(Res.string.drawer_delete)) },
+                                                                    onClick = {
+                                                                        showMenu = false
+                                                                        deleteTarget = conversation
+                                                                    },
                                                                         leadingIcon = {
                                                                             Icon(
                                                                                 Icons.Default.Delete,
@@ -491,12 +505,12 @@ private fun AppContent(
                                     Spacer(Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "User",
+                                            text = stringResource(Res.string.drawer_user),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurface,
                                         )
                                         Text(
-                                            text = "Free plan",
+                                            text = stringResource(Res.string.drawer_free_plan),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
@@ -510,7 +524,7 @@ private fun AppContent(
                                     ) {
                                         Icon(
                                             Icons.Default.Settings,
-                                            contentDescription = "Settings",
+                                            contentDescription = stringResource(Res.string.drawer_settings),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                     }
@@ -520,14 +534,14 @@ private fun AppContent(
                             deleteTarget?.let { target ->
                                 AlertDialog(
                                     onDismissRequest = { deleteTarget = null },
-                                    title = { Text("Delete conversation?") },
-                                    text = { Text("This action cannot be undone.") },
+                                    title = { Text(stringResource(Res.string.drawer_delete_conversation_title)) },
+                                    text = { Text(stringResource(Res.string.drawer_delete_conversation_text)) },
                                     confirmButton = {
                                         TextButton(onClick = {
                                             chatState.actions.deleteConversation(target.id)
                                             deleteTarget = null
                                         }) {
-                                            Text("Delete")
+                                            Text(stringResource(Res.string.drawer_delete))
                                         }
                                     },
                                     dismissButton = {

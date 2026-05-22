@@ -144,6 +144,7 @@ import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import com.oak.app.ui.oakAdaptiveCardSurface
+import com.oak.app.tools.SetupStoragePermissionHandler
 import com.oak.app.ui.sandbox.SandboxProgressRow
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
@@ -158,6 +159,10 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.jsonObject
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.default_soul
+import oak.composeapp.generated.resources.device_storage_description_disabled
+import oak.composeapp.generated.resources.device_storage_description_enabled_granted
+import oak.composeapp.generated.resources.device_storage_description_enabled_denied
+import oak.composeapp.generated.resources.device_storage_title
 import oak.composeapp.generated.resources.github_mark
 import oak.composeapp.generated.resources.litert_cancel
 import oak.composeapp.generated.resources.litert_context_size
@@ -327,6 +332,8 @@ fun SettingsScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
+
+    SetupStoragePermissionHandler(viewModel.storagePermissionController)
 
     SettingsScreenContent(
         uiState = uiState,
@@ -665,17 +672,17 @@ private fun DeviceStorageCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Device storage",
+                    text = stringResource(Res.string.device_storage_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
                     text = if (isEnabled && permissionGranted) {
-                        "Access internal storage and SD card from the sandbox"
+                        stringResource(Res.string.device_storage_description_enabled_granted)
                     } else if (isEnabled && !permissionGranted) {
-                        "Permission required — grant in Settings"
+                        stringResource(Res.string.device_storage_description_enabled_denied)
                     } else {
-                        "Browse device files in the sandbox file browser"
+                        stringResource(Res.string.device_storage_description_disabled)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

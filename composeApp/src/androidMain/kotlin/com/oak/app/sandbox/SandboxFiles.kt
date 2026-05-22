@@ -80,7 +80,7 @@ private fun resolveFileProviderUri(context: Context, file: File, authority: Stri
     } catch (_: IllegalArgumentException) {
         // Path not covered by FileProvider — copy to cache and serve from there.
     }
-    val cached = File(context.cacheDir, "external-share/${file.name}")
+    val cached = File(context.cacheDir, "external-share/${file.absolutePath.hashCode().toUInt().toString(16)}/${file.name}")
     cached.parentFile?.mkdirs()
     return try {
         file.copyTo(cached, overwrite = true)

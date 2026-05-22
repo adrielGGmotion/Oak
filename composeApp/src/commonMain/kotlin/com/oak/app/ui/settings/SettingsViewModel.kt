@@ -60,7 +60,7 @@ class SettingsViewModel(
     private val dataRepository: DataRepository,
     private val daemonController: DaemonController,
     private val notificationPermissionController: NotificationPermissionController,
-    private val storagePermissionController: StoragePermissionController,
+    val storagePermissionController: StoragePermissionController,
     private val taskScheduler: TaskScheduler,
     private val backgroundDispatcher: CoroutineContext = getBackgroundDispatcher(),
 ) : ViewModel() {

@@ -555,4 +555,54 @@ class SettingsViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    // --- Storage Access Tests ---
+
+    @Test
+    fun `initial state has storage access disabled and permission denied`() = runTest {
+        val viewModel = SettingsViewModel(fakeRepository, fakeDaemonController, fakeNotificationPermissionController, fakeStoragePermissionController, noOpScheduler, testDispatcher)
+
+        viewModel.state.test {
+            val state = awaitItem()
+            assertFalse(state.isStorageAccessEnabled)
+            assertFalse(state.storagePermissionGranted)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onToggleStorageAccess toggles off when already enabled`() = runTest {
+        fakeRepository.setStorageAccessEnabled(true)
+        val viewModel = SettingsViewModel(fakeRepository, fakeDaemonController, fakeNotificationPermissionController, fakeStoragePermissionController, noOpScheduler, testDispatcher)
+
+        viewModel.state.test {
+            val initialState = awaitItem()
+            assertTrue(initialState.isStorageAccessEnabled)
+
+            viewModel.actions.onToggleStorageAccess(false)
+            val afterToggle = awaitItem()
+            assertFalse(afterToggle.isStorageAccessEnabled)
+            assertFalse(fakeRepository.isStorageAccessEnabled())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `onToggleStorageAccess requests permission when toggling on`() = runTest {
+        val viewModel = SettingsViewModel(fakeRepository, fakeDaemonController, fakeNotificationPermissionController, fakeStoragePermissionController, noOpScheduler, testDispatcher)
+
+        viewModel.state.test {
+            val initialState = awaitItem()
+            assertFalse(initialState.isStorageAccessEnabled)
+
+            viewModel.actions.onToggleStorageAccess(true)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val permissionsGranted = fakeStoragePermissionController.hasPermission()
+            val repoEnabled = fakeRepository.isStorageAccessEnabled()
+            val item = cancelAndConsumeRemainingEvents()
+            assertFalse(repoEnabled, "Repository should remain disabled when permission not granted")
+        }
+    }
 }

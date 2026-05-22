@@ -103,7 +103,7 @@ class LinuxSandboxManager(
                     else -> null
                 } ?: return@forEach
                 val uuid = avolume.uuid?.takeIf { it.isNotEmpty() && it != "null" }
-                val volumeId = if (avolume.isPrimary) "internal" else (uuid ?: "external")
+                val volumeId = if (avolume.isPrimary) "internal" else (uuid ?: "external_${volumePath.hashCode().toUInt().toString(16)}")
                 put(volumeId, volumePath)
             }
         }
