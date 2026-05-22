@@ -205,3 +205,9 @@
 }
 -dontwarn com.google.gson.**
 -dontwarn sun.misc.Unsafe
+
+# Apache SSHD — pulled in by feat/remote-ssh for desktop SSH connectivity.
+# Uses javax.management and javax.security.auth.login classes that only exist
+# on the JVM, not on Android. R8 fails with "Missing class" without dontwarn.
+-dontwarn javax.management.**
+-dontwarn javax.security.auth.login.**
