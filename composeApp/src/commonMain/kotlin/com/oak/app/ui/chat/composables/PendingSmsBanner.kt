@@ -27,11 +27,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.oak.app.data.SmsDraft
 import com.oak.app.data.SmsDraftStatus
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.ic_close
 import oak.composeapp.generated.resources.sms_draft_banner_discard
 import oak.composeapp.generated.resources.sms_draft_banner_dismiss
 import oak.composeapp.generated.resources.sms_draft_banner_failed
@@ -41,7 +42,7 @@ import oak.composeapp.generated.resources.sms_draft_banner_sent
 import oak.composeapp.generated.resources.sms_draft_banner_to
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
+
 
 /**
  * Stack of cards, one per pending/sending/sent/failed SMS draft. Explicit
@@ -118,7 +119,7 @@ private fun PendingSmsBanner(
                     onClick = onDiscard,
                 ) {
                     Icon(
-                        imageVector = vectorResource(Res.drawable.ic_close),
+                        imageVector = Icons.Filled.Close,
                         contentDescription = dismissLabel,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp),

@@ -15,9 +15,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -44,10 +48,6 @@ import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.bot_message_copy_content_description
 import oak.composeapp.generated.resources.bot_message_regenerate_content_description
 import oak.composeapp.generated.resources.bot_message_speech_content_description
-import oak.composeapp.generated.resources.ic_copy
-import oak.composeapp.generated.resources.ic_refresh
-import oak.composeapp.generated.resources.ic_stop
-import oak.composeapp.generated.resources.ic_volume_up
 import kotlinx.coroutines.launch
 import nl.marc_apps.tts.TextToSpeechInstance
 import nl.marc_apps.tts.errors.TextToSpeechSynthesisInterruptedError
@@ -157,7 +157,7 @@ internal fun BotMessage(
         if (textToSpeech != null) {
             val componentScope = rememberCoroutineScope()
             SmallIconButton(
-                iconResource = if (isSpeaking) Res.drawable.ic_stop else Res.drawable.ic_volume_up,
+                imageVector = if (isSpeaking) Icons.Filled.Stop else Icons.AutoMirrored.Filled.VolumeUp,
                 contentDescription = stringResource(Res.string.bot_message_speech_content_description),
                 onClick = {
                     componentScope.launch(getBackgroundDispatcher()) {
@@ -181,7 +181,7 @@ internal fun BotMessage(
         }
         val clipboardManager = LocalClipboardManager.current
         SmallIconButton(
-            iconResource = Res.drawable.ic_copy,
+            imageVector = Icons.Filled.ContentCopy,
             contentDescription = stringResource(Res.string.bot_message_copy_content_description),
             onClick = {
                 clipboardManager.setText(buildAnnotatedString { append(message) })
@@ -189,7 +189,7 @@ internal fun BotMessage(
         )
         if (onRegenerate != null) {
             SmallIconButton(
-                iconResource = Res.drawable.ic_refresh,
+                imageVector = Icons.Filled.Refresh,
                 contentDescription = stringResource(Res.string.bot_message_regenerate_content_description),
                 onClick = onRegenerate,
             )

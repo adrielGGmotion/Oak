@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,7 +56,6 @@ import oak.composeapp.generated.resources.chat_history_delete_content_descriptio
 import oak.composeapp.generated.resources.chat_history_empty
 import oak.composeapp.generated.resources.chat_history_heartbeat_label
 import oak.composeapp.generated.resources.chat_history_title
-import oak.composeapp.generated.resources.ic_history
 import oak.composeapp.generated.resources.snackbar_conversation_deleted
 import oak.composeapp.generated.resources.snackbar_undo
 import kotlinx.collections.immutable.ImmutableList
@@ -64,7 +64,6 @@ import kotlinx.datetime.format.DateTimeComponents.Companion.Format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 
 private val dateFormat = Format {
     day()
@@ -173,8 +172,8 @@ internal fun ChatHistorySheet(
                                                         .padding(horizontal = 6.dp, vertical = 2.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                 ) {
-                                                    Icon(
-                                                        imageVector = vectorResource(Res.drawable.ic_history),
+                                                Icon(
+                                                    imageVector = Icons.Filled.History,
                                                         contentDescription = null,
                                                         tint = MaterialTheme.colorScheme.onTertiaryContainer,
                                                         modifier = Modifier.size(12.dp),

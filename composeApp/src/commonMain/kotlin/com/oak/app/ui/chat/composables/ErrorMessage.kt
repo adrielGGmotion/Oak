@@ -11,13 +11,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.ui.unit.dp
 import com.oak.app.network.UiError
 import com.oak.app.ui.handCursor
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.ic_refresh
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 internal fun uiErrorText(error: UiError): String = when (error) {
@@ -45,7 +44,7 @@ internal fun ErrorMessage(
             onClick = retry,
         ) {
             Icon(
-                imageVector = vectorResource(Res.drawable.ic_refresh),
+                imageVector = Icons.Filled.Refresh,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onBackground,
             )

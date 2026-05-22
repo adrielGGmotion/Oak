@@ -3,6 +3,9 @@ package com.oak.app.ui.chat.composables
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -35,11 +38,8 @@ import com.oak.app.ui.components.LocalShowFullScreenImage
 import com.oak.app.ui.handCursor
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.bot_message_copy_content_description
-import oak.composeapp.generated.resources.ic_copy
-import oak.composeapp.generated.resources.ic_file
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -98,10 +98,10 @@ internal fun UserMessage(
                                 SuggestionChip(
                                     onClick = {},
                                     icon = {
-                                        Icon(
-                                            modifier = Modifier.size(16.dp),
-                                            painter = painterResource(Res.drawable.ic_file),
-                                            contentDescription = null,
+                                                Icon(
+                                                    modifier = Modifier.size(16.dp),
+                                                    imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
+                                                    contentDescription = null,
                                             tint = MaterialTheme.colorScheme.onBackground,
                                         )
                                     },
@@ -127,7 +127,7 @@ internal fun UserMessage(
                     horizontalArrangement = Arrangement.End,
                 ) {
                     SmallIconButton(
-                        iconResource = Res.drawable.ic_copy,
+                        imageVector = Icons.Filled.ContentCopy,
                         contentDescription = stringResource(Res.string.bot_message_copy_content_description),
                         onClick = {
                             clipboardManager.setText(buildAnnotatedString { append(message) })
