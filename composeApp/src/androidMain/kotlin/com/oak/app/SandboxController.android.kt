@@ -1,7 +1,11 @@
 package com.oak.app
 
 import android.content.Context
+import android.os.Build
+import android.os.Environment
+import android.os.storage.StorageManager
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.oak.app.data.StorageVolume
 import com.oak.app.sandbox.LinuxSandboxManager
 import com.oak.app.sandbox.SandboxState
 import com.oak.app.sandbox.SessionShell
@@ -33,6 +37,32 @@ class AndroidSandboxController : SandboxController {
     private val _status = MutableStateFlow(SandboxStatus())
     override val status: StateFlow<SandboxStatus> = _status
     override val sessions: StateFlow<List<String>> = sandboxManager.sessions
+
+    private val storageVolumeMap: Map<String, String> by lazy {
+        sandboxManager.getStorageVolumeMap()
+    }
+
+    override fun getStorageVolumes(): List<StorageVolume> {
+        val storageManager = context.getSystemService(Context.STORAGE_SERVICE) as? StorageManager ?: return emptyList()
+        return storageManager.storageVolumes.mapNotNull { avolume ->
+            if (!isExternalStorageAccessible()) return@mapNotNull null
+            val volumePath = when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> avolume.directory?.absolutePath
+                avolume.isPrimary -> Environment.getExternalStorageDirectory().absolutePath
+                else -> null
+            } ?: return@mapNotNull null
+            val uuid = avolume.uuid?.takeIf { it.isNotEmpty() && it != "null" }
+            val volumeId = if (avolume.isPrimary) "internal" else (uuid ?: "external")
+            val volumeLabel = if (avolume.isPrimary) "Internal storage" else (uuid?.let { "SD Card ($it)" } ?: "External storage")
+            StorageVolume(
+                id = volumeId,
+                label = volumeLabel,
+                path = volumePath,
+                isPrimary = avolume.isPrimary,
+                isRemovable = avolume.isRemovable,
+            )
+        }
+    }
 
     init {
         // Synchronously seed the status from the manager's current state so the
@@ -206,7 +236,7 @@ class AndroidSandboxController : SandboxController {
     }
 
     override suspend fun listDirectory(path: String): List<SandboxFileEntry> = withContext(Dispatchers.IO) {
-        val dir = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path)
+        val dir = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path, storageVolumeMap)
             ?: return@withContext emptyList()
         if (!dir.isDirectory) return@withContext emptyList()
 
@@ -231,6 +261,17 @@ class AndroidSandboxController : SandboxController {
                     ),
                 )
             }
+            getStorageVolumes().forEach { volume ->
+                children.add(
+                    SandboxFileEntry(
+                        name = volume.label,
+                        path = "/${volume.id}",
+                        isDirectory = true,
+                        sizeBytes = 0,
+                        lastModifiedMs = File(volume.path).lastModified(),
+                    ),
+                )
+            }
         }
         children.sortedWith(
             compareByDescending<SandboxFileEntry> { it.isDirectory }
@@ -239,7 +280,7 @@ class AndroidSandboxController : SandboxController {
     }
 
     override suspend fun readTextFile(path: String, maxBytes: Int): String? = withContext(Dispatchers.IO) {
-        val file = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path)
+        val file = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path, storageVolumeMap)
             ?: return@withContext null
         if (!file.isFile) return@withContext null
         if (file.length() > maxBytes) return@withContext null
@@ -253,7 +294,7 @@ class AndroidSandboxController : SandboxController {
     }
 
     override suspend fun writeTextFile(path: String, content: String): Boolean = withContext(Dispatchers.IO) {
-        val file = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path)
+        val file = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path, storageVolumeMap)
             ?: return@withContext false
         if (file.exists() && !file.isFile) return@withContext false
         try {
@@ -266,7 +307,7 @@ class AndroidSandboxController : SandboxController {
     }
 
     override suspend fun openFile(path: String): Result<Unit> = withContext(Dispatchers.IO) {
-        val file = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path)
+        val file = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path, storageVolumeMap)
             ?: return@withContext Result.failure(IllegalArgumentException("Invalid path: $path"))
         if (!file.isFile) return@withContext Result.failure(IllegalArgumentException("Not a file: $path"))
         val result = openFileWithIntent(context, file)
@@ -274,7 +315,7 @@ class AndroidSandboxController : SandboxController {
     }
 
     override suspend fun deleteEntry(path: String, recursive: Boolean): Boolean = withContext(Dispatchers.IO) {
-        val file = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path)
+        val file = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path, storageVolumeMap)
             ?: return@withContext false
         if (!file.exists()) return@withContext false
         // Refuse to delete the sandbox roots themselves.
@@ -299,7 +340,7 @@ class AndroidSandboxController : SandboxController {
         ) {
             return@withContext Result.failure(IllegalArgumentException("Invalid name"))
         }
-        val src = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path)
+        val src = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, path, storageVolumeMap)
             ?: return@withContext Result.failure(IllegalArgumentException("Invalid path"))
         if (!src.exists()) return@withContext Result.failure(IllegalArgumentException("Not found"))
         val canonical = src.canonicalPath
@@ -311,7 +352,7 @@ class AndroidSandboxController : SandboxController {
         }
         val parentSandbox = path.substringBeforeLast('/', "")
         val newSandboxPath = if (parentSandbox.isEmpty()) "/$newName" else "$parentSandbox/$newName"
-        val dest = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, newSandboxPath)
+        val dest = resolveSandboxAbsolute(sandboxManager.rootfsPath, sandboxManager.homePath, newSandboxPath, storageVolumeMap)
             ?: return@withContext Result.failure(IllegalArgumentException("Invalid destination"))
         if (dest.exists()) return@withContext Result.failure(IllegalStateException("collision"))
         if (src.renameTo(dest)) {

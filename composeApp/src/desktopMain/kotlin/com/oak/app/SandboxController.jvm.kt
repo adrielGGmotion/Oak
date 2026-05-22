@@ -1,5 +1,6 @@
 package com.oak.app
 
+import com.oak.app.data.StorageVolume
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -20,6 +21,7 @@ class NoOpSandboxController : SandboxController {
         sessionId: String,
     ): CommandHandle = NoOpCommandHandle
 
+    override fun getStorageVolumes(): List<StorageVolume> = emptyList()
     override suspend fun listDirectory(path: String): List<SandboxFileEntry> = emptyList()
     override suspend fun readTextFile(path: String, maxBytes: Int): String? = null
     override suspend fun writeTextFile(path: String, content: String): Boolean = false

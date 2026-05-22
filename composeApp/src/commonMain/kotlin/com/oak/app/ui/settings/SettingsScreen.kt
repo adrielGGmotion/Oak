@@ -36,10 +36,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -136,11 +141,6 @@ import com.oak.app.ui.components.OakSlider
 import com.oak.app.ui.components.SettingsListItem
 import com.oak.app.ui.components.VerticalScrollbarForScroll
 import com.oak.app.ui.handCursor
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Replay
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.rounded.DragIndicator
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import com.oak.app.ui.oakAdaptiveCardSurface
@@ -148,6 +148,14 @@ import com.oak.app.ui.sandbox.SandboxProgressRow
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.readBytes
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.offsetAt
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.jsonObject
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.default_soul
 import oak.composeapp.generated.resources.github_mark
@@ -196,11 +204,11 @@ import oak.composeapp.generated.resources.settings_import_section_conversations
 import oak.composeapp.generated.resources.settings_import_section_email
 import oak.composeapp.generated.resources.settings_import_section_heartbeat
 import oak.composeapp.generated.resources.settings_import_section_mcp
-import oak.composeapp.generated.resources.settings_import_section_ssh
 import oak.composeapp.generated.resources.settings_import_section_memory
 import oak.composeapp.generated.resources.settings_import_section_scheduling
 import oak.composeapp.generated.resources.settings_import_section_services
 import oak.composeapp.generated.resources.settings_import_section_soul
+import oak.composeapp.generated.resources.settings_import_section_ssh
 import oak.composeapp.generated.resources.settings_import_section_tools
 import oak.composeapp.generated.resources.settings_import_success
 import oak.composeapp.generated.resources.settings_mcp_cancel
@@ -279,19 +287,11 @@ import oak.composeapp.generated.resources.settings_ui_scale
 import oak.composeapp.generated.resources.settings_version
 import oak.composeapp.generated.resources.snackbar_email_removed
 import oak.composeapp.generated.resources.snackbar_mcp_server_removed
-import oak.composeapp.generated.resources.snackbar_ssh_server_removed
 import oak.composeapp.generated.resources.snackbar_memory_deleted
 import oak.composeapp.generated.resources.snackbar_service_removed
+import oak.composeapp.generated.resources.snackbar_ssh_server_removed
 import oak.composeapp.generated.resources.snackbar_task_cancelled
 import oak.composeapp.generated.resources.snackbar_undo
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.offsetAt
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.json.jsonObject
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -494,6 +494,12 @@ fun SettingsScreenContent(
                                     onResetSandbox = onResetSandbox,
                                     onInstallPackages = onInstallPackages,
                                 )
+                                Spacer(Modifier.height(8.dp))
+                                DeviceStorageCard(
+                                    isEnabled = uiState.isStorageAccessEnabled,
+                                    permissionGranted = uiState.storagePermissionGranted,
+                                    onToggle = actions.onToggleStorageAccess,
+                                )
                             }
                         }
 
@@ -646,6 +652,44 @@ private fun SandboxSettingsCard(
 }
 
 @Composable
+private fun DeviceStorageCard(
+    isEnabled: Boolean,
+    permissionGranted: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    SettingsCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Device storage",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = if (isEnabled && permissionGranted) {
+                        "Access internal storage and SD card from the sandbox"
+                    } else if (isEnabled && !permissionGranted) {
+                        "Permission required — grant in Settings"
+                    } else {
+                        "Browse device files in the sandbox file browser"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = isEnabled,
+                onCheckedChange = onToggle,
+            )
+        }
+    }
+}
+
+@Composable
 private fun SettingsTabSelector(
     tabs: ImmutableList<SettingsTab>,
     currentTab: SettingsTab,
@@ -731,7 +775,6 @@ private fun BottomInfo() {
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onBackground,
         )
-
     }
 
     Spacer(Modifier.height(8.dp))
@@ -1407,7 +1450,13 @@ private fun LiteRTSettings(
                 Text(
                     text = "Backend: ${activeBackend?.uppercase() ?: "?"}",
                     style = MaterialTheme.typography.titleSmall,
-                    color = if (activeBackend == "gpu") StatusColorConnected else if (activeBackend == "cpu") StatusColorError else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (activeBackend == "gpu") {
+                        StatusColorConnected
+                    } else if (activeBackend == "cpu") {
+                        StatusColorError
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(

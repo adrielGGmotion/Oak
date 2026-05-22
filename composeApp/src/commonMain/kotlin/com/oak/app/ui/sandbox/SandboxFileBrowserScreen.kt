@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.SdCard
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -106,6 +108,7 @@ fun SandboxFilesContent(
             if (editor == null) {
                 FileList(
                     state = state,
+                    storageVolumeInfo = state.storageVolumeInfo,
                     onOpen = viewModel::openEntry,
                     onOpenExternal = viewModel::openInExternalApp,
                     onRename = viewModel::requestRename,
@@ -224,6 +227,7 @@ private fun Separator() {
 @Composable
 private fun FileList(
     state: FileBrowserUiState,
+    storageVolumeInfo: Map<String, Boolean>,
     onOpen: (SandboxFileEntry) -> Unit,
     onOpenExternal: (String) -> Unit,
     onRename: (SandboxFileEntry) -> Unit,
@@ -259,6 +263,8 @@ private fun FileList(
         items(state.entries, key = { it.path }) { entry ->
             FileRow(
                 entry = entry,
+                isStorageVolume = entry.path in storageVolumeInfo,
+                isRemovableStorage = storageVolumeInfo[entry.path] == true,
                 onClick = { onOpen(entry) },
                 onOpenExternal = { onOpenExternal(entry.path) },
                 onRename = { onRename(entry) },
@@ -271,6 +277,8 @@ private fun FileList(
 @Composable
 private fun FileRow(
     entry: SandboxFileEntry,
+    isStorageVolume: Boolean = false,
+    isRemovableStorage: Boolean = false,
     onClick: () -> Unit,
     onOpenExternal: () -> Unit,
     onRename: () -> Unit,
@@ -293,10 +301,16 @@ private fun FileRow(
                     .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val icon = when {
+                    isStorageVolume && isRemovableStorage -> Icons.Filled.SdCard
+                    isStorageVolume -> Icons.Filled.Storage
+                    entry.isDirectory -> Icons.Filled.Folder
+                    else -> Icons.AutoMirrored.Filled.InsertDriveFile
+                }
                 Icon(
-                    imageVector = if (entry.isDirectory) Icons.Filled.Folder else Icons.AutoMirrored.Filled.InsertDriveFile,
+                    imageVector = icon,
                     contentDescription = null,
-                    tint = if (entry.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (entry.isDirectory || isStorageVolume) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -316,7 +330,7 @@ private fun FileRow(
                     }
                 }
             }
-            if (entry.path != ROOT_HOME_PATH) {
+            if (entry.path != ROOT_HOME_PATH && !isStorageVolume) {
                 FileRowMenu(
                     isDirectory = entry.isDirectory,
                     onOpenExternal = onOpenExternal,

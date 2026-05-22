@@ -3,8 +3,6 @@ package com.oak.app.testutil
 import com.oak.app.data.Conversation
 import com.oak.app.data.DataRepository
 import com.oak.app.data.EmailAccount
-import com.oak.app.ssh.SshAuthType
-import com.oak.app.ssh.SshServerConfig
 import com.oak.app.data.EmailSyncState
 import com.oak.app.data.FallbackStatus
 import com.oak.app.data.FreeMode
@@ -26,6 +24,8 @@ import com.oak.app.inference.EngineState
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.McpServerConfig
 import com.oak.app.network.tools.ToolInfo
+import com.oak.app.ssh.SshAuthType
+import com.oak.app.ssh.SshServerConfig
 import com.oak.app.tools.CommonTools
 import com.oak.app.ui.chat.History
 import com.oak.app.ui.settings.SettingsModel
@@ -351,7 +351,9 @@ class FakeDataRepository : DataRepository {
     ): SshServerConfig {
         val base = name.lowercase().replace(Regex("[^a-z0-9]"), "_").take(30)
         val existingIds = sshServers.map { it.id }.toSet()
-        val id = if (base !in existingIds) base else {
+        val id = if (base !in existingIds) {
+            base
+        } else {
             var counter = 2
             while ("${base}_$counter" in existingIds) counter++
             "${base}_$counter"
@@ -501,6 +503,11 @@ class FakeDataRepository : DataRepository {
     override fun isSandboxEnabled(): Boolean = true
 
     override fun setSandboxEnabled(enabled: Boolean) {
+    }
+
+    override fun isStorageAccessEnabled(): Boolean = false
+
+    override fun setStorageAccessEnabled(enabled: Boolean) {
     }
 
     override fun getHeartbeatConfig(): HeartbeatConfig = HeartbeatConfig()

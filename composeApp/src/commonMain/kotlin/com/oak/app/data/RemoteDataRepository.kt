@@ -2089,6 +2089,12 @@ class RemoteDataRepository(
         appSettings.setSandboxEnabled(enabled)
     }
 
+    override fun isStorageAccessEnabled(): Boolean = appSettings.isStorageAccessEnabled()
+
+    override fun setStorageAccessEnabled(enabled: Boolean) {
+        appSettings.setStorageAccessEnabled(enabled)
+    }
+
     override fun getHeartbeatConfig(): HeartbeatConfig = heartbeatManager.getConfig()
 
     override fun setHeartbeatEnabled(enabled: Boolean) {

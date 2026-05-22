@@ -36,6 +36,7 @@ class SandboxViewModelTest {
         var resetCalls = 0
         var installPackagesCalls = 0
 
+        override fun getStorageVolumes(): List<com.oak.app.data.StorageVolume> = emptyList()
         override fun setup() {
             setupCalls++
         }
