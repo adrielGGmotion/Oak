@@ -68,6 +68,7 @@ data class SettingsActions(
     val onExportSettings: (Set<ImportSection>) -> String,
     val onPrepareExport: () -> Map<ImportSection, String?>,
     val onImportSettings: (ByteArray, Set<ImportSection>, Boolean) -> ImportResult,
+    val onToggleStorageAccess: (Boolean) -> Unit,
     val onUndoDelete: () -> Unit,
 ) {
     companion object {
@@ -130,6 +131,7 @@ data class SettingsActions(
             onExportSettings = { _ -> "" },
             onPrepareExport = { emptyMap() },
             onImportSettings = { _, _, _ -> ImportResult.Failure },
+            onToggleStorageAccess = {},
             onUndoDelete = {},
         )
     }

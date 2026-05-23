@@ -6,13 +6,6 @@ import com.oak.app.NoOpCommandHandle
 import com.oak.app.SandboxController
 import com.oak.app.SandboxFileEntry
 import com.oak.app.SandboxStatus
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.sandbox_files_delete_failed
-import oak.composeapp.generated.resources.sandbox_files_delete_success
-import oak.composeapp.generated.resources.sandbox_files_editor_closed_after_delete
-import oak.composeapp.generated.resources.sandbox_files_rename_error_collision
-import oak.composeapp.generated.resources.sandbox_files_rename_error_invalid
-import oak.composeapp.generated.resources.sandbox_files_rename_success
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +13,13 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.sandbox_files_delete_failed
+import oak.composeapp.generated.resources.sandbox_files_delete_success
+import oak.composeapp.generated.resources.sandbox_files_editor_closed_after_delete
+import oak.composeapp.generated.resources.sandbox_files_rename_error_collision
+import oak.composeapp.generated.resources.sandbox_files_rename_error_invalid
+import oak.composeapp.generated.resources.sandbox_files_rename_success
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -46,6 +46,7 @@ class SandboxFileBrowserViewModelTest {
         var lastDeleteCall: Pair<String, Boolean>? = null
         var lastRenameCall: Pair<String, String>? = null
 
+        override fun getStorageVolumes(): List<com.oak.app.data.StorageVolume> = emptyList()
         override fun setup() {}
         override fun cancel() {}
         override fun reset() {}

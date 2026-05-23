@@ -28,6 +28,8 @@ actual fun writeOakLocationMarker() {
 }
 
 fun isExternalStorageAccessible(): Boolean {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
-    return Environment.isExternalStorageManager()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        return Environment.isExternalStorageManager()
+    }
+    return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
 }

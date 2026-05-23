@@ -575,6 +575,13 @@ class AppSettings(private val settings: Settings) {
         settings.putBoolean(KEY_SANDBOX_ENABLED, enabled)
     }
 
+    // Storage access
+    fun isStorageAccessEnabled(): Boolean = settings.getBoolean(KEY_STORAGE_ACCESS_ENABLED, false)
+
+    fun setStorageAccessEnabled(enabled: Boolean) {
+        settings.putBoolean(KEY_STORAGE_ACCESS_ENABLED, enabled)
+    }
+
     fun getScheduledTasksJson(): String = settings.getString(KEY_SCHEDULED_TASKS, "[]")
 
     fun setScheduledTasksJson(json: String) {
@@ -1243,6 +1250,7 @@ class AppSettings(private val settings: Settings) {
         const val KEY_MODEL_CONTEXT_PREFIX = "model_context_"
 
         const val KEY_SANDBOX_ENABLED = "sandbox_enabled"
+        const val KEY_STORAGE_ACCESS_ENABLED = "storage_access_enabled"
 
         // Basic memory guidance shared by every chat variant. The advanced `## Structured
         // Learning` block lives in `ChatSystemPromptBuilder.DEFAULT_STRUCTURED_LEARNING_SECTION`
