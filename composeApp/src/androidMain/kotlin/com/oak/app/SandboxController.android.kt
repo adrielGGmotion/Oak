@@ -39,11 +39,11 @@ class AndroidSandboxController : SandboxController {
     override val status: StateFlow<SandboxStatus> = _status
     override val sessions: StateFlow<List<String>> = sandboxManager.sessions
 
-    private fun storageVolumeMap()(): Map<String, String> = sandboxManager.getStorageVolumeMap()
+    private fun storageVolumeMap(): Map<String, String> = sandboxManager.getStorageVolumeMap()
 
     override fun getStorageVolumes(): List<StorageVolume> {
         if (!isExternalStorageAccessible()) return emptyList()
-        val allowed = storageVolumeMap()()
+        val allowed = storageVolumeMap()
         if (allowed.isEmpty()) return emptyList()
         val storageManager = context.getSystemService(Context.STORAGE_SERVICE) as? StorageManager ?: return emptyList()
         return storageManager.storageVolumes.mapNotNull { avolume ->
