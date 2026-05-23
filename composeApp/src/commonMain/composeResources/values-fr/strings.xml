@@ -366,4 +366,7 @@ Si quelque chose nécessite de l'attention (souvenirs obsolètes, tâches échue
     <string name="sandbox_files_save_success">Enregistré</string>
     <string name="sandbox_files_save_failed">Échec de l'enregistrement</string>
     <string name="sandbox_files_open_failed">Impossible d'ouvrir à l'extérieur</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

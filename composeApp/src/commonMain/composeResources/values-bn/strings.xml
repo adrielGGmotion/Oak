@@ -366,4 +366,7 @@
     <string name="sandbox_files_save_success">সংরক্ষিত</string>
     <string name="sandbox_files_save_failed">সংরক্ষণ ব্যর্থ</string>
     <string name="sandbox_files_open_failed">বাহ্যিকভাবে খোলা যায়নি</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

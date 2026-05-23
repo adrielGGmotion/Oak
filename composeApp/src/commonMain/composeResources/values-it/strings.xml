@@ -366,4 +366,7 @@ Se qualcosa richiede attenzione (ricordi obsoleti, attività scadute, follow-up 
     <string name="sandbox_files_save_success">Salvato</string>
     <string name="sandbox_files_save_failed">Salvataggio non riuscito</string>
     <string name="sandbox_files_open_failed">Impossibile aprire esternamente</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

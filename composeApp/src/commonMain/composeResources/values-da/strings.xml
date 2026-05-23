@@ -367,4 +367,7 @@ Hvis noget kræver opmærksomhed (forældede erindringer, forfaldne opgaver, bru
     <string name="sandbox_files_save_success">Gemt</string>
     <string name="sandbox_files_save_failed">Kunne ikke gemme</string>
     <string name="sandbox_files_open_failed">Kunne ikke åbne eksternt</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

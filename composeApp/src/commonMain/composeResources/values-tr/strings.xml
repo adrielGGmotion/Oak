@@ -366,4 +366,7 @@ Bir şey dikkat gerektiriyorsa (eski anılar, vadesi geçmiş görevler, kullan�
     <string name="sandbox_files_save_success">Kaydedildi</string>
     <string name="sandbox_files_save_failed">Kaydetme başarısız</string>
     <string name="sandbox_files_open_failed">Harici olarak açılamadı</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

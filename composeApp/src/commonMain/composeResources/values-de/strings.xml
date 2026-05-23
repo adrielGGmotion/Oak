@@ -367,4 +367,7 @@ Wenn etwas Aufmerksamkeit erfordert (veraltete Erinnerungen, fällige Aufgaben, 
     <string name="sandbox_files_save_success">Gespeichert</string>
     <string name="sandbox_files_save_failed">Speichern fehlgeschlagen</string>
     <string name="sandbox_files_open_failed">Konnte nicht extern geöffnet werden</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

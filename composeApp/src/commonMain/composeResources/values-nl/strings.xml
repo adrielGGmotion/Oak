@@ -366,4 +366,7 @@ Als iets aandacht nodig heeft (verouderde herinneringen, verlopen taken, gebruik
     <string name="sandbox_files_save_success">Opgeslagen</string>
     <string name="sandbox_files_save_failed">Opslaan mislukt</string>
     <string name="sandbox_files_open_failed">Kon niet extern openen</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

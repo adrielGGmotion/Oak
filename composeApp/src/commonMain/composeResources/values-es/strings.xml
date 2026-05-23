@@ -367,4 +367,7 @@ Si algo necesita atención (memorias obsoletas, tareas vencidas, seguimientos de
     <string name="sandbox_files_save_success">Guardado</string>
     <string name="sandbox_files_save_failed">Error al guardar</string>
     <string name="sandbox_files_open_failed">No se pudo abrir externamente</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

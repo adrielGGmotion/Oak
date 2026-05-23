@@ -365,4 +365,7 @@
     <string name="sandbox_files_save_success">محفوظ ہو گیا</string>
     <string name="sandbox_files_save_failed">محفوظ کرنا ناکام</string>
     <string name="sandbox_files_open_failed">بیرونی طور پر نہیں کھولا جا سکا</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

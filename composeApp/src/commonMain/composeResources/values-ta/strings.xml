@@ -365,4 +365,7 @@
     <string name="sandbox_files_save_success">சேமிக்கப்பட்டது</string>
     <string name="sandbox_files_save_failed">சேமிப்பு தோல்வி</string>
     <string name="sandbox_files_open_failed">வெளியில் திறக்க முடியவில்லை</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

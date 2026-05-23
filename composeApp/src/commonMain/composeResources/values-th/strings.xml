@@ -365,4 +365,7 @@
     <string name="sandbox_files_save_success">บันทึกแล้ว</string>
     <string name="sandbox_files_save_failed">บันทึกล้มเหลว</string>
     <string name="sandbox_files_open_failed">ไม่สามารถเปิดภายนอกได้</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

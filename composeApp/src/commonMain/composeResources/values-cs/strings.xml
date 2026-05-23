@@ -366,4 +366,7 @@
     <string name="sandbox_files_save_success">Uloženo</string>
     <string name="sandbox_files_save_failed">Uložení selhalo</string>
     <string name="sandbox_files_open_failed">Nelze otevřít externě</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>
