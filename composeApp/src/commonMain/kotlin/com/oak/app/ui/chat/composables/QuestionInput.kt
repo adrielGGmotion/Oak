@@ -29,7 +29,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Stop
@@ -237,7 +237,7 @@ fun QuestionInput(
             leadingIcon = if (filePickerLauncher != null) {
                 {
                     CircleIconButton(
-                        icon = Icons.Filled.AttachFile,
+                        icon = Icons.Filled.Add,
                         onClick = { filePickerLauncher.launch() },
                         modifier = Modifier.padding(start = 7.dp),
                         tint = MaterialTheme.colorScheme.onBackground,
