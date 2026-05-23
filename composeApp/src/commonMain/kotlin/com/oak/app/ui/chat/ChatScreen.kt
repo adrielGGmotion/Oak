@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.oak.app.BackIcon
 import com.oak.app.data.Service
+import com.oak.app.data.ServiceEntry
 import com.oak.app.data.supportsAgenticFlows
 import com.oak.app.getBackgroundDispatcher
 import com.oak.app.onDragAndDropEventDropped
@@ -117,6 +118,7 @@ import oak.composeapp.generated.resources.interactive_welcome_subtitle
 import oak.composeapp.generated.resources.interactive_welcome_title
 import oak.composeapp.generated.resources.scroll_to_bottom_content_description
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import nl.marc_apps.tts.TextToSpeechInstance
@@ -217,6 +219,8 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
                 onExit = uiState.actions.exitInteractiveMode,
                 isLoading = uiState.isLoading,
                 showBack = hasAssistantResponse,
+                availableServices = interactiveServices,
+                onSelectService = uiState.actions.selectService,
             )
 
             Box(
@@ -267,8 +271,6 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
                         supportedFileExtensions = uiState.supportedFileExtensions,
                         isLoading = uiState.isLoading,
                         cancel = uiState.actions.cancel,
-                        availableServices = interactiveServices,
-                        onSelectService = uiState.actions.selectService,
                     )
                 }
             }
@@ -325,6 +327,8 @@ private fun InteractiveModeTopBar(
     onExit: () -> Unit,
     isLoading: Boolean,
     showBack: Boolean,
+    availableServices: ImmutableList<ServiceEntry> = persistentListOf(),
+    onSelectService: (String) -> Unit = {},
 ) {
     val iconColor = MaterialTheme.colorScheme.onSurface
 
@@ -348,6 +352,12 @@ private fun InteractiveModeTopBar(
         } else {
             // Placeholder to keep close button aligned right
             Spacer(Modifier.size(48.dp))
+        }
+        if (availableServices.size > 1) {
+            ServiceSelector(
+                services = availableServices,
+                onSelectService = onSelectService,
+            )
         }
         Spacer(Modifier.weight(1f))
         Text(
@@ -496,10 +506,8 @@ private fun ChatModeScreen(
                 isSpeaking = uiState.isSpeaking,
                 actions = uiState.actions,
                 onNavigateToSettings = onNavigateToSettings,
-                isSandboxAvailable = isSandboxAvailable,
-                isSandboxOpen = isSandboxOpen,
-                isShellExecuting = isShellExecuting,
-                onToggleSandbox = { isSandboxOpen = !isSandboxOpen },
+                availableServices = uiState.availableServices,
+                onSelectService = uiState.actions.selectService,
                 onToggleDrawer = onToggleDrawer,
                 navigationTabBar = navigationTabBar,
             )
@@ -821,8 +829,10 @@ private fun ChatModeScreen(
                         supportedFileExtensions = uiState.supportedFileExtensions,
                         isLoading = uiState.isLoading,
                         cancel = uiState.actions.cancel,
-                        availableServices = uiState.availableServices,
-                        onSelectService = uiState.actions.selectService,
+                        isSandboxAvailable = isSandboxAvailable,
+                        isSandboxOpen = isSandboxOpen,
+                        isShellExecuting = isShellExecuting,
+                        onToggleSandbox = { isSandboxOpen = !isSandboxOpen },
                         initialText = onGetDraft(),
                         onTextChanged = onSaveDraft,
                     )
