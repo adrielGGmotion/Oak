@@ -10,10 +10,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.Arrangement
@@ -276,20 +274,17 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
             }
         }
 
-        // Collapsed pill floats over content at the bottom-end
+        // Collapsed card floats over content at the bottom-end
         if (!showFullInput) {
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
                     .height(56.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(28.dp))
-                    .border(
-                        BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
-                        RoundedCornerShape(28.dp),
-                    )
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(16.dp))
                     .handCursor()
+                    .clickable(enabled = !uiState.isLoading) { inputExpanded = true }
                     .padding(horizontal = 7.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
