@@ -366,4 +366,7 @@
     <string name="sandbox_files_save_success">已儲存</string>
     <string name="sandbox_files_save_failed">儲存失敗</string>
     <string name="sandbox_files_open_failed">無法以外部方式開啟</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

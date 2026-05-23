@@ -365,4 +365,7 @@
     <string name="sandbox_files_save_success">Disimpan</string>
     <string name="sandbox_files_save_failed">Gagal menyimpan</string>
     <string name="sandbox_files_open_failed">Tidak boleh dibuka secara luaran</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

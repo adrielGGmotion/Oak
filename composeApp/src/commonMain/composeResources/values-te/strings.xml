@@ -365,4 +365,7 @@
     <string name="sandbox_files_save_success">సేవ్ చేయబడింది</string>
     <string name="sandbox_files_save_failed">సేవ్ విఫలమైంది</string>
     <string name="sandbox_files_open_failed">బాహ్యంగా తెరవలేకపోయాము</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

@@ -365,4 +365,7 @@
     <string name="sandbox_files_save_success">Saglabāts</string>
     <string name="sandbox_files_save_failed">Saglabāšana neizdevās</string>
     <string name="sandbox_files_open_failed">Nevarēja atvērt ārēji</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

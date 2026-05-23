@@ -366,4 +366,7 @@ Se algo precisar de atenção (memórias desatualizadas, tarefas vencidas, acomp
     <string name="sandbox_files_save_success">Salvo</string>
     <string name="sandbox_files_save_failed">Falha ao salvar</string>
     <string name="sandbox_files_open_failed">Não foi possível abrir externamente</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

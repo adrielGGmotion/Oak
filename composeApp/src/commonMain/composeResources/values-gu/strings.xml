@@ -365,4 +365,7 @@
     <string name="sandbox_files_save_success">સાચવ્યું</string>
     <string name="sandbox_files_save_failed">સાચવવામાં નિષ્ફળ</string>
     <string name="sandbox_files_open_failed">બાહ્ય રીતે ખોલી શકાયું નથી</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

@@ -367,4 +367,7 @@
     <string name="sandbox_files_save_success">ተቀምጧል</string>
     <string name="sandbox_files_save_failed">ማስቀመጥ አልተሳካም</string>
     <string name="sandbox_files_open_failed">በውጭ መክፈት አልተቻለም</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

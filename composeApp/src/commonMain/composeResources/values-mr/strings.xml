@@ -365,4 +365,7 @@
     <string name="sandbox_files_save_success">जतन केले</string>
     <string name="sandbox_files_save_failed">जतन अयशस्वी</string>
     <string name="sandbox_files_open_failed">बाहेरून उघडता आले नाही</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

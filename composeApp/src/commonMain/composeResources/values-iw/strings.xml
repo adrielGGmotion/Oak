@@ -365,4 +365,7 @@
     <string name="sandbox_files_save_success">נשמר</string>
     <string name="sandbox_files_save_failed">השמירה נכשלה</string>
     <string name="sandbox_files_open_failed">לא ניתן לפתוח חיצונית</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>

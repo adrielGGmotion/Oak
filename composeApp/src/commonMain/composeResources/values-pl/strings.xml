@@ -366,4 +366,7 @@ Jeśli coś wymaga uwagi (przestarzałe wspomnienia, zaległe zadania, dalsze dz
     <string name="sandbox_files_save_success">Zapisano</string>
     <string name="sandbox_files_save_failed">Nie udało się zapisać</string>
     <string name="sandbox_files_open_failed">Nie można otworzyć zewnętrznie</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>
