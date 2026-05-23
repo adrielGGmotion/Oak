@@ -1,6 +1,7 @@
 package com.oak.app.ui.chat.composables
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -27,10 +28,13 @@ import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
@@ -63,7 +67,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.oak.app.Platform
 import com.oak.app.currentPlatform
-import com.oak.app.data.ServiceEntry
 import com.oak.app.data.imageExtensions
 import com.oak.app.ui.handCursor
 
@@ -74,8 +77,8 @@ import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.name
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.prompt_ask_question
+import oak.composeapp.generated.resources.sandbox_content_description
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -88,8 +91,10 @@ fun QuestionInput(
     supportedFileExtensions: ImmutableList<String>,
     isLoading: Boolean = false,
     cancel: () -> Unit = {},
-    availableServices: ImmutableList<ServiceEntry> = persistentListOf(),
-    onSelectService: (String) -> Unit = {},
+    isSandboxAvailable: Boolean = false,
+    isSandboxOpen: Boolean = false,
+    isShellExecuting: Boolean = false,
+    onToggleSandbox: () -> Unit = {},
     initialText: String = "",
     onTextChanged: (String) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -233,11 +238,40 @@ fun QuestionInput(
                 modifier = Modifier.padding(end = 8.dp, bottom = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                if (availableServices.size > 1) {
-                    ServiceSelector(
-                        services = availableServices,
-                        onSelectService = onSelectService,
-                    )
+                if (isSandboxAvailable) {
+                    val flashAlpha = remember { Animatable(0f) }
+                    LaunchedEffect(isShellExecuting) {
+                        if (isShellExecuting) {
+                            flashAlpha.snapTo(0.4f)
+                            flashAlpha.animateTo(
+                                targetValue = 0f,
+                                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+                            )
+                        }
+                    }
+                    val primary = MaterialTheme.colorScheme.primary
+                    val checkedContainer = primary.copy(alpha = 0.2f)
+                    val flashContainer = primary.copy(alpha = flashAlpha.value)
+                    IconToggleButton(
+                        checked = isSandboxOpen,
+                        onCheckedChange = { onToggleSandbox() },
+                        modifier = Modifier.size(42.dp).handCursor(),
+                        colors = IconButtonDefaults.iconToggleButtonColors(
+                            containerColor = flashContainer,
+                            checkedContainerColor = if (flashAlpha.value > 0f) flashContainer else checkedContainer,
+                            checkedContentColor = MaterialTheme.colorScheme.primary,
+                        ),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Dns,
+                            contentDescription = stringResource(Res.string.sandbox_content_description),
+                            tint = if (isSandboxOpen) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        )
+                    }
                 }
                 if (isLoading) {
                     TrailingIcon(icon = Icons.Filled.Stop, onClick = cancel, isPulsing = true)
