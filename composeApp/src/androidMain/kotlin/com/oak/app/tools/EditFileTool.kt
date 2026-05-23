@@ -43,6 +43,7 @@ The find-and-replace must match exactly including whitespace and indentation."""
             rootfsPath = sandboxManager.rootfsPath,
             homePath = sandboxManager.homePath,
             sandboxPath = path,
+            extraPaths = sandboxManager.getStorageVolumeMap(),
         ) ?: return mapOf("success" to false, "error" to "Invalid path: must not contain .. segments")
 
         val newString = args["new_string"] as? String
@@ -94,19 +95,17 @@ The find-and-replace must match exactly including whitespace and indentation."""
         )
     }
 
-    private fun doWrite(file: File, path: String, content: String): Any {
-        return try {
-            file.parentFile?.mkdirs()
-            file.writeText(content)
-            mapOf(
-                "success" to true,
-                "path" to path,
-                "type" to "write",
-                "chars_written" to content.length,
-            )
-        } catch (e: Exception) {
-            mapOf("success" to false, "error" to "Failed to write file: ${e.message}")
-        }
+    private fun doWrite(file: File, path: String, content: String): Any = try {
+        file.parentFile?.mkdirs()
+        file.writeText(content)
+        mapOf(
+            "success" to true,
+            "path" to path,
+            "type" to "write",
+            "chars_written" to content.length,
+        )
+    } catch (e: Exception) {
+        mapOf("success" to false, "error" to "Failed to write file: ${e.message}")
     }
 
     val toolInfo = ToolInfo(

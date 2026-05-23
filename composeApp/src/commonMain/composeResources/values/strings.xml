@@ -402,4 +402,25 @@
     <string name="model_sort_date">Date</string>
     <string name="model_sort_score">Score</string>
     <string name="model_sort_context">Context</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
+    <string name="device_storage_title">Device storage</string>
+    <string name="device_storage_description_enabled_granted">Access internal storage and SD card from the sandbox</string>
+    <string name="device_storage_description_enabled_denied">Permission required — grant in Settings</string>
+    <string name="device_storage_description_disabled">Browse device files in the sandbox file browser</string>
+    <string name="drawer_new_chat">New Chat</string>
+    <string name="drawer_more_options">More options</string>
+    <string name="drawer_delete">Delete</string>
+    <string name="drawer_projects">Projects</string>
+    <string name="drawer_artifacts">Artifacts</string>
+    <string name="drawer_chats">Chats</string>
+    <string name="drawer_no_conversations">No conversations yet</string>
+    <string name="drawer_user">User</string>
+    <string name="drawer_free_plan">Free plan</string>
+    <string name="drawer_settings">Settings</string>
+    <string name="drawer_delete_conversation_title">Delete conversation?</string>
+    <string name="drawer_delete_conversation_text">This action cannot be undone.</string>
+    <string name="drawer_cancel">Cancel</string>
+    <string name="new_chat_fallback">New Chat</string>
 </resources>

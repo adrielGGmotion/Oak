@@ -112,6 +112,8 @@ data class SettingsUiState(
     val showAddSshServerDialog: Boolean = false,
     val localAvailableModels: ImmutableList<LocalModel> = persistentListOf(),
     val totalDeviceMemoryBytes: Long = Long.MAX_VALUE,
+    val isStorageAccessEnabled: Boolean = false,
+    val storagePermissionGranted: Boolean = false,
     val localFreeSpaceBytes: Long = 0L,
     val localDownloadingModelId: String? = null,
     val localDownloadProgress: Float? = null,

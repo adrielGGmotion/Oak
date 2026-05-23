@@ -2,11 +2,15 @@ package com.oak.app.sandbox
 
 import android.content.Context
 import android.os.Build
+import android.os.Environment
+import android.os.storage.StorageManager
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.oak.app.SandboxSessions
 import com.oak.app.TerminalLine
 import com.oak.app.data.ConversationStorage
+import com.oak.app.data.AppSettings
 import com.oak.app.getExternalOakRoot
+import com.oak.app.isExternalStorageAccessible
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +30,7 @@ private val TRANSCRIPT_SAVE_DEBOUNCE = 500.milliseconds
 class LinuxSandboxManager(
     private val context: Context,
     private val conversationStorage: ConversationStorage,
+    private val appSettings: AppSettings,
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -85,6 +90,24 @@ class LinuxSandboxManager(
     }
 
     val tmpPath: String get() = File(sandboxDir, "tmp").absolutePath
+
+    fun getStorageVolumeMap(): Map<String, String> {
+        if (!appSettings.isStorageAccessEnabled()) return emptyMap()
+        if (!isExternalStorageAccessible()) return emptyMap()
+        val storageManager = context.getSystemService(Context.STORAGE_SERVICE) as? StorageManager ?: return emptyMap()
+        return buildMap {
+            storageManager.storageVolumes.forEach { avolume ->
+                val volumePath = when {
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> avolume.directory?.absolutePath
+                    avolume.isPrimary -> Environment.getExternalStorageDirectory().absolutePath
+                    else -> null
+                } ?: return@forEach
+                val uuid = avolume.uuid?.takeIf { it.isNotEmpty() && it != "null" }
+                val volumeId = if (avolume.isPrimary) "internal" else (uuid ?: "external_${volumePath.hashCode().toUInt().toString(16)}")
+                put(volumeId, volumePath)
+            }
+        }
+    }
 
     // Run proot directly from nativeLibraryDir where Android grants execute permission
     val prootPath: String get() = File(context.applicationInfo.nativeLibraryDir, "libproot.so").absolutePath

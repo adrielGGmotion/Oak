@@ -5,6 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.oak.app.SandboxController
 import com.oak.app.SandboxFileEntry
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.sandbox_files_delete_failed
 import oak.composeapp.generated.resources.sandbox_files_delete_success
@@ -16,10 +20,6 @@ import oak.composeapp.generated.resources.sandbox_files_rename_failed
 import oak.composeapp.generated.resources.sandbox_files_rename_success
 import oak.composeapp.generated.resources.sandbox_files_save_failed
 import oak.composeapp.generated.resources.sandbox_files_save_success
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 
 private val TEXT_EXTENSIONS = setOf(
@@ -56,6 +56,7 @@ data class FileBrowserUiState(
     val snackbarMessage: StringResource? = null,
     val pendingDelete: SandboxFileEntry? = null,
     val renaming: RenameState? = null,
+    val storageVolumeInfo: Map<String, Boolean> = emptyMap(),
 )
 
 class SandboxFileBrowserViewModel(
@@ -67,6 +68,11 @@ class SandboxFileBrowserViewModel(
 
     fun start(initialPath: String) {
         if (_state.value.entries.isNotEmpty() && _state.value.currentPath == initialPath) return
+        _state.update {
+            it.copy(
+                storageVolumeInfo = sandboxController.getStorageVolumes().associate { "/${it.id}" to it.isRemovable },
+            )
+        }
         navigateTo(initialPath)
     }
 

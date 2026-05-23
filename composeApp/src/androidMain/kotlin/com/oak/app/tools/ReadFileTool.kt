@@ -36,6 +36,7 @@ object ReadFileTool : Tool {
             rootfsPath = sandboxManager.rootfsPath,
             homePath = sandboxManager.homePath,
             sandboxPath = path,
+            extraPaths = sandboxManager.getStorageVolumeMap(),
         ) ?: return mapOf("success" to false, "error" to "Invalid path: must not contain .. segments")
 
         if (!file.exists()) return mapOf("success" to false, "error" to "File not found: $path")

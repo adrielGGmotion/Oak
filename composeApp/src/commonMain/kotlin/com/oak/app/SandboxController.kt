@@ -2,6 +2,7 @@ package com.oak.app
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.oak.app.data.StorageVolume
 import kotlinx.coroutines.flow.StateFlow
 
 data class SandboxStatus(
@@ -86,6 +87,7 @@ interface SandboxController {
     /** Wipe the transcript for [sessionId]. Idempotent. */
     fun clearTranscript(sessionId: String) {}
 
+    fun getStorageVolumes(): List<StorageVolume>
     suspend fun listDirectory(path: String): List<SandboxFileEntry>
     suspend fun readTextFile(path: String, maxBytes: Int = 512_000): String?
     suspend fun writeTextFile(path: String, content: String): Boolean

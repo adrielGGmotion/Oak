@@ -19,8 +19,6 @@ import com.oak.app.isNotificationsSupported
 import com.oak.app.isSmsSupported
 import com.oak.app.mcp.PopularMcpServer
 import com.oak.app.network.AnthropicInsufficientCreditsException
-import com.oak.app.ssh.SshAuthType
-import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.network.AnthropicInvalidApiKeyException
 import com.oak.app.network.AnthropicOverloadedException
 import com.oak.app.network.AnthropicRateLimitExceededException
@@ -31,7 +29,10 @@ import com.oak.app.network.OpenAICompatibleInvalidApiKeyException
 import com.oak.app.network.OpenAICompatibleQuotaExhaustedException
 import com.oak.app.network.OpenAICompatibleRateLimitExceededException
 import com.oak.app.network.dtos.SponsorsResponseDto
+import com.oak.app.ssh.SshAuthType
+import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.tools.NotificationPermissionController
+import com.oak.app.tools.StoragePermissionController
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -59,6 +60,7 @@ class SettingsViewModel(
     private val dataRepository: DataRepository,
     private val daemonController: DaemonController,
     private val notificationPermissionController: NotificationPermissionController,
+    val storagePermissionController: StoragePermissionController,
     private val taskScheduler: TaskScheduler,
     private val backgroundDispatcher: CoroutineContext = getBackgroundDispatcher(),
 ) : ViewModel() {
@@ -76,6 +78,8 @@ class SettingsViewModel(
         themeMode = dataRepository.getThemeMode(),
         useDynamicColors = dataRepository.isUseDynamicColorsEnabled(),
         showDynamicColorsToggle = currentPlatform is Platform.Mobile.Android,
+        isStorageAccessEnabled = dataRepository.isStorageAccessEnabled(),
+        storagePermissionGranted = storagePermissionController.hasPermission(),
         isMemoryEnabled = dataRepository.isMemoryEnabled(),
         memories = dataRepository.getMemories().toImmutableList(),
         isSchedulingEnabled = dataRepository.isSchedulingEnabled(),
@@ -171,6 +175,7 @@ class SettingsViewModel(
         onToggleNotifications = ::onToggleNotifications,
         onOpenNotificationListenerSettings = ::onOpenNotificationListenerSettings,
         onClearPendingNotifications = ::onClearPendingNotifications,
+        onToggleStorageAccess = ::onToggleStorageAccess,
         onToggleFreeFallback = ::onToggleFreeFallback,
         onChangeUiScale = ::onChangeUiScale,
         onAddMcpServer = ::onAddMcpServer,
@@ -622,6 +627,26 @@ class SettingsViewModel(
         }
     }
 
+    private fun onToggleStorageAccess(enabled: Boolean) {
+        if (enabled && !storagePermissionController.hasPermission()) {
+            viewModelScope.launch(backgroundDispatcher) {
+                val granted = storagePermissionController.requestPermission()
+                _state.update { it.copy(storagePermissionGranted = granted, isStorageAccessEnabled = granted) }
+                if (granted) {
+                    dataRepository.setStorageAccessEnabled(true)
+                }
+            }
+        } else {
+            dataRepository.setStorageAccessEnabled(enabled)
+            _state.update {
+                it.copy(
+                    isStorageAccessEnabled = enabled,
+                    storagePermissionGranted = storagePermissionController.hasPermission(),
+                )
+            }
+        }
+    }
+
     private fun onToggleNotifications(enabled: Boolean) {
         // Listener access is granted via system Settings, not a runtime permission
         // dialog. Set the toggle, then if access is missing, deep-link the user out
@@ -1004,6 +1029,7 @@ class SettingsViewModel(
                 _state.update { it.copy(pendingDeletion = null) }
                 refreshMcpServers()
             }
+
             is PendingDeletion.SshServer -> {
                 dataRepository.removeSshServer(deletion.serverId)
                 _state.update { it.copy(pendingDeletion = null) }
