@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import oak.composeapp.generated.resources.Res
+import com.oak.app.shared.R
 import org.koin.java.KoinJavaComponent.inject
 import java.io.File
 import java.io.IOException
@@ -60,11 +61,11 @@ class AndroidSandboxController : SandboxController {
             }
             if (volumeId !in allowed.keys) return@mapNotNull null
             val volumeLabel = if (avolume.isPrimary) {
-                context.getString(Res.string.storage_internal)
+                context.getString(R.string.storage_internal)
             } else if (uuid != null) {
-                context.getString(Res.string.storage_sd_card, uuid)
+                context.getString(R.string.storage_sd_card, uuid)
             } else {
-                context.getString(Res.string.storage_external)
+                context.getString(R.string.storage_external)
             }
             StorageVolume(
                 id = volumeId,

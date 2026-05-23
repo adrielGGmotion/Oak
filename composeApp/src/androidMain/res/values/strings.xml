@@ -9,4 +9,7 @@
     <string name="documents_provider_root_title">Oak</string>
     <string name="documents_provider_summary_folders">%1$d folders</string>
     <string name="documents_provider_summary_models">%1$d models</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="storage_sd_card">SD Card (%1$s)</string>
+    <string name="storage_external">External storage</string>
 </resources>
