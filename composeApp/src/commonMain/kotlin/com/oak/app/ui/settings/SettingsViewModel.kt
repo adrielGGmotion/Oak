@@ -638,7 +638,12 @@ class SettingsViewModel(
             }
         } else {
             dataRepository.setStorageAccessEnabled(enabled)
-            _state.update { it.copy(isStorageAccessEnabled = enabled) }
+            _state.update {
+                it.copy(
+                    isStorageAccessEnabled = enabled,
+                    storagePermissionGranted = storagePermissionController.hasPermission(),
+                )
+            }
         }
     }
 
