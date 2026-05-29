@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,18 +29,25 @@ import androidx.compose.ui.unit.dp
 import com.oak.app.ui.components.LogoAnimation
 import com.oak.app.ui.components.oakOutlinedBorder
 import com.oak.app.ui.handCursor
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.greeting_afternoon
+import oak.composeapp.generated.resources.greeting_evening
+import oak.composeapp.generated.resources.greeting_morning
 import oak.composeapp.generated.resources.privacy_agree_prefix
 import oak.composeapp.generated.resources.privacy_policy
 import oak.composeapp.generated.resources.start_interactive_ui
 import oak.composeapp.generated.resources.welcome_message
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Clock
 
 @Composable
 internal fun EmptyState(
     modifier: Modifier,
     isUsingSharedKey: Boolean,
     onStartInteractiveMode: (() -> Unit)? = null,
+    userName: String? = null,
 ) {
     Column(
         modifier = modifier,
@@ -48,11 +56,20 @@ internal fun EmptyState(
     ) {
         LogoAnimation()
         Spacer(Modifier.height(16.dp))
-        Text(
-            text = stringResource(Res.string.welcome_message),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
+        val greeting = timeBasedGreeting(userName)
+        if (greeting != null) {
+            Text(
+                text = greeting,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        } else {
+            Text(
+                text = stringResource(Res.string.welcome_message),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        }
         if (onStartInteractiveMode != null) {
             Spacer(Modifier.height(16.dp))
             AnimatedBorderButton(
@@ -84,6 +101,18 @@ internal fun EmptyState(
             )
         }
     }
+}
+
+@Composable
+private fun timeBasedGreeting(userName: String?): String? {
+    if (userName.isNullOrBlank()) return null
+    val hour = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).hour
+    val baseGreeting = when {
+        hour in 5..11 -> stringResource(Res.string.greeting_morning)
+        hour in 12..17 -> stringResource(Res.string.greeting_afternoon)
+        else -> stringResource(Res.string.greeting_evening)
+    }
+    return "$baseGreeting, $userName"
 }
 
 @Composable
