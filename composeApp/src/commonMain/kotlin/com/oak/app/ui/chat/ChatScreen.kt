@@ -41,15 +41,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,6 +82,7 @@ import com.oak.app.data.ServiceEntry
 import com.oak.app.data.supportsAgenticFlows
 import com.oak.app.getBackgroundDispatcher
 import com.oak.app.onDragAndDropEventDropped
+import com.oak.app.ui.chat.composables.BotAvatar
 import com.oak.app.ui.chat.composables.BotMessage
 import com.oak.app.ui.chat.composables.CircleIconButton
 import com.oak.app.ui.chat.composables.EmptyState
@@ -92,21 +96,23 @@ import com.oak.app.ui.chat.composables.TrailingIcon
 import com.oak.app.ui.chat.composables.UserMessage
 import com.oak.app.ui.chat.composables.WaitingResponseRow
 import com.oak.app.ui.chat.composables.uiErrorText
-import com.oak.app.ui.chat.composables.BotAvatar
-import com.oak.app.ui.markdown.MarkdownContent
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.Stop
 import com.oak.app.ui.components.LogoAnimation
 import com.oak.app.ui.components.VerticalScrollbarForList
 import com.oak.app.ui.dynamicui.FrozenSubmission
 import com.oak.app.ui.dynamicui.OakUiRenderer
 import com.oak.app.ui.dynamicui.toSpeakableText
 import com.oak.app.ui.handCursor
+import com.oak.app.ui.markdown.MarkdownContent
 import com.oak.app.ui.markdown.OakUiBlock
 import com.oak.app.ui.markdown.parseMarkdown
 import com.oak.app.ui.sandbox.SandboxTabsContent
 import com.oak.app.ui.settings.SandboxViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
+import nl.marc_apps.tts.TextToSpeechInstance
+import nl.marc_apps.tts.errors.TextToSpeechSynthesisInterruptedError
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.fallback_answered_by
 import oak.composeapp.generated.resources.fallback_service_failed
@@ -117,12 +123,6 @@ import oak.composeapp.generated.resources.interactive_ui_parsing_failed
 import oak.composeapp.generated.resources.interactive_welcome_subtitle
 import oak.composeapp.generated.resources.interactive_welcome_title
 import oak.composeapp.generated.resources.scroll_to_bottom_content_description
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.launch
-import nl.marc_apps.tts.TextToSpeechInstance
-import nl.marc_apps.tts.errors.TextToSpeechSynthesisInterruptedError
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -501,15 +501,11 @@ private fun ChatModeScreen(
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).navigationBarsPadding().statusBarsPadding().imePadding()) {
         Column(Modifier.fillMaxSize()) {
             TopBar(
-                textToSpeech = textToSpeech,
-                isSpeechOutputEnabled = uiState.isSpeechOutputEnabled,
-                isSpeaking = uiState.isSpeaking,
-                actions = uiState.actions,
                 onNavigateToSettings = onNavigateToSettings,
-                availableServices = uiState.availableServices,
-                onSelectService = uiState.actions.selectService,
                 onToggleDrawer = onToggleDrawer,
                 navigationTabBar = navigationTabBar,
+                availableServices = uiState.availableServices,
+                onSelectService = uiState.actions.selectService,
             )
 
             HeartbeatBanner(
@@ -600,6 +596,7 @@ private fun ChatModeScreen(
                                 isUsingSharedKey = uiState.showPrivacyInfo,
                                 onStartInteractiveMode = uiState.actions.enterInteractiveMode
                                     .takeUnless { primaryIsOnDevice },
+                                userName = uiState.userName,
                             )
                         } else {
                             val listState = rememberLazyListState()
@@ -846,9 +843,7 @@ private fun ChatModeScreen(
             Snackbar(snackbarData = data)
         }
     }
-
 }
-
 
 @Composable
 private fun StreamingMessage(
@@ -905,7 +900,6 @@ private fun StreamingMessage(
         }
     }
 }
-
 
 private data class ExecutingToolsState(
     val tools: ImmutableList<Pair<String, String>>,

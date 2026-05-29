@@ -16,10 +16,6 @@ import com.oak.app.ui.markdown.OakUiError
 import com.oak.app.ui.markdown.parseMarkdown
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.extension
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.conversation_untitled
-import oak.composeapp.generated.resources.error_unsupported_file_type
-import oak.composeapp.generated.resources.litert_no_model_warning
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
@@ -36,11 +32,15 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.conversation_untitled
+import oak.composeapp.generated.resources.error_unsupported_file_type
+import oak.composeapp.generated.resources.litert_no_model_warning
 import org.jetbrains.compose.resources.getString
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class ChatViewModel(
     private val dataRepository: DataRepository,
@@ -75,6 +75,7 @@ class ChatViewModel(
         discardSmsDraft = ::discardSmsDraft,
     )
     private val freeModeNames: Map<FreeMode, String> = FreeMode.entries.associateWith { "Free ${it.modelId.replaceFirstChar { c -> c.uppercase() }}" }
+
     @Volatile
     private var activeSessionId: String? = null
     private var pendingConversationDeleteJob: Job? = null
@@ -98,7 +99,9 @@ class ChatViewModel(
                 sessionManager.getOrCreateSession(convId)
             }
             presetInteractiveModeForCurrentConversation()
-            _state.update { it.copy(isRestoring = false) }
+            val memories = dataRepository.getMemories()
+            val userName = memories.firstOrNull { it.key == "user_name" }?.content
+            _state.update { it.copy(userName = userName, isRestoring = false) }
         }
 
         viewModelScope.launch(backgroundDispatcher) {
@@ -249,7 +252,8 @@ class ChatViewModel(
                 // to null. Reload if the conversation was persisted under this ID.
                 if (activeSessionId == id &&
                     dataRepository.currentConversationId.value != id &&
-                    dataRepository.savedConversations.value.any { it.id == id }) {
+                    dataRepository.savedConversations.value.any { it.id == id }
+                ) {
                     dataRepository.loadConversation(id)
                 }
 
@@ -560,9 +564,7 @@ class ChatViewModel(
         }
     }
 
-    fun getDraft(): String {
-        return sessionManager.getChatboxDraft(ensureActiveSession())
-    }
+    fun getDraft(): String = sessionManager.getChatboxDraft(ensureActiveSession())
 
     fun saveDraft(text: String) {
         sessionManager.setChatboxDraft(ensureActiveSession(), text)
