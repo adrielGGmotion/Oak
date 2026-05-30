@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -42,7 +41,18 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.stringResource
 import kotlin.io.encoding.Base64
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.ShortText
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlin.io.encoding.ExperimentalEncodingApi
+import oak.composeapp.generated.resources.user_message_edit
+import oak.composeapp.generated.resources.user_message_select_text
 
 @OptIn(ExperimentalEncodingApi::class, ExperimentalLayoutApi::class)
 @Composable
@@ -121,17 +131,36 @@ internal fun UserMessage(
                     }
                 }
             }
-            if (message.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+
+        }
+        if (message.isNotEmpty()) {
+            Box {
+                var menuExpanded by remember { mutableStateOf(false) }
+                SmallIconButton(
+                    imageVector = Icons.Default.MoreVert,
+                    onClick = { menuExpanded = true },
+                )
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
                 ) {
-                    SmallIconButton(
-                        imageVector = Icons.Filled.ContentCopy,
-                        contentDescription = stringResource(Res.string.bot_message_copy_content_description),
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.bot_message_copy_content_description)) },
                         onClick = {
                             clipboardManager.setText(buildAnnotatedString { append(message) })
+                            menuExpanded = false
                         },
+                        leadingIcon = { Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.user_message_select_text)) },
+                        onClick = { menuExpanded = false },
+                        leadingIcon = { Icon(Icons.Filled.ShortText, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.user_message_edit)) },
+                        onClick = { menuExpanded = false },
+                        leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp)) },
                     )
                 }
             }
