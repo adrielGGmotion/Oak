@@ -28,6 +28,7 @@ import com.oak.app.network.FileTooLargeException
 import com.oak.app.network.OpenAICompatibleEmptyResponseException
 import com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatResponseDto
 import com.oak.app.network.dtos.openaicompatible.toolCallMarkerRegex
+import com.oak.app.network.OpenAICompatibleInvalidApiKeyException
 import com.oak.app.network.OpenAICompatibleQuotaExhaustedException
 import com.oak.app.network.Requests
 import com.oak.app.network.ServiceCredentials
@@ -1502,7 +1503,7 @@ class RemoteDataRepository(
         return results
     }
 
-    private fun isNonRetryableException(e: Exception): Boolean = e is AnthropicInsufficientCreditsException || e is OpenAICompatibleQuotaExhaustedException
+    private fun isNonRetryableException(e: Exception): Boolean = e is AnthropicInsufficientCreditsException || e is OpenAICompatibleQuotaExhaustedException || e is OpenAICompatibleInvalidApiKeyException
 
     /**
      * Retries an API call with simple exponential backoff.

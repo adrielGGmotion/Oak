@@ -261,7 +261,28 @@ class Requests {
         try {
             statement.execute { response ->
                 if (!response.status.isSuccess()) {
-                    close(OpenAICompatibleGenericException("Stream request failed: ${response.status}"))
+                    val statusCode = response.status.value
+                    when (statusCode) {
+                        401 -> close(OpenAICompatibleInvalidApiKeyException())
+                        402 -> close(OpenAICompatibleQuotaExhaustedException())
+                        404 -> close(OpenAICompatibleModelNotFoundException())
+                        413 -> close(OpenAICompatibleRequestTooLargeException())
+                        429 -> close(OpenAICompatibleRateLimitExceededException())
+                        else -> {
+                            val responseBody = try { response.bodyAsText() } catch (_: Exception) { "" }
+                            if (responseBody.contains("credit", ignoreCase = true) ||
+                                responseBody.contains("exhausted", ignoreCase = true) ||
+                                responseBody.contains("spending limit", ignoreCase = true) ||
+                                responseBody.contains("quota", ignoreCase = true) ||
+                                responseBody.contains("subscription", ignoreCase = true) ||
+                                responseBody.contains("upgrade", ignoreCase = true)
+                            ) {
+                                close(OpenAICompatibleQuotaExhaustedException())
+                            } else {
+                                close(OpenAICompatibleGenericException("Stream request failed: ${response.status}"))
+                            }
+                        }
+                    }
                     return@execute
                 }
 
