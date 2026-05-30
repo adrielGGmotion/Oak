@@ -15,9 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -77,7 +76,7 @@ internal fun TopBar(
                         onClick = { onToggleDrawer() },
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Menu,
+                            imageVector = Icons.Outlined.Menu,
                             contentDescription = stringResource(Res.string.open_navigation_content_description),
                             tint = MaterialTheme.colorScheme.onBackground,
                         )
@@ -118,7 +117,7 @@ internal fun TopBar(
                     onClick = { onToggleDrawer() },
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Menu,
+                        imageVector = Icons.Outlined.Menu,
                         contentDescription = stringResource(Res.string.open_navigation_content_description),
                         tint = MaterialTheme.colorScheme.onBackground,
                     )
@@ -201,7 +200,7 @@ private fun CenteredModelPill(
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
+                imageVector = Icons.Outlined.KeyboardArrowDown,
                 contentDescription = null,
                 modifier = Modifier
                     .size(20.dp)

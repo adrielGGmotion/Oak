@@ -20,15 +20,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
@@ -305,7 +304,7 @@ private fun AppContent(
                                 NavigationDrawerItem(
                                     icon = {
                                         Icon(
-                                            Icons.Default.Edit,
+                                            Icons.Outlined.Edit,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
@@ -327,7 +326,7 @@ private fun AppContent(
                                 NavigationDrawerItem(
                                     icon = {
                                         Icon(
-                                            Icons.Default.Folder,
+                                            Icons.Outlined.Folder,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
@@ -346,7 +345,7 @@ private fun AppContent(
                                 NavigationDrawerItem(
                                     icon = {
                                         Icon(
-                                            Icons.Default.Description,
+                                            Icons.Outlined.Description,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
@@ -396,7 +395,7 @@ private fun AppContent(
                                                     icon = if (conversation.isHeartbeat) {
                                                         {
                                                             Icon(
-                                                                Icons.Default.History,
+                                                                Icons.Outlined.History,
                                                                 contentDescription = null,
                                                                 modifier = Modifier.size(18.dp),
                                                                 tint = MaterialTheme.colorScheme.tertiary,
@@ -436,7 +435,7 @@ private fun AppContent(
                                                                     modifier = Modifier.size(36.dp),
                                                                 ) {
                                                                     Icon(
-                                                                        Icons.Default.MoreVert,
+                                                                        Icons.Outlined.MoreVert,
                                                                         contentDescription = stringResource(Res.string.drawer_more_options),
                                                                         modifier = Modifier.size(18.dp),
                                                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -454,7 +453,7 @@ private fun AppContent(
                                                                     },
                                                                         leadingIcon = {
                                                                             Icon(
-                                                                                Icons.Default.Delete,
+                                                                                Icons.Outlined.Delete,
                                                                                 contentDescription = null,
                                                                                 modifier = Modifier.size(18.dp),
                                                                             )
@@ -496,7 +495,7 @@ private fun AppContent(
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Icon(
-                                            Icons.Default.Person,
+                                            Icons.Outlined.Person,
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp),
                                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -523,7 +522,7 @@ private fun AppContent(
                                         },
                                     ) {
                                         Icon(
-                                            Icons.Default.Settings,
+                                            Icons.Outlined.Settings,
                                             contentDescription = stringResource(Res.string.drawer_settings),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
