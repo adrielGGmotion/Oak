@@ -484,6 +484,7 @@ private fun RenderButton(
     onCallback: (String, Map<String, String>) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
+    @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
     var clicked by remember { mutableStateOf(false) }
     LaunchedEffect(isInteractive) {
@@ -1192,6 +1193,7 @@ private fun RenderIcon(node: IconNode) {
 
 @Composable
 private fun RenderCode(node: CodeNode) {
+    @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,

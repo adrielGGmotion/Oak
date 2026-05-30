@@ -44,7 +44,7 @@ import kotlin.io.encoding.Base64
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.ShortText
+import androidx.compose.material.icons.automirrored.filled.ShortText
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.getValue
@@ -61,6 +61,7 @@ internal fun UserMessage(
     attachments: ImmutableList<Attachment> = persistentListOf(),
 ) {
     val showFullScreen = LocalShowFullScreenImage.current
+    @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
     Row(Modifier.padding(16.dp)) {
         Spacer(Modifier.weight(1f))
@@ -155,7 +156,7 @@ internal fun UserMessage(
                     DropdownMenuItem(
                         text = { Text(stringResource(Res.string.user_message_select_text)) },
                         onClick = { menuExpanded = false },
-                        leadingIcon = { Icon(Icons.Filled.ShortText, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.ShortText, contentDescription = null, modifier = Modifier.size(18.dp)) },
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(Res.string.user_message_edit)) },
