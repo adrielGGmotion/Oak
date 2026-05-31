@@ -16,12 +16,10 @@ import com.oak.app.inference.EngineState
 import com.oak.app.inference.InferenceMessage
 import com.oak.app.inference.LocalInferenceEngine
 import com.oak.app.inference.LocalModel
-import com.oak.app.inference.LocalTool
 import com.oak.app.inference.NoModelDownloadedException
 import com.oak.app.inference.getTotalMemoryBytes
 import com.oak.app.mcp.McpServerConfig
 import com.oak.app.mcp.McpServerManager
-import com.oak.app.network.AnthropicGenericException
 import com.oak.app.network.AnthropicInsufficientCreditsException
 import com.oak.app.network.ContextWindowExceededException
 import com.oak.app.network.FileTooLargeException
@@ -84,8 +82,6 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonArray
-import kotlinx.serialization.json.putJsonObject
 import org.jetbrains.compose.resources.getString
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi

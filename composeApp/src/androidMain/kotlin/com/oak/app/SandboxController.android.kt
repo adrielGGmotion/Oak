@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import oak.composeapp.generated.resources.Res
 import com.oak.app.shared.R
 import org.koin.java.KoinJavaComponent.inject
 import java.io.File

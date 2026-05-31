@@ -7,7 +7,6 @@ import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.McpServerConfig
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.ssh.SshAuthType
-import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.ssh.SshServerConfig
 import com.oak.app.ui.chat.History
 import com.oak.app.ui.settings.SettingsModel

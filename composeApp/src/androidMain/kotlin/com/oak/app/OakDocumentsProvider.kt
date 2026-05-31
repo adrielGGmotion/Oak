@@ -12,8 +12,6 @@ import android.provider.DocumentsProvider
 import android.webkit.MimeTypeMap
 import com.oak.app.shared.R
 import java.io.File
-import java.io.FileNotFoundException
-
 class OakDocumentsProvider : DocumentsProvider() {
 
     private val res get() = requireNotNull(context).resources

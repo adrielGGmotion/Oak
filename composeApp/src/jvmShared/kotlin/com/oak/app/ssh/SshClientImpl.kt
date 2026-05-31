@@ -4,7 +4,6 @@ import org.apache.sshd.client.SshClient as MinaSshClient
 import org.apache.sshd.client.channel.ClientChannelEvent
 import org.apache.sshd.client.session.ClientSession
 import org.apache.sshd.common.config.keys.FilePasswordProvider
-import org.apache.sshd.common.util.security.SecurityUtils
 import org.apache.sshd.sftp.client.SftpClient
 import org.apache.sshd.sftp.client.SftpClientFactory
 import java.io.ByteArrayOutputStream

@@ -56,7 +56,6 @@ import com.oak.app.tools.SmsTools
 import com.oak.app.tools.SshTools
 import com.oak.app.tools.WebSearchTool
 import com.oak.app.tools.compressContextTool
-import com.russhwolf.settings.BuildConfig
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import dev.spght.encryptedprefs.EncryptedSharedPreferences
