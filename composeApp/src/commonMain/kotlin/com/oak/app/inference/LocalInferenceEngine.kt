@@ -1,6 +1,5 @@
 package com.oak.app.inference
 
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 data class LocalModel(

@@ -2,7 +2,6 @@ package com.oak.app.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.oak.app.data.AskQuestion
 import com.oak.app.data.AskQuestionsManager
 import com.oak.app.data.Conversation
 import com.oak.app.data.DataRepository

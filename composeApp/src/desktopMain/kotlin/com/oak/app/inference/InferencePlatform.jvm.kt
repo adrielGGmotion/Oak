@@ -2,8 +2,6 @@ package com.oak.app.inference
 
 import com.oak.app.getAppFilesDirectory
 import java.io.File
-import java.lang.management.ManagementFactory
-
 actual fun getModelStorageDirectory(): String = getAppFilesDirectory() + "/litert_models"
 
 actual fun getModelCacheDirectory(): String = System.getProperty("java.io.tmpdir") ?: getAppFilesDirectory()
