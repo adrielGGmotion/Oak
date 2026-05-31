@@ -1,6 +1,7 @@
 package com.oak.app.ui.chat
 
 import app.cash.turbine.test
+import com.oak.app.data.AskQuestionsManager
 import com.oak.app.data.Service
 import com.oak.app.data.TaskScheduler
 import com.oak.app.network.AnthropicInsufficientCreditsException
@@ -50,7 +51,7 @@ class ChatViewModelTest {
     private fun createViewModel(): ChatViewModel {
         val noOpScheduler = TaskScheduler(fakeRepository, enabled = false)
         val sessionManager = ChatSessionManager(fakeRepository)
-        return ChatViewModel(fakeRepository, noOpScheduler, sessionManager, unconfinedDispatcher)
+        return ChatViewModel(fakeRepository, noOpScheduler, sessionManager, AskQuestionsManager(), unconfinedDispatcher)
     }
 
     @Test
@@ -59,7 +60,7 @@ class ChatViewModelTest {
         val backgroundDispatcher = StandardTestDispatcher()
         val noOpScheduler = TaskScheduler(fakeRepository, enabled = false)
         val sessionManager = ChatSessionManager(fakeRepository)
-        val viewModel = ChatViewModel(fakeRepository, noOpScheduler, sessionManager, backgroundDispatcher)
+        val viewModel = ChatViewModel(fakeRepository, noOpScheduler, sessionManager, AskQuestionsManager(), backgroundDispatcher)
 
         viewModel.state.test {
             // Restore hasn't run yet — initial state still has isRestoring=true.

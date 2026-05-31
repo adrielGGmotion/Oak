@@ -2,6 +2,8 @@ package com.oak.app.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.oak.app.data.AskQuestion
+import com.oak.app.data.AskQuestionsManager
 import com.oak.app.data.Conversation
 import com.oak.app.data.DataRepository
 import com.oak.app.data.FreeMode
@@ -46,6 +48,7 @@ class ChatViewModel(
     private val dataRepository: DataRepository,
     private val taskScheduler: TaskScheduler,
     private val sessionManager: ChatSessionManager,
+    private val askQuestionsManager: AskQuestionsManager,
     private val backgroundDispatcher: CoroutineContext = getBackgroundDispatcher(),
 ) : ViewModel() {
 
@@ -73,6 +76,9 @@ class ChatViewModel(
         goBackInteractiveMode = ::goBackInteractiveMode,
         sendSmsDraft = ::sendSmsDraft,
         discardSmsDraft = ::discardSmsDraft,
+        answerQuestion = ::answerQuestion,
+        submitQuestionAnswers = ::submitQuestionAnswers,
+        cancelQuestions = ::cancelQuestions,
     )
     private val freeModeNames: Map<FreeMode, String> = FreeMode.entries.associateWith { "Free ${it.modelId.replaceFirstChar { c -> c.uppercase() }}" }
 
@@ -138,6 +144,23 @@ class ChatViewModel(
         viewModelScope.launch {
             sessionManager.generatingSessionIds.collectLatest { ids ->
                 _state.update { it.copy(generatingSessionIds = ids) }
+            }
+        }
+
+        viewModelScope.launch {
+            askQuestionsManager.pendingQuestions.collect { questions ->
+                _state.update {
+                    it.copy(
+                        pendingQuestions = questions?.toImmutableList(),
+                        pendingQuestionAnswers = if (questions != null) it.pendingQuestionAnswers else emptyMap(),
+                    )
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            askQuestionsManager.answers.collect { answers ->
+                _state.update { it.copy(pendingQuestionAnswers = answers) }
             }
         }
     }
@@ -562,6 +585,18 @@ class ChatViewModel(
         } else {
             dataRepository.popLastExchange()
         }
+    }
+
+    private fun answerQuestion(questionId: String, answer: String) {
+        askQuestionsManager.setAnswer(questionId, answer)
+    }
+
+    private fun submitQuestionAnswers() {
+        askQuestionsManager.submit()
+    }
+
+    private fun cancelQuestions() {
+        askQuestionsManager.cancel()
     }
 
     fun getDraft(): String = sessionManager.getChatboxDraft(ensureActiveSession())

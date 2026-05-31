@@ -1,6 +1,7 @@
 package com.oak.app.ui.chat
 
 import app.cash.turbine.test
+import com.oak.app.data.AskQuestionsManager
 import com.oak.app.data.Service
 import com.oak.app.data.ServiceEntry
 import com.oak.app.data.TaskScheduler
@@ -40,7 +41,7 @@ class ChatViewModelLiteRTTest {
     private fun createViewModel(): ChatViewModel {
         val noOpScheduler = TaskScheduler(fakeRepository, enabled = false)
         val sessionManager = ChatSessionManager(fakeRepository)
-        return ChatViewModel(fakeRepository, noOpScheduler, sessionManager, unconfinedDispatcher)
+        return ChatViewModel(fakeRepository, noOpScheduler, sessionManager, AskQuestionsManager(), unconfinedDispatcher)
     }
 
     private fun litertServiceEntry() = ServiceEntry(

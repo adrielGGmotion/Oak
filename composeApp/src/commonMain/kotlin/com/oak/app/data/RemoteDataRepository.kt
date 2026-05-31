@@ -98,8 +98,12 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private const val MAX_TOOL_ITERATIONS = 15
+
 private const val MIN_TOOL_DISPLAY_MS = 2000L
+
 private const val MAX_REPEATED_TOOL_CALLS = 3
+
+private const val ASK_QUESTIONS_TOOL_NAME = "ask_questions"
 private const val MAX_API_RETRIES = 2
 private const val MAX_HEARTBEAT_MESSAGES = 50
 private const val ESTIMATED_CHARS_PER_TOKEN = 4
@@ -494,12 +498,19 @@ class RemoteDataRepository(
             val toolResults = executeToolCallsInParallel(inlineResult.toolCalls.map { Triple(it.id, it.name, it.arguments) })
 
             history.update { h ->
-                buildList(h.size + toolResults.size) {
+                buildList<History>(h.size + toolResults.size) {
                     for (entry in h) {
-                        if (entry.role != History.Role.TOOL_EXECUTING) add(entry)
+                        if (entry.role != History.Role.TOOL_EXECUTING) {
+                            val cleaned = entry.withoutAskQuestionsToolCall()
+                            if (cleaned != null) add(cleaned)
+                        }
                     }
                     for ((callId, name, result) in toolResults) {
-                        add(History(role = History.Role.TOOL, content = result, toolCallId = callId, toolName = name))
+                        if (name == ASK_QUESTIONS_TOOL_NAME) {
+                            add(History(role = History.Role.USER, content = result))
+                        } else {
+                            add(History(role = History.Role.TOOL, content = result, toolCallId = callId, toolName = name))
+                        }
                     }
                 }
             }
@@ -1030,19 +1041,26 @@ class RemoteDataRepository(
             val toolResults = executeToolCallsInParallel(toolCalls.map { Triple(it.id, it.function.name, it.function.arguments) })
 
             history.update { h ->
-                buildList(h.size + toolResults.size) {
+                buildList<History>(h.size + toolResults.size) {
                     for (entry in h) {
-                        if (entry.role != History.Role.TOOL_EXECUTING) add(entry)
+                        if (entry.role != History.Role.TOOL_EXECUTING) {
+                            val cleaned = entry.withoutAskQuestionsToolCall()
+                            if (cleaned != null) add(cleaned)
+                        }
                     }
                     for ((callId, name, result) in toolResults) {
-                        add(
-                            History(
-                                role = History.Role.TOOL,
-                                content = result,
-                                toolCallId = callId,
-                                toolName = name,
-                            ),
-                        )
+                        if (name == ASK_QUESTIONS_TOOL_NAME) {
+                            add(History(role = History.Role.USER, content = result))
+                        } else {
+                            add(
+                                History(
+                                    role = History.Role.TOOL,
+                                    content = result,
+                                    toolCallId = callId,
+                                    toolName = name,
+                                ),
+                            )
+                        }
                     }
                 }
             }
@@ -1149,19 +1167,26 @@ class RemoteDataRepository(
 
             // Add all tool results to history and trim to fit context window
             history.update { h ->
-                val updated = buildList(h.size + toolResults.size) {
+                val updated = buildList<History>(h.size + toolResults.size) {
                     for (entry in h) {
-                        if (entry.role != History.Role.TOOL_EXECUTING) add(entry)
+                        if (entry.role != History.Role.TOOL_EXECUTING) {
+                            val cleaned = entry.withoutAskQuestionsToolCall()
+                            if (cleaned != null) add(cleaned)
+                        }
                     }
                     for ((callId, name, result) in toolResults) {
-                        add(
-                            History(
-                                role = History.Role.TOOL,
-                                content = result,
-                                toolCallId = callId,
-                                toolName = name,
-                            ),
-                        )
+                        if (name == ASK_QUESTIONS_TOOL_NAME) {
+                            add(History(role = History.Role.USER, content = result))
+                        } else {
+                            add(
+                                History(
+                                    role = History.Role.TOOL,
+                                    content = result,
+                                    toolCallId = callId,
+                                    toolName = name,
+                                ),
+                            )
+                        }
                     }
                 }
                 trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
@@ -1387,24 +1412,43 @@ class RemoteDataRepository(
 
             // Add all tool results to history and trim to fit context window
             history.update { h ->
-                val updated = buildList(h.size + toolResults.size) {
+                val updated = buildList<History>(h.size + toolResults.size) {
                     for (entry in h) {
-                        if (entry.role != History.Role.TOOL_EXECUTING) add(entry)
+                        if (entry.role != History.Role.TOOL_EXECUTING) {
+                            val cleaned = entry.withoutAskQuestionsToolCall()
+                            if (cleaned != null) add(cleaned)
+                        }
                     }
                     for ((callId, name, result) in toolResults) {
-                        add(
-                            History(
-                                role = History.Role.TOOL,
-                                content = result,
-                                toolCallId = callId,
-                                toolName = name,
-                            ),
-                        )
+                        if (name == ASK_QUESTIONS_TOOL_NAME) {
+                            add(History(role = History.Role.USER, content = result))
+                        } else {
+                            add(
+                                History(
+                                    role = History.Role.TOOL,
+                                    content = result,
+                                    toolCallId = callId,
+                                    toolName = name,
+                                ),
+                            )
+                        }
                     }
                 }
                 trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
             }
         }
+    }
+
+    /**
+     * Strips [ask_questions][ASK_QUESTIONS_TOOL_NAME] tool calls from an ASSISTANT entry.
+     * Returns null if the entry becomes empty (no text, no remaining tool calls).
+     */
+    private fun History.withoutAskQuestionsToolCall(): History? {
+        if (role != History.Role.ASSISTANT || toolCalls == null) return this
+        val filtered = toolCalls.filter { it.name != ASK_QUESTIONS_TOOL_NAME }
+        if (filtered.size == toolCalls.size) return this
+        if (filtered.isEmpty() && content.isEmpty()) return null
+        return copy(toolCalls = if (filtered.isEmpty()) null else filtered.toImmutableList())
     }
 
     /**

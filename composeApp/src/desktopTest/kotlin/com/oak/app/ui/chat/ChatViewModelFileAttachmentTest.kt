@@ -1,6 +1,7 @@
 package com.oak.app.ui.chat
 
 import app.cash.turbine.test
+import com.oak.app.data.AskQuestionsManager
 import com.oak.app.data.TaskScheduler
 import com.oak.app.testutil.FakeDataRepository
 import io.github.vinceglb.filekit.PlatformFile
@@ -47,7 +48,7 @@ class ChatViewModelFileAttachmentTest {
     private fun createViewModel(): ChatViewModel {
         val noOpScheduler = TaskScheduler(fakeRepository, enabled = false)
         val sessionManager = ChatSessionManager(fakeRepository)
-        return ChatViewModel(fakeRepository, noOpScheduler, sessionManager, unconfinedDispatcher)
+        return ChatViewModel(fakeRepository, noOpScheduler, sessionManager, AskQuestionsManager(), unconfinedDispatcher)
     }
 
     private fun tempPlatformFile(extension: String): PlatformFile {

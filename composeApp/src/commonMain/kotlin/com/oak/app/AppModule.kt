@@ -1,6 +1,7 @@
 package com.oak.app
 
 import com.oak.app.data.AppSettings
+import com.oak.app.data.AskQuestionsManager
 import com.oak.app.data.ConversationStorage
 import com.oak.app.data.DataRepository
 import com.oak.app.data.EmailStore
@@ -62,6 +63,9 @@ val appModule = module {
     }
     single<ToolExecutor> {
         ToolExecutor()
+    }
+    single<AskQuestionsManager> {
+        AskQuestionsManager()
     }
     single<MemoryStore> {
         MemoryStore(get())
@@ -144,5 +148,5 @@ val appModule = module {
     viewModel { SandboxFileBrowserViewModel(get<SandboxController>()) }
     viewModel { SandboxPackagesViewModel(get<SandboxController>()) }
     viewModel { SandboxSessionViewModel(get<SandboxController>(), get<DataRepository>()) }
-    viewModel { ChatViewModel(get<DataRepository>(), get<TaskScheduler>(), get<ChatSessionManager>()) }
+    viewModel { ChatViewModel(get<DataRepository>(), get<TaskScheduler>(), get<ChatSessionManager>(), get<AskQuestionsManager>()) }
 }

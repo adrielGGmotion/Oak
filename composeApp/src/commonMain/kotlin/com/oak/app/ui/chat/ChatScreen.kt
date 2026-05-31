@@ -89,6 +89,7 @@ import com.oak.app.ui.chat.composables.EmptyState
 import com.oak.app.ui.chat.composables.ErrorMessage
 import com.oak.app.ui.chat.composables.HeartbeatBanner
 import com.oak.app.ui.chat.composables.PendingSmsBanners
+import com.oak.app.ui.chat.composables.AskQuestionsSheet
 import com.oak.app.ui.chat.composables.QuestionInput
 import com.oak.app.ui.chat.composables.ServiceSelector
 import com.oak.app.ui.chat.composables.TopBar
@@ -841,6 +842,16 @@ private fun ChatModeScreen(
             modifier = Modifier.align(BottomCenter).padding(bottom = 80.dp),
         ) { data ->
             Snackbar(snackbarData = data)
+        }
+
+        uiState.pendingQuestions?.let { questions ->
+            AskQuestionsSheet(
+                questions = questions,
+                currentAnswers = uiState.pendingQuestionAnswers,
+                onAnswer = uiState.actions.answerQuestion,
+                onSubmit = uiState.actions.submitQuestionAnswers,
+                onCancel = uiState.actions.cancelQuestions,
+            )
         }
     }
 }

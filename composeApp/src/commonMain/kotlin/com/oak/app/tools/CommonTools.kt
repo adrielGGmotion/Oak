@@ -289,6 +289,7 @@ object CommonTools {
         waitToolInfo,
         FetchUrlTool.toolInfo,
         compressContextToolInfo,
+        askQuestionsToolInfo,
     ) +
         listOf(memoryStoreToolInfo, memoryForgetToolInfo, memoryLearnToolInfo, memoryReinforceToolInfo) +
         SchedulingTools.schedulingToolDefinitions +

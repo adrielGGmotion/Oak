@@ -28,4 +28,7 @@ data class ChatActions(
     val goBackInteractiveMode: () -> Unit,
     val sendSmsDraft: (String) -> Unit,
     val discardSmsDraft: (String) -> Unit,
+    val answerQuestion: (questionId: String, answer: String) -> Unit,
+    val submitQuestionAnswers: () -> Unit,
+    val cancelQuestions: () -> Unit,
 )
