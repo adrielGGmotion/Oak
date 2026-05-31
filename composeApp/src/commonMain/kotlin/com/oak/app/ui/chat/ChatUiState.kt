@@ -3,6 +3,7 @@
 package com.oak.app.ui.chat
 
 import androidx.compose.runtime.Immutable
+import com.oak.app.data.AskQuestion
 import com.oak.app.data.Attachment
 import com.oak.app.data.FallbackStatus
 import com.oak.app.data.ServiceEntry
@@ -95,6 +96,8 @@ data class ChatUiState(
     val generatingSessionIds: Set<String> = emptySet(),
     val snackbarText: String? = null,
     val sendVersion: Int = 0,
+    val pendingQuestions: ImmutableList<AskQuestion>? = null,
+    val pendingQuestionAnswers: Map<String, String> = emptyMap(),
 ) {
     val heartbeatConversationId: String?
         get() = savedConversations.firstOrNull { it.isHeartbeat }?.id

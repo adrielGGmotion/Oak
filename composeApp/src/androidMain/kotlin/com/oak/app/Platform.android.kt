@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import com.oak.app.data.AppSettings
+import com.oak.app.data.AskQuestionsManager
 import com.oak.app.data.DataRepository
 import com.oak.app.data.EmailStore
 import com.oak.app.data.MemoryStore
@@ -47,8 +48,10 @@ import com.oak.app.tools.NotificationTools
 import com.oak.app.tools.OpenFileTool
 import com.oak.app.tools.ProcessManagerTool
 import com.oak.app.tools.ReadFileTool
+import com.oak.app.tools.askQuestionsToolInfo
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
+import com.oak.app.tools.createAskQuestionsTool
 import com.oak.app.tools.SmsTools
 import com.oak.app.tools.SshTools
 import com.oak.app.tools.WebSearchTool
@@ -514,6 +517,11 @@ actual fun getAvailableTools(): List<Tool> {
                     dataRepository.triggerCompaction(keepRecent, focus)
                 },
             )
+        }
+
+        if (appSettings.isToolEnabled(askQuestionsToolInfo.id, defaultEnabled = true)) {
+            val askQuestionsManager: AskQuestionsManager by inject(AskQuestionsManager::class.java)
+            add(createAskQuestionsTool(askQuestionsManager))
         }
 
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)
