@@ -108,6 +108,14 @@ class FakeDataRepository : DataRepository {
         freeFallbackEnabled = enabled
     }
 
+    private var streamingEnabled = true
+
+    override fun isStreamingEnabled(): Boolean = streamingEnabled
+
+    override fun setStreamingEnabled(enabled: Boolean) {
+        streamingEnabled = enabled
+    }
+
     private var freeMode = FreeMode.FAST
 
     override fun getFreeMode(): FreeMode = freeMode

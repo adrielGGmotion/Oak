@@ -26,6 +26,8 @@ interface DataRepository {
     fun removeConfiguredService(instanceId: String)
     fun reorderConfiguredServices(orderedInstanceIds: List<String>)
     fun getServiceEntries(): List<ServiceEntry>
+    fun isStreamingEnabled(): Boolean
+    fun setStreamingEnabled(enabled: Boolean)
     fun isFreeFallbackEnabled(): Boolean
     fun setFreeFallbackEnabled(enabled: Boolean)
     fun getFreeMode(): FreeMode
