@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+import kotlin.time.Clock
 
 private val serverIdRegex = Regex("[^a-z0-9]")
 
@@ -25,6 +26,7 @@ class SshServerManager(
 
     private val mutex = Mutex()
     private val clients = mutableMapOf<String, SshClient>()
+    private val adhocTimestamps = mutableMapOf<String, Long>()
 
     private var cachedConfigsJson: String? = null
     private var cachedConfigs: List<SshServerConfig> = emptyList()
@@ -128,6 +130,23 @@ class SshServerManager(
         mutex.withLock {
             clients.remove(id)?.disconnect()
             clients[id] = client
+            adhocTimestamps[id] = currentTimeMillis()
+        }
+    }
+
+    private fun currentTimeMillis(): Long = Clock.System.now().toEpochMilliseconds()
+
+    suspend fun cleanupStaleAdhocClients(maxAgeMinutes: Long = 30) {
+        val cutoff = currentTimeMillis() - maxAgeMinutes * 60_000
+        mutex.withLock {
+            val stale = adhocTimestamps.filter { it.value < cutoff }.keys
+            stale.forEach { id ->
+                // Only disconnect clients that were registered as ad-hoc (no server config)
+                if (getServers().none { it.id == id }) {
+                    clients.remove(id)?.disconnect()
+                }
+                adhocTimestamps.remove(id)
+            }
         }
     }
 

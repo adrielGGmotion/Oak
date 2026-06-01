@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshConnectionStatus
@@ -203,7 +204,7 @@ private fun SshServerCard(
                 val statusText = when (server.connectionStatus) {
                     SshConnectionStatus.Connected -> stringResource(Res.string.settings_ssh_status_connected)
                     SshConnectionStatus.Connecting -> stringResource(Res.string.settings_ssh_status_connecting)
-                    SshConnectionStatus.Error -> stringResource(Res.string.settings_ssh_status_error)
+                    SshConnectionStatus.Error -> server.errorMessage ?: stringResource(Res.string.settings_ssh_status_error)
                     SshConnectionStatus.Disconnected -> stringResource(Res.string.settings_ssh_status_disconnected)
                     SshConnectionStatus.Unknown -> ""
                 }
@@ -215,6 +216,8 @@ private fun SshServerCard(
                             SshConnectionStatus.Error -> MaterialTheme.colorScheme.error
                             else -> MaterialTheme.colorScheme.onSurfaceVariant
                         },
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
                     )
                     Spacer(Modifier.height(8.dp))
                 }

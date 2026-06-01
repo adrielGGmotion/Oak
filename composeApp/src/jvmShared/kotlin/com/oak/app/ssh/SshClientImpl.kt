@@ -6,10 +6,28 @@ import org.apache.sshd.client.session.ClientSession
 import org.apache.sshd.common.config.keys.FilePasswordProvider
 import org.apache.sshd.sftp.client.SftpClient
 import org.apache.sshd.sftp.client.SftpClientFactory
-import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
+
+private const val MAX_OUTPUT_CHARS = 20_000
+
+private class CappedOutputStream : OutputStream() {
+    private val sb = StringBuilder(MAX_OUTPUT_CHARS)
+
+    override fun write(b: Int) {
+        if (sb.length < MAX_OUTPUT_CHARS) sb.append((b and 0xFF).toChar())
+    }
+
+    override fun write(b: ByteArray, off: Int, len: Int) {
+        val str = b.decodeToString(off, off + len)
+        val allowed = minOf(str.length, MAX_OUTPUT_CHARS - sb.length)
+        if (allowed > 0) sb.append(str, 0, allowed)
+    }
+
+    override fun toString(): String = sb.toString()
+}
 
 class SshClientImpl : SshClient {
 
@@ -89,12 +107,12 @@ class SshClientImpl : SshClient {
     override suspend fun executeCommand(command: String, timeoutSeconds: Long): SshCommandResult {
         val s = session ?: return SshCommandResult(-1, "", "Not connected")
         val channel = s.createExecChannel(command)
-        val stdout = ByteArrayOutputStream()
-        val stderr = ByteArrayOutputStream()
+        val stdout = CappedOutputStream()
+        val stderr = CappedOutputStream()
         channel.setOut(stdout)
         channel.setErr(stderr)
         try {
-            channel.open().verify(timeoutSeconds, TimeUnit.SECONDS)
+            channel.open().verify(15, TimeUnit.SECONDS)
             val events = channel.waitFor(
                 setOf(ClientChannelEvent.CLOSED),
                 TimeUnit.SECONDS.toMillis(timeoutSeconds),

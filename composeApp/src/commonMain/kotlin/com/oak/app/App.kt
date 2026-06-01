@@ -81,6 +81,7 @@ import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.svg.SvgDecoder
 import com.oak.app.data.AppSettings
 import com.oak.app.data.ThemeMode
+import com.oak.app.ssh.SshServerManager
 import com.oak.app.tools.CalendarPermissionController
 import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.SetupCalendarPermissionHandler
@@ -202,6 +203,13 @@ private fun AppContent(
         if (matchingVoice != null) {
             tts.currentVoice = matchingVoice
         }
+    }
+
+    // Auto-connect enabled SSH servers on startup, clean up stale ad-hoc clients
+    val sshManager = koinInject<SshServerManager>()
+    LaunchedEffect(Unit) {
+        sshManager.connectEnabledServers()
+        sshManager.cleanupStaleAdhocClients()
     }
 
     val uiScale by appSettings.uiScaleFlow.collectAsStateWithLifecycle()

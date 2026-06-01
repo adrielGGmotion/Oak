@@ -253,9 +253,9 @@ class SettingsViewModel(
             connectEnabledMcpServers()
             viewModelScope.launch(backgroundDispatcher) {
                 val enabledServers = dataRepository.getSshServers().filter { it.isEnabled }
-                enabledServers.forEach { server ->
-                    connectSshServerWithStatus(server.id)
-                }
+                enabledServers
+                    .filterNot { dataRepository.isSshServerConnected(it.id) }
+                    .forEach { server -> connectSshServerWithStatus(server.id) }
             }
             fetchSponsors()
         }
@@ -896,12 +896,12 @@ class SettingsViewModel(
 
     private fun refreshSshServers() {
         _state.update { current ->
-            val existingStatuses = current.sshServers.associate { it.id to it.connectionStatus }
+            val existingState = current.sshServers.associateBy { it.id }
             current.copy(
                 sshServers = buildSshServerEntries().map { entry ->
-                    val preservedStatus = existingStatuses[entry.id]
-                    if (preservedStatus == SshConnectionStatus.Connecting || preservedStatus == SshConnectionStatus.Error) {
-                        entry.copy(connectionStatus = preservedStatus)
+                    val existing = existingState[entry.id]
+                    if (existing != null && (existing.connectionStatus == SshConnectionStatus.Connecting || existing.connectionStatus == SshConnectionStatus.Error)) {
+                        entry.copy(connectionStatus = existing.connectionStatus, errorMessage = existing.errorMessage)
                     } else {
                         entry
                     }
@@ -964,15 +964,16 @@ class SettingsViewModel(
             updateSshConnectionStatus(serverId, SshConnectionStatus.Connected)
             refreshSshServers()
         } else {
-            updateSshConnectionStatus(serverId, SshConnectionStatus.Error)
+            val errorMessage = result.exceptionOrNull()?.message ?: "Connection failed"
+            updateSshConnectionStatus(serverId, SshConnectionStatus.Error, errorMessage)
         }
     }
 
-    private fun updateSshConnectionStatus(serverId: String, status: SshConnectionStatus) {
+    private fun updateSshConnectionStatus(serverId: String, status: SshConnectionStatus, errorMessage: String? = null) {
         _state.update { state ->
             state.copy(
                 sshServers = state.sshServers.map { entry ->
-                    if (entry.id == serverId) entry.copy(connectionStatus = status) else entry
+                    if (entry.id == serverId) entry.copy(connectionStatus = status, errorMessage = errorMessage) else entry
                 }.toImmutableList(),
             )
         }
