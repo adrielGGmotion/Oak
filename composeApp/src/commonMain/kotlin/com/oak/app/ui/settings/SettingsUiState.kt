@@ -138,6 +138,7 @@ data class SshServerUiState(
     val authType: SshAuthType,
     val isEnabled: Boolean,
     val connectionStatus: SshConnectionStatus,
+    val errorMessage: String? = null,
 )
 
 @Immutable
