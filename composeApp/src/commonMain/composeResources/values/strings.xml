@@ -310,7 +310,7 @@
     <string name="conversation_untitled">Untitled</string>
     <string name="error_unsupported_file_type">This file type is not supported. You can attach images, text files, and PDFs.</string>
     <string name="error_file_too_large">File is too large. Text files must be under 100 KB.</string>
-    <string name="error_image_too_large">Image is too large. Try a smaller image.</string>
+    <string name="error_request_too_large">Request too large. Try starting a new chat or shortening your message.</string>
     <string name="error_context_window_exceeded">Context window too large for fallback service. Try starting a new chat or using a model with a larger context window.</string>
     <string name="error_insufficient_credits">Insufficient credits</string>
     <string name="error_quota_exhausted">Quota exhausted</string>
@@ -429,4 +429,6 @@
     <string name="user_message_select_text">Select text</string>
     <string name="user_message_edit">Edit</string>
     <string name="new_chat_fallback">New Chat</string>
+    <string name="settings_streaming_enabled">Streaming responses</string>
+    <string name="settings_streaming_description">Disable if your provider has issues with streaming responses</string>
 </resources>
