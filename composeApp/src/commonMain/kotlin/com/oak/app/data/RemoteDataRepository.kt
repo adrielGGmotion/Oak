@@ -231,6 +231,12 @@ class RemoteDataRepository(
         )
     }
 
+    override fun isStreamingEnabled(): Boolean = appSettings.isStreamingEnabled()
+
+    override fun setStreamingEnabled(enabled: Boolean) {
+        appSettings.setStreamingEnabled(enabled)
+    }
+
     override fun isFreeFallbackEnabled(): Boolean = appSettings.isFreeFallbackEnabled()
 
     override fun setFreeFallbackEnabled(enabled: Boolean) {
@@ -937,50 +943,61 @@ class RemoteDataRepository(
 
             var (textContent, fullReasoning, toolCalls) = try {
                 retryApiCall {
-                    _streamingContent.value = null
-                    _streamingReasoning.value = null
-                    val contentBuilder = StringBuilder()
-                    val reasoningBuilder = StringBuilder()
-                    val toolCallAccumulators = mutableMapOf<Int, MutableMap<String, String>>()
+                    if (appSettings.isStreamingEnabled()) {
+                        _streamingContent.value = null
+                        _streamingReasoning.value = null
+                        val contentBuilder = StringBuilder()
+                        val reasoningBuilder = StringBuilder()
+                        val toolCallAccumulators = mutableMapOf<Int, MutableMap<String, String>>()
 
-                    requests.openAICompatibleChatStream(service, credentials, currentMessages, tools)
-                        .collect { chunk ->
-                            val choice = chunk.choices?.firstOrNull()
-                            val delta = choice?.delta ?: return@collect
+                        requests.openAICompatibleChatStream(service, credentials, currentMessages, tools)
+                            .collect { chunk ->
+                                val choice = chunk.choices?.firstOrNull()
+                                val delta = choice?.delta ?: return@collect
 
-                            delta.content?.let { c ->
-                                contentBuilder.append(c)
-                                _streamingContent.value = contentBuilder.toString()
+                                delta.content?.let { c ->
+                                    contentBuilder.append(c)
+                                    _streamingContent.value = contentBuilder.toString()
+                                }
+                                delta.reasoningContent?.let { r ->
+                                    reasoningBuilder.append(r)
+                                    _streamingReasoning.value = reasoningBuilder.toString()
+                                }
+                                delta.toolCalls?.forEach { tc ->
+                                    val acc = toolCallAccumulators.getOrPut(tc.index) { mutableMapOf() }
+                                    tc.id?.let { acc["id"] = it }
+                                    tc.type?.let { acc["type"] = it }
+                                    tc.function?.name?.let { acc["function_name"] = (acc["function_name"] ?: "") + it }
+                                    tc.function?.arguments?.let { acc["function_arguments"] = (acc["function_arguments"] ?: "") + it }
+                                }
                             }
-                            delta.reasoningContent?.let { r ->
-                                reasoningBuilder.append(r)
-                                _streamingReasoning.value = reasoningBuilder.toString()
-                            }
-                            delta.toolCalls?.forEach { tc ->
-                                val acc = toolCallAccumulators.getOrPut(tc.index) { mutableMapOf() }
-                                tc.id?.let { acc["id"] = it }
-                                tc.type?.let { acc["type"] = it }
-                                tc.function?.name?.let { acc["function_name"] = (acc["function_name"] ?: "") + it }
-                                tc.function?.arguments?.let { acc["function_arguments"] = (acc["function_arguments"] ?: "") + it }
-                            }
+
+                        val calls = toolCallAccumulators.entries.map { (_, acc) ->
+                            OpenAICompatibleChatResponseDto.ToolCall(
+                                id = acc["id"] ?: "",
+                                type = acc["type"] ?: "function",
+                                function = OpenAICompatibleChatResponseDto.FunctionCall(
+                                    name = acc["function_name"] ?: "",
+                                    arguments = acc["function_arguments"] ?: "",
+                                ),
+                            )
                         }
 
-                    val calls = toolCallAccumulators.entries.map { (_, acc) ->
-                        OpenAICompatibleChatResponseDto.ToolCall(
-                            id = acc["id"] ?: "",
-                            type = acc["type"] ?: "function",
-                            function = OpenAICompatibleChatResponseDto.FunctionCall(
-                                name = acc["function_name"] ?: "",
-                                arguments = acc["function_arguments"] ?: "",
-                            ),
+                        Triple(
+                            contentBuilder.toString().ifEmpty { null },
+                            reasoningBuilder.toString().ifEmpty { null },
+                            calls,
+                        )
+                    } else {
+                        val response = requests.openAICompatibleChat(service, credentials, currentMessages, tools).getOrThrow()
+                        val choice = response.choices.firstOrNull()
+                        val message = choice?.message
+                        Triple(
+                            message?.effectiveContent,
+                            message?.effectiveReasoning,
+                            message?.toolCalls ?: emptyList(),
                         )
                     }
-
-                    Triple(
-                        contentBuilder.toString().ifEmpty { null },
-                        reasoningBuilder.toString().ifEmpty { null },
-                        calls,
-                    )
                 }
             } catch (e: Exception) {
                 _streamingContent.value = null

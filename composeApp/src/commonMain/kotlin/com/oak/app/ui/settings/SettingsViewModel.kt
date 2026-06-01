@@ -121,6 +121,7 @@ class SettingsViewModel(
         notificationListenerBound = dataRepository.getNotificationSyncState().listenerBound,
         notificationPendingCount = dataRepository.getPendingNotificationCount(),
         isFreeFallbackEnabled = dataRepository.isFreeFallbackEnabled(),
+        isStreamingEnabled = dataRepository.isStreamingEnabled(),
         uiScale = dataRepository.getUiScale(),
         showUiScale = currentPlatform is Platform.Desktop,
         mcpServers = buildMcpServerEntries().toImmutableList(),
@@ -177,6 +178,7 @@ class SettingsViewModel(
         onClearPendingNotifications = ::onClearPendingNotifications,
         onToggleStorageAccess = ::onToggleStorageAccess,
         onToggleFreeFallback = ::onToggleFreeFallback,
+        onToggleStreaming = ::onToggleStreaming,
         onChangeUiScale = ::onChangeUiScale,
         onAddMcpServer = ::onAddMcpServer,
         onRemoveMcpServer = ::onRemoveMcpServer,
@@ -678,6 +680,11 @@ class SettingsViewModel(
     private fun onToggleFreeFallback(enabled: Boolean) {
         dataRepository.setFreeFallbackEnabled(enabled)
         _state.update { it.copy(isFreeFallbackEnabled = enabled) }
+    }
+
+    private fun onToggleStreaming(enabled: Boolean) {
+        dataRepository.setStreamingEnabled(enabled)
+        _state.update { it.copy(isStreamingEnabled = enabled) }
     }
 
     private fun onDownloadLocalModel(model: LocalModel) {

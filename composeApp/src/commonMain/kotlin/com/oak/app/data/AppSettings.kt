@@ -468,6 +468,13 @@ class AppSettings(private val settings: Settings) {
         }
     }
 
+    // Streaming
+    fun isStreamingEnabled(): Boolean = settings.getBoolean(KEY_STREAMING_ENABLED, true)
+
+    fun setStreamingEnabled(enabled: Boolean) {
+        settings.putBoolean(KEY_STREAMING_ENABLED, enabled)
+    }
+
     // Free fallback
     fun isFreeFallbackEnabled(): Boolean = settings.getBoolean(KEY_FREE_FALLBACK_ENABLED, true)
 
@@ -1251,6 +1258,7 @@ class AppSettings(private val settings: Settings) {
 
         const val KEY_SANDBOX_ENABLED = "sandbox_enabled"
         const val KEY_STORAGE_ACCESS_ENABLED = "storage_access_enabled"
+        const val KEY_STREAMING_ENABLED = "streaming_enabled"
 
         // Basic memory guidance shared by every chat variant. The advanced `## Structured
         // Learning` block lives in `ChatSystemPromptBuilder.DEFAULT_STRUCTURED_LEARNING_SECTION`

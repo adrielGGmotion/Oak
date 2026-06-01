@@ -250,6 +250,8 @@ import oak.composeapp.generated.resources.settings_soul_reset_cancel
 import oak.composeapp.generated.resources.settings_soul_reset_confirm
 import oak.composeapp.generated.resources.settings_soul_save
 import oak.composeapp.generated.resources.settings_sponsors_monthly
+import oak.composeapp.generated.resources.settings_streaming_description
+import oak.composeapp.generated.resources.settings_streaming_enabled
 import oak.composeapp.generated.resources.settings_sponsors_past
 import oak.composeapp.generated.resources.settings_status_checking
 import oak.composeapp.generated.resources.settings_status_connected
@@ -998,6 +1000,41 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
         Spacer(Modifier.height(12.dp))
         OutlinedButton(onClick = { showAddServiceSheet = true }, modifier = Modifier.handCursor()) {
             Text(stringResource(Res.string.settings_add_service))
+        }
+    }
+
+    // Streaming toggle
+    Spacer(Modifier.height(16.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = oakAdaptiveCardColors(),
+        border = oakAdaptiveCardBorder(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { actions.onToggleStreaming(!uiState.isStreamingEnabled) }
+                .handCursor()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(Res.string.settings_streaming_enabled),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(Res.string.settings_streaming_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = uiState.isStreamingEnabled,
+                onCheckedChange = actions.onToggleStreaming,
+            )
         }
     }
 
