@@ -7,7 +7,7 @@ import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.error_context_window_exceeded
 import oak.composeapp.generated.resources.error_empty_response
 import oak.composeapp.generated.resources.error_file_too_large
-import oak.composeapp.generated.resources.error_image_too_large
+import oak.composeapp.generated.resources.error_request_too_large
 import oak.composeapp.generated.resources.error_insufficient_credits
 import oak.composeapp.generated.resources.error_invalid_api_key
 import oak.composeapp.generated.resources.error_openai_compatible_connection
@@ -60,7 +60,7 @@ fun Exception.toUiError(): UiError = when (this) {
     is UnsupportedFileTypeException -> UiError.Resource(Res.string.error_unsupported_file_type)
     is FileTooLargeException -> UiError.Resource(Res.string.error_file_too_large)
     is ContextWindowExceededException -> UiError.Resource(Res.string.error_context_window_exceeded)
-    is OpenAICompatibleRequestTooLargeException -> UiError.Resource(Res.string.error_image_too_large)
+    is OpenAICompatibleRequestTooLargeException -> UiError.Resource(Res.string.error_request_too_large)
     is GeminiInvalidApiKeyException, is OpenAICompatibleInvalidApiKeyException, is AnthropicInvalidApiKeyException -> UiError.Resource(Res.string.error_invalid_api_key)
     is GeminiRateLimitExceededException, is OpenAICompatibleRateLimitExceededException, is AnthropicRateLimitExceededException -> UiError.Resource(Res.string.error_rate_limit_exceeded)
     is AnthropicOverloadedException -> UiError.Resource(Res.string.error_rate_limit_exceeded)
