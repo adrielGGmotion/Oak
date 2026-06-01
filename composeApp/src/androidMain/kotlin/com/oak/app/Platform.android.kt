@@ -249,7 +249,11 @@ actual fun getPlatformToolDefinitions(): List<ToolInfo> = buildList {
     // UI — `getAvailableTools()` never consulted them.
 
     // SSH tools
-    addAll(SshTools.toolDefinitions)
+    try {
+        addAll(SshTools.toolDefinitions)
+    } catch (_: Throwable) {
+        // SSH tools failed to load
+    }
 }
 
 actual fun getAvailableTools(): List<Tool> {
@@ -528,7 +532,11 @@ actual fun getAvailableTools(): List<Tool> {
 
         // SSH tools (always available, tools handle no-connection state gracefully)
         if (appSettings.isToolEnabled("ssh_connect")) {
-            addAll(SshTools.getTools())
+            try {
+                addAll(SshTools.getTools())
+            } catch (_: Throwable) {
+                // SSH tools unavailable
+            }
         }
     }
 }
