@@ -65,6 +65,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -475,6 +476,7 @@ class RemoteDataRepository(
         ))
 
         var iteration = 0
+        try {
         while (iteration < MAX_TOOL_ITERATIONS) {
             iteration++
             // Try XML invoke blocks first, then fall back to JSON format
@@ -493,7 +495,7 @@ class RemoteDataRepository(
 
             history.update {
                 it.toMutableList().apply {
-                    add(History(role = History.Role.ASSISTANT, content = inlineResult.cleanContent, toolCalls = inlineResult.toolCalls.toImmutableList()))
+                    add(History(role = History.Role.ASSISTANT, content = inlineResult.cleanContent.stripToolMarkup(), toolCalls = inlineResult.toolCalls.toImmutableList()))
                 }
             }
 
@@ -533,6 +535,19 @@ class RemoteDataRepository(
         }
 
         return response
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            try {
+                return stripThinkBlocks(engine.chat(
+                    messages = inferenceMessages,
+                    systemPrompt = promptWithTools,
+                    tools = emptyList(),
+                ))
+            } catch (e2: Exception) {
+                if (e2 is CancellationException) throw e2
+                return response.stripToolMarkup()
+            }
+        }
     }
 
     /**
@@ -605,14 +620,24 @@ class RemoteDataRepository(
     private data class ParsedInvokeCall(val name: String, val arguments: String)
 
     private val INVOKE_BLOCK_REGEX = Regex(
-        """<invoke\s+(?:[^>]*\s)?name\s*=\s*"([^"]+)"(?:[^>]*)>([\s\S]*?)</invoke>""",
-        RegexOption.DOT_MATCHES_ALL,
+        """<invoke\s+(?:[^>]*\s)?name\s*=\s*["']([^"']+)["'](?:[^>]*)>([\s\S]*?)</invoke>""",
+        setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE),
     )
 
     private val PARAMETER_REGEX = Regex(
-        """<parameter\s+(?:[^>]*\s)?name\s*=\s*"([^"]+)"(?:[^>]*)>([\s\S]*?)</parameter>""",
-        RegexOption.DOT_MATCHES_ALL,
+        """<parameter\s+(?:[^>]*\s)?name\s*=\s*["']([^"']+)["'](?:[^>]*)>([\s\S]*?)</parameter>""",
+        setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE),
     )
+
+    private val INVOKE_STRIP_REGEX = Regex(
+        """<invoke\b[^>]*>[\s\S]*?</invoke>""",
+        setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE),
+    )
+
+    private fun String.stripToolMarkup(): String = this
+        .replace(toolCallMarkerRegex, "")
+        .replace(INVOKE_STRIP_REGEX, "")
+        .trim()
 
     private fun coerceValue(raw: String): JsonElement {
         val trimmed = raw.trim()
@@ -863,7 +888,7 @@ class RemoteDataRepository(
                 val isReasoningOnly = responseText.isBlank() && !reasoning.isNullOrBlank()
                 chatHistory.update {
                     it.toMutableList().apply {
-                        add(History(role = History.Role.ASSISTANT, content = responseText, isThinking = isReasoningOnly, reasoningContent = reasoning, fallbackServiceName = fallbackServiceName))
+                        add(History(role = History.Role.ASSISTANT, content = responseText.stripToolMarkup(), isThinking = isReasoningOnly, reasoningContent = reasoning, fallbackServiceName = fallbackServiceName))
                     }
                 }
                 saveCurrentConversation()
@@ -932,6 +957,7 @@ class RemoteDataRepository(
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
 
+        try {
         while (true) {
             iteration++
             if (iteration > MAX_TOOL_ITERATIONS) {
@@ -1021,7 +1047,7 @@ class RemoteDataRepository(
                         }
                         textContent = inlineResult.cleanContent.ifEmpty { null }
                     } else {
-                        val stripped = textContent.replace(toolCallMarkerRegex, "").trim()
+                        val stripped = textContent.stripToolMarkup()
                         return stripped.ifEmpty { "" }
                     }
                 } else {
@@ -1040,7 +1066,7 @@ class RemoteDataRepository(
                     add(
                         History(
                             role = History.Role.ASSISTANT,
-                            content = textContent?.replace(toolCallMarkerRegex, "")?.trim() ?: "",
+                            content = textContent?.stripToolMarkup() ?: "",
                             isThinking = textContent == null && fullReasoning != null,
                             toolCalls = toolCalls.map { tc ->
                                 ToolCallInfo(id = tc.id, name = tc.function.name, arguments = tc.function.arguments)
@@ -1086,6 +1112,15 @@ class RemoteDataRepository(
                 contextWindowTokens,
             )
         }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            try {
+                return makeFinalCallWithoutTools(service, credentials, currentMessages)
+            } catch (e2: Exception) {
+                if (e2 is CancellationException) throw e2
+                return ""
+            }
+        }
     }
 
     private suspend fun handleGeminiChatWithTools(credentials: ServiceCredentials, messages: List<History>, tools: List<Tool>, systemPrompt: String? = null, history: MutableStateFlow<List<History>> = chatHistory): String {
@@ -1094,6 +1129,7 @@ class RemoteDataRepository(
         val recentSignatures = mutableListOf<String>()
 
         // Loop until AI returns a final response (no more function calls)
+        try {
         while (true) {
             iteration++
 
@@ -1168,7 +1204,7 @@ class RemoteDataRepository(
                     add(
                         History(
                             role = History.Role.ASSISTANT,
-                            content = textContent,
+                            content = textContent.stripToolMarkup(),
                             toolCalls = toolCallInfos.toImmutableList(),
                         ),
                     )
@@ -1203,6 +1239,24 @@ class RemoteDataRepository(
                     }
                 }
                 trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+            }
+        }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            try {
+                val currentMessages = history.value.filter { it.role != History.Role.TOOL_EXECUTING }
+                val geminiMessages = currentMessages.map { it.toGeminiMessageDto() }
+                val bailoutResponse = retryApiCall {
+                    requests.geminiChat(
+                        credentials = credentials,
+                        messages = geminiMessages,
+                        systemInstruction = systemPrompt,
+                    ).getOrThrow()
+                }
+                return bailoutResponse.extractText()
+            } catch (e2: Exception) {
+                if (e2 is CancellationException) throw e2
+                return ""
             }
         }
     }
@@ -1341,6 +1395,7 @@ class RemoteDataRepository(
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
 
+        try {
         while (true) {
             iteration++
 
@@ -1413,7 +1468,7 @@ class RemoteDataRepository(
                     add(
                         History(
                             role = History.Role.ASSISTANT,
-                            content = textContent,
+                            content = textContent.stripToolMarkup(),
                             toolCalls = toolCallInfos.toImmutableList(),
                         ),
                     )
@@ -1448,6 +1503,25 @@ class RemoteDataRepository(
                     }
                 }
                 trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+            }
+        }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            try {
+                val currentMessages = buildAnthropicMessages(
+                    history.value.filter { it.role != History.Role.TOOL_EXECUTING },
+                )
+                val bailoutResponse = retryApiCall {
+                    requests.anthropicChat(
+                        credentials = credentials,
+                        messages = currentMessages,
+                        systemInstruction = systemPrompt,
+                    ).getOrThrow()
+                }
+                return bailoutResponse.extractText()
+            } catch (e2: Exception) {
+                if (e2 is CancellationException) throw e2
+                return ""
             }
         }
     }
@@ -1539,25 +1613,26 @@ class RemoteDataRepository(
         // see a stable value even if the user switches conversations mid-flight.
         val conversationIdSnapshot = _currentConversationId.value
         val startTime = Clock.System.now().toEpochMilliseconds()
-        val results = coroutineScope {
-            toolCalls.map { (callId, name, arguments) ->
-                async {
-                    val result = toolExecutor.executeTool(name, arguments, conversationIdSnapshot)
-                    Triple(callId, name, result)
-                }
-            }.awaitAll()
+        try {
+            val results = coroutineScope {
+                toolCalls.map { (callId, name, arguments) ->
+                    async {
+                        val result = toolExecutor.executeTool(name, arguments, conversationIdSnapshot)
+                        Triple(callId, name, result)
+                    }
+                }.awaitAll()
+            }
+            val elapsed = Clock.System.now().toEpochMilliseconds() - startTime
+            if (elapsed < MIN_TOOL_DISPLAY_MS) {
+                delay((MIN_TOOL_DISPLAY_MS - elapsed).milliseconds)
+            }
+            return results
+        } finally {
+            // Always remove TOOL_EXECUTING indicators, even on cancellation
+            chatHistory.update { history ->
+                history.filter { h -> h.id !in executingIds }
+            }
         }
-        val elapsed = Clock.System.now().toEpochMilliseconds() - startTime
-        if (elapsed < MIN_TOOL_DISPLAY_MS) {
-            delay((MIN_TOOL_DISPLAY_MS - elapsed).milliseconds)
-        }
-
-        // Remove all TOOL_EXECUTING indicators
-        chatHistory.update { history ->
-            history.filter { h -> h.id !in executingIds }
-        }
-
-        return results
     }
 
     private fun isNonRetryableException(e: Exception): Boolean = e is AnthropicInsufficientCreditsException || e is OpenAICompatibleQuotaExhaustedException || e is OpenAICompatibleInvalidApiKeyException

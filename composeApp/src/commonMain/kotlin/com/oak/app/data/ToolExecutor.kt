@@ -64,7 +64,7 @@ class ToolExecutor {
     ): String {
         val tools = getAvailableTools()
         val tool = tools.find { it.schema.name == name }
-            ?: return """{"success": false, "error": "Unknown tool: $name"}"""
+            ?: return """{"success": false, "error": "Unknown tool: '$name'. Available: ${tools.joinToString(", ") { it.schema.name }}"}"""
 
         val args = try {
             parseJsonToMap(arguments)
