@@ -2256,6 +2256,12 @@ class RemoteDataRepository(
         appSettings.setFontFamily(family)
     }
 
+    override fun getAiFontFamily(): OakFontFamily = appSettings.getAiFontFamily()
+
+    override fun setAiFontFamily(family: OakFontFamily) {
+        appSettings.setAiFontFamily(family)
+    }
+
     private var interactiveModeFlag = appSettings.getCurrentInteractiveMode()
 
     override fun setInteractiveMode(enabled: Boolean) {

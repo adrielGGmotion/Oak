@@ -69,6 +69,7 @@ data class SettingsUiState(
     val useDynamicColors: Boolean = false,
     val showDynamicColorsToggle: Boolean = false,
     val fontFamily: OakFontFamily = OakFontFamily.System,
+    val aiFontFamily: OakFontFamily = OakFontFamily.System,
     val isMemoryEnabled: Boolean = true,
     val memories: ImmutableList<MemoryEntry> = persistentListOf(),
     val isSchedulingEnabled: Boolean = true,

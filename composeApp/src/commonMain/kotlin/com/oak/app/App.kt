@@ -227,6 +227,7 @@ private fun AppContent(
     }
     val useDynamicColors by appSettings.useDynamicColorsFlow.collectAsStateWithLifecycle()
     val fontFamily by appSettings.fontFamilyFlow.collectAsStateWithLifecycle()
+    val aiFontFamily by appSettings.aiFontFamilyFlow.collectAsStateWithLifecycle()
 
     CompositionLocalProvider(LocalDensity provides scaledDensity) {
         OakTheme(
@@ -234,6 +235,7 @@ private fun AppContent(
             darkTheme = isDark,
             isOledBlack = themeMode == ThemeMode.OledBlack,
             fontFamily = fontFamily,
+            aiFontFamily = aiFontFamily,
         ) {
             FullScreenImageHost {
                 val chatViewModel: ChatViewModel = koinViewModel()

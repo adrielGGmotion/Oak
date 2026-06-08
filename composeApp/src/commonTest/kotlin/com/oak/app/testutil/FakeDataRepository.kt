@@ -28,6 +28,7 @@ import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshServerConfig
 import com.oak.app.tools.CommonTools
 import com.oak.app.ui.chat.History
+import com.oak.app.ui.OakFontFamily
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.CompletableDeferred
@@ -451,6 +452,22 @@ class FakeDataRepository : DataRepository {
 
     override fun setUseDynamicColorsEnabled(enabled: Boolean) {
         useDynamicColors = enabled
+    }
+
+    private var fontFamily: OakFontFamily = OakFontFamily.System
+
+    override fun getFontFamily(): OakFontFamily = fontFamily
+
+    override fun setFontFamily(family: OakFontFamily) {
+        fontFamily = family
+    }
+
+    private var aiFontFamily: OakFontFamily = OakFontFamily.System
+
+    override fun getAiFontFamily(): OakFontFamily = aiFontFamily
+
+    override fun setAiFontFamily(family: OakFontFamily) {
+        aiFontFamily = family
     }
 
     private var interactiveMode = false

@@ -591,6 +591,28 @@ class AppSettings(private val settings: Settings) {
         return OakFontFamily.System
     }
 
+    private val _aiFontFamilyFlow = MutableStateFlow(loadInitialAiFontFamily())
+    val aiFontFamilyFlow: StateFlow<OakFontFamily> = _aiFontFamilyFlow
+
+    fun getAiFontFamily(): OakFontFamily = _aiFontFamilyFlow.value
+
+    fun setAiFontFamily(family: OakFontFamily) {
+        settings.putString(KEY_AI_FONT_FAMILY, family.name)
+        _aiFontFamilyFlow.value = family
+    }
+
+    private fun loadInitialAiFontFamily(): OakFontFamily {
+        val raw = settings.getString(KEY_AI_FONT_FAMILY, "")
+        if (raw.isNotEmpty()) {
+            return try {
+                OakFontFamily.valueOf(raw)
+            } catch (_: IllegalArgumentException) {
+                OakFontFamily.System
+            }
+        }
+        return OakFontFamily.System
+    }
+
     // Daemon mode
     fun isDaemonEnabled(): Boolean = settings.getBoolean(KEY_DAEMON_ENABLED, false)
 
@@ -1242,6 +1264,7 @@ class AppSettings(private val settings: Settings) {
         const val KEY_OLED_MODE_ENABLED = "oled_mode_enabled"
         const val KEY_THEME_MODE = "theme_mode"
         const val KEY_FONT_FAMILY = "font_family"
+        const val KEY_AI_FONT_FAMILY = "ai_font_family"
         const val KEY_DAEMON_ENABLED = "daemon_enabled"
         const val KEY_HEARTBEAT_CONFIG = "heartbeat_config"
         const val KEY_HEARTBEAT_PROMPT = "heartbeat_prompt"

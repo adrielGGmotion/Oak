@@ -110,6 +110,10 @@ interface DataRepository {
     fun getFontFamily(): OakFontFamily
     fun setFontFamily(family: OakFontFamily)
 
+    // AI Font family
+    fun getAiFontFamily(): OakFontFamily
+    fun setAiFontFamily(family: OakFontFamily)
+
     // Interactive mode
     fun setInteractiveMode(enabled: Boolean)
     fun isInteractiveModeActive(): Boolean

@@ -285,6 +285,8 @@ import oak.composeapp.generated.resources.settings_theme_oled
 import oak.composeapp.generated.resources.settings_theme_system
 import oak.composeapp.generated.resources.settings_tools_description
 import oak.composeapp.generated.resources.settings_tools_none_available
+import oak.composeapp.generated.resources.settings_ai_font_family
+import oak.composeapp.generated.resources.settings_ai_font_family_description
 import oak.composeapp.generated.resources.settings_ui_scale
 import oak.composeapp.generated.resources.settings_version
 import oak.composeapp.generated.resources.snackbar_email_removed
@@ -1918,6 +1920,14 @@ private fun GeneralContent(uiState: SettingsUiState, actions: SettingsActions) {
                             onChangeFontFamily = actions.onChangeFontFamily,
                         )
                     }
+                    SettingsCard {
+                        FontFamilyPicker(
+                            selectedFontFamily = uiState.aiFontFamily,
+                            onChangeFontFamily = actions.onChangeAiFontFamily,
+                            title = stringResource(Res.string.settings_ai_font_family),
+                            description = stringResource(Res.string.settings_ai_font_family_description),
+                        )
+                    }
                 }
                 Column(
                     modifier = Modifier.weight(1f),
@@ -1973,6 +1983,14 @@ private fun GeneralContent(uiState: SettingsUiState, actions: SettingsActions) {
                     FontFamilyPicker(
                         selectedFontFamily = uiState.fontFamily,
                         onChangeFontFamily = actions.onChangeFontFamily,
+                    )
+                }
+                SettingsCard {
+                    FontFamilyPicker(
+                        selectedFontFamily = uiState.aiFontFamily,
+                        onChangeFontFamily = actions.onChangeAiFontFamily,
+                        title = stringResource(Res.string.settings_ai_font_family),
+                        description = stringResource(Res.string.settings_ai_font_family_description),
                     )
                 }
                 if (uiState.showUiScale) {

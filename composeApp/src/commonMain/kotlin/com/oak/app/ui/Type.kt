@@ -11,6 +11,7 @@ import org.jetbrains.compose.resources.Font
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.Inter_Variable
 import oak.composeapp.generated.resources.JetBrainsMono_Variable
+import oak.composeapp.generated.resources.JosefinSans_Variable
 import oak.composeapp.generated.resources.LexendDeca_Regular
 import oak.composeapp.generated.resources.Lora_Regular
 import oak.composeapp.generated.resources.Merriweather_Variable
@@ -22,6 +23,7 @@ import oak.composeapp.generated.resources.Prata_Regular
 enum class OakFontFamily(val displayName: String) {
     System("System"),
     Inter("Inter"),
+    JosefinSans("Josefin Sans"),
     LexendDeca("Lexend Deca"),
     NotoSans("Noto Sans"),
     PlusJakartaSans("Plus Jakarta Sans"),
@@ -35,6 +37,7 @@ enum class OakFontFamily(val displayName: String) {
 fun OakFontFamily.resolve(): FontFamily = when (this) {
     OakFontFamily.System -> FontFamily.Default
     OakFontFamily.Inter -> FontFamily(Font(resource = Res.font.Inter_Variable, weight = FontWeight.Normal))
+    OakFontFamily.JosefinSans -> FontFamily(Font(resource = Res.font.JosefinSans_Variable, weight = FontWeight.Normal))
     OakFontFamily.LexendDeca -> FontFamily(Font(resource = Res.font.LexendDeca_Regular, weight = FontWeight.Normal))
     OakFontFamily.NotoSans -> FontFamily(Font(resource = Res.font.NotoSans_Variable, weight = FontWeight.Normal))
     OakFontFamily.PlusJakartaSans -> FontFamily(Font(resource = Res.font.PlusJakartaSans_Variable, weight = FontWeight.Normal))
