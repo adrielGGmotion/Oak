@@ -16,6 +16,7 @@ import com.oak.app.network.dtos.SponsorsResponseDto
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshConnectionStatus
+import com.oak.app.ui.OakFontFamily
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
@@ -67,6 +68,7 @@ data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.System,
     val useDynamicColors: Boolean = false,
     val showDynamicColorsToggle: Boolean = false,
+    val fontFamily: OakFontFamily = OakFontFamily.System,
     val isMemoryEnabled: Boolean = true,
     val memories: ImmutableList<MemoryEntry> = persistentListOf(),
     val isSchedulingEnabled: Boolean = true,

@@ -1912,6 +1912,12 @@ private fun GeneralContent(uiState: SettingsUiState, actions: SettingsActions) {
                             )
                         }
                     }
+                    SettingsCard {
+                        FontFamilyPicker(
+                            selectedFontFamily = uiState.fontFamily,
+                            onChangeFontFamily = actions.onChangeFontFamily,
+                        )
+                    }
                 }
                 Column(
                     modifier = Modifier.weight(1f),
@@ -1962,6 +1968,12 @@ private fun GeneralContent(uiState: SettingsUiState, actions: SettingsActions) {
                             onToggleDynamicColors = actions.onToggleDynamicColors,
                         )
                     }
+                }
+                SettingsCard {
+                    FontFamilyPicker(
+                        selectedFontFamily = uiState.fontFamily,
+                        onChangeFontFamily = actions.onChangeFontFamily,
+                    )
                 }
                 if (uiState.showUiScale) {
                     SettingsCard {

@@ -8,6 +8,7 @@ import com.oak.app.mcp.McpServerConfig
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshServerConfig
+import com.oak.app.ui.OakFontFamily
 import com.oak.app.ui.chat.History
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
@@ -104,6 +105,10 @@ interface DataRepository {
     fun setThemeMode(mode: ThemeMode)
     fun isUseDynamicColorsEnabled(): Boolean
     fun setUseDynamicColorsEnabled(enabled: Boolean)
+
+    // Font family
+    fun getFontFamily(): OakFontFamily
+    fun setFontFamily(family: OakFontFamily)
 
     // Interactive mode
     fun setInteractiveMode(enabled: Boolean)

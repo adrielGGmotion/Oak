@@ -7,6 +7,7 @@ import com.oak.app.data.ThemeMode
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.PopularMcpServer
 import com.oak.app.ssh.SshAuthType
+import com.oak.app.ui.OakFontFamily
 
 @Immutable
 data class SettingsActions(
@@ -22,6 +23,7 @@ data class SettingsActions(
     val onSaveSoul: (String) -> Unit,
     val onToggleDynamicUi: (Boolean) -> Unit,
     val onChangeThemeMode: (ThemeMode) -> Unit,
+    val onChangeFontFamily: (OakFontFamily) -> Unit,
     val onToggleDynamicColors: (Boolean) -> Unit,
     val onToggleMemory: (Boolean) -> Unit,
     val onDeleteMemory: (String) -> Unit,
@@ -86,6 +88,7 @@ data class SettingsActions(
             onSaveSoul = {},
             onToggleDynamicUi = {},
             onChangeThemeMode = {},
+            onChangeFontFamily = {},
             onToggleDynamicColors = {},
             onToggleMemory = {},
             onDeleteMemory = {},

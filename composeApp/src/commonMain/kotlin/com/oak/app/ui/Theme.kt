@@ -102,11 +102,13 @@ fun OakTheme(
     useDynamicColors: Boolean = false,
     darkTheme: Boolean = isSystemInDarkTheme(),
     isOledBlack: Boolean = false,
+    fontFamily: OakFontFamily = OakFontFamily.System,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = oakColorScheme(useDynamicColors, darkTheme)
     val effectiveScheme = if (isOledBlack) colorScheme.withBlackBackground() else colorScheme
-    MaterialTheme(colorScheme = effectiveScheme) {
+    val typography = fontFamily.toTypography()
+    MaterialTheme(colorScheme = effectiveScheme, typography = typography) {
         content()
     }
 }

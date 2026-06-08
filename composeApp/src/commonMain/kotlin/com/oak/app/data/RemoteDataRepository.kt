@@ -28,6 +28,7 @@ import com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatResponseDto
 import com.oak.app.network.dtos.openaicompatible.toolCallMarkerRegex
 import com.oak.app.network.OpenAICompatibleInvalidApiKeyException
 import com.oak.app.network.OpenAICompatibleQuotaExhaustedException
+import com.oak.app.ui.OakFontFamily
 import com.oak.app.network.Requests
 import com.oak.app.network.ServiceCredentials
 import com.oak.app.network.UnsupportedFileTypeException
@@ -2247,6 +2248,12 @@ class RemoteDataRepository(
 
     override fun setUseDynamicColorsEnabled(enabled: Boolean) {
         appSettings.setUseDynamicColorsEnabled(enabled)
+    }
+
+    override fun getFontFamily(): OakFontFamily = appSettings.getFontFamily()
+
+    override fun setFontFamily(family: OakFontFamily) {
+        appSettings.setFontFamily(family)
     }
 
     private var interactiveModeFlag = appSettings.getCurrentInteractiveMode()

@@ -1,6 +1,7 @@
 package com.oak.app.data
 
 import com.oak.app.defaultUiScale
+import com.oak.app.ui.OakFontFamily
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -566,6 +567,28 @@ class AppSettings(private val settings: Settings) {
         }
         // Migrate the legacy boolean OLED toggle: true → OledBlack, false → System.
         return if (settings.getBoolean(KEY_OLED_MODE_ENABLED, false)) ThemeMode.OledBlack else ThemeMode.System
+    }
+
+    private val _fontFamilyFlow = MutableStateFlow(loadInitialFontFamily())
+    val fontFamilyFlow: StateFlow<OakFontFamily> = _fontFamilyFlow
+
+    fun getFontFamily(): OakFontFamily = _fontFamilyFlow.value
+
+    fun setFontFamily(family: OakFontFamily) {
+        settings.putString(KEY_FONT_FAMILY, family.name)
+        _fontFamilyFlow.value = family
+    }
+
+    private fun loadInitialFontFamily(): OakFontFamily {
+        val raw = settings.getString(KEY_FONT_FAMILY, "")
+        if (raw.isNotEmpty()) {
+            return try {
+                OakFontFamily.valueOf(raw)
+            } catch (_: IllegalArgumentException) {
+                OakFontFamily.System
+            }
+        }
+        return OakFontFamily.System
     }
 
     // Daemon mode
@@ -1218,6 +1241,7 @@ class AppSettings(private val settings: Settings) {
         const val KEY_USE_DYNAMIC_COLORS = "use_dynamic_colors"
         const val KEY_OLED_MODE_ENABLED = "oled_mode_enabled"
         const val KEY_THEME_MODE = "theme_mode"
+        const val KEY_FONT_FAMILY = "font_family"
         const val KEY_DAEMON_ENABLED = "daemon_enabled"
         const val KEY_HEARTBEAT_CONFIG = "heartbeat_config"
         const val KEY_HEARTBEAT_PROMPT = "heartbeat_prompt"
