@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +22,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -40,15 +50,19 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.tools_count
-import oak.composeapp.generated.resources.waiting_brewing
-import oak.composeapp.generated.resources.waiting_content_description
-import oak.composeapp.generated.resources.waiting_thinking
-import oak.composeapp.generated.resources.waiting_working
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.action_artifact_count_one
+import oak.composeapp.generated.resources.action_artifact_count_other
+import oak.composeapp.generated.resources.action_summary_view_details
+import oak.composeapp.generated.resources.tools_count
+import oak.composeapp.generated.resources.waiting_brewing
+import oak.composeapp.generated.resources.waiting_content_description
+import oak.composeapp.generated.resources.waiting_specific_tool
+import oak.composeapp.generated.resources.waiting_thinking
+import oak.composeapp.generated.resources.waiting_working
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -187,6 +201,168 @@ internal fun PulsingStatusIndicator(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Live tool indicator (shown during TOOL_EXECUTING)
+// ---------------------------------------------------------------------------
+
+@Composable
+internal fun LiveToolIndicator(
+    toolName: String,
+    modifier: Modifier = Modifier,
+) {
+    val displayName = ToolDisplayRegistry.displayName(toolName)
+    val icon = ToolDisplayRegistry.displayIcon(toolName)
+    val waitingSpecificCd = stringResource(Res.string.waiting_specific_tool, displayName)
+
+    val infiniteTransition = rememberInfiniteTransition()
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+    )
+
+    Row(
+        modifier = modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clipToBounds(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant,
+                    RoundedCornerShape(8.dp),
+                )
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .semantics { contentDescription = waitingSpecificCd },
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .graphicsLayer {
+                            scaleX = pulseScale
+                            scaleY = pulseScale
+                            alpha = pulseAlpha
+                        }
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape),
+                )
+                Spacer(Modifier.width(8.dp))
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = displayName,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Action summary row (completed tool calls)
+// ---------------------------------------------------------------------------
+
+@Composable
+internal fun ActionSummaryRow(
+    summary: ActionSummary,
+    onTap: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val leadingIcon = when (summary.variant) {
+        ActionSummaryVariant.REASONING -> Icons.Default.Schedule
+        ActionSummaryVariant.SEARCH -> Icons.Default.Search
+        ActionSummaryVariant.STEPS -> Icons.AutoMirrored.Filled.List
+        ActionSummaryVariant.DOCUMENT -> Icons.Default.Description
+    }
+    val viewDetailsCd = stringResource(Res.string.action_summary_view_details)
+
+    Row(
+        modifier = modifier
+            .padding(horizontal = 16.dp, vertical = 2.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onTap)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = leadingIcon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = summary.truncatedText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = viewDetailsCd,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Artifact badge row (shown below summaries that produce file/code outputs)
+// ---------------------------------------------------------------------------
+
+@Composable
+internal fun ArtifactBadgeRow(
+    count: Int,
+    modifier: Modifier = Modifier,
+) {
+    val text = if (count == 1) {
+        stringResource(Res.string.action_artifact_count_one, count)
+    } else {
+        stringResource(Res.string.action_artifact_count_other, count)
+    }
+
+    Row(
+        modifier = modifier
+            .padding(horizontal = 16.dp, vertical = 2.dp)
+            .padding(start = 44.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Surface(
+            shape = RoundedCornerShape(6.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            )
         }
     }
 }

@@ -69,7 +69,8 @@ class ToolExecutor {
         val args = try {
             parseJsonToMap(arguments)
         } catch (e: Exception) {
-            return """{"success": false, "error": "Failed to parse arguments: ${e.message}"}"""
+            val safeMsg = escapeJsonString(e.message ?: "unknown error")
+            return """{"success": false, "error": "Failed to parse arguments: $safeMsg"}"""
         }
 
         return try {
@@ -135,7 +136,8 @@ class ToolExecutor {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            """{"success": false, "error": "Tool execution failed: ${e.message}"}"""
+            val safeMsg = escapeJsonString(e.message ?: "unknown error")
+            """{"success": false, "error": "Tool execution failed: $safeMsg"}"""
         }
     }
 
@@ -146,6 +148,14 @@ class ToolExecutor {
     }
 
     private fun truncateResult(result: String): String = result.smartTruncate(MAX_TOOL_RESULT_LENGTH)
+
+    /** Escapes a string for safe embedding in a JSON string value. */
+    private fun escapeJsonString(value: String): String = value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t")
 
     private fun anyToJsonElement(value: Any?): JsonElement = when (value) {
         null -> JsonNull

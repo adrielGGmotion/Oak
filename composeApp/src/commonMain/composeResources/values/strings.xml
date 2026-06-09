@@ -431,4 +431,18 @@
     <string name="new_chat_fallback">New Chat</string>
     <string name="settings_streaming_enabled">Streaming responses</string>
     <string name="settings_streaming_description">Disable if your provider has issues with streaming responses</string>
+
+    <!-- Action Summary -->
+    <string name="action_summary_title">Summary</string>
+    <string name="action_summary_close">Close</string>
+    <string name="action_summary_view_details">View details</string>
+    <string name="action_summary_error_indicator">Error</string>
+    <string name="action_artifact_count_one">%1$d Artifact</string>
+    <string name="action_artifact_count_other">%1$d Artifacts</string>
+    <string name="action_steps_error_suffix">(with errors)</string>
+    <string name="action_sources_title">Sources</string>
+    <string name="action_detail_back">Back</string>
+    <string name="action_result_unavailable">Result unavailable</string>
+    <string name="action_no_result">No result</string>
+    <string name="waiting_specific_tool">Working on %1$s…</string>
 </resources>

@@ -80,6 +80,10 @@ import com.oak.app.data.ServiceEntry
 import com.oak.app.data.supportsAgenticFlows
 import com.oak.app.getBackgroundDispatcher
 import com.oak.app.onDragAndDropEventDropped
+import com.oak.app.ui.chat.composables.ActionSummary
+import com.oak.app.ui.chat.composables.ActionSummaryRow
+import com.oak.app.ui.chat.composables.ActionSummarySheet
+import com.oak.app.ui.chat.composables.ArtifactBadgeRow
 import com.oak.app.ui.chat.composables.BotAvatar
 import com.oak.app.ui.chat.composables.BotMessage
 import com.oak.app.ui.chat.composables.CircleIconButton
@@ -88,12 +92,14 @@ import com.oak.app.ui.chat.composables.ErrorMessage
 import com.oak.app.ui.chat.composables.HeartbeatBanner
 import com.oak.app.ui.chat.composables.PendingSmsBanners
 import com.oak.app.ui.chat.composables.AskQuestionsSheet
+import com.oak.app.ui.chat.composables.LiveToolIndicator
 import com.oak.app.ui.chat.composables.QuestionInput
 import com.oak.app.ui.chat.composables.ServiceSelector
 import com.oak.app.ui.chat.composables.TopBar
 import com.oak.app.ui.chat.composables.TrailingIcon
 import com.oak.app.ui.chat.composables.UserMessage
 import com.oak.app.ui.chat.composables.WaitingResponseRow
+import com.oak.app.ui.chat.composables.deriveActionSummaries
 import com.oak.app.ui.chat.composables.uiErrorText
 import com.oak.app.ui.components.LogoAnimation
 import com.oak.app.ui.components.VerticalScrollbarForList
@@ -497,6 +503,14 @@ private fun ChatModeScreen(
         }
     }
 
+    // Drill-down state for action summary sheet
+    var selectedSummary by remember { mutableStateOf<ActionSummary?>(null) }
+
+    // Clear drill-down state on conversation switch
+    LaunchedEffect(uiState.currentConversationId) {
+        selectedSummary = null
+    }
+
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).navigationBarsPadding().statusBarsPadding().imePadding()) {
         Column(Modifier.fillMaxSize()) {
             TopBar(
@@ -673,6 +687,14 @@ private fun ChatModeScreen(
                             val userIdByAssistantId = pairings.second
                             val executingToolsState = rememberExecutingTools(uiState.history)
 
+                            // Action summaries: derived from history, grouped by assistant entry
+                            val actionSummaries = remember(uiState.history) {
+                                deriveActionSummaries(uiState.history)
+                            }
+                            val summariesByAssistantId = remember(actionSummaries) {
+                                actionSummaries.associateBy { it.assistantHistoryId }
+                            }
+
                             val fallbackStatusText = uiState.fallbackStatus?.let { status ->
                                 stringResource(Res.string.fallback_service_failed, status.serviceName, uiErrorText(status.errorReason))
                             }
@@ -704,6 +726,21 @@ private fun ChatModeScreen(
                                             }
 
                                             History.Role.ASSISTANT -> {
+                                                // Action summary BEFORE assistant message (Claude pattern)
+                                                // Shows what the AI did to arrive at the answer.
+                                                // Rendered outside the content guard so it shows even when
+                                                // the model returned tool calls without text content.
+                                                if (!uiState.isInteractiveMode) {
+                                                    summariesByAssistantId[history.id]?.let { summary ->
+                                                        ActionSummaryRow(
+                                                            summary = summary,
+                                                            onTap = { selectedSummary = summary },
+                                                        )
+                                                        if (summary.hasArtifacts) {
+                                                            ArtifactBadgeRow(count = summary.artifactCount)
+                                                        }
+                                                    }
+                                                }
                                                 // Skip thinking messages unless it's the last assistant message
                                                 // (i.e. the model only returned reasoning with no content)
                                                 if (history.content.isNotEmpty() && !history.isThinking) {
@@ -769,11 +806,17 @@ private fun ChatModeScreen(
                                         (frozenByAssistantId.values.none { it.isPending } || executingToolsState.tools.isNotEmpty())
                                     if (showWaitingRow) {
                                         item(key = "loading") {
-                                            WaitingResponseRow(
-                                                executingTools = executingToolsState.tools,
-                                                isStatusOnly = executingToolsState.isStatusOnly,
-                                                statusText = fallbackStatusText,
-                                            )
+                                            // Show specific tool indicator when we know which tool is executing
+                                            val singleTool = executingToolsState.tools.takeIf { it.size == 1 }?.firstOrNull()
+                                            if (singleTool != null && !executingToolsState.isStatusOnly) {
+                                                LiveToolIndicator(toolName = singleTool.second)
+                                            } else {
+                                                WaitingResponseRow(
+                                                    executingTools = executingToolsState.tools,
+                                                    isStatusOnly = executingToolsState.isStatusOnly,
+                                                    statusText = fallbackStatusText,
+                                                )
+                                            }
                                         }
                                     }
                                     uiState.error?.let { error ->
@@ -849,6 +892,14 @@ private fun ChatModeScreen(
                 onAnswer = uiState.actions.answerQuestion,
                 onSubmit = uiState.actions.submitQuestionAnswers,
                 onCancel = uiState.actions.cancelQuestions,
+            )
+        }
+
+        // Action summary drill-down sheet (single sheet handles both levels internally)
+        selectedSummary?.let { summary ->
+            ActionSummarySheet(
+                summary = summary,
+                onDismiss = { selectedSummary = null },
             )
         }
     }
