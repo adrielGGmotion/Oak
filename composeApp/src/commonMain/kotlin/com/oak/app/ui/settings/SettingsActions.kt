@@ -7,7 +7,7 @@ import com.oak.app.data.ThemeMode
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.PopularMcpServer
 import com.oak.app.ssh.SshAuthType
-import com.oak.app.ui.OakFontFamily
+import com.oak.app.data.OakFontFamily
 
 @Immutable
 data class SettingsActions(

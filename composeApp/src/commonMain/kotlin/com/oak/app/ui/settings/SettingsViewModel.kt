@@ -33,7 +33,7 @@ import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.StoragePermissionController
-import com.oak.app.ui.OakFontFamily
+import com.oak.app.data.OakFontFamily
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get

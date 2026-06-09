@@ -11,7 +11,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,7 +39,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.oak.app.ui.OakFontFamily
+import com.oak.app.data.OakFontFamily
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.resolveForPreview
 import com.oak.app.ui.toTypography
@@ -102,11 +101,11 @@ private fun FontFamilyCard(
     )
 
     Card(
+        onClick = onClick,
         modifier = Modifier
             .width(72.dp)
             .height(48.dp)
-            .handCursor()
-            .clickable(onClick = onClick),
+            .handCursor(),
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
@@ -130,7 +129,7 @@ private fun FontFamilyCard(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = fontFamily.displayName,
+                    text = stringResource(fontFamily.displayNameRes),
                     style = TextStyle(
                         fontFamily = fontFamily.resolveForPreview(),
                         fontSize = 11.sp,
@@ -190,7 +189,7 @@ private fun FontFamilyPreview(
             val typography = targetFont.toTypography()
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = targetFont.displayName,
+                    text = stringResource(targetFont.displayNameRes),
                     style = typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

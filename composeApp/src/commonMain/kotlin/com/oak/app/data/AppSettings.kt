@@ -1,7 +1,6 @@
 package com.oak.app.data
 
 import com.oak.app.defaultUiScale
-import com.oak.app.ui.OakFontFamily
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
