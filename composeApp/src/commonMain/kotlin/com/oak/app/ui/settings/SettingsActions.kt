@@ -7,6 +7,7 @@ import com.oak.app.data.ThemeMode
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.PopularMcpServer
 import com.oak.app.ssh.SshAuthType
+import com.oak.app.data.OakFontFamily
 
 @Immutable
 data class SettingsActions(
@@ -22,6 +23,8 @@ data class SettingsActions(
     val onSaveSoul: (String) -> Unit,
     val onToggleDynamicUi: (Boolean) -> Unit,
     val onChangeThemeMode: (ThemeMode) -> Unit,
+    val onChangeFontFamily: (OakFontFamily) -> Unit,
+    val onChangeAiFontFamily: (OakFontFamily) -> Unit,
     val onToggleDynamicColors: (Boolean) -> Unit,
     val onToggleMemory: (Boolean) -> Unit,
     val onDeleteMemory: (String) -> Unit,
@@ -46,7 +49,6 @@ data class SettingsActions(
     val onToggleNotifications: (Boolean) -> Unit,
     val onOpenNotificationListenerSettings: () -> Unit,
     val onClearPendingNotifications: () -> Unit,
-    val onToggleFreeFallback: (Boolean) -> Unit,
     val onToggleStreaming: (Boolean) -> Unit,
     val onChangeUiScale: (Float) -> Unit,
     val onAddMcpServer: (String, String, Map<String, String>) -> Unit,
@@ -64,7 +66,6 @@ data class SettingsActions(
     val onCancelLocalModelDownload: () -> Unit,
     val onDeleteLocalModel: (String) -> Unit,
     val onChangeModelContextTokens: (String, Int) -> Unit,
-    val onChangeHfToken: (String) -> Unit,
     val onChangeBackendPreference: (String) -> Unit,
     val onExportSettings: (Set<ImportSection>) -> String,
     val onPrepareExport: () -> Map<ImportSection, String?>,
@@ -86,6 +87,8 @@ data class SettingsActions(
             onSaveSoul = {},
             onToggleDynamicUi = {},
             onChangeThemeMode = {},
+            onChangeFontFamily = {},
+            onChangeAiFontFamily = {},
             onToggleDynamicColors = {},
             onToggleMemory = {},
             onDeleteMemory = {},
@@ -110,7 +113,6 @@ data class SettingsActions(
             onToggleNotifications = {},
             onOpenNotificationListenerSettings = {},
             onClearPendingNotifications = {},
-            onToggleFreeFallback = {},
             onToggleStreaming = {},
             onChangeUiScale = {},
             onAddMcpServer = { _, _, _ -> },
@@ -128,7 +130,6 @@ data class SettingsActions(
             onCancelLocalModelDownload = {},
             onDeleteLocalModel = {},
             onChangeModelContextTokens = { _, _ -> },
-            onChangeHfToken = {},
             onChangeBackendPreference = {},
             onExportSettings = { _ -> "" },
             onPrepareExport = { emptyMap() },

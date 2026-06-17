@@ -20,9 +20,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.materialkolor.dynamicColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -34,6 +36,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.oak.app.data.OakFontFamily
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 val OakSeed = Color(0xFF5B8C5B)
@@ -97,17 +100,24 @@ fun Modifier.oakAdaptiveCardSurface(shape: Shape = CardDefaults.shape): Modifier
 @Composable
 expect fun oakColorScheme(useDynamicColors: Boolean, darkTheme: Boolean): ColorScheme
 
+val LocalOakAiFontFamily = staticCompositionLocalOf { OakFontFamily.System }
+
 @Composable
 fun OakTheme(
     useDynamicColors: Boolean = false,
     darkTheme: Boolean = isSystemInDarkTheme(),
     isOledBlack: Boolean = false,
+    fontFamily: OakFontFamily = OakFontFamily.System,
+    aiFontFamily: OakFontFamily = OakFontFamily.System,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = oakColorScheme(useDynamicColors, darkTheme)
     val effectiveScheme = if (isOledBlack) colorScheme.withBlackBackground() else colorScheme
-    MaterialTheme(colorScheme = effectiveScheme) {
-        content()
+    val typography = fontFamily.toTypography()
+    CompositionLocalProvider(LocalOakAiFontFamily provides aiFontFamily) {
+        MaterialTheme(colorScheme = effectiveScheme, typography = typography) {
+            content()
+        }
     }
 }
 

@@ -117,7 +117,6 @@ import oak.composeapp.generated.resources.drawer_chats
 import oak.composeapp.generated.resources.drawer_delete
 import oak.composeapp.generated.resources.drawer_delete_conversation_text
 import oak.composeapp.generated.resources.drawer_delete_conversation_title
-import oak.composeapp.generated.resources.drawer_free_plan
 import oak.composeapp.generated.resources.drawer_more_options
 import oak.composeapp.generated.resources.drawer_new_chat
 import oak.composeapp.generated.resources.drawer_no_conversations
@@ -226,12 +225,16 @@ private fun AppContent(
         ThemeMode.Dark, ThemeMode.OledBlack -> true
     }
     val useDynamicColors by appSettings.useDynamicColorsFlow.collectAsStateWithLifecycle()
+    val fontFamily by appSettings.fontFamilyFlow.collectAsStateWithLifecycle()
+    val aiFontFamily by appSettings.aiFontFamilyFlow.collectAsStateWithLifecycle()
 
     CompositionLocalProvider(LocalDensity provides scaledDensity) {
         OakTheme(
             useDynamicColors = useDynamicColors,
             darkTheme = isDark,
             isOledBlack = themeMode == ThemeMode.OledBlack,
+            fontFamily = fontFamily,
+            aiFontFamily = aiFontFamily,
         ) {
             FullScreenImageHost {
                 val chatViewModel: ChatViewModel = koinViewModel()
@@ -515,11 +518,6 @@ private fun AppContent(
                                             text = stringResource(Res.string.drawer_user),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurface,
-                                        )
-                                        Text(
-                                            text = stringResource(Res.string.drawer_free_plan),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                     }
                                     IconButton(

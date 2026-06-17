@@ -12,10 +12,10 @@ import com.oak.app.data.SmsSyncState
 import com.oak.app.data.ThemeMode
 import com.oak.app.inference.DownloadError
 import com.oak.app.inference.LocalModel
-import com.oak.app.network.dtos.SponsorsResponseDto
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshConnectionStatus
+import com.oak.app.data.OakFontFamily
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
@@ -67,6 +67,8 @@ data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.System,
     val useDynamicColors: Boolean = false,
     val showDynamicColorsToggle: Boolean = false,
+    val fontFamily: OakFontFamily = OakFontFamily.System,
+    val aiFontFamily: OakFontFamily = OakFontFamily.System,
     val isMemoryEnabled: Boolean = true,
     val memories: ImmutableList<MemoryEntry> = persistentListOf(),
     val isSchedulingEnabled: Boolean = true,
@@ -103,7 +105,6 @@ data class SettingsUiState(
     val notificationListenerAccessGranted: Boolean = false,
     val notificationListenerBound: Boolean = false,
     val notificationPendingCount: Int = 0,
-    val isFreeFallbackEnabled: Boolean = true,
     val isStreamingEnabled: Boolean = true,
     val uiScale: Float = 1.0f,
     val showUiScale: Boolean = false,
@@ -122,9 +123,6 @@ data class SettingsUiState(
     val modelContextTokens: ImmutableMap<String, Int> = persistentMapOf(),
     val localActiveBackend: String? = null,
     val backendPreference: String = "auto",
-    val hfToken: String = "",
-    val currentSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
-    val pastSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
     val pendingDeletion: PendingDeletion? = null,
 )
 

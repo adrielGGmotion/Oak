@@ -28,12 +28,6 @@ interface DataRepository {
     fun getServiceEntries(): List<ServiceEntry>
     fun isStreamingEnabled(): Boolean
     fun setStreamingEnabled(enabled: Boolean)
-    fun isFreeFallbackEnabled(): Boolean
-    fun setFreeFallbackEnabled(enabled: Boolean)
-    fun getFreeMode(): FreeMode
-    fun setFreeMode(mode: FreeMode)
-    fun isFreeServicePrimary(): Boolean
-    fun setFreeServicePrimary(primary: Boolean)
 
     // Per-instance settings
     fun getInstanceApiKey(instanceId: String): String
@@ -49,7 +43,6 @@ interface DataRepository {
     suspend fun askForConversation(conversationId: String, question: String?, files: List<PlatformFile>, uiSubmission: UiSubmission? = null)
     fun clearHistory()
     fun currentService(): Service
-    fun isUsingSharedKey(): Boolean
     fun supportedFileExtensions(): List<String>
 
     // Conversation management
@@ -104,6 +97,14 @@ interface DataRepository {
     fun setThemeMode(mode: ThemeMode)
     fun isUseDynamicColorsEnabled(): Boolean
     fun setUseDynamicColorsEnabled(enabled: Boolean)
+
+    // Font family
+    fun getFontFamily(): OakFontFamily
+    fun setFontFamily(family: OakFontFamily)
+
+    // AI Font family
+    fun getAiFontFamily(): OakFontFamily
+    fun setAiFontFamily(family: OakFontFamily)
 
     // Interactive mode
     fun setInteractiveMode(enabled: Boolean)
@@ -234,8 +235,6 @@ interface DataRepository {
     fun cancelLocalModelDownload()
     suspend fun deleteLocalModel(modelId: String)
     fun getLocalActiveBackend(): StateFlow<String?>?
-    fun getHfToken(): String
-    fun setHfToken(token: String)
     fun getBackendPreference(): String
     fun setBackendPreference(pref: String)
 }

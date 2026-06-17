@@ -37,8 +37,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Replay
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material3.AlertDialog
@@ -96,8 +94,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
@@ -127,7 +123,6 @@ import com.oak.app.inference.LocalModel
 import com.oak.app.inference.calculateDevicePerformance
 import com.oak.app.inference.estimateGpuMemoryMb
 import com.oak.app.mcp.PopularMcpServer
-import com.oak.app.network.dtos.SponsorsResponseDto
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.saveFileToDevice
 import com.oak.app.ui.OakClearableTextField
@@ -177,10 +172,6 @@ import oak.composeapp.generated.resources.settings_ai_mistakes_warning
 import oak.composeapp.generated.resources.settings_api_key_label
 import oak.composeapp.generated.resources.settings_api_key_optional_label
 import oak.composeapp.generated.resources.settings_base_url_label
-import oak.composeapp.generated.resources.settings_become_sponsor
-import oak.composeapp.generated.resources.settings_business_partnerships
-import oak.composeapp.generated.resources.settings_business_partnerships_description
-import oak.composeapp.generated.resources.settings_contact_sponsorship
 import oak.composeapp.generated.resources.settings_daemon_mode
 import oak.composeapp.generated.resources.settings_daemon_mode_description
 import oak.composeapp.generated.resources.settings_documentation
@@ -190,9 +181,8 @@ import oak.composeapp.generated.resources.settings_export
 import oak.composeapp.generated.resources.settings_export_import_description
 import oak.composeapp.generated.resources.settings_export_import_title
 import oak.composeapp.generated.resources.settings_export_preview_title
-import oak.composeapp.generated.resources.settings_free_fallback
-import oak.composeapp.generated.resources.settings_free_tier_description
-import oak.composeapp.generated.resources.settings_free_tier_title
+import oak.composeapp.generated.resources.settings_free_ai_access
+import oak.composeapp.generated.resources.settings_free_ai_access_url
 import oak.composeapp.generated.resources.settings_heartbeat_recent
 import oak.composeapp.generated.resources.settings_import
 import oak.composeapp.generated.resources.settings_import_error
@@ -249,10 +239,8 @@ import oak.composeapp.generated.resources.settings_soul_reset
 import oak.composeapp.generated.resources.settings_soul_reset_cancel
 import oak.composeapp.generated.resources.settings_soul_reset_confirm
 import oak.composeapp.generated.resources.settings_soul_save
-import oak.composeapp.generated.resources.settings_sponsors_monthly
 import oak.composeapp.generated.resources.settings_streaming_description
 import oak.composeapp.generated.resources.settings_streaming_enabled
-import oak.composeapp.generated.resources.settings_sponsors_past
 import oak.composeapp.generated.resources.settings_status_checking
 import oak.composeapp.generated.resources.settings_status_connected
 import oak.composeapp.generated.resources.settings_status_error
@@ -285,6 +273,8 @@ import oak.composeapp.generated.resources.settings_theme_oled
 import oak.composeapp.generated.resources.settings_theme_system
 import oak.composeapp.generated.resources.settings_tools_description
 import oak.composeapp.generated.resources.settings_tools_none_available
+import oak.composeapp.generated.resources.settings_ai_font_family
+import oak.composeapp.generated.resources.settings_ai_font_family_description
 import oak.composeapp.generated.resources.settings_ui_scale
 import oak.composeapp.generated.resources.settings_version
 import oak.composeapp.generated.resources.snackbar_email_removed
@@ -785,170 +775,6 @@ private fun BottomInfo() {
 }
 
 @Composable
-private fun FreeSettings(
-    showFallbackToggle: Boolean = false,
-    isFreeFallbackEnabled: Boolean = true,
-    onToggleFreeFallback: (Boolean) -> Unit = {},
-    currentSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
-    pastSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = oakAdaptiveCardColors(),
-        border = oakAdaptiveCardBorder(),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(Res.string.settings_free_tier_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            if (showFallbackToggle) {
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onToggleFreeFallback(!isFreeFallbackEnabled) }
-                        .handCursor(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.settings_free_fallback),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Switch(
-                        checked = isFreeFallbackEnabled,
-                        onCheckedChange = onToggleFreeFallback,
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-            }
-
-            Spacer(Modifier.height(6.dp))
-
-            Text(
-                text = stringResource(Res.string.settings_free_tier_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            val uriHandler = LocalUriHandler.current
-            Button(
-                onClick = {
-                    uriHandler.openUri("https://github.com/sponsors/SimonSchubert")
-                },
-                Modifier
-                    .align(CenterHorizontally)
-                    .handCursor(),
-            ) {
-                Icon(Icons.Default.Favorite, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(Res.string.settings_become_sponsor))
-            }
-
-            if (currentSponsors.isNotEmpty()) {
-                Spacer(Modifier.height(16.dp))
-                HorizontalDivider(thickness = 0.5.dp)
-                Spacer(Modifier.height(16.dp))
-                SponsorList(
-                    title = stringResource(Res.string.settings_sponsors_monthly),
-                    sponsors = currentSponsors,
-                )
-            }
-
-            if (pastSponsors.isNotEmpty()) {
-                Spacer(Modifier.height(16.dp))
-                HorizontalDivider(thickness = 0.5.dp)
-                Spacer(Modifier.height(16.dp))
-                SponsorList(
-                    title = stringResource(Res.string.settings_sponsors_past),
-                    sponsors = pastSponsors,
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
-            HorizontalDivider(thickness = 0.5.dp)
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(Res.string.settings_business_partnerships),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = stringResource(Res.string.settings_business_partnerships_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            TextButton(
-                onClick = {
-                    uriHandler.openUri("https://schubert-simon.de")
-                },
-                Modifier
-                    .handCursor(),
-            ) {
-                Text(stringResource(Res.string.settings_contact_sponsorship))
-            }
-        }
-    }
-}
-
-@Composable
-private fun SponsorList(
-    title: String,
-    sponsors: ImmutableList<SponsorsResponseDto.Sponsor>,
-) {
-    val uriHandler = LocalUriHandler.current
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(8.dp))
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        sponsors.forEach { sponsor ->
-            Column(
-                horizontalAlignment = CenterHorizontally,
-                modifier = Modifier
-                    .width(72.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { uriHandler.openUri("https://github.com/${sponsor.username}") }
-                    .handCursor()
-                    .padding(4.dp),
-            ) {
-                coil3.compose.AsyncImage(
-                    model = sponsor.avatar,
-                    contentDescription = sponsor.username,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = sponsor.username,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) {
     var showAddServiceSheet by remember { mutableStateOf(false) }
 
@@ -977,7 +803,6 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
                     dragHandleModifier = if (entries.size >= 2) Modifier.draggableHandle() else null,
                     localActiveBackend = uiState.localActiveBackend,
                     backendPreference = uiState.backendPreference,
-                    hfToken = uiState.hfToken,
                     localAvailableModels = uiState.localAvailableModels,
                     totalDeviceMemoryBytes = uiState.totalDeviceMemoryBytes,
                     localFreeSpaceBytes = uiState.localFreeSpaceBytes,
@@ -988,7 +813,6 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
                     onCancelLocalModelDownload = actions.onCancelLocalModelDownload,
                     onDeleteLocalModel = actions.onDeleteLocalModel,
                     onChangeModelContextTokens = actions.onChangeModelContextTokens,
-                    onChangeHfToken = actions.onChangeHfToken,
                     onChangeBackendPreference = actions.onChangeBackendPreference,
                     modelContextTokens = uiState.modelContextTokens,
                 )
@@ -1001,6 +825,19 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
         OutlinedButton(onClick = { showAddServiceSheet = true }, modifier = Modifier.handCursor()) {
             Text(stringResource(Res.string.settings_add_service))
         }
+    }
+    
+    // Free AI Access Guide
+    Spacer(Modifier.height(12.dp))
+    val uriHandler = LocalUriHandler.current
+    val freeAiAccessUrl = stringResource(Res.string.settings_free_ai_access_url)
+    OutlinedButton(
+        onClick = { uriHandler.openUri(freeAiAccessUrl) },
+        modifier = Modifier.handCursor(),
+    ) {
+        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(Res.string.settings_free_ai_access))
     }
 
     // Streaming toggle
@@ -1037,16 +874,6 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
             )
         }
     }
-
-    // Free tier card (always at bottom)
-    Spacer(Modifier.height(16.dp))
-    FreeSettings(
-        showFallbackToggle = entries.isNotEmpty(),
-        isFreeFallbackEnabled = uiState.isFreeFallbackEnabled,
-        onToggleFreeFallback = actions.onToggleFreeFallback,
-        currentSponsors = uiState.currentSponsors,
-        pastSponsors = uiState.pastSponsors,
-    )
 
     // Add service bottom sheet
     if (showAddServiceSheet) {
@@ -1146,8 +973,6 @@ private fun ConfiguredServiceCardContent(
     onDeleteLocalModel: (String) -> Unit = {},
     onChangeModelContextTokens: (String, Int) -> Unit = { _, _ -> },
     backendPreference: String = "auto",
-    hfToken: String = "",
-    onChangeHfToken: (String) -> Unit = {},
     onChangeBackendPreference: (String) -> Unit = {},
     modelContextTokens: Map<String, Int> = emptyMap(),
 ) {
@@ -1230,7 +1055,6 @@ private fun ConfiguredServiceCardContent(
                         freeSpaceBytes = localFreeSpaceBytes,
                         activeBackend = localActiveBackend,
                         backendPreference = backendPreference,
-                        hfToken = hfToken,
                         downloadingModelId = localDownloadingModelId,
                         downloadProgress = localDownloadProgress,
                         downloadError = localDownloadError,
@@ -1239,7 +1063,6 @@ private fun ConfiguredServiceCardContent(
                         onCancelDownload = onCancelLocalModelDownload,
                         onDeleteModel = onDeleteLocalModel,
                         onChangeModelContextTokens = onChangeModelContextTokens,
-                        onChangeHfToken = onChangeHfToken,
                         onChangeBackendPreference = onChangeBackendPreference,
                         modelContextTokens = modelContextTokens,
                     )
@@ -1443,7 +1266,6 @@ private fun LiteRTSettings(
     freeSpaceBytes: Long,
     activeBackend: String? = null,
     backendPreference: String = "auto",
-    hfToken: String = "",
     downloadingModelId: String?,
     downloadProgress: Float?,
     downloadError: DownloadError?,
@@ -1452,7 +1274,6 @@ private fun LiteRTSettings(
     onCancelDownload: () -> Unit,
     onDeleteModel: (String) -> Unit,
     onChangeModelContextTokens: (String, Int) -> Unit,
-    onChangeHfToken: (String) -> Unit = {},
     onChangeBackendPreference: (String) -> Unit = {},
     modelContextTokens: Map<String, Int>,
 ) {
@@ -1556,27 +1377,6 @@ private fun LiteRTSettings(
 
     Spacer(Modifier.height(12.dp))
 
-    var showHfToken by remember { mutableStateOf(false) }
-    OakOutlinedTextField(
-        value = hfToken,
-        onValueChange = onChangeHfToken,
-        label = { Text("HuggingFace Token") },
-        placeholder = { Text("hf_... (for gated models)") },
-        singleLine = true,
-        visualTransformation = if (showHfToken) VisualTransformation.None else PasswordVisualTransformation(),
-        trailingIcon = {
-            IconButton(onClick = { showHfToken = !showHfToken }) {
-                Icon(
-                    imageVector = if (showHfToken) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = if (showHfToken) "Hide token" else "Show token",
-                )
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-    )
-
-    Spacer(Modifier.height(8.dp))
-
     Text(
         text = stringResource(Res.string.litert_tool_support),
         style = MaterialTheme.typography.bodySmall,
@@ -1589,10 +1389,24 @@ private fun LiteRTSettings(
         val isDownloaded = model.id in downloadedIds
         val isSelected = selectedModel?.id == model.id
         val isDownloading = downloadingModelId == model.id
-        val steps = (model.maxContextTokens - model.defaultContextTokens) / 1024
+
+        // Cap max context tokens by device memory to prevent OOM
+        // Use up to 70% of device memory for model + KV cache
+        val maxMemoryBytes = (totalDeviceMemoryBytes * 0.7).toLong()
+        var maxContextByMemory = model.defaultContextTokens
+        for (testTokens in model.defaultContextTokens..model.maxContextTokens step 1024) {
+            val estMem = estimateGpuMemoryMb(model, testTokens).toLong() * 1024 * 1024
+            if (estMem > maxMemoryBytes) break
+            maxContextByMemory = testTokens
+        }
+        val effectiveMaxContext = maxOf(model.defaultContextTokens, maxContextByMemory)
+
+        val steps = (effectiveMaxContext - model.defaultContextTokens) / 1024
         val storedContextTokens = modelContextTokens[model.id] ?: model.defaultContextTokens
-        var contextSliderValue by remember(storedContextTokens) {
-            mutableStateOf(((storedContextTokens - model.defaultContextTokens) / 1024).toFloat())
+        // Clamp stored value to effective max
+        val clampedStoredContext = storedContextTokens.coerceAtMost(effectiveMaxContext)
+        var contextSliderValue by remember(clampedStoredContext) {
+            mutableStateOf(((clampedStoredContext - model.defaultContextTokens) / 1024).toFloat())
         }
         val contextTokens = model.defaultContextTokens + (contextSliderValue.roundToInt() * 1024)
         val estimatedMemoryMb = estimateGpuMemoryMb(model, contextTokens)
@@ -1671,8 +1485,16 @@ private fun LiteRTSettings(
                         onChangeModelContextTokens(model.id, contextTokens)
                     },
                     valueRange = 0f..steps.toFloat(),
-                    steps = steps - 1,
+                    steps = (steps - 1).coerceAtLeast(0),
                 )
+                if (performance == DevicePerformance.POOR) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "⚠ High memory usage — may cause slowdowns or crashes",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 if (isDownloading && downloadProgress != null) {
                     Spacer(Modifier.height(8.dp))
                     LinearProgressIndicator(
@@ -1912,6 +1734,20 @@ private fun GeneralContent(uiState: SettingsUiState, actions: SettingsActions) {
                             )
                         }
                     }
+                    SettingsCard {
+                        FontFamilyPicker(
+                            selectedFontFamily = uiState.fontFamily,
+                            onChangeFontFamily = actions.onChangeFontFamily,
+                        )
+                    }
+                    SettingsCard {
+                        FontFamilyPicker(
+                            selectedFontFamily = uiState.aiFontFamily,
+                            onChangeFontFamily = actions.onChangeAiFontFamily,
+                            title = stringResource(Res.string.settings_ai_font_family),
+                            description = stringResource(Res.string.settings_ai_font_family_description),
+                        )
+                    }
                 }
                 Column(
                     modifier = Modifier.weight(1f),
@@ -1962,6 +1798,20 @@ private fun GeneralContent(uiState: SettingsUiState, actions: SettingsActions) {
                             onToggleDynamicColors = actions.onToggleDynamicColors,
                         )
                     }
+                }
+                SettingsCard {
+                    FontFamilyPicker(
+                        selectedFontFamily = uiState.fontFamily,
+                        onChangeFontFamily = actions.onChangeFontFamily,
+                    )
+                }
+                SettingsCard {
+                    FontFamilyPicker(
+                        selectedFontFamily = uiState.aiFontFamily,
+                        onChangeFontFamily = actions.onChangeAiFontFamily,
+                        title = stringResource(Res.string.settings_ai_font_family),
+                        description = stringResource(Res.string.settings_ai_font_family_description),
+                    )
                 }
                 if (uiState.showUiScale) {
                     SettingsCard {

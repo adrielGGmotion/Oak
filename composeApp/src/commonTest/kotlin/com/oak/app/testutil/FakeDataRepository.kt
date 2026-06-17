@@ -5,7 +5,6 @@ import com.oak.app.data.DataRepository
 import com.oak.app.data.EmailAccount
 import com.oak.app.data.EmailSyncState
 import com.oak.app.data.FallbackStatus
-import com.oak.app.data.FreeMode
 import com.oak.app.data.HeartbeatConfig
 import com.oak.app.data.HeartbeatLogEntry
 import com.oak.app.data.ImportSection
@@ -28,6 +27,7 @@ import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshServerConfig
 import com.oak.app.tools.CommonTools
 import com.oak.app.ui.chat.History
+import com.oak.app.data.OakFontFamily
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.CompletableDeferred
@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.update
 
 class FakeDataRepository : DataRepository {
 
-    private var currentService: Service = Service.Free
+    private var currentService: Service = Service.OpenAICompatible
 
     override val chatHistory: MutableStateFlow<List<History>> = MutableStateFlow(emptyList())
     override val currentConversationId: MutableStateFlow<String?> = MutableStateFlow(null)
@@ -79,7 +79,6 @@ class FakeDataRepository : DataRepository {
         }
         val instance = ServiceInstance(instanceId = instanceId, serviceId = serviceId)
         configuredInstances.add(instance)
-        freeServicePrimary = false
         return instance
     }
 
@@ -100,36 +99,12 @@ class FakeDataRepository : DataRepository {
     var fakeServiceEntries: List<ServiceEntry> = emptyList()
     override fun getServiceEntries(): List<ServiceEntry> = fakeServiceEntries
 
-    private var freeFallbackEnabled = true
-
-    override fun isFreeFallbackEnabled(): Boolean = freeFallbackEnabled
-
-    override fun setFreeFallbackEnabled(enabled: Boolean) {
-        freeFallbackEnabled = enabled
-    }
-
     private var streamingEnabled = true
 
     override fun isStreamingEnabled(): Boolean = streamingEnabled
 
     override fun setStreamingEnabled(enabled: Boolean) {
         streamingEnabled = enabled
-    }
-
-    private var freeMode = FreeMode.FAST
-
-    override fun getFreeMode(): FreeMode = freeMode
-
-    override fun setFreeMode(mode: FreeMode) {
-        freeMode = mode
-    }
-
-    private var freeServicePrimary = false
-
-    override fun isFreeServicePrimary(): Boolean = freeServicePrimary
-
-    override fun setFreeServicePrimary(primary: Boolean) {
-        freeServicePrimary = primary
     }
 
     // Per-instance settings
@@ -220,7 +195,6 @@ class FakeDataRepository : DataRepository {
 
     override fun currentService(): Service = currentService
 
-    override fun isUsingSharedKey(): Boolean = currentService == Service.Free
     override fun supportedFileExtensions(): List<String> = if (fileAttachmentSupported) listOf("txt", "pdf", "png") else emptyList()
 
     var fileAttachmentSupported = true
@@ -453,6 +427,22 @@ class FakeDataRepository : DataRepository {
         useDynamicColors = enabled
     }
 
+    private var fontFamily: OakFontFamily = OakFontFamily.System
+
+    override fun getFontFamily(): OakFontFamily = fontFamily
+
+    override fun setFontFamily(family: OakFontFamily) {
+        fontFamily = family
+    }
+
+    private var aiFontFamily: OakFontFamily = OakFontFamily.System
+
+    override fun getAiFontFamily(): OakFontFamily = aiFontFamily
+
+    override fun setAiFontFamily(family: OakFontFamily) {
+        aiFontFamily = family
+    }
+
     private var interactiveMode = false
 
     override fun setInteractiveMode(enabled: Boolean) {
@@ -682,8 +672,6 @@ class FakeDataRepository : DataRepository {
     override val streamingReasoning: StateFlow<String?> = MutableStateFlow(null)
     override val streamingContent: StateFlow<String?> = MutableStateFlow(null)
     override fun getLocalActiveBackend(): StateFlow<String?>? = null
-    override fun getHfToken(): String = ""
-    override fun setHfToken(token: String) {}
     override fun getBackendPreference(): String = ""
     override fun setBackendPreference(pref: String) {}
 }

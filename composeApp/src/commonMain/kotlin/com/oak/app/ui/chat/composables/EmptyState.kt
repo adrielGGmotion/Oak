@@ -16,24 +16,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withLink
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.oak.app.ui.components.LogoAnimation
 import com.oak.app.ui.components.oakOutlinedBorder
 import com.oak.app.ui.handCursor
+import com.oak.app.ui.LocalOakAiFontFamily
+import com.oak.app.ui.toTypography
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.greeting_afternoon
 import oak.composeapp.generated.resources.greeting_evening
 import oak.composeapp.generated.resources.greeting_morning
-import oak.composeapp.generated.resources.privacy_agree_prefix
-import oak.composeapp.generated.resources.privacy_policy
 import oak.composeapp.generated.resources.start_interactive_ui
 import oak.composeapp.generated.resources.welcome_message
 import org.jetbrains.compose.resources.stringResource
@@ -42,7 +37,6 @@ import kotlin.time.Clock
 @Composable
 internal fun EmptyState(
     modifier: Modifier,
-    isUsingSharedKey: Boolean,
     onStartInteractiveMode: (() -> Unit)? = null,
     userName: String? = null,
 ) {
@@ -53,17 +47,19 @@ internal fun EmptyState(
     ) {
         LogoAnimation()
         Spacer(Modifier.height(16.dp))
+        val aiFontFamily = LocalOakAiFontFamily.current
+        val aiTypography = aiFontFamily.toTypography()
         val greeting = timeBasedGreeting(userName)
         if (greeting != null) {
             Text(
                 text = greeting,
-                style = MaterialTheme.typography.titleLarge,
+                style = aiTypography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
         } else {
             Text(
                 text = stringResource(Res.string.welcome_message),
-                style = MaterialTheme.typography.titleLarge,
+                style = aiTypography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }
@@ -72,29 +68,6 @@ internal fun EmptyState(
             AnimatedBorderButton(
                 text = stringResource(Res.string.start_interactive_ui),
                 onClick = onStartInteractiveMode,
-            )
-            Spacer(Modifier.height(8.dp))
-        }
-        if (isUsingSharedKey) {
-            val linkColor = MaterialTheme.colorScheme.primary
-            val prefixText = stringResource(Res.string.privacy_agree_prefix)
-            val policyText = stringResource(Res.string.privacy_policy)
-            val annotatedString = remember(prefixText, policyText, linkColor) {
-                buildAnnotatedString {
-                    append(prefixText)
-                    withLink(LinkAnnotation.Url(url = "https://github.com/adrielGGmotion/Oak#privacy")) {
-                        withStyle(style = SpanStyle(color = linkColor)) {
-                            append(policyText)
-                        }
-                    }
-                }
-            }
-            Text(
-                annotatedString,
-                modifier = Modifier.padding(horizontal = 16.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground,
             )
         }
     }

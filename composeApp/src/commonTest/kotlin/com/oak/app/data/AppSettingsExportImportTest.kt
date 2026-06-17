@@ -146,7 +146,6 @@ class AppSettingsExportImportTest {
             ),
         )
         appSettings.selectService(Service.OpenAI)
-        appSettings.setFreeFallbackEnabled(false)
         appSettings.setInstanceApiKey("openai", "sk-key")
         appSettings.setInstanceModelId("openai", "gpt-4")
         appSettings.setInstanceBaseUrl("gemini", "https://custom.url")
@@ -160,7 +159,6 @@ class AppSettingsExportImportTest {
         assertEquals("openai", instances[0].instanceId)
         assertEquals("gemini", instances[1].instanceId)
         assertEquals(Service.OpenAI, target.currentService())
-        assertFalse(target.isFreeFallbackEnabled())
         assertEquals("sk-key", target.getInstanceApiKey("openai"))
         assertEquals("gpt-4", target.getInstanceModelId("openai"))
         assertEquals("https://custom.url", target.getInstanceBaseUrl("gemini"))
@@ -299,7 +297,6 @@ class AppSettingsExportImportTest {
         assertEquals("openai", instances[0].serviceId)
         assertEquals("gemini", instances[1].serviceId)
         assertEquals(Service.OpenAI, target.currentService())
-        assertFalse(target.isFreeFallbackEnabled())
 
         // Per-instance
         assertEquals("sk-abc", target.getInstanceApiKey("openai"))

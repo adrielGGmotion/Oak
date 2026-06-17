@@ -16,6 +16,7 @@ import com.oak.app.inference.EngineState
 import com.oak.app.inference.InferenceMessage
 import com.oak.app.inference.LocalInferenceEngine
 import com.oak.app.inference.LocalModel
+import com.oak.app.inference.LocalTool
 import com.oak.app.inference.NoModelDownloadedException
 import com.oak.app.inference.getTotalMemoryBytes
 import com.oak.app.mcp.McpServerConfig
@@ -52,7 +53,7 @@ import com.oak.app.ui.chat.History
 import com.oak.app.ui.chat.ToolCallInfo
 import com.oak.app.ui.chat.toAnthropicContentBlocks
 import com.oak.app.ui.chat.toGeminiMessageDto
-import com.oak.app.ui.chat.toGroqMessageDto
+import com.oak.app.ui.chat.toOpenAICompatibleMessageDto
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.mimeType
@@ -68,6 +69,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -165,11 +167,7 @@ class RemoteDataRepository(
     /** Build credentials from per-instance settings */
     private fun instanceCredentials(instanceId: String, service: Service): ServiceCredentials = ServiceCredentials(
         apiKey = appSettings.getInstanceApiKey(instanceId),
-        modelId = if (service == Service.Free) {
-            appSettings.getFreeMode().modelId
-        } else {
-            appSettings.getInstanceModelId(instanceId).ifEmpty { appSettings.getSelectedModelId(service) }
-        },
+        modelId = appSettings.getInstanceModelId(instanceId).ifEmpty { appSettings.getSelectedModelId(service) },
         baseUrl = appSettings.getInstanceBaseUrl(instanceId).ifEmpty { appSettings.getBaseUrl(service) },
     )
 
@@ -191,7 +189,7 @@ class RemoteDataRepository(
 
     override val savedConversations: StateFlow<List<Conversation>> = conversationStorage.conversations
 
-    override fun getConfiguredServiceInstances(): List<ServiceInstance> = appSettings.getConfiguredServiceInstances().filter { Service.fromId(it.serviceId) != Service.Free }
+    override fun getConfiguredServiceInstances(): List<ServiceInstance> = appSettings.getConfiguredServiceInstances()
 
     override fun addConfiguredService(serviceId: String): ServiceInstance {
         val instanceId = appSettings.generateInstanceId(serviceId)
@@ -199,7 +197,6 @@ class RemoteDataRepository(
         val current = appSettings.getConfiguredServiceInstances().toMutableList()
         current.add(instance)
         appSettings.setConfiguredServiceInstances(current)
-        appSettings.setFreeServicePrimary(false)
         return instance
     }
 
@@ -236,24 +233,6 @@ class RemoteDataRepository(
 
     override fun setStreamingEnabled(enabled: Boolean) {
         appSettings.setStreamingEnabled(enabled)
-    }
-
-    override fun isFreeFallbackEnabled(): Boolean = appSettings.isFreeFallbackEnabled()
-
-    override fun setFreeFallbackEnabled(enabled: Boolean) {
-        appSettings.setFreeFallbackEnabled(enabled)
-    }
-
-    override fun getFreeMode(): FreeMode = appSettings.getFreeMode()
-
-    override fun setFreeMode(mode: FreeMode) {
-        appSettings.setFreeMode(mode)
-    }
-
-    override fun isFreeServicePrimary(): Boolean = appSettings.isFreeServicePrimary()
-
-    override fun setFreeServicePrimary(primary: Boolean) {
-        appSettings.setFreeServicePrimary(primary)
     }
 
     // Per-instance settings
@@ -314,8 +293,6 @@ class RemoteDataRepository(
         }
         val creds = instanceCredentials(instanceId, service)
         when (service) {
-            Service.Free -> { /* Always valid */ }
-
             Service.OpenRouter -> {
                 requests.validateOpenRouterApiKey(creds).getOrThrow()
                 fetchInstanceModels(service, instanceId)
@@ -330,8 +307,6 @@ class RemoteDataRepository(
             Service.Gemini -> fetchGeminiModelsForInstance(instanceId)
 
             Service.Anthropic -> fetchAnthropicModelsForInstance(instanceId)
-
-            Service.Free -> { /* No model listing */ }
 
             Service.LiteRT -> {
                 val engine = localInferenceEngine ?: return
@@ -445,23 +420,62 @@ class RemoteDataRepository(
             } finally {
                 history.update { h -> h.filter { it.id != statusEntry.id } }
             }
-        } else {
-            engine.initialize(model, contextTokens, backendPref)
         }
 
-        // Tool descriptions are injected into the system prompt as text instead of
-        // relying on LiteRT-LM's automaticToolCalling / ANTLR parser, which is too
-        // strict for small on-device models. The model either follows the format
-        // and we execute the tool, or it ignores it and we return plain text.
-        val localTools = getLocalSafeTools()
-        val toolPrompt = buildLocalToolPrompt(localTools)
-        val promptWithTools = if (toolPrompt != null) {
-            if (systemPrompt != null) "$systemPrompt\n\n$toolPrompt" else toolPrompt
-        } else {
-            systemPrompt
+        // Convert Oak tools to LocalTool format for native litertlm tool calling.
+        // litertlm handles tool call parsing, execution, and result injection internally
+        // via constrained decoding — no manual XML/JSON parsing needed.
+        val localTools = getLocalSafeTools().map { tool ->
+            val schema = tool.schema
+            val descriptionJson = kotlinx.serialization.json.Json.encodeToString(
+                kotlinx.serialization.json.JsonObject.serializer(),
+                kotlinx.serialization.json.buildJsonObject {
+                    put("name", schema.name)
+                    put("description", schema.description)
+                    if (schema.parameters.isNotEmpty()) {
+                        put("parameters", kotlinx.serialization.json.buildJsonObject {
+                            put("type", "object")
+                            put("properties", kotlinx.serialization.json.buildJsonObject {
+                                for ((name, param) in schema.parameters) {
+                                    put(name, kotlinx.serialization.json.buildJsonObject {
+                                        put("type", param.type)
+                                        put("description", param.description)
+                                    })
+                                }
+                            })
+                            put("required", kotlinx.serialization.json.buildJsonArray {
+                                for ((name, param) in schema.parameters) {
+                                    if (param.required) add(kotlinx.serialization.json.JsonPrimitive(name))
+                                }
+                            })
+                        })
+                    }
+                },
+            )
+            LocalTool(
+                name = schema.name,
+                descriptionJsonString = descriptionJson,
+                execute = { jsonArgs ->
+                    val argsMap = try {
+                        val element = kotlinx.serialization.json.Json.parseToJsonElement(jsonArgs)
+                        if (element is kotlinx.serialization.json.JsonObject) {
+                            element.mapValues { (_, v) ->
+                                when (v) {
+                                    is kotlinx.serialization.json.JsonPrimitive -> v.content
+                                    else -> v.toString()
+                                }
+                            }
+                        } else emptyMap<String, Any>()
+                    } catch (e: Exception) {
+                        emptyMap<String, Any>()
+                    }
+                    val result = tool.execute(argsMap)
+                    result.toString()
+                },
+            )
         }
 
-        var inferenceMessages = messages.mapNotNull { msg ->
+        val inferenceMessages = messages.mapNotNull { msg ->
             when (msg.role) {
                 History.Role.USER -> InferenceMessage(role = "user", content = msg.content)
                 History.Role.ASSISTANT -> InferenceMessage(role = "assistant", content = msg.content)
@@ -469,83 +483,22 @@ class RemoteDataRepository(
             }
         }
 
-        var response = stripThinkBlocks(engine.chat(
-            messages = inferenceMessages,
-            systemPrompt = promptWithTools,
-            tools = emptyList(),
-        ))
-
-        var iteration = 0
-        try {
-        while (iteration < MAX_TOOL_ITERATIONS) {
-            iteration++
-            // Try XML invoke blocks first, then fall back to JSON format
-            var inlineResult = parseInlineToolCalls(response)
-            if (inlineResult == null) {
-                val jsonCalls = parseJsonToolCalls(response)
-                if (jsonCalls.isNotEmpty()) {
-                    val cleanContent = response.replace(JSON_TOOL_CALL_REGEX, "").trim()
-                    inlineResult = InlineToolCallResult(
-                        toolCalls = jsonCalls.map { ToolCallInfo(id = "invoke-${Uuid.random()}", name = it.name, arguments = it.arguments) },
-                        cleanContent = cleanContent,
-                    )
+        // Pass tools to engine.chat() — litertlm handles tool calling natively
+        // Collect streaming tokens from the engine and propagate to UI StateFlows
+        return coroutineScope {
+            val streamingJob = launch {
+                engine.streamingContent.collect { token ->
+                    _streamingContent.value = token
                 }
             }
-            if (inlineResult == null) break
-
-            history.update {
-                it.toMutableList().apply {
-                    add(History(role = History.Role.ASSISTANT, content = inlineResult.cleanContent.stripToolMarkup(), toolCalls = inlineResult.toolCalls.toImmutableList()))
-                }
-            }
-
-            val toolResults = executeToolCallsInParallel(inlineResult.toolCalls.map { Triple(it.id, it.name, it.arguments) })
-
-            history.update { h ->
-                buildList<History>(h.size + toolResults.size) {
-                    for (entry in h) {
-                        if (entry.role != History.Role.TOOL_EXECUTING) {
-                            val cleaned = entry.withoutAskQuestionsToolCall()
-                            if (cleaned != null) add(cleaned)
-                        }
-                    }
-                    for ((callId, name, result) in toolResults) {
-                        if (name == ASK_QUESTIONS_TOOL_NAME) {
-                            add(History(role = History.Role.USER, content = result))
-                        } else {
-                            add(History(role = History.Role.TOOL, content = result, toolCallId = callId, toolName = name))
-                        }
-                    }
-                }
-            }
-
-            inferenceMessages = history.value.mapNotNull { msg ->
-                when (msg.role) {
-                    History.Role.USER -> InferenceMessage(role = "user", content = msg.content)
-                    History.Role.ASSISTANT -> InferenceMessage(role = "assistant", content = msg.content)
-                    else -> null
-                }
-            }
-
-            response = stripThinkBlocks(engine.chat(
-                messages = inferenceMessages,
-                systemPrompt = promptWithTools,
-                tools = emptyList(),
-            ))
-        }
-
-        return response
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
             try {
-                return stripThinkBlocks(engine.chat(
+                stripThinkBlocks(engine.chat(
                     messages = inferenceMessages,
-                    systemPrompt = promptWithTools,
-                    tools = emptyList(),
+                    systemPrompt = systemPrompt,
+                    tools = localTools,
                 ))
-            } catch (e2: Exception) {
-                if (e2 is CancellationException) throw e2
-                return response.stripToolMarkup()
+            } finally {
+                streamingJob.cancel()
             }
         }
     }
@@ -740,7 +693,6 @@ class RemoteDataRepository(
     }
 
     private fun hasValidInstanceApiKey(instanceId: String, service: Service): Boolean {
-        if (service == Service.Free) return true
         if (service.isOnDevice) return true
         if (!service.requiresApiKey && !service.supportsOptionalApiKey) return true
         if (service.requiresApiKey) return appSettings.getInstanceApiKey(instanceId).isNotBlank()
@@ -751,19 +703,8 @@ class RemoteDataRepository(
 
     private fun getOrderedFallbackEntries(): List<FallbackEntry> {
         val instances = getConfiguredServiceInstances()
-        val entries = instances.map { FallbackEntry(instanceId = it.instanceId, service = Service.fromId(it.serviceId)) }
-            .filter { it.service != Service.Free }
+        return instances.map { FallbackEntry(instanceId = it.instanceId, service = Service.fromId(it.serviceId)) }
             .filter { !it.service.isOnDevice || localInferenceEngine != null }
-        val freeEntry = FallbackEntry(instanceId = "free", service = Service.Free)
-        return if (entries.isEmpty()) {
-            listOf(freeEntry)
-        } else if (appSettings.isFreeServicePrimary()) {
-            listOf(freeEntry) + entries
-        } else if (appSettings.isFreeFallbackEnabled()) {
-            entries + freeEntry
-        } else {
-            entries
-        }
     }
 
     override suspend fun ask(question: String?, files: List<PlatformFile>, uiSubmission: UiSubmission?) {
@@ -1331,7 +1272,7 @@ class RemoteDataRepository(
             )
         }
         addAll(
-            messages.map { it.toGroqMessageDto() }
+            messages.map { it.toOpenAICompatibleMessageDto() }
                 .let { sanitizeToolSequences(it) },
         )
     }
@@ -1766,9 +1707,17 @@ class RemoteDataRepository(
         if (firstInstance == null) {
             return mapOf("success" to false, "error" to "No service configured")
         }
-        val contextWindowTokens = ModelCatalog.estimateContextWindow(
-            appSettings.getSelectedModelId(Service.fromId(firstInstance.serviceId)),
-        )
+        val service = Service.fromId(firstInstance.serviceId)
+        val selectedModelId = appSettings.getSelectedModelId(service)
+
+        // For on-device services, use the local model's actual max context tokens
+        // instead of ModelCatalog's default (100K) which is way too high for local models
+        val contextWindowTokens = if (service.isOnDevice && localInferenceEngine != null) {
+            val localModel = localInferenceEngine.getAvailableModels().find { it.id == selectedModelId }
+            localModel?.maxContextTokens ?: ModelCatalog.estimateContextWindow(selectedModelId)
+        } else {
+            ModelCatalog.estimateContextWindow(selectedModelId)
+        }
 
         var history = chatHistory.value.filter { it.role != History.Role.TOOL_EXECUTING }
         val systemPromptChars = getActiveSystemPrompt()?.length ?: 0
@@ -1934,18 +1883,20 @@ class RemoteDataRepository(
         }
     }
 
-    override fun isUsingSharedKey(): Boolean = currentService() == Service.Free
-
     override fun supportedFileExtensions(): List<String> {
         val service = currentService()
         if (service.isOnDevice) return emptyList()
         return if (service.supportsPdf) supportedFileExtensions + "pdf" else supportedFileExtensions
     }
 
+    private fun firstRunnableInstance(): ServiceInstance? =
+        getConfiguredServiceInstances().firstOrNull { instance ->
+            val service = Service.fromId(instance.serviceId)
+            !service.isOnDevice || localInferenceEngine != null
+        }
+
     override fun currentService(): Service {
-        if (appSettings.isFreeServicePrimary()) return Service.Free
-        val instances = getConfiguredServiceInstances()
-        return instances.firstOrNull()?.let { Service.fromId(it.serviceId) } ?: Service.Free
+        return firstRunnableInstance()?.let { Service.fromId(it.serviceId) } ?: Service.OpenAICompatible
     }
 
     private fun setCurrentConversationId(id: String?) {
@@ -2249,6 +2200,18 @@ class RemoteDataRepository(
         appSettings.setUseDynamicColorsEnabled(enabled)
     }
 
+    override fun getFontFamily(): OakFontFamily = appSettings.getFontFamily()
+
+    override fun setFontFamily(family: OakFontFamily) {
+        appSettings.setFontFamily(family)
+    }
+
+    override fun getAiFontFamily(): OakFontFamily = appSettings.getAiFontFamily()
+
+    override fun setAiFontFamily(family: OakFontFamily) {
+        appSettings.setAiFontFamily(family)
+    }
+
     private var interactiveModeFlag = appSettings.getCurrentInteractiveMode()
 
     override fun setInteractiveMode(enabled: Boolean) {
@@ -2483,8 +2446,8 @@ class RemoteDataRepository(
     }
 
     override suspend fun askSilently(question: String): String {
-        val service = currentService()
-        val firstInstance = getConfiguredServiceInstances().firstOrNull() ?: return ""
+        val instance = firstRunnableInstance() ?: return ""
+        val service = Service.fromId(instance.serviceId)
         val messages = listOf(History(role = History.Role.USER, content = question))
 
         if (service.isOnDevice) {
@@ -2492,12 +2455,12 @@ class RemoteDataRepository(
             // visible chatHistory for a "silent" call. LOCAL variant of the system
             // prompt so small on-device models get the right section set.
             val localPrompt = getActiveSystemPrompt(SystemPromptVariant.CHAT_LOCAL)
-            return askWithLocalEngine(messages, localPrompt, firstInstance.instanceId, MutableStateFlow(messages))
+            return askWithLocalEngine(messages, localPrompt, instance.instanceId, MutableStateFlow(messages))
         }
 
         val systemPrompt = getActiveSystemPrompt()
 
-        val creds = instanceCredentials(firstInstance.instanceId, service)
+        val creds = instanceCredentials(instance.instanceId, service)
 
         val responseText = when (service) {
             Service.Gemini -> {
@@ -2642,7 +2605,7 @@ class RemoteDataRepository(
     }
 
     override fun startLocalModelDownload(model: LocalModel) {
-        localInferenceEngine?.startDownload(model, appSettings.getHfToken())
+        localInferenceEngine?.startDownload(model)
     }
 
     override fun cancelLocalModelDownload() {
@@ -2654,12 +2617,6 @@ class RemoteDataRepository(
     }
 
     override fun getLocalActiveBackend(): StateFlow<String?>? = localInferenceEngine?.activeBackend
-
-    override fun getHfToken(): String = appSettings.getHfToken()
-
-    override fun setHfToken(token: String) {
-        appSettings.setHfToken(token)
-    }
 
     override fun getBackendPreference(): String = appSettings.getBackendPreference()
 
