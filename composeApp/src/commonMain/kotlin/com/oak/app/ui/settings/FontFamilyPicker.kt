@@ -1,7 +1,6 @@
 package com.oak.app.ui.settings
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -10,38 +9,33 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.oak.app.data.OakFontFamily
 import com.oak.app.ui.handCursor
-import com.oak.app.ui.resolveForPreview
+import com.oak.app.ui.resolve
 import com.oak.app.ui.toTypography
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.settings_font_family
@@ -104,7 +98,7 @@ private fun FontFamilyCard(
         onClick = onClick,
         modifier = Modifier
             .width(72.dp)
-            .height(48.dp)
+            .height(40.dp)
             .handCursor(),
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
@@ -120,44 +114,23 @@ private fun FontFamilyCard(
         ),
     ) {
         Box(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = stringResource(fontFamily.displayNameRes),
-                    style = TextStyle(
-                        fontFamily = fontFamily.resolveForPreview(),
-                        fontSize = 11.sp,
-                    ),
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    modifier = Modifier.weight(1f),
-                )
-                AnimatedVisibility(
-                    visible = isSelected,
-                    enter = fadeIn(tween(150)) + slideInVertically(tween(150)) { it / 2 },
-                    exit = fadeOut(tween(150)) + slideOutVertically(tween(150)) { it / 2 },
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .padding(top = 2.dp)
-                            .size(10.dp),
-                    )
-                }
-            }
+            Text(
+                text = stringResource(fontFamily.displayNameRes),
+                style = TextStyle(
+                    fontFamily = fontFamily.resolve(),
+                    fontSize = 11.sp,
+                ),
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+            )
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.oak.app.data
 
-import androidx.compose.runtime.Immutable
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.font_family_system
 import oak.composeapp.generated.resources.font_family_inter
@@ -14,7 +13,6 @@ import oak.composeapp.generated.resources.font_family_prata
 import oak.composeapp.generated.resources.font_family_jetbrains_mono
 import org.jetbrains.compose.resources.StringResource
 
-@Immutable
 enum class OakFontFamily(val displayNameRes: StringResource) {
     System(Res.string.font_family_system),
     Inter(Res.string.font_family_inter),
