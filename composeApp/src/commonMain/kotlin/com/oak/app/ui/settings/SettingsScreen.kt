@@ -1558,10 +1558,24 @@ private fun LiteRTSettings(
         val isDownloaded = model.id in downloadedIds
         val isSelected = selectedModel?.id == model.id
         val isDownloading = downloadingModelId == model.id
-        val steps = (model.maxContextTokens - model.defaultContextTokens) / 1024
+
+        // Cap max context tokens by device memory to prevent OOM
+        // Use up to 70% of device memory for model + KV cache
+        val maxMemoryBytes = (totalDeviceMemoryBytes * 0.7).toLong()
+        var maxContextByMemory = model.defaultContextTokens
+        for (testTokens in model.defaultContextTokens..model.maxContextTokens step 1024) {
+            val estMem = estimateGpuMemoryMb(model, testTokens).toLong() * 1024 * 1024
+            if (estMem > maxMemoryBytes) break
+            maxContextByMemory = testTokens
+        }
+        val effectiveMaxContext = maxOf(model.defaultContextTokens, maxContextByMemory)
+
+        val steps = (effectiveMaxContext - model.defaultContextTokens) / 1024
         val storedContextTokens = modelContextTokens[model.id] ?: model.defaultContextTokens
-        var contextSliderValue by remember(storedContextTokens) {
-            mutableStateOf(((storedContextTokens - model.defaultContextTokens) / 1024).toFloat())
+        // Clamp stored value to effective max
+        val clampedStoredContext = storedContextTokens.coerceAtMost(effectiveMaxContext)
+        var contextSliderValue by remember(clampedStoredContext) {
+            mutableStateOf(((clampedStoredContext - model.defaultContextTokens) / 1024).toFloat())
         }
         val contextTokens = model.defaultContextTokens + (contextSliderValue.roundToInt() * 1024)
         val estimatedMemoryMb = estimateGpuMemoryMb(model, contextTokens)
@@ -1642,6 +1656,14 @@ private fun LiteRTSettings(
                     valueRange = 0f..steps.toFloat(),
                     steps = steps - 1,
                 )
+                if (performance == DevicePerformance.POOR) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "⚠ High memory usage — may cause slowdowns or crashes",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 if (isDownloading && downloadProgress != null) {
                     Spacer(Modifier.height(8.dp))
                     LinearProgressIndicator(

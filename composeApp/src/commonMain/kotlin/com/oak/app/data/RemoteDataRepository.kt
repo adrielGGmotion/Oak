@@ -16,6 +16,7 @@ import com.oak.app.inference.EngineState
 import com.oak.app.inference.InferenceMessage
 import com.oak.app.inference.LocalInferenceEngine
 import com.oak.app.inference.LocalModel
+import com.oak.app.inference.LocalTool
 import com.oak.app.inference.NoModelDownloadedException
 import com.oak.app.inference.getTotalMemoryBytes
 import com.oak.app.mcp.McpServerConfig
@@ -445,23 +446,62 @@ class RemoteDataRepository(
             } finally {
                 history.update { h -> h.filter { it.id != statusEntry.id } }
             }
-        } else {
-            engine.initialize(model, contextTokens, backendPref)
         }
 
-        // Tool descriptions are injected into the system prompt as text instead of
-        // relying on LiteRT-LM's automaticToolCalling / ANTLR parser, which is too
-        // strict for small on-device models. The model either follows the format
-        // and we execute the tool, or it ignores it and we return plain text.
-        val localTools = getLocalSafeTools()
-        val toolPrompt = buildLocalToolPrompt(localTools)
-        val promptWithTools = if (toolPrompt != null) {
-            if (systemPrompt != null) "$systemPrompt\n\n$toolPrompt" else toolPrompt
-        } else {
-            systemPrompt
+        // Convert Oak tools to LocalTool format for native litertlm tool calling.
+        // litertlm handles tool call parsing, execution, and result injection internally
+        // via constrained decoding — no manual XML/JSON parsing needed.
+        val localTools = getLocalSafeTools().map { tool ->
+            val schema = tool.schema
+            val descriptionJson = kotlinx.serialization.json.Json.encodeToString(
+                kotlinx.serialization.json.JsonObject.serializer(),
+                kotlinx.serialization.json.buildJsonObject {
+                    put("name", schema.name)
+                    put("description", schema.description)
+                    if (schema.parameters.isNotEmpty()) {
+                        put("parameters", kotlinx.serialization.json.buildJsonObject {
+                            put("type", "object")
+                            put("properties", kotlinx.serialization.json.buildJsonObject {
+                                for ((name, param) in schema.parameters) {
+                                    put(name, kotlinx.serialization.json.buildJsonObject {
+                                        put("type", param.type)
+                                        put("description", param.description)
+                                    })
+                                }
+                            })
+                            put("required", kotlinx.serialization.json.buildJsonArray {
+                                for ((name, param) in schema.parameters) {
+                                    if (param.required) add(kotlinx.serialization.json.JsonPrimitive(name))
+                                }
+                            })
+                        })
+                    }
+                },
+            )
+            LocalTool(
+                name = schema.name,
+                descriptionJsonString = descriptionJson,
+                execute = { jsonArgs ->
+                    val argsMap = try {
+                        val element = kotlinx.serialization.json.Json.parseToJsonElement(jsonArgs)
+                        if (element is kotlinx.serialization.json.JsonObject) {
+                            element.mapValues { (_, v) ->
+                                when (v) {
+                                    is kotlinx.serialization.json.JsonPrimitive -> v.content
+                                    else -> v.toString()
+                                }
+                            }
+                        } else emptyMap<String, Any>()
+                    } catch (e: Exception) {
+                        emptyMap<String, Any>()
+                    }
+                    val result = tool.execute(argsMap)
+                    result.toString()
+                },
+            )
         }
 
-        var inferenceMessages = messages.mapNotNull { msg ->
+        val inferenceMessages = messages.mapNotNull { msg ->
             when (msg.role) {
                 History.Role.USER -> InferenceMessage(role = "user", content = msg.content)
                 History.Role.ASSISTANT -> InferenceMessage(role = "assistant", content = msg.content)
@@ -469,85 +509,14 @@ class RemoteDataRepository(
             }
         }
 
-        var response = stripThinkBlocks(engine.chat(
+        // Pass tools to engine.chat() — litertlm handles tool calling natively
+        val response = stripThinkBlocks(engine.chat(
             messages = inferenceMessages,
-            systemPrompt = promptWithTools,
-            tools = emptyList(),
+            systemPrompt = systemPrompt,
+            tools = localTools,
         ))
 
-        var iteration = 0
-        try {
-        while (iteration < MAX_TOOL_ITERATIONS) {
-            iteration++
-            // Try XML invoke blocks first, then fall back to JSON format
-            var inlineResult = parseInlineToolCalls(response)
-            if (inlineResult == null) {
-                val jsonCalls = parseJsonToolCalls(response)
-                if (jsonCalls.isNotEmpty()) {
-                    val cleanContent = response.replace(JSON_TOOL_CALL_REGEX, "").trim()
-                    inlineResult = InlineToolCallResult(
-                        toolCalls = jsonCalls.map { ToolCallInfo(id = "invoke-${Uuid.random()}", name = it.name, arguments = it.arguments) },
-                        cleanContent = cleanContent,
-                    )
-                }
-            }
-            if (inlineResult == null) break
-
-            history.update {
-                it.toMutableList().apply {
-                    add(History(role = History.Role.ASSISTANT, content = inlineResult.cleanContent.stripToolMarkup(), toolCalls = inlineResult.toolCalls.toImmutableList()))
-                }
-            }
-
-            val toolResults = executeToolCallsInParallel(inlineResult.toolCalls.map { Triple(it.id, it.name, it.arguments) })
-
-            history.update { h ->
-                buildList<History>(h.size + toolResults.size) {
-                    for (entry in h) {
-                        if (entry.role != History.Role.TOOL_EXECUTING) {
-                            val cleaned = entry.withoutAskQuestionsToolCall()
-                            if (cleaned != null) add(cleaned)
-                        }
-                    }
-                    for ((callId, name, result) in toolResults) {
-                        if (name == ASK_QUESTIONS_TOOL_NAME) {
-                            add(History(role = History.Role.USER, content = result))
-                        } else {
-                            add(History(role = History.Role.TOOL, content = result, toolCallId = callId, toolName = name))
-                        }
-                    }
-                }
-            }
-
-            inferenceMessages = history.value.mapNotNull { msg ->
-                when (msg.role) {
-                    History.Role.USER -> InferenceMessage(role = "user", content = msg.content)
-                    History.Role.ASSISTANT -> InferenceMessage(role = "assistant", content = msg.content)
-                    else -> null
-                }
-            }
-
-            response = stripThinkBlocks(engine.chat(
-                messages = inferenceMessages,
-                systemPrompt = promptWithTools,
-                tools = emptyList(),
-            ))
-        }
-
         return response
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            try {
-                return stripThinkBlocks(engine.chat(
-                    messages = inferenceMessages,
-                    systemPrompt = promptWithTools,
-                    tools = emptyList(),
-                ))
-            } catch (e2: Exception) {
-                if (e2 is CancellationException) throw e2
-                return response.stripToolMarkup()
-            }
-        }
     }
 
     /**
@@ -1766,9 +1735,17 @@ class RemoteDataRepository(
         if (firstInstance == null) {
             return mapOf("success" to false, "error" to "No service configured")
         }
-        val contextWindowTokens = ModelCatalog.estimateContextWindow(
-            appSettings.getSelectedModelId(Service.fromId(firstInstance.serviceId)),
-        )
+        val service = Service.fromId(firstInstance.serviceId)
+        val selectedModelId = appSettings.getSelectedModelId(service)
+
+        // For on-device services, use the local model's actual max context tokens
+        // instead of ModelCatalog's default (100K) which is way too high for local models
+        val contextWindowTokens = if (service.isOnDevice && localInferenceEngine != null) {
+            val localModel = localInferenceEngine.getAvailableModels().find { it.id == selectedModelId }
+            localModel?.maxContextTokens ?: ModelCatalog.estimateContextWindow(selectedModelId)
+        } else {
+            ModelCatalog.estimateContextWindow(selectedModelId)
+        }
 
         var history = chatHistory.value.filter { it.role != History.Role.TOOL_EXECUTING }
         val systemPromptChars = getActiveSystemPrompt()?.length ?: 0
