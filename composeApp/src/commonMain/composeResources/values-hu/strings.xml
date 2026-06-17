@@ -14,12 +14,6 @@
     <string name="settings_content_description">Beállítások</string>
     <string name="bot_message_speech_content_description">Beszéd</string>
     <string name="bot_message_copy_content_description">Másolás</string>
-    <string name="settings_free_tier_title">Ingyenes szint</string>
-    <string name="settings_free_tier_description">A felhasználói bázis növekedésével a szponzorálás segít az infrastruktúra bővítésében, a kérési limitek növelésében mindenki számára, és a fejlesztés aktívan tartásában.</string>
-    <string name="settings_become_sponsor">Légy GitHub szponzor</string>
-    <string name="settings_business_partnerships">Üzleti partnerségek</string>
-    <string name="settings_business_partnerships_description">Szeretnéd megjeleníteni a céged logóját vagy stratégiai partnerségről tárgyalni?</string>
-    <string name="settings_contact_sponsorship">Kapcsolatfelvétel stratégiai szponzorációért</string>
     <string name="settings_base_url_label">Szerver URL</string>
     <string name="settings_status_checking">Kapcsolat ellenőrzése…</string>
     <string name="settings_status_connected">Csatlakozva</string>
@@ -42,8 +36,6 @@
     <string name="settings_tab_tools">Eszközök</string>
     <string name="settings_tab_integrations">Integrációk</string>
     <string name="tools_count">%1$d Eszköz</string>
-    <string name="privacy_agree_prefix">A szolgáltatás használatával elfogadod az </string>
-    <string name="privacy_policy">Adatvédelmi irányelveket</string>
     <string name="tool_get_local_time_name">Helyi idő lekérése</string>
     <string name="tool_get_local_time_description">Az aktuális helyi dátum és idő lekérése relatív dátumok értelmezéséhez</string>
     <string name="tool_get_location_name">Tartózkodási hely lekérése</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">Utolsó lekérdezés sikertelen %1$s</string>
     <string name="settings_email_refresh">Fiók frissítése</string>
     <string name="settings_add_service">Szolgáltatás hozzáadása</string>
-    <string name="settings_free_fallback">Tartalékként használ</string>
-    <string name="service_free_fast">Ingyenes gyors</string>
-    <string name="service_free_expert">Ingyenes szakértő</string>
     <string name="settings_heartbeat">Szívverés</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] Ez egy automatikus önellenőrzés. Tekintsd át az emlékeidet és a függő feladatokat. Ha minden rendben van és semmi sem igényel figyelmet, válaszolj pontosan ezzel: HEARTBEAT_OK\nHa valami figyelmet igényel (elavult emlékek, esedékes feladatok, felhasználói utánkövetések), foglalkozz vele.</string>
     <string name="settings_heartbeat_description">Időszakos önellenőrzések, amelyek lehetővé teszik az AI számára az emlékek és feladatok áttekintését felhasználói beavatkozás nélkül. Minden %1$d percben fut az aktív órákban.</string>
@@ -229,8 +218,6 @@
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">Kilépés az interaktív módból</string>
     <string name="interactive_ui_parsing_failed">A felhasználói felület elemzése sikertelen, újrapróbálás…</string>
-    <string name="settings_sponsors_monthly">Havi szponzorok</string>
-    <string name="settings_sponsors_past">Korábbi szponzorok</string>
     <string name="snackbar_undo">Visszavonás</string>
     <string name="snackbar_memory_deleted">Emlék törölve</string>
     <string name="snackbar_task_cancelled">Feladat visszavonva</string>

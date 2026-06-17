@@ -14,12 +14,6 @@
     <string name="settings_content_description">Innstillinger</string>
     <string name="bot_message_speech_content_description">Tale</string>
     <string name="bot_message_copy_content_description">Kopier</string>
-    <string name="settings_free_tier_title">Gratisnivå</string>
-    <string name="settings_free_tier_description">Etter hvert som brukergruppen vokser, hjelper sponsing med å skalere infrastrukturen, øke hastighetsgrensene for alle og holde utviklingen aktiv.</string>
-    <string name="settings_become_sponsor">Bli en GitHub-sponsor</string>
-    <string name="settings_business_partnerships">Forretningssamarbeid</string>
-    <string name="settings_business_partnerships_description">Vil du vise bedriftslogoen din eller diskutere et strategisk samarbeid?</string>
-    <string name="settings_contact_sponsorship">Kontakt for strategisk sponsing</string>
     <string name="settings_base_url_label">Server-URL</string>
     <string name="settings_status_checking">Sjekker tilkobling…</string>
     <string name="settings_status_connected">Tilkoblet</string>
@@ -42,8 +36,6 @@
     <string name="settings_tab_tools">Verktøy</string>
     <string name="settings_tab_integrations">Integrasjoner</string>
     <string name="tools_count">%1$d Verktøy</string>
-    <string name="privacy_agree_prefix">Ved å bruke tjenesten godtar du </string>
-    <string name="privacy_policy">Personvernerklæringen</string>
     <string name="tool_get_local_time_name">Hent lokal tid</string>
     <string name="tool_get_local_time_description">Hent gjeldende lokal dato og tid for å tolke relative datoer</string>
     <string name="tool_get_location_name">Hent posisjon</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">Siste henting mislyktes %1$s</string>
     <string name="settings_email_refresh">Oppdater konto</string>
     <string name="settings_add_service">Legg til tjeneste</string>
-    <string name="settings_free_fallback">Bruk som reserve</string>
-    <string name="service_free_fast">Gratis rask</string>
-    <string name="service_free_expert">Gratis ekspert</string>
     <string name="settings_heartbeat">Hjerteslag</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] Dette er en automatisk selvsjekk. Gå gjennom minnene dine og ventende oppgaver. Hvis alt ser bra ut og ingenting trenger oppmerksomhet, svar nøyaktig: HEARTBEAT_OK
 Hvis noe trenger oppmerksomhet (utdaterte minner, forfalte oppgaver, brukeroppfølginger), ta tak i det.</string>
@@ -230,8 +219,6 @@ Hvis noe trenger oppmerksomhet (utdaterte minner, forfalte oppgaver, brukeroppf�
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">Avslutt interaktiv modus</string>
     <string name="interactive_ui_parsing_failed">UI-analyse mislyktes, prøver igjen…</string>
-    <string name="settings_sponsors_monthly">Månedlige sponsorer</string>
-    <string name="settings_sponsors_past">Tidligere sponsorer</string>
     <string name="snackbar_undo">Angre</string>
     <string name="snackbar_memory_deleted">Minne slettet</string>
     <string name="snackbar_task_cancelled">Oppgave avbrutt</string>

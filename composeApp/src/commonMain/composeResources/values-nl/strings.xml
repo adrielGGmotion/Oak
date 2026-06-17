@@ -14,12 +14,6 @@
     <string name="settings_content_description">Instellingen</string>
     <string name="bot_message_speech_content_description">Spraak</string>
     <string name="bot_message_copy_content_description">Kopiëren</string>
-    <string name="settings_free_tier_title">Gratis Niveau</string>
-    <string name="settings_free_tier_description">Naarmate het gebruikersbestand groeit, helpt sponsoring om de infrastructuur op te schalen, de aanvraaglimieten voor iedereen te verhogen en de ontwikkeling actief te houden.</string>
-    <string name="settings_become_sponsor">Word een GitHub-sponsor</string>
-    <string name="settings_business_partnerships">Zakelijke Partnerschappen</string>
-    <string name="settings_business_partnerships_description">Wilt u uw bedrijfslogo tonen of een strategisch partnerschap bespreken?</string>
-    <string name="settings_contact_sponsorship">Contact voor strategische sponsoring</string>
     <string name="settings_status_error_invalid_key">Ongeldige API-sleutel</string>
     <string name="settings_status_error_quota_exhausted">Quotum uitgeput</string>
     <string name="settings_status_error_rate_limited">Aanvraaglimiet bereikt</string>
@@ -48,8 +42,6 @@
     <string name="settings_tab_tools">Hulpmiddelen</string>
     <string name="settings_tab_integrations">Integraties</string>
     <string name="tools_count">%1$d Hulpmiddelen</string>
-    <string name="privacy_agree_prefix">Door de service te gebruiken, gaat u akkoord met het </string>
-    <string name="privacy_policy">Privacybeleid</string>
     <string name="settings_tab_general">Algemeen</string>
     <string name="settings_tab_agent">Agent</string>
     <string name="tool_set_alarm_name">Wekker instellen</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">Laatste ophaalpoging mislukt %1$s</string>
     <string name="settings_email_refresh">Account vernieuwen</string>
     <string name="settings_add_service">Service toevoegen</string>
-    <string name="settings_free_fallback">Gebruiken als terugval</string>
-    <string name="service_free_fast">Gratis snel</string>
-    <string name="service_free_expert">Gratis expert</string>
     <string name="settings_heartbeat">Hartslag</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] Dit is een automatische zelfcontrole. Bekijk je herinneringen en openstaande taken. Als alles er goed uitziet en niets aandacht nodig heeft, antwoord dan precies: HEARTBEAT_OK
 Als iets aandacht nodig heeft (verouderde herinneringen, verlopen taken, gebruikersopvolgingen), pak het aan.</string>
@@ -230,8 +219,6 @@ Als iets aandacht nodig heeft (verouderde herinneringen, verlopen taken, gebruik
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">Interactieve modus verlaten</string>
     <string name="interactive_ui_parsing_failed">UI-analyse mislukt, opnieuw proberen…</string>
-    <string name="settings_sponsors_monthly">Maandelijkse sponsors</string>
-    <string name="settings_sponsors_past">Vorige sponsors</string>
     <string name="snackbar_undo">Ongedaan maken</string>
     <string name="snackbar_memory_deleted">Herinnering verwijderd</string>
     <string name="snackbar_task_cancelled">Taak geannuleerd</string>

@@ -114,7 +114,7 @@ fun detectExportableSections(json: JsonObject): Map<ImportSection, String?> {
 
 fun detectImportSections(json: JsonObject): Map<ImportSection, String?> {
     val sections = mutableMapOf<ImportSection, String?>()
-    if (json["configured_services"] != null || json["current_service_id"] != null || json["free_fallback_enabled"] != null || json["instance_settings"] != null) {
+    if (json["configured_services"] != null || json["current_service_id"] != null || json["instance_settings"] != null) {
         val count = json["configured_services"]?.jsonArray?.size
         sections[ImportSection.SERVICES] = count?.let { "$it" }
     }
@@ -184,8 +184,10 @@ class AppSettings(private val settings: Settings) {
     }
 
     fun currentService(): Service {
-        val id = settings.getString(KEY_CURRENT_SERVICE_ID, Service.Free.id)
-        return Service.fromId(id)
+        val id = settings.getString(KEY_CURRENT_SERVICE_ID, "")
+        if (id.isNotBlank()) return Service.fromId(id)
+        val firstConfigured = getConfiguredServiceInstances().firstOrNull()?.serviceId.orEmpty()
+        return Service.fromId(firstConfigured)
     }
 
     // API Keys
@@ -261,16 +263,8 @@ class AppSettings(private val settings: Settings) {
         val existingServiceIds = existing.map { it.serviceId }.toSet()
         val instances = existing.toMutableList()
 
-        // Add the current service if not already present
-        val currentServiceId = settings.getString(KEY_CURRENT_SERVICE_ID, Service.Free.id)
-        val currentService = Service.fromId(currentServiceId)
-        if (currentService != Service.Free && currentService.id !in existingServiceIds) {
-            instances.add(ServiceInstance(instanceId = currentService.id, serviceId = currentService.id))
-        }
-
         // Also add any service that has a legacy API key configured
         for (service in Service.all) {
-            if (service == Service.Free) continue
             if (service.id in existingServiceIds) continue
             if (instances.any { it.serviceId == service.id }) continue
             val apiKey = getApiKey(service)
@@ -322,7 +316,6 @@ class AppSettings(private val settings: Settings) {
         val instances = getConfiguredServiceInstances()
         for (instance in instances) {
             val service = Service.fromId(instance.serviceId)
-            if (service == Service.Free) continue
             // Copy legacy per-service API key to per-instance key
             val legacyApiKey = getApiKey(service)
             if (legacyApiKey.isNotBlank() && getInstanceApiKey(instance.instanceId).isBlank()) {
@@ -473,28 +466,6 @@ class AppSettings(private val settings: Settings) {
 
     fun setStreamingEnabled(enabled: Boolean) {
         settings.putBoolean(KEY_STREAMING_ENABLED, enabled)
-    }
-
-    // Free fallback
-    fun isFreeFallbackEnabled(): Boolean = settings.getBoolean(KEY_FREE_FALLBACK_ENABLED, true)
-
-    fun setFreeFallbackEnabled(enabled: Boolean) {
-        settings.putBoolean(KEY_FREE_FALLBACK_ENABLED, enabled)
-    }
-
-    fun getFreeMode(): FreeMode {
-        val stored = settings.getStringOrNull(KEY_FREE_MODE) ?: return FreeMode.FAST
-        return FreeMode.entries.find { it.name == stored } ?: FreeMode.FAST
-    }
-
-    fun setFreeMode(mode: FreeMode) {
-        settings.putString(KEY_FREE_MODE, mode.name)
-    }
-
-    fun isFreeServicePrimary(): Boolean = settings.getBoolean(KEY_FREE_SERVICE_PRIMARY, false)
-
-    fun setFreeServicePrimary(primary: Boolean) {
-        settings.putBoolean(KEY_FREE_SERVICE_PRIMARY, primary)
     }
 
     // Soul (system prompt)
@@ -815,8 +786,7 @@ class AppSettings(private val settings: Settings) {
             if (configuredJson.isNotBlank()) {
                 map["configured_services"] = Json.parseToJsonElement(configuredJson)
             }
-            map["current_service_id"] = JsonPrimitive(settings.getString(KEY_CURRENT_SERVICE_ID, Service.Free.id))
-            map["free_fallback_enabled"] = JsonPrimitive(isFreeFallbackEnabled())
+            map["current_service_id"] = JsonPrimitive(settings.getString(KEY_CURRENT_SERVICE_ID, ""))
 
             val instances = getConfiguredServiceInstances()
             if (instances.isNotEmpty()) {
@@ -960,8 +930,11 @@ class AppSettings(private val settings: Settings) {
         if (ImportSection.SERVICES in sections) {
             try {
                 settings.putString(KEY_CONFIGURED_SERVICES, json["configured_services"]?.toString() ?: "")
-                settings.putString(KEY_CURRENT_SERVICE_ID, json["current_service_id"]?.jsonPrimitive?.content ?: Service.Free.id)
-                settings.putBoolean(KEY_FREE_FALLBACK_ENABLED, json["free_fallback_enabled"]?.jsonPrimitive?.content?.toBoolean() ?: true)
+                val importedCurrent = json["current_service_id"]?.jsonPrimitive?.content.orEmpty()
+                val fallbackCurrent = importedCurrent.ifBlank {
+                    getConfiguredServiceInstances().firstOrNull()?.serviceId.orEmpty()
+                }
+                settings.putString(KEY_CURRENT_SERVICE_ID, fallbackCurrent)
             } catch (_: Exception) {
                 errors++
             }
@@ -990,8 +963,7 @@ class AppSettings(private val settings: Settings) {
             }
         } else if (replace) {
             settings.putString(KEY_CONFIGURED_SERVICES, "")
-            settings.putString(KEY_CURRENT_SERVICE_ID, Service.Free.id)
-            settings.putBoolean(KEY_FREE_FALLBACK_ENABLED, true)
+            settings.putString(KEY_CURRENT_SERVICE_ID, "")
             oldInstances.forEach { removeInstanceSettings(it.instanceId) }
         }
 
@@ -1282,9 +1254,6 @@ class AppSettings(private val settings: Settings) {
         const val KEY_NOTIFICATIONS_STORE = "notifications_store"
         const val KEY_NOTIFICATIONS_SYNC_STATE = "notifications_sync_state"
         const val KEY_CONFIGURED_SERVICES = "configured_services"
-        const val KEY_FREE_FALLBACK_ENABLED = "free_fallback_enabled"
-        const val KEY_FREE_MODE = "free_mode"
-        const val KEY_FREE_SERVICE_PRIMARY = "free_service_primary"
         const val KEY_SERVICES_MIGRATION_COMPLETE = "services_migration_complete_v1"
         const val KEY_UI_SCALE = "ui_scale"
         const val KEY_MCP_SERVERS = "mcp_servers"

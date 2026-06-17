@@ -123,7 +123,6 @@ import com.oak.app.inference.LocalModel
 import com.oak.app.inference.calculateDevicePerformance
 import com.oak.app.inference.estimateGpuMemoryMb
 import com.oak.app.mcp.PopularMcpServer
-import com.oak.app.network.dtos.SponsorsResponseDto
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.saveFileToDevice
 import com.oak.app.ui.OakClearableTextField
@@ -173,10 +172,6 @@ import oak.composeapp.generated.resources.settings_ai_mistakes_warning
 import oak.composeapp.generated.resources.settings_api_key_label
 import oak.composeapp.generated.resources.settings_api_key_optional_label
 import oak.composeapp.generated.resources.settings_base_url_label
-import oak.composeapp.generated.resources.settings_become_sponsor
-import oak.composeapp.generated.resources.settings_business_partnerships
-import oak.composeapp.generated.resources.settings_business_partnerships_description
-import oak.composeapp.generated.resources.settings_contact_sponsorship
 import oak.composeapp.generated.resources.settings_daemon_mode
 import oak.composeapp.generated.resources.settings_daemon_mode_description
 import oak.composeapp.generated.resources.settings_documentation
@@ -186,9 +181,8 @@ import oak.composeapp.generated.resources.settings_export
 import oak.composeapp.generated.resources.settings_export_import_description
 import oak.composeapp.generated.resources.settings_export_import_title
 import oak.composeapp.generated.resources.settings_export_preview_title
-import oak.composeapp.generated.resources.settings_free_fallback
-import oak.composeapp.generated.resources.settings_free_tier_description
-import oak.composeapp.generated.resources.settings_free_tier_title
+import oak.composeapp.generated.resources.settings_free_ai_access
+import oak.composeapp.generated.resources.settings_free_ai_access_url
 import oak.composeapp.generated.resources.settings_heartbeat_recent
 import oak.composeapp.generated.resources.settings_import
 import oak.composeapp.generated.resources.settings_import_error
@@ -245,10 +239,8 @@ import oak.composeapp.generated.resources.settings_soul_reset
 import oak.composeapp.generated.resources.settings_soul_reset_cancel
 import oak.composeapp.generated.resources.settings_soul_reset_confirm
 import oak.composeapp.generated.resources.settings_soul_save
-import oak.composeapp.generated.resources.settings_sponsors_monthly
 import oak.composeapp.generated.resources.settings_streaming_description
 import oak.composeapp.generated.resources.settings_streaming_enabled
-import oak.composeapp.generated.resources.settings_sponsors_past
 import oak.composeapp.generated.resources.settings_status_checking
 import oak.composeapp.generated.resources.settings_status_connected
 import oak.composeapp.generated.resources.settings_status_error
@@ -783,170 +775,6 @@ private fun BottomInfo() {
 }
 
 @Composable
-private fun FreeSettings(
-    showFallbackToggle: Boolean = false,
-    isFreeFallbackEnabled: Boolean = true,
-    onToggleFreeFallback: (Boolean) -> Unit = {},
-    currentSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
-    pastSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = oakAdaptiveCardColors(),
-        border = oakAdaptiveCardBorder(),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(Res.string.settings_free_tier_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            if (showFallbackToggle) {
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onToggleFreeFallback(!isFreeFallbackEnabled) }
-                        .handCursor(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.settings_free_fallback),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Switch(
-                        checked = isFreeFallbackEnabled,
-                        onCheckedChange = onToggleFreeFallback,
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-            }
-
-            Spacer(Modifier.height(6.dp))
-
-            Text(
-                text = stringResource(Res.string.settings_free_tier_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            val uriHandler = LocalUriHandler.current
-            Button(
-                onClick = {
-                    uriHandler.openUri("https://github.com/sponsors/SimonSchubert")
-                },
-                Modifier
-                    .align(CenterHorizontally)
-                    .handCursor(),
-            ) {
-                Icon(Icons.Default.Favorite, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(Res.string.settings_become_sponsor))
-            }
-
-            if (currentSponsors.isNotEmpty()) {
-                Spacer(Modifier.height(16.dp))
-                HorizontalDivider(thickness = 0.5.dp)
-                Spacer(Modifier.height(16.dp))
-                SponsorList(
-                    title = stringResource(Res.string.settings_sponsors_monthly),
-                    sponsors = currentSponsors,
-                )
-            }
-
-            if (pastSponsors.isNotEmpty()) {
-                Spacer(Modifier.height(16.dp))
-                HorizontalDivider(thickness = 0.5.dp)
-                Spacer(Modifier.height(16.dp))
-                SponsorList(
-                    title = stringResource(Res.string.settings_sponsors_past),
-                    sponsors = pastSponsors,
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
-            HorizontalDivider(thickness = 0.5.dp)
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(Res.string.settings_business_partnerships),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = stringResource(Res.string.settings_business_partnerships_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            TextButton(
-                onClick = {
-                    uriHandler.openUri("https://schubert-simon.de")
-                },
-                Modifier
-                    .handCursor(),
-            ) {
-                Text(stringResource(Res.string.settings_contact_sponsorship))
-            }
-        }
-    }
-}
-
-@Composable
-private fun SponsorList(
-    title: String,
-    sponsors: ImmutableList<SponsorsResponseDto.Sponsor>,
-) {
-    val uriHandler = LocalUriHandler.current
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(8.dp))
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        sponsors.forEach { sponsor ->
-            Column(
-                horizontalAlignment = CenterHorizontally,
-                modifier = Modifier
-                    .width(72.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { uriHandler.openUri("https://github.com/${sponsor.username}") }
-                    .handCursor()
-                    .padding(4.dp),
-            ) {
-                coil3.compose.AsyncImage(
-                    model = sponsor.avatar,
-                    contentDescription = sponsor.username,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = sponsor.username,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) {
     var showAddServiceSheet by remember { mutableStateOf(false) }
 
@@ -998,6 +826,19 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
             Text(stringResource(Res.string.settings_add_service))
         }
     }
+    
+    // Free AI Access Guide
+    Spacer(Modifier.height(12.dp))
+    val uriHandler = LocalUriHandler.current
+    val freeAiAccessUrl = stringResource(Res.string.settings_free_ai_access_url)
+    OutlinedButton(
+        onClick = { uriHandler.openUri(freeAiAccessUrl) },
+        modifier = Modifier.handCursor(),
+    ) {
+        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(Res.string.settings_free_ai_access))
+    }
 
     // Streaming toggle
     Spacer(Modifier.height(16.dp))
@@ -1033,16 +874,6 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
             )
         }
     }
-
-    // Free tier card (always at bottom)
-    Spacer(Modifier.height(16.dp))
-    FreeSettings(
-        showFallbackToggle = entries.isNotEmpty(),
-        isFreeFallbackEnabled = uiState.isFreeFallbackEnabled,
-        onToggleFreeFallback = actions.onToggleFreeFallback,
-        currentSponsors = uiState.currentSponsors,
-        pastSponsors = uiState.pastSponsors,
-    )
 
     // Add service bottom sheet
     if (showAddServiceSheet) {

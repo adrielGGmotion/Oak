@@ -14,12 +14,6 @@
     <string name="settings_content_description">Configurações</string>
     <string name="bot_message_speech_content_description">Fala</string>
     <string name="bot_message_copy_content_description">Copiar</string>
-    <string name="settings_free_tier_title">Nível Gratuito</string>
-    <string name="settings_free_tier_description">À medida que a base de usuários cresce, o patrocínio ajuda a escalar a infraestrutura, aumentar os limites de requisições para todos e manter o desenvolvimento ativo.</string>
-    <string name="settings_become_sponsor">Torne-se um patrocinador do GitHub</string>
-    <string name="settings_business_partnerships">Parcerias Empresariais</string>
-    <string name="settings_business_partnerships_description">Quer exibir o logo da sua empresa ou discutir uma parceria estratégica?</string>
-    <string name="settings_contact_sponsorship">Contato para patrocínio estratégico</string>
     <string name="settings_status_error_invalid_key">Chave de API inválida</string>
     <string name="settings_status_error_quota_exhausted">Cota esgotada</string>
     <string name="settings_status_error_rate_limited">Limite de taxa atingido</string>
@@ -48,8 +42,6 @@
     <string name="settings_tab_tools">Ferramentas</string>
     <string name="settings_tab_integrations">Integrações</string>
     <string name="tools_count">%1$d Ferramentas</string>
-    <string name="privacy_agree_prefix">Ao usar o serviço, você concorda com a </string>
-    <string name="privacy_policy">Política de Privacidade</string>
     <string name="settings_tab_general">Geral</string>
     <string name="settings_tab_agent">Agente</string>
     <string name="tool_set_alarm_name">Definir alarme</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">Última verificação falhou %1$s</string>
     <string name="settings_email_refresh">Atualizar conta</string>
     <string name="settings_add_service">Adicionar serviço</string>
-    <string name="settings_free_fallback">Usar como reserva</string>
-    <string name="service_free_fast">Grátis rápido</string>
-    <string name="service_free_expert">Grátis especialista</string>
     <string name="settings_heartbeat">Pulsação</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] Esta é uma verificação automática. Revise suas memórias e tarefas pendentes. Se tudo estiver bem e nada precisar de atenção, responda exatamente: HEARTBEAT_OK
 Se algo precisar de atenção (memórias desatualizadas, tarefas vencidas, acompanhamentos do usuário), trate disso.</string>
@@ -230,8 +219,6 @@ Se algo precisar de atenção (memórias desatualizadas, tarefas vencidas, acomp
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">Sair do modo interativo</string>
     <string name="interactive_ui_parsing_failed">Falha na análise da UI, tentando novamente…</string>
-    <string name="settings_sponsors_monthly">Patrocinadores Mensais</string>
-    <string name="settings_sponsors_past">Patrocinadores Anteriores</string>
     <string name="snackbar_undo">Desfazer</string>
     <string name="snackbar_memory_deleted">Memória excluída</string>
     <string name="snackbar_task_cancelled">Tarefa cancelada</string>

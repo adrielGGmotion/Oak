@@ -121,9 +121,7 @@ class SettingsViewModelTest {
 
         viewModel.state.test {
             val state = awaitItem()
-            // Should not contain Free
-            assertTrue(state.availableServicesToAdd.none { it == Service.Free })
-            // Should contain all other services including already-configured ones (multi-instance)
+            // Should contain all services including already-configured ones (multi-instance)
             assertTrue(state.availableServicesToAdd.contains(Service.Gemini))
             assertTrue(state.availableServicesToAdd.contains(Service.OpenAI))
             assertTrue(state.availableServicesToAdd.contains(Service.DeepSeek))
@@ -496,21 +494,6 @@ class SettingsViewModelTest {
             val updated = awaitItem()
             assertFalse(updated.isSchedulingEnabled)
             assertFalse(fakeRepository.isSchedulingEnabled())
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `onToggleFreeFallback persists and reflects in state`() = runTest {
-        val viewModel = SettingsViewModel(fakeRepository, fakeDaemonController, fakeNotificationPermissionController, fakeStoragePermissionController, noOpScheduler, testDispatcher)
-
-        viewModel.state.test {
-            val initialState = awaitItem()
-            assertTrue(initialState.isFreeFallbackEnabled)
-            viewModel.actions.onToggleFreeFallback(false)
-            val updated = awaitItem()
-            assertFalse(updated.isFreeFallbackEnabled)
-            assertFalse(fakeRepository.isFreeFallbackEnabled())
             cancelAndIgnoreRemainingEvents()
         }
     }

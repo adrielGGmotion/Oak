@@ -74,7 +74,6 @@ data class ChatUiState(
     val isLoading: Boolean = false,
     val error: UiError? = null,
     val warning: StringResource? = null,
-    val showPrivacyInfo: Boolean = false,
     val supportedFileExtensions: ImmutableList<String> = persistentListOf(),
     val isSpeaking: Boolean = false,
     val isSpeakingContentId: String = "",

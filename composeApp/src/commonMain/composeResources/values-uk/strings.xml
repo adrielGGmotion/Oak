@@ -14,12 +14,6 @@
     <string name="settings_content_description">Налаштування</string>
     <string name="bot_message_speech_content_description">Мовлення</string>
     <string name="bot_message_copy_content_description">Копіювати</string>
-    <string name="settings_free_tier_title">Безкоштовний рівень</string>
-    <string name="settings_free_tier_description">У міру зростання бази користувачів спонсорство допомагає масштабувати інфраструктуру, збільшувати ліміти запитів для всіх і підтримувати активну розробку.</string>
-    <string name="settings_become_sponsor">Стати спонсором GitHub</string>
-    <string name="settings_business_partnerships">Бізнес-партнерство</string>
-    <string name="settings_business_partnerships_description">Хочете розмістити логотип своєї компанії або обговорити стратегічне партнерство?</string>
-    <string name="settings_contact_sponsorship">Зв'язатися щодо стратегічного спонсорства</string>
     <string name="settings_status_error_invalid_key">Недійсний ключ API</string>
     <string name="settings_status_error_quota_exhausted">Квоту вичерпано</string>
     <string name="settings_status_error_rate_limited">Перевищено ліміт запитів</string>
@@ -48,8 +42,6 @@
     <string name="settings_tab_tools">Інструменти</string>
     <string name="settings_tab_integrations">Інтеграції</string>
     <string name="tools_count">%1$d інструментів</string>
-    <string name="privacy_agree_prefix">Використовуючи сервіс, ви погоджуєтесь з </string>
-    <string name="privacy_policy">Політикою конфіденційності</string>
     <string name="settings_tab_general">Загальне</string>
     <string name="settings_tab_agent">Агент</string>
     <string name="tool_set_alarm_name">Встановити будильник</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">Остання перевірка не вдалася %1$s</string>
     <string name="settings_email_refresh">Оновити обліковий запис</string>
     <string name="settings_add_service">Додати сервіс</string>
-    <string name="settings_free_fallback">Використовувати як запасний</string>
-    <string name="service_free_fast">Безкоштовний швидкий</string>
-    <string name="service_free_expert">Безкоштовний експерт</string>
     <string name="settings_heartbeat">Серцебиття</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] Це автоматична самоперевірка. Перегляньте свої спогади та очікувані завдання. Якщо все гаразд і нічого не потребує уваги, відповідайте точно: HEARTBEAT_OK
 Якщо щось потребує уваги (застарілі спогади, прострочені завдання, запити користувача), займіться цим.</string>
@@ -230,8 +219,6 @@
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">Вийти з інтерактивного режиму</string>
     <string name="interactive_ui_parsing_failed">Не вдалося розібрати UI, повторна спроба…</string>
-    <string name="settings_sponsors_monthly">Щомісячні спонсори</string>
-    <string name="settings_sponsors_past">Попередні спонсори</string>
     <string name="snackbar_undo">Скасувати</string>
     <string name="snackbar_memory_deleted">Спогад видалено</string>
     <string name="snackbar_task_cancelled">Завдання скасовано</string>
