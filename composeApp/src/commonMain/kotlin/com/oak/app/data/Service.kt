@@ -33,6 +33,12 @@ import oak.composeapp.generated.resources.ic_service_together
 import oak.composeapp.generated.resources.ic_service_venice
 import oak.composeapp.generated.resources.ic_service_xai
 import oak.composeapp.generated.resources.ic_service_zai
+import oak.composeapp.generated.resources.service_cloudflare
+import oak.composeapp.generated.resources.service_cohere
+import oak.composeapp.generated.resources.service_github_models
+import oak.composeapp.generated.resources.service_ovhcloud
+import oak.composeapp.generated.resources.service_sambanova
+import oak.composeapp.generated.resources.service_siliconflow
 
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -62,6 +68,7 @@ sealed class Service(
     val apiKeyUrlDisplay: String? = null,
     val isOnDevice: Boolean = false,
     val supportsPdf: Boolean = false,
+    val displayNameRes: StringResource? = null,
 ) {
     data object Groq : Service(
         id = "groqcloud",
@@ -403,10 +410,11 @@ sealed class Service(
         supportsOptionalApiKey = true,
         defaultModel = null,
         settingsKeyPrefix = "cloudflare",
-        chatUrl = "/ai/v1/chat/completions",
-        modelsUrl = "/ai/models/search",
+        chatUrl = "ai/v1/chat/completions",
+        modelsUrl = "ai/models/search",
         apiKeyUrl = "https://dash.cloudflare.com/profile/api-tokens",
         apiKeyUrlDisplay = "dash.cloudflare.com/profile/api-tokens",
+        displayNameRes = Res.string.service_cloudflare,
     )
 
     data object GitHubModels : Service(
@@ -420,6 +428,7 @@ sealed class Service(
         modelsUrl = "https://models.inference.ai.azure.com/models",
         apiKeyUrl = "https://github.com/settings/tokens",
         apiKeyUrlDisplay = "github.com/settings/tokens",
+        displayNameRes = Res.string.service_github_models,
     )
 
     data object Cohere : Service(
@@ -433,6 +442,7 @@ sealed class Service(
         modelsUrl = "https://api.cohere.com/compatibility/v1/models",
         apiKeyUrl = "https://dashboard.cohere.com/api-keys",
         apiKeyUrlDisplay = "dashboard.cohere.com/api-keys",
+        displayNameRes = Res.string.service_cohere,
     )
 
     data object SiliconFlow : Service(
@@ -446,6 +456,7 @@ sealed class Service(
         modelsUrl = "https://api.siliconflow.cn/v1/models",
         apiKeyUrl = "https://cloud.siliconflow.cn/account/ak",
         apiKeyUrlDisplay = "cloud.siliconflow.cn/account/ak",
+        displayNameRes = Res.string.service_siliconflow,
     )
 
     data object OVHcloud : Service(
@@ -459,6 +470,7 @@ sealed class Service(
         modelsUrl = "https://io.ai-maas.endpoints.ovhcloud.com/v1/models",
         apiKeyUrl = "https://api.us.ovhcloud.com/createToken",
         apiKeyUrlDisplay = "api.us.ovhcloud.com/createToken",
+        displayNameRes = Res.string.service_ovhcloud,
     )
 
     data object SambaNova : Service(
@@ -472,6 +484,7 @@ sealed class Service(
         modelsUrl = "https://api.sambanova.ai/v1/models",
         apiKeyUrl = "https://cloud.sambanova.ai/apis",
         apiKeyUrlDisplay = "cloud.sambanova.ai/apis",
+        displayNameRes = Res.string.service_sambanova,
     )
 
     data object OpenAICompatible : Service(

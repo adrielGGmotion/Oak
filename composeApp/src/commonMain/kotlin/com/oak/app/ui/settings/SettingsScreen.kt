@@ -182,6 +182,7 @@ import oak.composeapp.generated.resources.settings_export_import_description
 import oak.composeapp.generated.resources.settings_export_import_title
 import oak.composeapp.generated.resources.settings_export_preview_title
 import oak.composeapp.generated.resources.settings_free_ai_access
+import oak.composeapp.generated.resources.settings_free_ai_access_url
 import oak.composeapp.generated.resources.settings_heartbeat_recent
 import oak.composeapp.generated.resources.settings_import
 import oak.composeapp.generated.resources.settings_import_error
@@ -829,8 +830,9 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
     // Free AI Access Guide
     Spacer(Modifier.height(12.dp))
     val uriHandler = LocalUriHandler.current
+    val freeAiAccessUrl = stringResource(Res.string.settings_free_ai_access_url)
     OutlinedButton(
-        onClick = { uriHandler.openUri("https://github.com/adrielGGmotion/Oak/blob/main/docs/free-ai-access.html") },
+        onClick = { uriHandler.openUri(freeAiAccessUrl) },
         modifier = Modifier.handCursor(),
     ) {
         Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(18.dp))

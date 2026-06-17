@@ -185,7 +185,9 @@ class AppSettings(private val settings: Settings) {
 
     fun currentService(): Service {
         val id = settings.getString(KEY_CURRENT_SERVICE_ID, "")
-        return Service.fromId(id)
+        if (id.isNotBlank()) return Service.fromId(id)
+        val firstConfigured = getConfiguredServiceInstances().firstOrNull()?.serviceId.orEmpty()
+        return Service.fromId(firstConfigured)
     }
 
     // API Keys
@@ -928,7 +930,11 @@ class AppSettings(private val settings: Settings) {
         if (ImportSection.SERVICES in sections) {
             try {
                 settings.putString(KEY_CONFIGURED_SERVICES, json["configured_services"]?.toString() ?: "")
-                settings.putString(KEY_CURRENT_SERVICE_ID, json["current_service_id"]?.jsonPrimitive?.content ?: "")
+                val importedCurrent = json["current_service_id"]?.jsonPrimitive?.content.orEmpty()
+                val fallbackCurrent = importedCurrent.ifBlank {
+                    getConfiguredServiceInstances().firstOrNull()?.serviceId.orEmpty()
+                }
+                settings.putString(KEY_CURRENT_SERVICE_ID, fallbackCurrent)
             } catch (_: Exception) {
                 errors++
             }

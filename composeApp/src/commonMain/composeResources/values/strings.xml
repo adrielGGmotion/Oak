@@ -174,7 +174,14 @@
     <string name="settings_scheduled_tasks">Scheduled Tasks</string>
     <string name="settings_scheduled_tasks_description">Tasks scheduled by the AI for future execution. Ask the AI to remind you or run something later to create scheduled tasks.</string>
     <string name="settings_scheduled_tasks_cancel">Cancel task</string>
+    <string name="service_cloudflare">Cloudflare Workers AI</string>
+    <string name="service_github_models">GitHub Models</string>
+    <string name="service_cohere">Cohere</string>
+    <string name="service_siliconflow">SiliconFlow</string>
+    <string name="service_ovhcloud">OVHcloud AI</string>
+    <string name="service_sambanova">SambaNova</string>
     <string name="settings_free_ai_access">Free AI Access Guide</string>
+    <string name="settings_free_ai_access_url">https://github.com/adrielGGmotion/Oak/blob/main/docs/free-ai-access.html</string>
     <string name="settings_free_ai_access_description">Learn how to use Oak with free API keys or local LLMs</string>
     <string name="settings_task_details_trigger">Trigger</string>
     <string name="settings_task_details_status">Status</string>

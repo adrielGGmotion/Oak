@@ -53,7 +53,7 @@ import com.oak.app.ui.chat.History
 import com.oak.app.ui.chat.ToolCallInfo
 import com.oak.app.ui.chat.toAnthropicContentBlocks
 import com.oak.app.ui.chat.toGeminiMessageDto
-import com.oak.app.ui.chat.toGroqMessageDto
+import com.oak.app.ui.chat.toOpenAICompatibleMessageDto
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.mimeType
@@ -1272,7 +1272,7 @@ class RemoteDataRepository(
             )
         }
         addAll(
-            messages.map { it.toGroqMessageDto() }
+            messages.map { it.toOpenAICompatibleMessageDto() }
                 .let { sanitizeToolSequences(it) },
         )
     }
@@ -1889,9 +1889,14 @@ class RemoteDataRepository(
         return if (service.supportsPdf) supportedFileExtensions + "pdf" else supportedFileExtensions
     }
 
+    private fun firstRunnableInstance(): ServiceInstance? =
+        getConfiguredServiceInstances().firstOrNull { instance ->
+            val service = Service.fromId(instance.serviceId)
+            !service.isOnDevice || localInferenceEngine != null
+        }
+
     override fun currentService(): Service {
-        val instances = getConfiguredServiceInstances()
-        return instances.firstOrNull()?.let { Service.fromId(it.serviceId) } ?: Service.OpenAICompatible
+        return firstRunnableInstance()?.let { Service.fromId(it.serviceId) } ?: Service.OpenAICompatible
     }
 
     private fun setCurrentConversationId(id: String?) {
@@ -2441,8 +2446,8 @@ class RemoteDataRepository(
     }
 
     override suspend fun askSilently(question: String): String {
-        val service = currentService()
-        val firstInstance = getConfiguredServiceInstances().firstOrNull() ?: return ""
+        val instance = firstRunnableInstance() ?: return ""
+        val service = Service.fromId(instance.serviceId)
         val messages = listOf(History(role = History.Role.USER, content = question))
 
         if (service.isOnDevice) {
@@ -2450,12 +2455,12 @@ class RemoteDataRepository(
             // visible chatHistory for a "silent" call. LOCAL variant of the system
             // prompt so small on-device models get the right section set.
             val localPrompt = getActiveSystemPrompt(SystemPromptVariant.CHAT_LOCAL)
-            return askWithLocalEngine(messages, localPrompt, firstInstance.instanceId, MutableStateFlow(messages))
+            return askWithLocalEngine(messages, localPrompt, instance.instanceId, MutableStateFlow(messages))
         }
 
         val systemPrompt = getActiveSystemPrompt()
 
-        val creds = instanceCredentials(firstInstance.instanceId, service)
+        val creds = instanceCredentials(instance.instanceId, service)
 
         val responseText = when (service) {
             Service.Gemini -> {
