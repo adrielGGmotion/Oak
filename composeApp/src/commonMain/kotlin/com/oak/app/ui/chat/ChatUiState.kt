@@ -137,7 +137,7 @@ data class ToolCallInfo(
     val thoughtSignature: String? = null,
 )
 
-fun History.toGroqMessageDto(): OpenAICompatibleChatRequestDto.Message = when (role) {
+fun History.toOpenAICompatibleMessageDto(): OpenAICompatibleChatRequestDto.Message = when (role) {
     History.Role.USER -> {
         val split = attachments.splitForMessage()
         // Images become image_url parts; PDFs are dropped (OpenAI-compatible has no native PDF

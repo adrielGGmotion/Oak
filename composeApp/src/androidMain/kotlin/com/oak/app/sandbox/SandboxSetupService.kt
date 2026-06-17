@@ -1,4 +1,4 @@
-package com.oak.app.inference
+package com.oak.app.sandbox
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -9,16 +9,16 @@ import android.content.Intent
 import android.os.IBinder
 import com.oak.app.shared.R
 
-internal const val MODEL_DOWNLOAD_CHANNEL_ID = "oak_model_download_channel"
+internal const val SANDBOX_SETUP_CHANNEL_ID = "oak_sandbox_setup_channel"
 
-class ModelDownloadService : Service() {
+class SandboxSetupService : Service() {
 
     companion object {
-        const val NOTIFICATION_ID = 9002
-        const val EXTRA_MODEL_NAME = "model_name"
+        const val NOTIFICATION_ID = 9003
+        const val EXTRA_DETAIL = "detail"
     }
 
-    private var currentModelName: String? = null
+    private var currentDetail: String? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -26,8 +26,8 @@ class ModelDownloadService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.hasExtra(EXTRA_MODEL_NAME) == true) {
-            currentModelName = intent.getStringExtra(EXTRA_MODEL_NAME)
+        if (intent?.hasExtra(EXTRA_DETAIL) == true) {
+            currentDetail = intent.getStringExtra(EXTRA_DETAIL)
         }
         val notification = buildNotification()
         try {
@@ -41,7 +41,7 @@ class ModelDownloadService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onTimeout(startId: Int, fgsType: Int) {
-        // Don't stop — model downloads can take a long time (>10 min for multi-GB models).
+        // Don't stop — sandbox setup can take several minutes
     }
 
     override fun onDestroy() {
@@ -51,17 +51,17 @@ class ModelDownloadService : Service() {
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-            MODEL_DOWNLOAD_CHANNEL_ID,
-            getString(R.string.download_channel_name),
+            SANDBOX_SETUP_CHANNEL_ID,
+            getString(R.string.sandbox_channel_name),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
-            description = getString(R.string.download_channel_description)
+            description = getString(R.string.sandbox_channel_description)
         }
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
     private fun buildNotification(): Notification {
-        val builder = Notification.Builder(this, MODEL_DOWNLOAD_CHANNEL_ID)
+        val builder = Notification.Builder(this, SANDBOX_SETUP_CHANNEL_ID)
         val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -73,12 +73,12 @@ class ModelDownloadService : Service() {
         )
 
         return builder
-            .setContentTitle(currentModelName ?: getString(R.string.app_name))
-            .setContentText(getString(R.string.download_notification_text))
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(currentDetail ?: getString(R.string.sandbox_notification_text))
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
-            .setProgress(100, 0, true)
+            .setProgress(0, 0, true)
             .build()
     }
 }

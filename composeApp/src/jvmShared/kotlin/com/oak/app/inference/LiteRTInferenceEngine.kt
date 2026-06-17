@@ -519,7 +519,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                     throw IOException("Download failed: HTTP $responseCode")
                 }
 
-                startDownloadNotificationService()
+                startDownloadNotificationService(model.displayName)
                 notificationStarted = true
 
                 val contentLength = connection.contentLengthLong.takeIf { it > 0 } ?: model.sizeBytes
@@ -538,7 +538,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                             if (percent != lastNotifiedPercent) {
                                 lastNotifiedPercent = percent
                                 _downloadProgress.value = percent / 100f
-                                updateDownloadNotificationProgress(percent)
+                                updateDownloadNotificationProgress(percent, model.displayName)
                             }
                         }
                     }
@@ -555,6 +555,10 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                     tempFile.copyTo(targetFile, overwrite = true)
                     tempFile.delete()
                 }
+                postDownloadCompleteNotification(
+                    title = "Download complete",
+                    text = "${model.displayName} downloaded",
+                )
             } catch (e: Throwable) {
                 if (tempFile?.exists() == true) tempFile.delete()
                 if (e is CancellationException) throw e

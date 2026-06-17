@@ -6,6 +6,9 @@
     <string name="download_channel_name">Model Downloads</string>
     <string name="download_channel_description">Shows progress while downloading AI models</string>
     <string name="download_notification_text">Downloading model…</string>
+    <string name="sandbox_channel_name">Sandbox Setup</string>
+    <string name="sandbox_channel_description">Shows progress while setting up the Linux sandbox</string>
+    <string name="sandbox_notification_text">Setting up sandbox…</string>
     <string name="documents_provider_root_title">Oak</string>
     <string name="documents_provider_summary_folders">%1$d folders</string>
     <string name="documents_provider_summary_models">%1$d models</string>
