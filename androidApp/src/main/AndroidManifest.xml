@@ -8,6 +8,7 @@
    <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>
    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+   <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
 
@@ -60,6 +61,10 @@
             android:foregroundServiceType="dataSync" />
         <service
             android:name="com.oak.app.inference.ModelDownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+        <service
+            android:name="com.oak.app.sandbox.SandboxSetupService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
         <uses-native-library android:name="libvndksupport.so" android:required="false"/>

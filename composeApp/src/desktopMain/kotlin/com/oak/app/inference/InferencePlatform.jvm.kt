@@ -18,7 +18,7 @@ actual fun getAvailableDiskSpaceBytes(path: String): Long {
     return dir.usableSpace
 }
 
-actual fun startDownloadNotificationService() {
+actual fun startDownloadNotificationService(modelName: String) {
     // No foreground service needed on desktop
 }
 
@@ -26,6 +26,10 @@ actual fun stopDownloadNotificationService() {
     // No foreground service needed on desktop
 }
 
-actual fun updateDownloadNotificationProgress(percent: Int) {
+actual fun updateDownloadNotificationProgress(percent: Int, modelName: String) {
+    // No notification on desktop
+}
+
+actual fun postDownloadCompleteNotification(title: String, text: String) {
     // No notification on desktop
 }

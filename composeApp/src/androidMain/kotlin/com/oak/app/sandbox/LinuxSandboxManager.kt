@@ -1,8 +1,11 @@
 package com.oak.app.sandbox
 
+import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Environment
+import android.os.PowerManager
 import android.os.storage.StorageManager
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.oak.app.SandboxSessions
@@ -36,6 +39,8 @@ class LinuxSandboxManager(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var currentJob: Job? = null
     private val _state = MutableStateFlow<SandboxState>(SandboxState.NotInstalled)
+    private var setupWakeLock: PowerManager.WakeLock? = null
+    private var sandboxCompletionNotificationId = 20000
     val state: StateFlow<SandboxState> = _state
 
     private val sandboxDir: File
@@ -169,62 +174,74 @@ class LinuxSandboxManager(
     }
 
     private suspend fun setupInternal() {
-        val arch = getLinuxArch()
+        startSandboxForegroundService("Preparing...")
+        acquireSetupWakeLock()
+        try {
+            val arch = getLinuxArch()
 
-        // Verify proot is available in nativeLibraryDir
-        val proot = File(prootPath)
-        if (!proot.exists()) {
-            throw IllegalStateException(
-                "Proot binary not found at $prootPath. " +
-                    "nativeLibraryDir contents: ${File(nativeLibDir).listFiles()?.map { it.name } ?: "empty"}",
-            )
-        }
+            // Verify proot is available in nativeLibraryDir
+            val proot = File(prootPath)
+            if (!proot.exists()) {
+                throw IllegalStateException(
+                    "Proot binary not found at $prootPath. " +
+                        "nativeLibraryDir contents: ${File(nativeLibDir).listFiles()?.map { it.name } ?: "empty"}",
+                )
+            }
 
-        // Create directories. `homePath` getter creates the externally-visible
-        // sandbox-home dir on access, so we only need to ensure sandboxDir + tmp.
-        sandboxDir.mkdirs()
-        File(sandboxDir, "tmp").mkdirs()
+            // Create directories. `homePath` getter creates the externally-visible
+            // sandbox-home dir on access, so we only need to ensure sandboxDir + tmp.
+            sandboxDir.mkdirs()
+            File(sandboxDir, "tmp").mkdirs()
 
-        // Copy libtalloc with correct soname (Android strips .so.2 suffix in jniLibs)
-        copyLibtalloc()
+            // Copy libtalloc with correct soname (Android strips .so.2 suffix in jniLibs)
+            copyLibtalloc()
 
-        // Download rootfs
-        val rootfsDir = File(sandboxDir, "rootfs")
-        if (!rootfsDir.isDirectory) {
-            val tarGzFile = File(sandboxDir, "rootfs.tar.gz")
-            try {
-                _state.value = SandboxState.Downloading(0f)
-                downloader.download(arch, tarGzFile) { progress ->
-                    _state.value = SandboxState.Downloading(progress)
+            // Download rootfs
+            val rootfsDir = File(sandboxDir, "rootfs")
+            if (!rootfsDir.isDirectory) {
+                val tarGzFile = File(sandboxDir, "rootfs.tar.gz")
+                try {
+                    updateSandboxSetupNotification("Downloading rootfs...")
+                    _state.value = SandboxState.Downloading(0f)
+                    downloader.download(arch, tarGzFile) { progress ->
+                        _state.value = SandboxState.Downloading(progress)
+                    }
+
+                    updateSandboxSetupNotification("Extracting rootfs...")
+                    _state.value = SandboxState.Extracting
+                    downloader.extractTarGz(tarGzFile, rootfsDir)
+                } finally {
+                    tarGzFile.delete()
                 }
-
-                _state.value = SandboxState.Extracting
-                downloader.extractTarGz(tarGzFile, rootfsDir)
-            } finally {
-                tarGzFile.delete()
             }
-        }
 
-        // Post-setup
-        _state.value = SandboxState.Installing("Configuring...")
-        downloader.makeWritable(rootfsDir)
-        downloader.writeResolvConf(rootfsDir)
+            // Post-setup
+            updateSandboxSetupNotification("Configuring...")
+            _state.value = SandboxState.Installing("Configuring...")
+            downloader.makeWritable(rootfsDir)
+            downloader.writeResolvConf(rootfsDir)
 
-        val executor = createProotExecutor()
-        var updated = false
-        for (mirror in downloader.mirrors) {
-            downloader.writeRepositories(rootfsDir, mirror)
-            val result = executor.execute("apk update", timeoutSeconds = 60)
-            if (result["success"] as? Boolean == true) {
-                updated = true
-                break
+            val executor = createProotExecutor()
+            updateSandboxSetupNotification("Updating package lists (apk update)...")
+            var updated = false
+            for (mirror in downloader.mirrors) {
+                downloader.writeRepositories(rootfsDir, mirror)
+                val result = executor.execute("apk update", timeoutSeconds = 60)
+                if (result["success"] as? Boolean == true) {
+                    updated = true
+                    break
+                }
             }
-        }
-        if (!updated) {
-            throw IllegalStateException("apk update failed on all Alpine mirrors")
-        }
+            if (!updated) {
+                throw IllegalStateException("apk update failed on all Alpine mirrors")
+            }
 
-        _state.value = SandboxState.Ready
+            _state.value = SandboxState.Ready
+            postSandboxCompleteNotification("Sandbox setup complete")
+        } finally {
+            stopSandboxForegroundService()
+            releaseSetupWakeLock()
+        }
     }
 
     private fun copyLibtalloc() {
@@ -328,10 +345,13 @@ class LinuxSandboxManager(
             "openssh-client", "lftp", "rsync",
         )
         currentJob = scope.launch {
+            startSandboxForegroundService("Installing packages...")
+            acquireSetupWakeLock()
             try {
                 val executor = createProotExecutor()
                 for (pkg in packages) {
                     ensureActive()
+                    updateSandboxSetupNotification("Installing $pkg...")
                     _state.value = SandboxState.Installing("Installing $pkg...")
                     val result = executor.execute("apk add --no-cache $pkg", timeoutSeconds = 120)
                     ensureActive()
@@ -348,11 +368,15 @@ class LinuxSandboxManager(
                     }
                 }
                 _state.value = SandboxState.Ready
+                postSandboxCompleteNotification("Packages installed")
             } catch (_: kotlinx.coroutines.CancellationException) {
                 _state.value = SandboxState.Ready
             } catch (e: Exception) {
                 android.util.Log.e("LinuxSandbox", "Package install exception", e)
                 _state.value = SandboxState.Error("Install failed: ${e.message}")
+            } finally {
+                stopSandboxForegroundService()
+                releaseSetupWakeLock()
             }
         }
     }
@@ -363,6 +387,73 @@ class LinuxSandboxManager(
             sandboxDir.deleteRecursively()
             _state.value = SandboxState.NotInstalled
         }
+    }
+
+    private fun startSandboxForegroundService(detail: String? = null) {
+        try {
+            val intent = Intent(context, SandboxSetupService::class.java).apply {
+                if (detail != null) putExtra(SandboxSetupService.EXTRA_DETAIL, detail)
+            }
+            context.startForegroundService(intent)
+        } catch (_: Exception) {
+            // Service start may fail if app is in restricted state
+        }
+    }
+
+    private fun updateSandboxSetupNotification(detail: String) {
+        try {
+            // Restart with updated detail so the notification text reflects the current phase
+            startSandboxForegroundService(detail)
+        } catch (_: Exception) { }
+    }
+
+    private fun stopSandboxForegroundService() {
+        try {
+            context.stopService(Intent(context, SandboxSetupService::class.java))
+        } catch (_: Exception) { }
+    }
+
+    private fun postSandboxCompleteNotification(text: String) {
+        try {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val builder = android.app.Notification.Builder(context, SANDBOX_SETUP_CHANNEL_ID)
+            val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = android.app.PendingIntent.getActivity(
+                context,
+                0,
+                intent,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE,
+            )
+            val notification = builder
+                .setContentTitle("Sandbox setup")
+                .setContentText(text)
+                .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .build()
+            manager.notify(sandboxCompletionNotificationId++, notification)
+        } catch (_: Exception) { }
+    }
+
+    private fun acquireSetupWakeLock() {
+        try {
+            val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val lock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "Oak:SandboxSetupWakeLock",
+            )
+            lock.acquire()
+            setupWakeLock = lock
+        } catch (_: Exception) { }
+    }
+
+    private fun releaseSetupWakeLock() {
+        try {
+            setupWakeLock?.release()
+        } catch (_: Exception) { }
+        setupWakeLock = null
     }
 
     fun getDiskUsageMB(): Long {
