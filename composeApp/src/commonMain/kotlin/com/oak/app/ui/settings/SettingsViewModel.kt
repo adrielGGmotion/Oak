@@ -130,7 +130,6 @@ class SettingsViewModel(
         mcpServers = buildMcpServerEntries().toImmutableList(),
         sshServers = buildSshServerEntries().toImmutableList(),
         localActiveBackend = dataRepository.getLocalActiveBackend()?.value,
-        hfToken = dataRepository.getHfToken(),
         backendPreference = dataRepository.getBackendPreference(),
         localAvailableModels = dataRepository.getLocalAvailableModels().toImmutableList(),
         totalDeviceMemoryBytes = dataRepository.getTotalDeviceMemoryBytes(),
@@ -200,7 +199,6 @@ class SettingsViewModel(
         onCancelLocalModelDownload = ::onCancelLocalModelDownload,
         onDeleteLocalModel = ::onDeleteLocalModel,
         onChangeModelContextTokens = ::onChangeModelContextTokens,
-        onChangeHfToken = ::onChangeHfToken,
         onChangeBackendPreference = ::onChangeBackendPreference,
         onExportSettings = ::onExportSettings,
         onPrepareExport = ::onPrepareExport,
@@ -726,11 +724,6 @@ class SettingsViewModel(
         val stored = dataRepository.getModelContextTokens(model.id)
         model.id to if (stored > 0) stored else model.defaultContextTokens
     }.toImmutableMap()
-
-    private fun onChangeHfToken(token: String) {
-        dataRepository.setHfToken(token)
-        _state.update { it.copy(hfToken = token) }
-    }
 
     private fun onChangeBackendPreference(pref: String) {
         dataRepository.setBackendPreference(pref)

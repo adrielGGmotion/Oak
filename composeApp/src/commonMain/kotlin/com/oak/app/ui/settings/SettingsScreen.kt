@@ -37,8 +37,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Replay
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material3.AlertDialog
@@ -96,8 +94,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
@@ -979,7 +975,6 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
                     dragHandleModifier = if (entries.size >= 2) Modifier.draggableHandle() else null,
                     localActiveBackend = uiState.localActiveBackend,
                     backendPreference = uiState.backendPreference,
-                    hfToken = uiState.hfToken,
                     localAvailableModels = uiState.localAvailableModels,
                     totalDeviceMemoryBytes = uiState.totalDeviceMemoryBytes,
                     localFreeSpaceBytes = uiState.localFreeSpaceBytes,
@@ -990,7 +985,6 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
                     onCancelLocalModelDownload = actions.onCancelLocalModelDownload,
                     onDeleteLocalModel = actions.onDeleteLocalModel,
                     onChangeModelContextTokens = actions.onChangeModelContextTokens,
-                    onChangeHfToken = actions.onChangeHfToken,
                     onChangeBackendPreference = actions.onChangeBackendPreference,
                     modelContextTokens = uiState.modelContextTokens,
                 )
@@ -1148,8 +1142,6 @@ private fun ConfiguredServiceCardContent(
     onDeleteLocalModel: (String) -> Unit = {},
     onChangeModelContextTokens: (String, Int) -> Unit = { _, _ -> },
     backendPreference: String = "auto",
-    hfToken: String = "",
-    onChangeHfToken: (String) -> Unit = {},
     onChangeBackendPreference: (String) -> Unit = {},
     modelContextTokens: Map<String, Int> = emptyMap(),
 ) {
@@ -1232,7 +1224,6 @@ private fun ConfiguredServiceCardContent(
                         freeSpaceBytes = localFreeSpaceBytes,
                         activeBackend = localActiveBackend,
                         backendPreference = backendPreference,
-                        hfToken = hfToken,
                         downloadingModelId = localDownloadingModelId,
                         downloadProgress = localDownloadProgress,
                         downloadError = localDownloadError,
@@ -1241,7 +1232,6 @@ private fun ConfiguredServiceCardContent(
                         onCancelDownload = onCancelLocalModelDownload,
                         onDeleteModel = onDeleteLocalModel,
                         onChangeModelContextTokens = onChangeModelContextTokens,
-                        onChangeHfToken = onChangeHfToken,
                         onChangeBackendPreference = onChangeBackendPreference,
                         modelContextTokens = modelContextTokens,
                     )
@@ -1445,7 +1435,6 @@ private fun LiteRTSettings(
     freeSpaceBytes: Long,
     activeBackend: String? = null,
     backendPreference: String = "auto",
-    hfToken: String = "",
     downloadingModelId: String?,
     downloadProgress: Float?,
     downloadError: DownloadError?,
@@ -1454,7 +1443,6 @@ private fun LiteRTSettings(
     onCancelDownload: () -> Unit,
     onDeleteModel: (String) -> Unit,
     onChangeModelContextTokens: (String, Int) -> Unit,
-    onChangeHfToken: (String) -> Unit = {},
     onChangeBackendPreference: (String) -> Unit = {},
     modelContextTokens: Map<String, Int>,
 ) {
@@ -1557,27 +1545,6 @@ private fun LiteRTSettings(
     }
 
     Spacer(Modifier.height(12.dp))
-
-    var showHfToken by remember { mutableStateOf(false) }
-    OakOutlinedTextField(
-        value = hfToken,
-        onValueChange = onChangeHfToken,
-        label = { Text("HuggingFace Token") },
-        placeholder = { Text("hf_... (for gated models)") },
-        singleLine = true,
-        visualTransformation = if (showHfToken) VisualTransformation.None else PasswordVisualTransformation(),
-        trailingIcon = {
-            IconButton(onClick = { showHfToken = !showHfToken }) {
-                Icon(
-                    imageVector = if (showHfToken) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = if (showHfToken) "Hide token" else "Show token",
-                )
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-    )
-
-    Spacer(Modifier.height(8.dp))
 
     Text(
         text = stringResource(Res.string.litert_tool_support),

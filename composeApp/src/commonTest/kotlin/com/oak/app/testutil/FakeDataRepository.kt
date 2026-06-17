@@ -699,8 +699,6 @@ class FakeDataRepository : DataRepository {
     override val streamingReasoning: StateFlow<String?> = MutableStateFlow(null)
     override val streamingContent: StateFlow<String?> = MutableStateFlow(null)
     override fun getLocalActiveBackend(): StateFlow<String?>? = null
-    override fun getHfToken(): String = ""
-    override fun setHfToken(token: String) {}
     override fun getBackendPreference(): String = ""
     override fun setBackendPreference(pref: String) {}
 }

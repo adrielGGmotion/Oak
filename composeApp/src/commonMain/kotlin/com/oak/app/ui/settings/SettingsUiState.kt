@@ -125,7 +125,6 @@ data class SettingsUiState(
     val modelContextTokens: ImmutableMap<String, Int> = persistentMapOf(),
     val localActiveBackend: String? = null,
     val backendPreference: String = "auto",
-    val hfToken: String = "",
     val currentSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
     val pastSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
     val pendingDeletion: PendingDeletion? = null,

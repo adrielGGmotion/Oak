@@ -2654,7 +2654,7 @@ class RemoteDataRepository(
     }
 
     override fun startLocalModelDownload(model: LocalModel) {
-        localInferenceEngine?.startDownload(model, appSettings.getHfToken())
+        localInferenceEngine?.startDownload(model)
     }
 
     override fun cancelLocalModelDownload() {
@@ -2666,12 +2666,6 @@ class RemoteDataRepository(
     }
 
     override fun getLocalActiveBackend(): StateFlow<String?>? = localInferenceEngine?.activeBackend
-
-    override fun getHfToken(): String = appSettings.getHfToken()
-
-    override fun setHfToken(token: String) {
-        appSettings.setHfToken(token)
-    }
 
     override fun getBackendPreference(): String = appSettings.getBackendPreference()
 
