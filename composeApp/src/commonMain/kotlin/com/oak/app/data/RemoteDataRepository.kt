@@ -69,6 +69,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -510,13 +511,23 @@ class RemoteDataRepository(
         }
 
         // Pass tools to engine.chat() — litertlm handles tool calling natively
-        val response = stripThinkBlocks(engine.chat(
-            messages = inferenceMessages,
-            systemPrompt = systemPrompt,
-            tools = localTools,
-        ))
-
-        return response
+        // Collect streaming tokens from the engine and propagate to UI StateFlows
+        return coroutineScope {
+            val streamingJob = launch {
+                engine.streamingContent.collect { token ->
+                    _streamingContent.value = token
+                }
+            }
+            try {
+                stripThinkBlocks(engine.chat(
+                    messages = inferenceMessages,
+                    systemPrompt = systemPrompt,
+                    tools = localTools,
+                ))
+            } finally {
+                streamingJob.cancel()
+            }
+        }
     }
 
     /**

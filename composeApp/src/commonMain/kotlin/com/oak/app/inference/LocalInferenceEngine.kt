@@ -96,6 +96,12 @@ interface LocalInferenceEngine {
     /** "auto", "gpu", or "cpu" — the backend preference used at last init. */
     val currentBackendPref: String
 
+    /** Live streaming content tokens during an in-progress chat() call. */
+    val streamingContent: StateFlow<String?>
+
+    /** Live streaming reasoning tokens during an in-progress chat() call. */
+    val streamingReasoning: StateFlow<String?>
+
     suspend fun initialize(model: DownloadedModel, contextTokens: Int = 0, backendPreference: String = "auto")
     suspend fun release()
 
