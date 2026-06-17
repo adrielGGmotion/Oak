@@ -125,6 +125,7 @@ object CommonTools {
         description = "Get estimated location from IP address",
         nameRes = Res.string.tool_get_location_name,
         descriptionRes = Res.string.tool_get_location_description,
+        isEnabled = false,
     )
 
     val localTimeTool = object : Tool {
