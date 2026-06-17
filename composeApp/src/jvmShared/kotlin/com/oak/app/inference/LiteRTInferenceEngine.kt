@@ -160,6 +160,12 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
     private val _activeBackend = MutableStateFlow<String?>(null)
     override val activeBackend: StateFlow<String?> = _activeBackend
 
+    private val _streamingContent = MutableStateFlow<String?>(null)
+    override val streamingContent: StateFlow<String?> = _streamingContent
+
+    private val _streamingReasoning = MutableStateFlow<String?>(null)
+    override val streamingReasoning: StateFlow<String?> = _streamingReasoning
+
     override suspend fun initialize(model: DownloadedModel, contextTokens: Int, backendPreference: String) {
         withContext(Dispatchers.IO) {
             idleReleaseJob?.cancel()
@@ -369,7 +375,14 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
 
         runCatching { conversation?.close() }
         conversation = engine.createConversation(config)
-        sentUserMessageCount = messages.count { it.role == "user" }
+        // Only count user messages that were included as initialMessages (before the
+        // last user message) — the last user message still needs to be sent via
+        // sendMessageAsync in chat().
+        sentUserMessageCount = if (lastUserIndex > 0) {
+            messages.subList(0, lastUserIndex).count { it.role == "user" }
+        } else {
+            0
+        }
         lastSystemPrompt = systemPrompt
         lastToolCount = toolProviders.size
     }
@@ -389,10 +402,12 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
         val callback = object : MessageCallback {
             override fun onMessage(message: Message) {
                 responseBuilder.append(message.toString())
+                _streamingContent.value = responseBuilder.toString()
             }
 
             override fun onDone() {
                 latch.countDown()
+                _streamingContent.value = null
                 if (continuation.isActive) {
                     val response = responseBuilder.toString()
                     continuation.resume(response)
@@ -402,6 +417,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
             override fun onError(throwable: Throwable) {
                 errorRef.set(throwable)
                 latch.countDown()
+                _streamingContent.value = null
                 if (continuation.isActive) {
                     continuation.resumeWithException(throwable)
                 }
