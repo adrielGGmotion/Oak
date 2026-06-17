@@ -38,6 +38,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
+import com.oak.app.ui.LocalOakAiFontFamily
+import com.oak.app.ui.toTypography
 import com.oak.app.getBackgroundDispatcher
 import com.oak.app.ui.dynamicui.FrozenSubmission
 import com.oak.app.ui.dynamicui.toSpeakableText
@@ -71,6 +73,8 @@ internal fun BotMessage(
     var reasoningExpanded by remember { mutableStateOf(false) }
     val effectiveFrozen = if (isEditing && frozen != null) frozen.copy(pressedEvent = null) else frozen
     val effectiveInteractive = if (frozen != null) (onResubmit != null && isEditing) else isInteractive
+    val aiFontFamily = LocalOakAiFontFamily.current
+    val aiTypography = aiFontFamily.toTypography()
     val oakUiCallback: (String, Map<String, String>) -> Unit = if (onResubmit != null) {
         { event, data ->
             isEditing = false
@@ -111,24 +115,28 @@ internal fun BotMessage(
                             )
                         }
                         if (reasoningExpanded) {
-                            MarkdownContent(
-                                content = reasoningContent,
-                                modifier = Modifier.padding(top = 4.dp),
-                            )
+                            MaterialTheme(typography = aiTypography) {
+                                MarkdownContent(
+                                    content = reasoningContent,
+                                    modifier = Modifier.padding(top = 4.dp),
+                                )
+                            }
                         }
                     }
                 }
             }
             Box {
-                SelectionContainer {
-                    MarkdownContent(
-                        document = document,
-                        isInteractive = effectiveInteractive,
-                        onUiCallback = oakUiCallback,
-                        frozen = effectiveFrozen,
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(start = 8.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
-                    )
+                MaterialTheme(typography = aiTypography) {
+                    SelectionContainer {
+                        MarkdownContent(
+                            document = document,
+                            isInteractive = effectiveInteractive,
+                            onUiCallback = oakUiCallback,
+                            frozen = effectiveFrozen,
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(start = 8.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
+                        )
+                    }
                 }
                 if (frozen != null && onResubmit != null) {
                     Box(

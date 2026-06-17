@@ -107,6 +107,8 @@ import com.oak.app.ui.dynamicui.FrozenSubmission
 import com.oak.app.ui.dynamicui.OakUiRenderer
 import com.oak.app.ui.dynamicui.toSpeakableText
 import com.oak.app.ui.handCursor
+import com.oak.app.ui.LocalOakAiFontFamily
+import com.oak.app.ui.toTypography
 import com.oak.app.ui.markdown.MarkdownContent
 import com.oak.app.ui.markdown.OakUiBlock
 import com.oak.app.ui.markdown.parseMarkdown
@@ -911,6 +913,8 @@ private fun StreamingMessage(
     reasoningContent: String?,
 ) {
     var reasoningExpanded by remember { mutableStateOf(false) }
+    val aiFontFamily = LocalOakAiFontFamily.current
+    val aiTypography = aiFontFamily.toTypography()
 
     Row(modifier = Modifier.fillMaxWidth()) {
         BotAvatar(
@@ -943,20 +947,24 @@ private fun StreamingMessage(
                             )
                         }
                         if (reasoningExpanded) {
-                            MarkdownContent(
-                                content = reasoningContent,
-                                modifier = Modifier.padding(top = 4.dp),
-                            )
+                            MaterialTheme(typography = aiTypography) {
+                                MarkdownContent(
+                                    content = reasoningContent,
+                                    modifier = Modifier.padding(top = 4.dp),
+                                )
+                            }
                         }
                     }
                 }
             }
-            MarkdownContent(
-                content = content,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 8.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
-            )
+            MaterialTheme(typography = aiTypography) {
+                MarkdownContent(
+                    content = content,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+                )
+            }
         }
     }
 }
