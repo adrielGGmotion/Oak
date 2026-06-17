@@ -1654,7 +1654,7 @@ private fun LiteRTSettings(
                         onChangeModelContextTokens(model.id, contextTokens)
                     },
                     valueRange = 0f..steps.toFloat(),
-                    steps = steps - 1,
+                    steps = (steps - 1).coerceAtLeast(0),
                 )
                 if (performance == DevicePerformance.POOR) {
                     Spacer(Modifier.height(4.dp))
