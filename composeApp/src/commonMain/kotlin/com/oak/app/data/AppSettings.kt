@@ -674,12 +674,6 @@ class AppSettings(private val settings: Settings) {
         settings.putString(KEY_MCP_SERVERS, json)
     }
 
-    fun getHfToken(): String = settings.getString(KEY_HF_TOKEN, "")
-
-    fun setHfToken(token: String) {
-        settings.putString(KEY_HF_TOKEN, token)
-    }
-
     fun getBackendPreference(): String = settings.getString(KEY_BACKEND_PREFERENCE, "auto")
 
     fun setBackendPreference(pref: String) {
@@ -1298,7 +1292,6 @@ class AppSettings(private val settings: Settings) {
         const val KEY_INSTANCE_MIGRATION_COMPLETE = "instance_migration_complete_v1"
         const val KEY_BASE_URL_V1_MIGRATION_COMPLETE = "base_url_v1_migration_complete"
 
-        const val KEY_HF_TOKEN = "hf_token"
         const val KEY_BACKEND_PREFERENCE = "litert_backend"
         const val KEY_MODEL_CONTEXT_PREFIX = "model_context_"
 

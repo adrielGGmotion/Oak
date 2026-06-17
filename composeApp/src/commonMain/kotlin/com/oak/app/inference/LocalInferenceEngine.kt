@@ -115,7 +115,7 @@ interface LocalInferenceEngine {
     fun getDownloadedModels(): List<DownloadedModel>
     fun getAvailableModels(): List<LocalModel>
     fun getFreeSpaceBytes(): Long
-    fun startDownload(model: LocalModel, hfToken: String = "")
+    fun startDownload(model: LocalModel)
     fun cancelDownload()
     suspend fun deleteModel(modelId: String)
 }
