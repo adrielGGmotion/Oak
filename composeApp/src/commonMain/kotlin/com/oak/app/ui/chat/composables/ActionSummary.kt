@@ -54,8 +54,8 @@ data class ToolAction(
 )
 
 /**
- * A group of tool calls that happened between two assistant text messages.
- * Rendered as an inline summary row in the chat; tapping opens a detail sheet.
+ * A group of tool calls triggered by a message.
+ * Rendered as an inline summary row below the triggering message; tapping opens a detail sheet.
  */
 @Immutable
 data class ActionSummary(
@@ -77,17 +77,13 @@ data class ActionSummary(
 /**
  * Derives [ActionSummary] groups from chat [history].
  *
- * Groups all tool calls between two text messages into a single summary.
- * The summary is keyed to the *following* text ASSISTANT entry so it renders
- * right before that answer — matching Claude's "N steps >" pattern.
- *
- * If history ends with tool calls (no final text yet), the summary is keyed
- * to the last tool-calling entry so it still appears.
+ * Tool calls are anchored to the most recent message before them — either
+ * the last user message or the last assistant text response. Consecutive
+ * tool-calling entries are grouped under the same anchor.
  */
 fun deriveActionSummaries(history: List<History>): List<ActionSummary> {
     val cleanHistory = history.filter { it.role != History.Role.TOOL_EXECUTING }
 
-    // --- First pass: collect all tool results keyed by toolCallId -----------
     val allToolResults = mutableMapOf<String, History>()
     for (entry in cleanHistory) {
         if (entry.role == History.Role.TOOL && entry.toolCallId != null) {
@@ -95,17 +91,15 @@ fun deriveActionSummaries(history: List<History>): List<ActionSummary> {
         }
     }
 
-    // --- Second pass: walk history, accumulating tool calls into rounds ---
-    // A "round" = all tool calls since the last user/text-assistant message,
-    // ending at the next text ASSISTANT (or end of history).
     data class Round(
         val toolActions: List<ToolAction>,
-        val anchorId: String,      // the ASSISTANT id this summary attaches to
+        val anchorId: String,
     )
 
     val rounds = mutableListOf<Round>()
     var pendingActions = mutableListOf<ToolAction>()
     var pendingAnchorId: String? = null
+    var lastMessageId: String? = null
 
     fun flushRound() {
         val anchor = pendingAnchorId
@@ -116,52 +110,50 @@ fun deriveActionSummaries(history: List<History>): List<ActionSummary> {
         }
     }
 
-    var lastUserOrTextIdx = -1
-
-    for ((idx, entry) in cleanHistory.withIndex()) {
-        if (entry.role != History.Role.ASSISTANT) continue
-
-        if (!entry.toolCalls.isNullOrEmpty()) {
-            // Tool-calling assistant entry — accumulate its tool calls
-            for (tc in entry.toolCalls) {
-                val toolEntry = allToolResults[tc.id]
-                val resultContent = toolEntry?.content
-                val registry = ToolDisplayRegistry.lookup(tc.name)
-                pendingActions.add(
-                    ToolAction(
-                        id = tc.id,
-                        name = tc.name,
-                        displayName = registry.displayName.ifEmpty { ToolDisplayRegistry.humanizeToolName(tc.name) },
-                        icon = registry.icon,
-                        isError = resultContent?.let { isToolError(it) } ?: false,
-                        arguments = tc.arguments,
-                        result = resultContent,
-                        sources = if (registry.isSearchTool && resultContent != null) {
-                            extractSearchSources(resultContent)
-                        } else {
-                            persistentListOf()
-                        },
-                        isFileCreation = registry.isFileCreationTool,
-                    ),
-                )
+    for (entry in cleanHistory) {
+        when (entry.role) {
+            History.Role.USER -> {
+                lastMessageId = entry.id
             }
-            // This tool-calling entry becomes the fallback anchor
-            // if no text response follows
-            if (pendingAnchorId == null) {
-                pendingAnchorId = entry.id
+
+            History.Role.ASSISTANT -> {
+                if (!entry.toolCalls.isNullOrEmpty()) {
+                    if (pendingActions.isEmpty()) {
+                        pendingAnchorId = lastMessageId
+                    }
+                    for (tc in entry.toolCalls) {
+                        val toolEntry = allToolResults[tc.id]
+                        val resultContent = toolEntry?.content
+                        val registry = ToolDisplayRegistry.lookup(tc.name)
+                        pendingActions.add(
+                            ToolAction(
+                                id = tc.id,
+                                name = tc.name,
+                                displayName = registry.displayName.ifEmpty { ToolDisplayRegistry.humanizeToolName(tc.name) },
+                                icon = registry.icon,
+                                isError = resultContent?.let { isToolError(it) } ?: false,
+                                arguments = tc.arguments,
+                                result = resultContent,
+                                sources = if (registry.isSearchTool && resultContent != null) {
+                                    extractSearchSources(resultContent)
+                                } else {
+                                    persistentListOf()
+                                },
+                                isFileCreation = registry.isFileCreationTool,
+                            ),
+                        )
+                    }
+                } else if (entry.content.isNotEmpty() && !entry.isThinking) {
+                    flushRound()
+                    lastMessageId = entry.id
+                }
             }
-        } else if (entry.content.isNotEmpty() && !entry.isThinking) {
-            // Text response — this anchors the previous round of tool calls
-            flushRound()
-            // Start a new potential round anchored to this text entry
-            pendingAnchorId = entry.id
-            lastUserOrTextIdx = idx
+
+            else -> {}
         }
     }
-    // Flush any trailing round (in-progress streaming)
     flushRound()
 
-    // --- Third pass: build summaries for each round ------------------------
     return rounds.mapNotNull { round ->
         buildSummaryFromActions(round.toolActions, round.anchorId)
     }
@@ -175,10 +167,8 @@ private fun buildSummaryFromActions(
     allActions: List<ToolAction>,
     anchorAssistantId: String,
 ): ActionSummary? {
-    // Skip if all tools are hidden
     if (allActions.all { ToolDisplayRegistry.isHiddenTool(it.name) }) return null
 
-    // Filter out hidden tools for display
     val visibleActions = allActions.filter { !ToolDisplayRegistry.isHiddenTool(it.name) }
     if (visibleActions.isEmpty()) return null
 
@@ -187,7 +177,6 @@ private fun buildSummaryFromActions(
     val truncatedText = truncateText(displayText, MAX_SUMMARY_TEXT_LENGTH)
     val fileCreationCount = visibleActions.count { it.isFileCreation }
 
-    // Complete = all actions have results
     val isComplete = visibleActions.all { action ->
         allActions.any { it.id == action.id && it.result != null }
     }

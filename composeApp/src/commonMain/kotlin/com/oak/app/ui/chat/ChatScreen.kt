@@ -717,21 +717,12 @@ private fun ChatModeScreen(
                                     items(uiState.history, key = { it.id }, contentType = { it.role }) { history ->
                                         when (history.role) {
                                             History.Role.USER -> {
-                                                // Submissions are shown by the paired assistant's frozen oak-ui card
-                                                // above; the "Responded with: …" text bubble would be redundant.
                                                 if (history.uiSubmission == null) {
                                                     UserMessage(
                                                         message = history.content,
                                                         attachments = history.attachments,
                                                     )
                                                 }
-                                            }
-
-                                            History.Role.ASSISTANT -> {
-                                                // Action summary BEFORE assistant message (Claude pattern)
-                                                // Shows what the AI did to arrive at the answer.
-                                                // Rendered outside the content guard so it shows even when
-                                                // the model returned tool calls without text content.
                                                 if (!uiState.isInteractiveMode) {
                                                     summariesByAssistantId[history.id]?.let { summary ->
                                                         ActionSummaryRow(
@@ -743,8 +734,9 @@ private fun ChatModeScreen(
                                                         }
                                                     }
                                                 }
-                                                // Skip thinking messages unless it's the last assistant message
-                                                // (i.e. the model only returned reasoning with no content)
+                                            }
+
+                                            History.Role.ASSISTANT -> {
                                                 if (history.content.isNotEmpty() && !history.isThinking) {
                                                     val isLastAssistant = history.id == lastAssistantId
                                                     val frozen = frozenByAssistantId[history.id]
@@ -776,6 +768,17 @@ private fun ChatModeScreen(
                                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
                                                         )
+                                                    }
+                                                }
+                                                if (!uiState.isInteractiveMode) {
+                                                    summariesByAssistantId[history.id]?.let { summary ->
+                                                        ActionSummaryRow(
+                                                            summary = summary,
+                                                            onTap = { selectedSummary = summary },
+                                                        )
+                                                        if (summary.hasArtifacts) {
+                                                            ArtifactBadgeRow(count = summary.artifactCount)
+                                                        }
                                                     }
                                                 }
                                             }
