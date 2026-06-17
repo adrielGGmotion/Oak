@@ -83,7 +83,11 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "../composeApp/proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "../composeApp/proguard-rules.pro",
+                "proguard-android.pro"
+            )
             signingConfig =
                 if (rootProject.file("release.keystore").exists()) {
                     signingConfigs.getByName("release")
