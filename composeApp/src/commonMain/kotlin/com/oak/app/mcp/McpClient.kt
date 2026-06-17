@@ -54,12 +54,10 @@ class McpClient(
             setBody(requestBody)
         }
 
-        // Track session ID from response
         response.headers["Mcp-Session-Id"]?.let { sessionId = it }
 
         val responseText = response.bodyAsText()
 
-        // Handle SSE response
         if (response.headers["Content-Type"]?.contains("text/event-stream") == true) {
             return parseSseResponse(responseText)
         }
@@ -68,7 +66,6 @@ class McpClient(
     }
 
     private fun parseSseResponse(sseText: String): JsonRpcResponse {
-        // Parse SSE format: look for "data: " lines and find the JSON-RPC response
         val lines = sseText.lines()
         val dataLines = lines.filter { it.startsWith("data: ") }
         for (line in dataLines) {
@@ -77,7 +74,6 @@ class McpClient(
             try {
                 return json.decodeFromString(JsonRpcResponse.serializer(), data)
             } catch (_: Exception) {
-                // Not a valid JSON-RPC response, continue
             }
         }
         throw McpException("No valid JSON-RPC response found in SSE stream")
@@ -103,7 +99,6 @@ class McpClient(
             throw McpException("Initialize failed: ${response.error.message}")
         }
 
-        // Send initialized notification (no id, no response expected)
         sendNotification("notifications/initialized")
     }
 

@@ -90,7 +90,6 @@ object EmailTools {
                 ?: return mapOf("success" to false, "error" to "Missing password")
             val displayName = args["display_name"]?.toString() ?: ""
 
-            // Auto-detect or use provided settings
             val detected = ServerAutoDetect.detect(email)
             val imapHost = args["imap_host"]?.toString() ?: detected?.imapHost
                 ?: return mapOf("success" to false, "error" to "Cannot auto-detect server for this email. Please provide imap_host and smtp_host.")
@@ -99,7 +98,6 @@ object EmailTools {
                 ?: return mapOf("success" to false, "error" to "Cannot auto-detect SMTP server. Please provide smtp_host.")
             val smtpPort = (args["smtp_port"] as? Number)?.toInt() ?: detected?.smtpPort ?: 587
 
-            // Test IMAP connection
             val imap = ImapClient(imapHost, imapPort)
             return try {
                 imap.connect()

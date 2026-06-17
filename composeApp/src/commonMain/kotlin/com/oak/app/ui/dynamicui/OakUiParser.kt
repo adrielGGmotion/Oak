@@ -21,9 +21,7 @@ import kotlinx.collections.immutable.toImmutableList
  */
 object OakUiParser {
 
-    // =========================================================================================
     // Public API
-    // =========================================================================================
 
     /** Result of decoding a oak-ui fence body; consumed by the markdown parser. */
     sealed interface UiBlockResult {
@@ -63,9 +61,7 @@ object OakUiParser {
         }
     }
 
-    // =========================================================================================
     // Internals
-    // =========================================================================================
 
     /** Try to parse a single NDJSON line, retrying with `sanitizeJson` on the first failure. */
     private fun tryParseLine(line: String): OakUiNode? = runCatching { parseSingleNode(line) }.getOrNull()
@@ -78,9 +74,7 @@ object OakUiParser {
     /** Parse a repaired JSON string into a [OakUiNode] via the direct builder pipeline. */
     private fun parseSingleNode(json: String): OakUiNode? = parseNode(SharedJson.parseToJsonElement(json))
 
-    // =========================================================================================
     // Stage 2: syntax repair
-    // =========================================================================================
 
     /** Fix common LLM JSON syntax errors like `"key=[` instead of `"key":[`. */
     private val brokenKeySyntax = Regex(""""(\w+)=([{\[])""")

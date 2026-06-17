@@ -227,7 +227,6 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
             Box(
                 modifier = Modifier.fillMaxSize(),
             ) {
-                // Content area fills remaining space
                 if (!hasAssistantResponse && !uiState.isLoading) {
                     Column(
                         modifier = Modifier.align(Alignment.Center),
@@ -258,7 +257,6 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
                     }
                 }
 
-                // Full QuestionInput stays in the column flow
                 if (showFullInput) {
                     QuestionInput(
                         modifier = Modifier.align(Alignment.BottomEnd),
@@ -442,7 +440,6 @@ private fun InteractiveModeContent(
             }
         }
 
-        // Error state
         uiState.error?.let { error ->
             Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
                 ErrorMessage(error = error, retry = uiState.actions.retry)
@@ -625,9 +622,7 @@ private fun ChatModeScreen(
                                             try {
                                                 textToSpeech?.say(lastMessage.content.toSpeakableText())
                                             } catch (_: TextToSpeechSynthesisInterruptedError) {
-                                                // Speech was interrupted by user
                                             } catch (_: Exception) {
-                                                // Handle TTS errors gracefully (service failure, audio issues, etc.)
                                             } finally {
                                                 uiState.actions.setIsSpeaking(false, lastMessage.id)
                                             }

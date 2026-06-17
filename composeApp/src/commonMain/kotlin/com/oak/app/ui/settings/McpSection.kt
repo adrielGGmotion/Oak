@@ -146,7 +146,6 @@ private fun McpServerCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Status dot
                 val statusColor = when (server.connectionStatus) {
                     McpConnectionStatus.Connected -> StatusColorConnected
                     McpConnectionStatus.Connecting -> StatusColorChecking
@@ -192,7 +191,6 @@ private fun McpServerCard(
             if (expanded) {
                 Spacer(Modifier.height(12.dp))
 
-                // Status text
                 val statusText = when (server.connectionStatus) {
                     McpConnectionStatus.Connected -> stringResource(Res.string.settings_mcp_status_connected)
                     McpConnectionStatus.Connecting -> stringResource(Res.string.settings_mcp_status_connecting)
@@ -211,7 +209,6 @@ private fun McpServerCard(
                     Spacer(Modifier.height(8.dp))
                 }
 
-                // Tools list
                 if (server.tools.isNotEmpty()) {
                     for (tool in server.tools) {
                         Row(

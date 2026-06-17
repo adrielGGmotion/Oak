@@ -853,7 +853,6 @@ class RemoteDataRepository(
         val previousConversationId = _currentConversationId.value
         val previousHistory = chatHistory.value.toList()
 
-        // Load the target conversation or set fresh state
         if (savedConversations.value.any { it.id == conversationId }) {
             loadConversation(conversationId)
         } else {
@@ -868,7 +867,6 @@ class RemoteDataRepository(
         } finally {
             askForConversationId = null
 
-            // Restore previous context
             if (previousConversationId != null && savedConversations.value.any { it.id == previousConversationId }) {
                 loadConversation(previousConversationId)
             } else {
@@ -1069,7 +1067,6 @@ class RemoteDataRepository(
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
 
-        // Loop until AI returns a final response (no more function calls)
         try {
         while (true) {
             iteration++
@@ -1096,7 +1093,6 @@ class RemoteDataRepository(
             }
             val parts = response.candidates.firstOrNull()?.content?.parts ?: return ""
 
-            // Check for function calls in the response (parts that have functionCall)
             val partsWithFunctionCalls = parts.filter { it.functionCall != null }
             val toolCallInfos: List<ToolCallInfo>
             val textContent: String
@@ -1124,7 +1120,6 @@ class RemoteDataRepository(
                     .replace(INVOKE_BLOCK_REGEX, "").trim()
             }
 
-            // Check for repetition
             val signatures = toolCallInfos.map { "${it.name}:${it.arguments.hashCode()}" }
             if (isRepeatingToolCalls(recentSignatures, signatures)) {
                 val bailoutMessages = currentMessages.map { it.toGeminiMessageDto() }
@@ -1139,7 +1134,6 @@ class RemoteDataRepository(
             }
             recentSignatures.addAll(signatures)
 
-            // Add assistant message with tool calls to history (skip thought parts)
             history.update {
                 it.toMutableList().apply {
                     add(
@@ -1152,10 +1146,8 @@ class RemoteDataRepository(
                 }
             }
 
-            // Execute all tool calls in parallel
             val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
 
-            // Add all tool results to history and trim to fit context window
             history.update { h ->
                 val updated = buildList<History>(h.size + toolResults.size) {
                     for (entry in h) {
@@ -1389,7 +1381,6 @@ class RemoteDataRepository(
                     .replace(INVOKE_BLOCK_REGEX, "").trim()
             }
 
-            // Check for repetition
             val signatures = toolCallInfos.map { "${it.name}:${it.arguments.hashCode()}" }
             if (isRepeatingToolCalls(recentSignatures, signatures)) {
                 val bailoutResponse = retryApiCall {
@@ -1403,7 +1394,7 @@ class RemoteDataRepository(
             }
             recentSignatures.addAll(signatures)
 
-            // Add assistant message with tool calls to history
+
             history.update {
                 it.toMutableList().apply {
                     add(
@@ -1416,10 +1407,8 @@ class RemoteDataRepository(
                 }
             }
 
-            // Execute all tool calls in parallel
             val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
 
-            // Add all tool results to history and trim to fit context window
             history.update { h ->
                 val updated = buildList<History>(h.size + toolResults.size) {
                     for (entry in h) {

@@ -96,11 +96,9 @@ class OakToolProvider(private val tool: Tool) : OpenApiTool {
 class LocalToolAdapter(private val localTool: LocalTool) : OpenApiTool {
 
     override fun getToolDescriptionJsonString(): String {
-        // If the LocalTool has a pre-built description JSON, use it
         if (localTool.descriptionJsonString.isNotBlank()) {
             return localTool.descriptionJsonString
         }
-        // Otherwise, build a minimal tool description from the name
         val jsonObject = buildJsonObject {
             put("name", localTool.name)
             put("description", localTool.name)

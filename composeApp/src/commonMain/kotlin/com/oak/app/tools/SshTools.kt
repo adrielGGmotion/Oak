@@ -528,7 +528,6 @@ object SshTools {
 
             val escapedPath = escapeShellArg(path)
 
-            // Single remote command: check existence, then emit name|type|size per entry
             val cmd = "if [ ! -d $escapedPath ]; then echo ___NOT_A_DIR___; exit 0; fi;" +
                 " ls -1a $escapedPath 2>/dev/null | head -n 202 | while IFS= read -r f; do" +
                 " if [ -z \"\$f\" ] || [ \"\$f\" = \".\" ] || [ \"\$f\" = \"..\" ]; then continue; fi;" +
