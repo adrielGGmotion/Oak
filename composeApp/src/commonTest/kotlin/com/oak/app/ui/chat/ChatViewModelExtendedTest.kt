@@ -262,17 +262,6 @@ class ChatViewModelExtendedTest {
 
     // ---- showPrivacyInfo ----
 
-    @Test
-    fun `showPrivacyInfo is false when current service is not Free`() = runTest {
-        fakeRepository.setCurrentService(Service.Gemini)
-        val viewModel = createViewModel()
-        viewModel.state.test {
-            val state = awaitItem()
-            assertFalse(state.showPrivacyInfo)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
     // ---- files ----
 
     @Test

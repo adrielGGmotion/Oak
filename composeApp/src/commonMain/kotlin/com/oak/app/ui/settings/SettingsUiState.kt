@@ -12,7 +12,6 @@ import com.oak.app.data.SmsSyncState
 import com.oak.app.data.ThemeMode
 import com.oak.app.inference.DownloadError
 import com.oak.app.inference.LocalModel
-import com.oak.app.network.dtos.SponsorsResponseDto
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshConnectionStatus
@@ -106,7 +105,6 @@ data class SettingsUiState(
     val notificationListenerAccessGranted: Boolean = false,
     val notificationListenerBound: Boolean = false,
     val notificationPendingCount: Int = 0,
-    val isFreeFallbackEnabled: Boolean = true,
     val isStreamingEnabled: Boolean = true,
     val uiScale: Float = 1.0f,
     val showUiScale: Boolean = false,
@@ -125,8 +123,6 @@ data class SettingsUiState(
     val modelContextTokens: ImmutableMap<String, Int> = persistentMapOf(),
     val localActiveBackend: String? = null,
     val backendPreference: String = "auto",
-    val currentSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
-    val pastSponsors: ImmutableList<SponsorsResponseDto.Sponsor> = persistentListOf(),
     val pendingDeletion: PendingDeletion? = null,
 )
 

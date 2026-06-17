@@ -14,12 +14,6 @@
     <string name="settings_content_description">ترتیبات</string>
     <string name="bot_message_speech_content_description">تقریر</string>
     <string name="bot_message_copy_content_description">کاپی</string>
-    <string name="settings_free_tier_title">مفت درجہ</string>
-    <string name="settings_free_tier_description">جیسے جیسے صارفین کی تعداد بڑھتی ہے، سرپرستی بنیادی ڈھانچے کو بڑھانے، سب کے لیے شرح کی حدود بڑھانے اور ترقی کو فعال رکھنے میں مدد کرتی ہے۔</string>
-    <string name="settings_become_sponsor">GitHub سرپرست بنیں</string>
-    <string name="settings_business_partnerships">کاروباری شراکت داری</string>
-    <string name="settings_business_partnerships_description">اپنی کمپنی کا لوگو دکھانا چاہتے ہیں یا اسٹریٹجک شراکت داری پر بات کرنا چاہتے ہیں؟</string>
-    <string name="settings_contact_sponsorship">اسٹریٹجک سرپرستی کے لیے رابطہ کریں</string>
     <string name="settings_status_error_invalid_key">غلط API کلید</string>
     <string name="settings_status_error_quota_exhausted">کوٹہ ختم ہو گیا</string>
     <string name="settings_status_error_rate_limited">شرح کی حد تک پہنچ گئی</string>
@@ -48,8 +42,6 @@
     <string name="settings_tab_tools">ٹولز</string>
     <string name="settings_tab_integrations">انٹیگریشنز</string>
     <string name="tools_count">%1$d ٹولز</string>
-    <string name="privacy_agree_prefix">سروس استعمال کرکے، آپ اتفاق کرتے ہیں </string>
-    <string name="privacy_policy">رازداری کی پالیسی</string>
     <string name="settings_tab_general">عمومی</string>
     <string name="settings_tab_agent">ایجنٹ</string>
     <string name="tool_set_alarm_name">الارم سیٹ کریں</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">آخری چیک ناکام %1$s</string>
     <string name="settings_email_refresh">اکاؤنٹ ریفریش کریں</string>
     <string name="settings_add_service">سروس شامل کریں</string>
-    <string name="settings_free_fallback">متبادل کے طور پر استعمال کریں</string>
-    <string name="service_free_fast">مفت تیز</string>
-    <string name="service_free_expert">مفت ماہر</string>
     <string name="settings_heartbeat">دل کی دھڑکن</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] یہ ایک خودکار سیلف چیک ہے۔ اپنی یادداشتوں اور زیر التوا کاموں کا جائزہ لیں۔ اگر سب کچھ ٹھیک ہے اور کسی چیز پر توجہ کی ضرورت نہیں ہے تو بالکل اس طرح جواب دیں: HEARTBEAT_OK\nاگر کسی چیز پر توجہ کی ضرورت ہے (پرانی یادداشتیں، واجب الادا کام، صارف کے فالو اپ)، اسے حل کریں۔</string>
     <string name="settings_heartbeat_description">وقتاً فوقتاً سیلف چیک جو AI کو صارف کے ان پٹ کے بغیر یادداشتوں اور کاموں کا جائزہ لینے دیتے ہیں۔ فعال اوقات میں ہر %1$d منٹ بعد چلتا ہے۔</string>
@@ -229,8 +218,6 @@
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">انٹرایکٹو موڈ سے باہر نکلیں</string>
     <string name="interactive_ui_parsing_failed">UI تجزیہ ناکام، دوبارہ کوشش ہو رہی ہے…</string>
-    <string name="settings_sponsors_monthly">ماہانہ سپانسرز</string>
-    <string name="settings_sponsors_past">سابقہ سپانسرز</string>
     <string name="snackbar_undo">واپس کریں</string>
     <string name="snackbar_memory_deleted">یادداشت حذف ہو گئی</string>
     <string name="snackbar_task_cancelled">ٹاسک منسوخ ہو گیا</string>

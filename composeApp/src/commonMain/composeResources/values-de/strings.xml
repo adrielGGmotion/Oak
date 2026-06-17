@@ -14,12 +14,6 @@
     <string name="settings_content_description">Einstellungen</string>
     <string name="bot_message_speech_content_description">Sprache</string>
     <string name="bot_message_copy_content_description">Kopieren</string>
-    <string name="settings_free_tier_title">Kostenlose Stufe</string>
-    <string name="settings_free_tier_description">Mit wachsender Nutzerbasis hilft Sponsoring dabei, die Infrastruktur zu skalieren, die Rate-Limits für alle zu erhöhen und die Entwicklung aktiv zu halten.</string>
-    <string name="settings_become_sponsor">GitHub-Sponsor werden</string>
-    <string name="settings_business_partnerships">Geschäftspartnerschaften</string>
-    <string name="settings_business_partnerships_description">Möchtest du dein Firmenlogo präsentieren oder eine strategische Partnerschaft besprechen?</string>
-    <string name="settings_contact_sponsorship">Kontakt für strategisches Sponsoring</string>
     <string name="settings_status_error_invalid_key">Ungültiger API-Schlüssel</string>
     <string name="settings_status_error_quota_exhausted">Kontingent erschöpft</string>
     <string name="settings_status_error_rate_limited">Rate-Limit erreicht</string>
@@ -48,8 +42,6 @@
     <string name="settings_tab_tools">Werkzeuge</string>
     <string name="settings_tab_integrations">Integrationen</string>
     <string name="tools_count">%1$d Werkzeuge</string>
-    <string name="privacy_agree_prefix">Mit der Nutzung des Dienstes stimmst du der </string>
-    <string name="privacy_policy">Datenschutzrichtlinie</string>
     <string name="settings_tab_general">Allgemein</string>
     <string name="settings_tab_agent">Agent</string>
     <string name="tool_set_alarm_name">Wecker stellen</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">Letzter Abruf fehlgeschlagen %1$s</string>
     <string name="settings_email_refresh">Konto aktualisieren</string>
     <string name="settings_add_service">Dienst hinzufügen</string>
-    <string name="settings_free_fallback">Als Fallback verwenden</string>
-    <string name="service_free_fast">Gratis Schnell</string>
-    <string name="service_free_expert">Gratis Experte</string>
     <string name="settings_heartbeat">Herzschlag</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] Dies ist eine automatische Selbstprüfung. Überprüfe deine Erinnerungen und ausstehenden Aufgaben. Wenn alles in Ordnung ist und nichts Aufmerksamkeit erfordert, antworte mit genau: HEARTBEAT_OK
 Wenn etwas Aufmerksamkeit erfordert (veraltete Erinnerungen, fällige Aufgaben, Benutzer-Nachfragen), kümmere dich darum.</string>
@@ -230,8 +219,6 @@ Wenn etwas Aufmerksamkeit erfordert (veraltete Erinnerungen, fällige Aufgaben, 
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">Interaktiven Modus verlassen</string>
     <string name="interactive_ui_parsing_failed">UI-Analyse fehlgeschlagen, erneuter Versuch…</string>
-    <string name="settings_sponsors_monthly">Monatliche Sponsoren</string>
-    <string name="settings_sponsors_past">Frühere Sponsoren</string>
     <string name="snackbar_undo">Rückgängig</string>
     <string name="snackbar_memory_deleted">Erinnerung gelöscht</string>
     <string name="snackbar_task_cancelled">Aufgabe abgebrochen</string>

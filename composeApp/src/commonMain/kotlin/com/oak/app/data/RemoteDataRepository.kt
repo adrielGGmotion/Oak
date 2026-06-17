@@ -167,11 +167,7 @@ class RemoteDataRepository(
     /** Build credentials from per-instance settings */
     private fun instanceCredentials(instanceId: String, service: Service): ServiceCredentials = ServiceCredentials(
         apiKey = appSettings.getInstanceApiKey(instanceId),
-        modelId = if (service == Service.Free) {
-            appSettings.getFreeMode().modelId
-        } else {
-            appSettings.getInstanceModelId(instanceId).ifEmpty { appSettings.getSelectedModelId(service) }
-        },
+        modelId = appSettings.getInstanceModelId(instanceId).ifEmpty { appSettings.getSelectedModelId(service) },
         baseUrl = appSettings.getInstanceBaseUrl(instanceId).ifEmpty { appSettings.getBaseUrl(service) },
     )
 
@@ -193,7 +189,7 @@ class RemoteDataRepository(
 
     override val savedConversations: StateFlow<List<Conversation>> = conversationStorage.conversations
 
-    override fun getConfiguredServiceInstances(): List<ServiceInstance> = appSettings.getConfiguredServiceInstances().filter { Service.fromId(it.serviceId) != Service.Free }
+    override fun getConfiguredServiceInstances(): List<ServiceInstance> = appSettings.getConfiguredServiceInstances()
 
     override fun addConfiguredService(serviceId: String): ServiceInstance {
         val instanceId = appSettings.generateInstanceId(serviceId)
@@ -201,7 +197,6 @@ class RemoteDataRepository(
         val current = appSettings.getConfiguredServiceInstances().toMutableList()
         current.add(instance)
         appSettings.setConfiguredServiceInstances(current)
-        appSettings.setFreeServicePrimary(false)
         return instance
     }
 
@@ -238,24 +233,6 @@ class RemoteDataRepository(
 
     override fun setStreamingEnabled(enabled: Boolean) {
         appSettings.setStreamingEnabled(enabled)
-    }
-
-    override fun isFreeFallbackEnabled(): Boolean = appSettings.isFreeFallbackEnabled()
-
-    override fun setFreeFallbackEnabled(enabled: Boolean) {
-        appSettings.setFreeFallbackEnabled(enabled)
-    }
-
-    override fun getFreeMode(): FreeMode = appSettings.getFreeMode()
-
-    override fun setFreeMode(mode: FreeMode) {
-        appSettings.setFreeMode(mode)
-    }
-
-    override fun isFreeServicePrimary(): Boolean = appSettings.isFreeServicePrimary()
-
-    override fun setFreeServicePrimary(primary: Boolean) {
-        appSettings.setFreeServicePrimary(primary)
     }
 
     // Per-instance settings
@@ -316,8 +293,6 @@ class RemoteDataRepository(
         }
         val creds = instanceCredentials(instanceId, service)
         when (service) {
-            Service.Free -> { /* Always valid */ }
-
             Service.OpenRouter -> {
                 requests.validateOpenRouterApiKey(creds).getOrThrow()
                 fetchInstanceModels(service, instanceId)
@@ -332,8 +307,6 @@ class RemoteDataRepository(
             Service.Gemini -> fetchGeminiModelsForInstance(instanceId)
 
             Service.Anthropic -> fetchAnthropicModelsForInstance(instanceId)
-
-            Service.Free -> { /* No model listing */ }
 
             Service.LiteRT -> {
                 val engine = localInferenceEngine ?: return
@@ -720,7 +693,6 @@ class RemoteDataRepository(
     }
 
     private fun hasValidInstanceApiKey(instanceId: String, service: Service): Boolean {
-        if (service == Service.Free) return true
         if (service.isOnDevice) return true
         if (!service.requiresApiKey && !service.supportsOptionalApiKey) return true
         if (service.requiresApiKey) return appSettings.getInstanceApiKey(instanceId).isNotBlank()
@@ -731,19 +703,8 @@ class RemoteDataRepository(
 
     private fun getOrderedFallbackEntries(): List<FallbackEntry> {
         val instances = getConfiguredServiceInstances()
-        val entries = instances.map { FallbackEntry(instanceId = it.instanceId, service = Service.fromId(it.serviceId)) }
-            .filter { it.service != Service.Free }
+        return instances.map { FallbackEntry(instanceId = it.instanceId, service = Service.fromId(it.serviceId)) }
             .filter { !it.service.isOnDevice || localInferenceEngine != null }
-        val freeEntry = FallbackEntry(instanceId = "free", service = Service.Free)
-        return if (entries.isEmpty()) {
-            listOf(freeEntry)
-        } else if (appSettings.isFreeServicePrimary()) {
-            listOf(freeEntry) + entries
-        } else if (appSettings.isFreeFallbackEnabled()) {
-            entries + freeEntry
-        } else {
-            entries
-        }
     }
 
     override suspend fun ask(question: String?, files: List<PlatformFile>, uiSubmission: UiSubmission?) {
@@ -1922,8 +1883,6 @@ class RemoteDataRepository(
         }
     }
 
-    override fun isUsingSharedKey(): Boolean = currentService() == Service.Free
-
     override fun supportedFileExtensions(): List<String> {
         val service = currentService()
         if (service.isOnDevice) return emptyList()
@@ -1931,9 +1890,8 @@ class RemoteDataRepository(
     }
 
     override fun currentService(): Service {
-        if (appSettings.isFreeServicePrimary()) return Service.Free
         val instances = getConfiguredServiceInstances()
-        return instances.firstOrNull()?.let { Service.fromId(it.serviceId) } ?: Service.Free
+        return instances.firstOrNull()?.let { Service.fromId(it.serviceId) } ?: Service.OpenAICompatible
     }
 
     private fun setCurrentConversationId(id: String?) {

@@ -14,12 +14,6 @@
     <string name="settings_content_description">設定</string>
     <string name="bot_message_speech_content_description">音声</string>
     <string name="bot_message_copy_content_description">コピー</string>
-    <string name="settings_free_tier_title">無料プラン</string>
-    <string name="settings_free_tier_description">ユーザー数の増加に伴い、スポンサーシップはインフラの拡張、全員のレート制限の引き上げ、開発の継続に役立ちます。</string>
-    <string name="settings_become_sponsor">GitHubスポンサーになる</string>
-    <string name="settings_business_partnerships">ビジネスパートナーシップ</string>
-    <string name="settings_business_partnerships_description">会社のロゴを掲載したい、または戦略的パートナーシップについて相談したいですか？</string>
-    <string name="settings_contact_sponsorship">戦略的スポンサーシップのお問い合わせ</string>
     <string name="settings_status_error_invalid_key">無効なAPIキー</string>
     <string name="settings_status_error_quota_exhausted">クォータ超過</string>
     <string name="settings_status_error_rate_limited">レート制限中</string>
@@ -48,8 +42,6 @@
     <string name="settings_tab_tools">ツール</string>
     <string name="settings_tab_integrations">連携</string>
     <string name="tools_count">%1$d ツール</string>
-    <string name="privacy_agree_prefix">サービスを利用することで、</string>
-    <string name="privacy_policy">プライバシーポリシー</string>
     <string name="settings_tab_general">一般</string>
     <string name="settings_tab_agent">エージェント</string>
     <string name="tool_set_alarm_name">アラームを設定</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">最終取得失敗 %1$s</string>
     <string name="settings_email_refresh">アカウントを更新</string>
     <string name="settings_add_service">サービスを追加</string>
-    <string name="settings_free_fallback">フォールバックとして使用</string>
-    <string name="service_free_fast">無料 高速</string>
-    <string name="service_free_expert">無料 エキスパート</string>
     <string name="settings_heartbeat">ハートビート</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] これは自動セルフチェックです。記憶と保留中のタスクを確認してください。すべて問題なく何も注意を必要としない場合は、正確に次のように応答してください: HEARTBEAT_OK
 何かが注意を必要とする場合（古い記憶、期限のタスク、ユーザーフォローアップ）、対処してください。</string>
@@ -230,8 +219,6 @@
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">インタラクティブモードを終了</string>
     <string name="interactive_ui_parsing_failed">UIの解析に失敗しました。再試行中…</string>
-    <string name="settings_sponsors_monthly">月間スポンサー</string>
-    <string name="settings_sponsors_past">過去のスポンサー</string>
     <string name="snackbar_undo">元に戻す</string>
     <string name="snackbar_memory_deleted">メモリを削除しました</string>
     <string name="snackbar_task_cancelled">タスクをキャンセルしました</string>

@@ -14,12 +14,6 @@
     <string name="settings_content_description">Setări</string>
     <string name="bot_message_speech_content_description">Voce</string>
     <string name="bot_message_copy_content_description">Copiază</string>
-    <string name="settings_free_tier_title">Nivel gratuit</string>
-    <string name="settings_free_tier_description">Pe măsură ce baza de utilizatori crește, sponsorizarea ajută la extinderea infrastructurii, la creșterea limitelor de utilizare pentru toți și la menținerea dezvoltării active.</string>
-    <string name="settings_become_sponsor">Devino sponsor pe GitHub</string>
-    <string name="settings_business_partnerships">Parteneriate de afaceri</string>
-    <string name="settings_business_partnerships_description">Doriți să afișați logo-ul companiei dvs. sau să discutați un parteneriat strategic?</string>
-    <string name="settings_contact_sponsorship">Contactați-ne pentru sponsorizare strategică</string>
     <string name="settings_base_url_label">URL server</string>
     <string name="settings_status_checking">Se verifică conexiunea...</string>
     <string name="settings_status_connected">Conectat</string>
@@ -42,8 +36,6 @@
     <string name="settings_tab_tools">Instrumente</string>
     <string name="settings_tab_integrations">Integrări</string>
     <string name="tools_count">%1$d instrumente</string>
-    <string name="privacy_agree_prefix">Prin utilizarea serviciului, sunteți de acord cu </string>
-    <string name="privacy_policy">Politica de confidențialitate</string>
     <string name="tool_get_local_time_name">Obține ora locală</string>
     <string name="tool_get_local_time_description">Obține data și ora locală curentă pentru interpretarea datelor relative</string>
     <string name="tool_get_location_name">Obține locația</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">Ultima verificare a eșuat %1$s</string>
     <string name="settings_email_refresh">Reîmprospătează contul</string>
     <string name="settings_add_service">Adăugare serviciu</string>
-    <string name="settings_free_fallback">Folosește ca rezervă</string>
-    <string name="service_free_fast">Gratuit rapid</string>
-    <string name="service_free_expert">Gratuit expert</string>
     <string name="settings_heartbeat">Ritm cardiac</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] Aceasta este o autoverificare automată. Verifică-ți amintirile și sarcinile în așteptare. Dacă totul arată bine și nimic nu necesită atenție, răspunde cu exact: HEARTBEAT_OK\nDacă ceva necesită atenție (amintiri vechi, sarcini scadente, urmăriri utilizator), ocupă-te de asta.</string>
     <string name="settings_heartbeat_description">Autoverificări periodice care permit IA să verifice amintirile și sarcinile fără input de la utilizator. Rulează la fiecare %1$d minute în orele active.</string>
@@ -229,8 +218,6 @@
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">Ieșire din modul interactiv</string>
     <string name="interactive_ui_parsing_failed">Analiza UI a eșuat, se încearcă din nou…</string>
-    <string name="settings_sponsors_monthly">Sponsori lunari</string>
-    <string name="settings_sponsors_past">Sponsori anteriori</string>
     <string name="snackbar_undo">Anulare</string>
     <string name="snackbar_memory_deleted">Amintire ștearsă</string>
     <string name="snackbar_task_cancelled">Sarcină anulată</string>

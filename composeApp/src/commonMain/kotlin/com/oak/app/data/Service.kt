@@ -4,12 +4,14 @@ import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.ic_service_aihubmix
 import oak.composeapp.generated.resources.ic_service_anthropic
 import oak.composeapp.generated.resources.ic_service_cerebras
+import oak.composeapp.generated.resources.ic_service_cloudflare
+import oak.composeapp.generated.resources.ic_service_cohere
 import oak.composeapp.generated.resources.ic_service_deepinfra
 import oak.composeapp.generated.resources.ic_service_deepseek
 import oak.composeapp.generated.resources.ic_service_fireworksai
-import oak.composeapp.generated.resources.ic_service_free_expert
-import oak.composeapp.generated.resources.ic_service_free_fast
+
 import oak.composeapp.generated.resources.ic_service_gemini
+import oak.composeapp.generated.resources.ic_service_github
 import oak.composeapp.generated.resources.ic_service_groqcloud
 import oak.composeapp.generated.resources.ic_service_huggingface
 import oak.composeapp.generated.resources.ic_service_litert
@@ -23,23 +25,17 @@ import oak.composeapp.generated.resources.ic_service_openai
 import oak.composeapp.generated.resources.ic_service_openai_compatible
 import oak.composeapp.generated.resources.ic_service_opencode
 import oak.composeapp.generated.resources.ic_service_openrouter
+import oak.composeapp.generated.resources.ic_service_ovhcloud
 import oak.composeapp.generated.resources.ic_service_publicai
+import oak.composeapp.generated.resources.ic_service_sambanova
+import oak.composeapp.generated.resources.ic_service_siliconflow
 import oak.composeapp.generated.resources.ic_service_together
 import oak.composeapp.generated.resources.ic_service_venice
 import oak.composeapp.generated.resources.ic_service_xai
 import oak.composeapp.generated.resources.ic_service_zai
-import oak.composeapp.generated.resources.service_free_expert
-import oak.composeapp.generated.resources.service_free_fast
+
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
-
-enum class FreeMode(val modelId: String, val nameRes: StringResource, val icon: DrawableResource) {
-    FAST("fast", Res.string.service_free_fast, Res.drawable.ic_service_free_fast),
-    EXPERT("expert", Res.string.service_free_expert, Res.drawable.ic_service_free_expert),
-    ;
-
-    val instanceId: String get() = "free-$modelId"
-}
 
 data class ModelDefinition(
     val id: String,
@@ -67,15 +63,6 @@ sealed class Service(
     val isOnDevice: Boolean = false,
     val supportsPdf: Boolean = false,
 ) {
-    data object Free : Service(
-        id = "free",
-        displayName = "Free",
-        icon = Res.drawable.ic_service_free_fast,
-        requiresApiKey = false,
-        defaultModel = null,
-        settingsKeyPrefix = "",
-    )
-
     data object Groq : Service(
         id = "groqcloud",
         displayName = "GroqCloud",
@@ -408,6 +395,85 @@ sealed class Service(
         apiKeyUrlDisplay = "platform.publicai.co",
     )
 
+    data object Cloudflare : Service(
+        id = "cloudflare",
+        displayName = "Cloudflare Workers AI",
+        icon = Res.drawable.ic_service_cloudflare,
+        requiresApiKey = true,
+        supportsOptionalApiKey = true,
+        defaultModel = null,
+        settingsKeyPrefix = "cloudflare",
+        chatUrl = "/ai/v1/chat/completions",
+        modelsUrl = "/ai/models/search",
+        apiKeyUrl = "https://dash.cloudflare.com/profile/api-tokens",
+        apiKeyUrlDisplay = "dash.cloudflare.com/profile/api-tokens",
+    )
+
+    data object GitHubModels : Service(
+        id = "github",
+        displayName = "GitHub Models",
+        icon = Res.drawable.ic_service_github,
+        requiresApiKey = true,
+        defaultModel = null,
+        settingsKeyPrefix = "github",
+        chatUrl = "https://models.inference.ai.azure.com/chat/completions",
+        modelsUrl = "https://models.inference.ai.azure.com/models",
+        apiKeyUrl = "https://github.com/settings/tokens",
+        apiKeyUrlDisplay = "github.com/settings/tokens",
+    )
+
+    data object Cohere : Service(
+        id = "cohere",
+        displayName = "Cohere",
+        icon = Res.drawable.ic_service_cohere,
+        requiresApiKey = true,
+        defaultModel = null,
+        settingsKeyPrefix = "cohere",
+        chatUrl = "https://api.cohere.com/compatibility/v1/chat/completions",
+        modelsUrl = "https://api.cohere.com/compatibility/v1/models",
+        apiKeyUrl = "https://dashboard.cohere.com/api-keys",
+        apiKeyUrlDisplay = "dashboard.cohere.com/api-keys",
+    )
+
+    data object SiliconFlow : Service(
+        id = "siliconflow",
+        displayName = "SiliconFlow",
+        icon = Res.drawable.ic_service_siliconflow,
+        requiresApiKey = true,
+        defaultModel = null,
+        settingsKeyPrefix = "siliconflow",
+        chatUrl = "https://api.siliconflow.cn/v1/chat/completions",
+        modelsUrl = "https://api.siliconflow.cn/v1/models",
+        apiKeyUrl = "https://cloud.siliconflow.cn/account/ak",
+        apiKeyUrlDisplay = "cloud.siliconflow.cn/account/ak",
+    )
+
+    data object OVHcloud : Service(
+        id = "ovhcloud",
+        displayName = "OVHcloud AI",
+        icon = Res.drawable.ic_service_ovhcloud,
+        requiresApiKey = true,
+        defaultModel = null,
+        settingsKeyPrefix = "ovhcloud",
+        chatUrl = "https://io.ai-maas.endpoints.ovhcloud.com/v1/chat/completions",
+        modelsUrl = "https://io.ai-maas.endpoints.ovhcloud.com/v1/models",
+        apiKeyUrl = "https://api.us.ovhcloud.com/createToken",
+        apiKeyUrlDisplay = "api.us.ovhcloud.com/createToken",
+    )
+
+    data object SambaNova : Service(
+        id = "sambanova",
+        displayName = "SambaNova",
+        icon = Res.drawable.ic_service_sambanova,
+        requiresApiKey = true,
+        defaultModel = null,
+        settingsKeyPrefix = "sambanova",
+        chatUrl = "https://api.sambanova.ai/v1/chat/completions",
+        modelsUrl = "https://api.sambanova.ai/v1/models",
+        apiKeyUrl = "https://cloud.sambanova.ai/apis",
+        apiKeyUrlDisplay = "cloud.sambanova.ai/apis",
+    )
+
     data object OpenAICompatible : Service(
         id = "openai-compatible",
         displayName = "OpenAI-Compatible API",
@@ -432,11 +498,11 @@ sealed class Service(
     )
 
     companion object {
-        val all: List<Service> get() = listOf(Free, Gemini, Anthropic, OpenAI, DeepSeek, Mistral, XAI, OpenRouter, Groq, Nvidia, Cerebras, OllamaCloud, LongCat, Together, HuggingFace, Venice, Moonshot, Zai, ZaiCodingPlan, Minimax, AiHubMix, DeepInfra, FireworksAI, OpenCode, PublicAI, OpenAICompatible, LiteRT)
+        val all: List<Service> get() = listOf(Gemini, Anthropic, OpenAI, DeepSeek, Mistral, XAI, OpenRouter, Groq, Nvidia, Cerebras, OllamaCloud, LongCat, Together, HuggingFace, Venice, Moonshot, Zai, ZaiCodingPlan, Minimax, AiHubMix, DeepInfra, FireworksAI, OpenCode, PublicAI, Cloudflare, GitHubModels, Cohere, SiliconFlow, OVHcloud, SambaNova, OpenAICompatible, LiteRT)
 
         const val DEFAULT_OPENAI_COMPATIBLE_BASE_URL = "http://localhost:11434/v1"
 
-        fun fromId(id: String): Service = all.find { it.id == id } ?: Free
+        fun fromId(id: String): Service = all.find { it.id == id } ?: OpenAICompatible
     }
 
     val apiKeyKey: String get() = "service_${settingsKeyPrefix}_api_key"

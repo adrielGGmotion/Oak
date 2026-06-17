@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oak - Free AI Access Guide</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #0f3460;
+            --text-primary: #e6e6e6;
+            --text-secondary: #a0a0a0;
+            --accent-green: #5B8C5B;
+            --accent-blue: #4a90d9;
+            --accent-orange: #e67e22;
+            --accent-red: #e74c3c;
+            --accent-yellow: #f1c40f;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        .privacy-warning {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(231, 76, 60, 0.1));
+            border: 1px solid var(--accent-red);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .privacy-warning .icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+        
+        .privacy-warning h3 {
+            color: var(--accent-red);
+            margin-bottom: 0.5rem;
+        }
+        
+        section {
+            margin-bottom: 3rem;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-green);
+            display: inline-block;
+        }
+        
+        .provider-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .provider-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .provider-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .provider-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .provider-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-green);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .provider-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .privacy-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: auto;
+        }
+        
+        .privacy-safe {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+        
+        .privacy-caution {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f1c40f;
+            border: 1px solid #f1c40f;
+        }
+        
+        .privacy-warning {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+        
+        .provider-details {
+            margin-top: 1rem;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .detail-label {
+            color: var(--text-secondary);
+        }
+        
+        .detail-value {
+            font-weight: 500;
+        }
+        
+        .provider-link {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--accent-green);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        .provider-link:hover {
+            background: #4a7a4a;
+        }
+        
+        .setup-guide {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .setup-step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .step-content h4 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .step-content p {
+            color: var(--text-secondary);
+        }
+        
+        .model-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .model-table th,
+        .model-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .model-table th {
+            background: rgba(91, 140, 91, 0.2);
+            font-weight: 600;
+        }
+        
+        .model-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .provider-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .privacy-warning {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Free AI Access Guide</h1>
+            <p class="subtitle">Learn how to use Oak with free API keys or local LLMs</p>
+        </header>
+        
+        <div class="privacy-warning">
+            <div class="icon">⚠️</div>
+            <div>
+                <h3>Privacy Notice</h3>
+                <p><strong>Only local LLMs (Ollama, LM Studio) are 100% private.</strong> Cloud API providers process your data on their servers. Even "free" tiers may collect and use your data. Use cloud APIs only for non-sensitive tasks.</p>
+            </div>
+        </div>
+        
+        <section>
+            <h2>🏠 Local LLMs (Recommended for Privacy)</h2>
+            <p>Run AI models directly on your machine. No data leaves your computer. No API keys needed.</p>
+            
+            <div class="provider-grid">
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">🦙</div>
+                        <div class="provider-name">Ollama</div>
+                        <span class="privacy-badge privacy-safe">100% Private</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Difficulty</span>
+                            <span class="detail-value">Easy</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Cost</span>
+                            <span class="detail-value">Free (open source)</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Data Collection</span>
+                            <span class="detail-value">None</span>
+                        </div>
+                    </div>
+                    <a href="https://ollama.com" class="provider-link" target="_blank">Download Ollama</a>
+                </div>
+                
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">LM</div>
+                        <div class="provider-name">LM Studio</div>
+                        <span class="privacy-badge privacy-safe">100% Private</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Difficulty</span>
+                            <span class="detail-value">Easy (GUI)</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Cost</span>
+                            <span class="detail-value">Free</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Data Collection</span>
+                            <span class="detail-value">None</span>
+                        </div>
+                    </div>
+                    <a href="https://lmstudio.ai" class="provider-link" target="_blank">Download LM Studio</a>
+                </div>
+                
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">ll</div>
+                        <div class="provider-name">llama.cpp</div>
+                        <span class="privacy-badge privacy-safe">100% Private</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Difficulty</span>
+                            <span class="detail-value">Advanced</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Cost</span>
+                            <span class="detail-value">Free (open source)</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Data Collection</span>
+                            <span class="detail-value">None</span>
+                        </div>
+                    </div>
+                    <a href="https://github.com/ggerganov/llama.cpp" class="provider-link" target="_blank">View on GitHub</a>
+                </div>
+            </div>
+            
+            <div class="setup-guide">
+                <h3>Setting Up Ollama with Oak</h3>
+                <div class="setup-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Install Ollama</h4>
+                        <p>Download from <a href="https://ollama.com/download" target="_blank">ollama.com/download</a> or run: <code>curl -fsSL https://ollama.com/install.sh | sh</code></p>
+                    </div>
+                </div>
+                <div class="setup-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Pull a Model</h4>
+                        <p>Run <code>ollama pull llama3.2</code> (3B, ~2GB) or <code>ollama pull gemma4</code> for a stronger model.</p>
+                    </div>
+                </div>
+                <div class="setup-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Configure Oak</h4>
+                        <p>In Oak Settings → Services → Add Service → Select "OpenAI-Compatible API". Use base URL: <code>http://localhost:11434/v1</code></p>
+                    </div>
+                </div>
+                <div class="setup-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Start Chatting</h4>
+                        <p>Select the OpenAI-Compatible service and start chatting. Your data never leaves your machine.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <table class="model-table">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Size</th>
+                        <th>RAM Needed</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>llama3.2</td>
+                        <td>3B</td>
+                        <td>4-8 GB</td>
+                        <td>General chat, fast responses</td>
+                    </tr>
+                    <tr>
+                        <td>gemma4</td>
+                        <td>7B</td>
+                        <td>8-16 GB</td>
+                        <td>Quality responses, coding</td>
+                    </tr>
+                    <tr>
+                        <td>qwen3</td>
+                        <td>8B</td>
+                        <td>8-16 GB</td>
+                        <td>Coding, reasoning</td>
+                    </tr>
+                    <tr>
+                        <td>deepseek-r1</td>
+                        <td>7B</td>
+                        <td>8-16 GB</td>
+                        <td>Complex reasoning</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <section>
+            <h2>☁️ Free Cloud API Providers</h2>
+            <p>Get free API keys from these providers. No credit card required.</p>
+            
+            <h3 style="margin: 1.5rem 0 1rem; color: #27ae60;">Tier 1: No Training on API Data (Safest Cloud Option)</h3>
+            <div class="provider-grid">
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">G</div>
+                        <div class="provider-name">Groq</div>
+                        <span class="privacy-badge privacy-safe">No Training</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Free Tier</span>
+                            <span class="detail-value">Permanent</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rate Limit</span>
+                            <span class="detail-value">30 RPM, 1000/day</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Models</span>
+                            <span class="detail-value">Llama 3.3 70B, Mixtral</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Credit Card</span>
+                            <span class="detail-value">Not required</span>
+                        </div>
+                    </div>
+                    <a href="https://console.groq.com/keys" class="provider-link" target="_blank">Get API Key</a>
+                </div>
+                
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">C</div>
+                        <div class="provider-name">Cerebras</div>
+                        <span class="privacy-badge privacy-safe">No Training</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Free Tier</span>
+                            <span class="detail-value">Permanent</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rate Limit</span>
+                            <span class="detail-value">30 RPM, 1M tokens/day</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Models</span>
+                            <span class="detail-value">Llama 3.3 70B</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Credit Card</span>
+                            <span class="detail-value">Not required</span>
+                        </div>
+                    </div>
+                    <a href="https://cloud.cerebras.ai" class="provider-link" target="_blank">Get API Key</a>
+                </div>
+                
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">OR</div>
+                        <div class="provider-name">OpenRouter</div>
+                        <span class="privacy-badge privacy-safe">No Training</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Free Tier</span>
+                            <span class="detail-value">20+ free models</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rate Limit</span>
+                            <span class="detail-value">20 RPM, 50/day</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Models</span>
+                            <span class="detail-value">Multi-provider</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Credit Card</span>
+                            <span class="detail-value">Not required</span>
+                        </div>
+                    </div>
+                    <a href="https://openrouter.ai/settings/keys" class="provider-link" target="_blank">Get API Key</a>
+                </div>
+                
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">GH</div>
+                        <div class="provider-name">GitHub Models</div>
+                        <span class="privacy-badge privacy-safe">No Training</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Free Tier</span>
+                            <span class="detail-value">Free with GitHub</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rate Limit</span>
+                            <span class="detail-value">15 RPM, 150-1000/day</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Models</span>
+                            <span class="detail-value">GPT-4o, Claude 3.5, Llama</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Credit Card</span>
+                            <span class="detail-value">Not required</span>
+                        </div>
+                    </div>
+                    <a href="https://github.com/settings/tokens" class="provider-link" target="_blank">Get API Key</a>
+                </div>
+                
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">NV</div>
+                        <div class="provider-name">NVIDIA NIM</div>
+                        <span class="privacy-badge privacy-safe">No Training</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Free Tier</span>
+                            <span class="detail-value">Free with dev program</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rate Limit</span>
+                            <span class="detail-value">~1000/day</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Models</span>
+                            <span class="detail-value">Nemotron, Llama variants</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Credit Card</span>
+                            <span class="detail-value">Not required</span>
+                        </div>
+                    </div>
+                    <a href="https://build.nvidia.com/settings/api-keys" class="provider-link" target="_blank">Get API Key</a>
+                </div>
+                
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">SF</div>
+                        <div class="provider-name">SiliconFlow</div>
+                        <span class="privacy-badge privacy-safe">No Training</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Free Tier</span>
+                            <span class="detail-value">Permanently free models</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rate Limit</span>
+                            <span class="detail-value">Variable</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Models</span>
+                            <span class="detail-value">200+ models</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Credit Card</span>
+                            <span class="detail-value">Not required</span>
+                        </div>
+                    </div>
+                    <a href="https://cloud.siliconflow.cn/account/ak" class="provider-link" target="_blank">Get API Key</a>
+                </div>
+            </div>
+            
+            <h3 style="margin: 1.5rem 0 1rem; color: #f1c40f;">Tier 2: Training with Opt-out (Caution)</h3>
+            <div class="provider-grid">
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">G</div>
+                        <div class="provider-name">Google Gemini</div>
+                        <span class="privacy-badge privacy-caution">Trains on Data</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Free Tier</span>
+                            <span class="detail-value">Most generous</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rate Limit</span>
+                            <span class="detail-value">5-15 RPM, 20-1500/day</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Models</span>
+                            <span class="detail-value">Gemini Flash, Pro</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Credit Card</span>
+                            <span class="detail-value">Not required</span>
+                        </div>
+                    </div>
+                    <a href="https://aistudio.google.com/apikey" class="provider-link" target="_blank">Get API Key</a>
+                </div>
+                
+                <div class="provider-card">
+                    <div class="provider-header">
+                        <div class="provider-icon">M</div>
+                        <div class="provider-name">Mistral</div>
+                        <span class="privacy-badge privacy-caution">Trains on Data</span>
+                    </div>
+                    <div class="provider-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Free Tier</span>
+                            <span class="detail-value">Experiment tier</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rate Limit</span>
+                            <span class="detail-value">~1B tokens/month</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Models</span>
+                            <span class="detail-value">Mistral Large, Codestral</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Credit Card</span>
+                            <span class="detail-value">Not required</span>
+                        </div>
+                    </div>
+                    <a href="https://console.mistral.ai/api-keys" class="provider-link" target="_blank">Get API Key</a>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2>🔧 How to Add a Provider to Oak</h2>
+            <div class="setup-guide">
+                <div class="setup-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Get an API Key</h4>
+                        <p>Sign up at one of the providers above and copy your API key.</p>
+                    </div>
+                </div>
+                <div class="setup-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Open Oak Settings</h4>
+                        <p>Go to Settings → Services tab.</p>
+                    </div>
+                </div>
+                <div class="setup-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Add Service</h4>
+                        <p>Click "Add Service" and select the provider. Paste your API key.</p>
+                    </div>
+                </div>
+                <div class="setup-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Start Chatting</h4>
+                        <p>Select the service and start your conversation.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2>📋 Provider Comparison</h2>
+            <table class="model-table">
+                <thead>
+                    <tr>
+                        <th>Provider</th>
+                        <th>Free Tier</th>
+                        <th>Rate Limit</th>
+                        <th>Privacy</th>
+                        <th>Credit Card</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Ollama (Local)</td>
+                        <td>Unlimited</td>
+                        <td>None</td>
+                        <td>100% Private</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Groq</td>
+                        <td>Permanent</td>
+                        <td>30 RPM, 1000/day</td>
+                        <td>No Training</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Cerebras</td>
+                        <td>Permanent</td>
+                        <td>30 RPM, 1M/day</td>
+                        <td>No Training</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>OpenRouter</td>
+                        <td>20+ models</td>
+                        <td>20 RPM, 50/day</td>
+                        <td>No Training</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>GitHub Models</td>
+                        <td>Free w/ GitHub</td>
+                        <td>15 RPM, 150-1000/day</td>
+                        <td>No Training</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Google Gemini</td>
+                        <td>Most generous</td>
+                        <td>5-15 RPM, 20-1500/day</td>
+                        <td>Trains (opt-out)</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Mistral</td>
+                        <td>Experiment tier</td>
+                        <td>~1B tokens/month</td>
+                        <td>Trains (opt-out)</td>
+                        <td>No</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <footer>
+            <p>Oak - Free and Open Source AI Assistant</p>
+            <p><a href="https://github.com/adrielGGmotion/Oak" style="color: var(--accent-green);">GitHub</a></p>
+        </footer>
+    </div>
+</body>
+</html>
