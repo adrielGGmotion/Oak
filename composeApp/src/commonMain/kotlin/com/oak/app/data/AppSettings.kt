@@ -535,7 +535,7 @@ class AppSettings(private val settings: Settings) {
     }
 
     // Dynamic Colors (Android 12+)
-    private val _useDynamicColorsFlow = MutableStateFlow(settings.getBoolean(KEY_USE_DYNAMIC_COLORS, false))
+    private val _useDynamicColorsFlow = MutableStateFlow(settings.getBoolean(KEY_USE_DYNAMIC_COLORS, true))
     val useDynamicColorsFlow: StateFlow<Boolean> = _useDynamicColorsFlow
 
     fun isUseDynamicColorsEnabled(): Boolean = _useDynamicColorsFlow.value
@@ -698,7 +698,7 @@ class AppSettings(private val settings: Settings) {
     }
 
     // Email
-    fun isEmailEnabled(): Boolean = settings.getBoolean(KEY_EMAIL_ENABLED, true)
+    fun isEmailEnabled(): Boolean = settings.getBoolean(KEY_EMAIL_ENABLED, false)
 
     fun setEmailEnabled(enabled: Boolean) {
         settings.putBoolean(KEY_EMAIL_ENABLED, enabled)
