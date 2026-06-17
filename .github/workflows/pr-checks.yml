@@ -1,15 +1,17 @@
-name: "PR Title Check"
+name: PR Checks
 
 on:
   pull_request_target:
     types: [opened, edited, synchronize, reopened]
 
 permissions:
-  pull-requests: read
+  contents: read
+  pull-requests: write
   statuses: write
 
 jobs:
-  check:
+  check-title:
+    name: Check PR Title
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
@@ -24,3 +26,12 @@ jobs:
                 'Types: feat, fix, chore, docs, refactor, test, deps, revert'
               );
             }
+
+  label:
+    name: Label PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v6
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: true
