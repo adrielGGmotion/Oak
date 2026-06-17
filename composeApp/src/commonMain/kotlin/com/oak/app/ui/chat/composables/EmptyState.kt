@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import com.oak.app.ui.components.LogoAnimation
 import com.oak.app.ui.components.oakOutlinedBorder
 import com.oak.app.ui.handCursor
+import com.oak.app.ui.LocalOakAiFontFamily
+import com.oak.app.ui.toTypography
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import oak.composeapp.generated.resources.Res
@@ -53,17 +55,19 @@ internal fun EmptyState(
     ) {
         LogoAnimation()
         Spacer(Modifier.height(16.dp))
+        val aiFontFamily = LocalOakAiFontFamily.current
+        val aiTypography = aiFontFamily.toTypography()
         val greeting = timeBasedGreeting(userName)
         if (greeting != null) {
             Text(
                 text = greeting,
-                style = MaterialTheme.typography.titleLarge,
+                style = aiTypography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
         } else {
             Text(
                 text = stringResource(Res.string.welcome_message),
-                style = MaterialTheme.typography.titleLarge,
+                style = aiTypography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }

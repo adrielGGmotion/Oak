@@ -2249,6 +2249,18 @@ class RemoteDataRepository(
         appSettings.setUseDynamicColorsEnabled(enabled)
     }
 
+    override fun getFontFamily(): OakFontFamily = appSettings.getFontFamily()
+
+    override fun setFontFamily(family: OakFontFamily) {
+        appSettings.setFontFamily(family)
+    }
+
+    override fun getAiFontFamily(): OakFontFamily = appSettings.getAiFontFamily()
+
+    override fun setAiFontFamily(family: OakFontFamily) {
+        appSettings.setAiFontFamily(family)
+    }
+
     private var interactiveModeFlag = appSettings.getCurrentInteractiveMode()
 
     override fun setInteractiveMode(enabled: Boolean) {

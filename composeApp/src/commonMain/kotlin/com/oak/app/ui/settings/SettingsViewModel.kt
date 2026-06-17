@@ -33,6 +33,7 @@ import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.StoragePermissionController
+import com.oak.app.data.OakFontFamily
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -78,6 +79,8 @@ class SettingsViewModel(
         themeMode = dataRepository.getThemeMode(),
         useDynamicColors = dataRepository.isUseDynamicColorsEnabled(),
         showDynamicColorsToggle = currentPlatform is Platform.Mobile.Android,
+        fontFamily = dataRepository.getFontFamily(),
+        aiFontFamily = dataRepository.getAiFontFamily(),
         isStorageAccessEnabled = dataRepository.isStorageAccessEnabled(),
         storagePermissionGranted = storagePermissionController.hasPermission(),
         isMemoryEnabled = dataRepository.isMemoryEnabled(),
@@ -152,6 +155,8 @@ class SettingsViewModel(
         onSaveSoul = ::onSaveSoul,
         onToggleDynamicUi = ::onToggleDynamicUi,
         onChangeThemeMode = ::onChangeThemeMode,
+        onChangeFontFamily = ::onChangeFontFamily,
+        onChangeAiFontFamily = ::onChangeAiFontFamily,
         onToggleDynamicColors = ::onToggleDynamicColors,
         onToggleMemory = ::onToggleMemory,
         onDeleteMemory = ::onDeleteMemory,
@@ -444,6 +449,16 @@ class SettingsViewModel(
     private fun onChangeThemeMode(mode: ThemeMode) {
         dataRepository.setThemeMode(mode)
         _state.update { it.copy(themeMode = mode) }
+    }
+
+    private fun onChangeFontFamily(family: OakFontFamily) {
+        dataRepository.setFontFamily(family)
+        _state.update { it.copy(fontFamily = family) }
+    }
+
+    private fun onChangeAiFontFamily(family: OakFontFamily) {
+        dataRepository.setAiFontFamily(family)
+        _state.update { it.copy(aiFontFamily = family) }
     }
 
     private fun onToggleDynamicColors(enabled: Boolean) {
