@@ -12,7 +12,6 @@ import com.oak.app.data.TaskScheduler
 import com.oak.app.data.ThemeMode
 import com.oak.app.data.supportsAgenticFlows
 import com.oak.app.getBackgroundDispatcher
-import com.oak.app.httpClient
 import com.oak.app.inference.LocalModel
 import com.oak.app.isEmailSupported
 import com.oak.app.isNotificationsSupported
@@ -28,17 +27,11 @@ import com.oak.app.network.OpenAICompatibleConnectionException
 import com.oak.app.network.OpenAICompatibleInvalidApiKeyException
 import com.oak.app.network.OpenAICompatibleQuotaExhaustedException
 import com.oak.app.network.OpenAICompatibleRateLimitExceededException
-import com.oak.app.network.dtos.SponsorsResponseDto
 import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.StoragePermissionController
 import com.oak.app.data.OakFontFamily
-import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.get
-import io.ktor.http.isSuccess
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toPersistentSet
@@ -123,7 +116,6 @@ class SettingsViewModel(
         notificationListenerAccessGranted = dataRepository.isNotificationListenerAccessGranted(),
         notificationListenerBound = dataRepository.getNotificationSyncState().listenerBound,
         notificationPendingCount = dataRepository.getPendingNotificationCount(),
-        isFreeFallbackEnabled = dataRepository.isFreeFallbackEnabled(),
         isStreamingEnabled = dataRepository.isStreamingEnabled(),
         uiScale = dataRepository.getUiScale(),
         showUiScale = currentPlatform is Platform.Desktop,
@@ -181,7 +173,6 @@ class SettingsViewModel(
         onOpenNotificationListenerSettings = ::onOpenNotificationListenerSettings,
         onClearPendingNotifications = ::onClearPendingNotifications,
         onToggleStorageAccess = ::onToggleStorageAccess,
-        onToggleFreeFallback = ::onToggleFreeFallback,
         onToggleStreaming = ::onToggleStreaming,
         onChangeUiScale = ::onChangeUiScale,
         onAddMcpServer = ::onAddMcpServer,
@@ -260,7 +251,6 @@ class SettingsViewModel(
                     .filterNot { dataRepository.isSshServerConnected(it.id) }
                     .forEach { server -> connectSshServerWithStatus(server.id) }
             }
-            fetchSponsors()
         }
         // Re-read notification listener state every time the screen becomes visible:
         // the user may have toggled access in system settings while we were backgrounded.
@@ -271,30 +261,6 @@ class SettingsViewModel(
                     notificationListenerBound = dataRepository.getNotificationSyncState().listenerBound,
                     notificationPendingCount = dataRepository.getPendingNotificationCount(),
                 )
-            }
-        }
-    }
-
-    private fun fetchSponsors() {
-        viewModelScope.launch(backgroundDispatcher) {
-            try {
-                val client = httpClient {
-                    install(ContentNegotiation) {
-                        json(Json { ignoreUnknownKeys = true })
-                    }
-                }
-                val response = client.get("https://ghs.vercel.app/v3/sponsors/SimonSchubert")
-                if (response.status.isSuccess()) {
-                    val dto = response.body<SponsorsResponseDto>()
-                    _state.update {
-                        it.copy(
-                            currentSponsors = dto.sponsors.current.toImmutableList(),
-                            pastSponsors = dto.sponsors.past.toImmutableList(),
-                        )
-                    }
-                }
-            } catch (_: Exception) {
-                // Silently ignore - sponsors are non-critical
             }
         }
     }
@@ -313,11 +279,10 @@ class SettingsViewModel(
     }
 
     private fun computeAvailableServices(): List<Service> {
-        // Allow all non-Free services (multiple instances of same type are allowed)
+        // Allow all services (multiple instances of same type are allowed)
         // Pin OpenAI-Compatible and LiteRT (Local Model) to the top, then sort the rest alphabetically
         // Hide on-device services on platforms that don't support them
         return Service.all
-            .filter { it != Service.Free }
             .filter { !it.isOnDevice || dataRepository.isLocalInferenceAvailable() }
             .sortedWith(compareBy<Service> { !(it is Service.OpenAICompatible || it.isOnDevice) }.thenBy { it.displayName })
     }
@@ -688,11 +653,6 @@ class SettingsViewModel(
             dataRepository.clearPendingNotifications()
             _state.update { it.copy(notificationPendingCount = 0) }
         }
-    }
-
-    private fun onToggleFreeFallback(enabled: Boolean) {
-        dataRepository.setFreeFallbackEnabled(enabled)
-        _state.update { it.copy(isFreeFallbackEnabled = enabled) }
     }
 
     private fun onToggleStreaming(enabled: Boolean) {
@@ -1089,10 +1049,6 @@ class SettingsViewModel(
     }
 
     private fun checkConnection(instanceId: String, service: Service) {
-        if (service == Service.Free) {
-            updateConnectionStatus(instanceId, ConnectionStatus.Connected)
-            return
-        }
         if (service.isOnDevice) {
             validateConnectionWithStatus(instanceId, service)
             return

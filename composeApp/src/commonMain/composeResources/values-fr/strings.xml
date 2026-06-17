@@ -14,12 +14,6 @@
     <string name="settings_content_description">Paramètres</string>
     <string name="bot_message_speech_content_description">Voix</string>
     <string name="bot_message_copy_content_description">Copier</string>
-    <string name="settings_free_tier_title">Niveau Gratuit</string>
-    <string name="settings_free_tier_description">À mesure que la base d'utilisateurs grandit, le parrainage aide à mettre à l'échelle l'infrastructure, à augmenter les limites de requêtes pour tous et à maintenir le développement actif.</string>
-    <string name="settings_become_sponsor">Devenir sponsor GitHub</string>
-    <string name="settings_business_partnerships">Partenariats Commerciaux</string>
-    <string name="settings_business_partnerships_description">Vous souhaitez afficher le logo de votre entreprise ou discuter d'un partenariat stratégique ?</string>
-    <string name="settings_contact_sponsorship">Contact pour parrainage stratégique</string>
     <string name="settings_status_error_invalid_key">Clé API invalide</string>
     <string name="settings_status_error_quota_exhausted">Quota épuisé</string>
     <string name="settings_status_error_rate_limited">Limite de taux atteinte</string>
@@ -48,8 +42,6 @@
     <string name="settings_tab_tools">Outils</string>
     <string name="settings_tab_integrations">Intégrations</string>
     <string name="tools_count">%1$d Outils</string>
-    <string name="privacy_agree_prefix">En utilisant le service, vous acceptez la </string>
-    <string name="privacy_policy">Politique de confidentialité</string>
     <string name="settings_tab_general">Général</string>
     <string name="settings_tab_agent">Agent</string>
     <string name="tool_set_alarm_name">Régler une alarme</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">Dernière vérification échouée %1$s</string>
     <string name="settings_email_refresh">Actualiser le compte</string>
     <string name="settings_add_service">Ajouter un service</string>
-    <string name="settings_free_fallback">Utiliser comme secours</string>
-    <string name="service_free_fast">Gratuit rapide</string>
-    <string name="service_free_expert">Gratuit expert</string>
     <string name="settings_heartbeat">Battement de cœur</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] Ceci est une vérification automatique. Passez en revue vos souvenirs et tâches en attente. Si tout semble correct et rien ne nécessite d'attention, répondez exactement : HEARTBEAT_OK
 Si quelque chose nécessite de l'attention (souvenirs obsolètes, tâches échues, suivis utilisateur), traitez-le.</string>
@@ -230,8 +219,6 @@ Si quelque chose nécessite de l'attention (souvenirs obsolètes, tâches échue
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">Quitter le mode interactif</string>
     <string name="interactive_ui_parsing_failed">Échec de l'analyse de l'interface, nouvel essai…</string>
-    <string name="settings_sponsors_monthly">Sponsors mensuels</string>
-    <string name="settings_sponsors_past">Anciens sponsors</string>
     <string name="snackbar_undo">Annuler</string>
     <string name="snackbar_memory_deleted">Souvenir supprimé</string>
     <string name="snackbar_task_cancelled">Tâche annulée</string>

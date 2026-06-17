@@ -75,17 +75,6 @@ class ChatViewModelTest {
     }
 
     @Test
-    fun `initial state reflects isUsingSharedKey from repository`() = runTest {
-        fakeRepository.setCurrentService(Service.Free)
-        val viewModel = createViewModel()
-
-        viewModel.state.test {
-            val state = awaitItem()
-            assertTrue(state.showPrivacyInfo)
-        }
-    }
-
-    @Test
     fun `ask completes successfully and updates history`() = runTest {
         val viewModel = createViewModel()
 

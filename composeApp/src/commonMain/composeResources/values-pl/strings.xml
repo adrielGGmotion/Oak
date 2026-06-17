@@ -14,12 +14,6 @@
     <string name="settings_content_description">Ustawienia</string>
     <string name="bot_message_speech_content_description">Mowa</string>
     <string name="bot_message_copy_content_description">Kopiuj</string>
-    <string name="settings_free_tier_title">Poziom Darmowy</string>
-    <string name="settings_free_tier_description">Wraz ze wzrostem bazy użytkowników, sponsoring pomaga skalować infrastrukturę, zwiększać limity żądań dla wszystkich i utrzymywać aktywny rozwój.</string>
-    <string name="settings_become_sponsor">Zostań sponsorem GitHub</string>
-    <string name="settings_business_partnerships">Partnerstwa Biznesowe</string>
-    <string name="settings_business_partnerships_description">Chcesz wyświetlić logo swojej firmy lub omówić partnerstwo strategiczne?</string>
-    <string name="settings_contact_sponsorship">Kontakt w sprawie sponsoringu strategicznego</string>
     <string name="settings_status_error_invalid_key">Nieprawidłowy klucz API</string>
     <string name="settings_status_error_quota_exhausted">Limit wyczerpany</string>
     <string name="settings_status_error_rate_limited">Limit żądań osiągnięty</string>
@@ -48,8 +42,6 @@
     <string name="settings_tab_tools">Narzędzia</string>
     <string name="settings_tab_integrations">Integracje</string>
     <string name="tools_count">%1$d Narzędzia</string>
-    <string name="privacy_agree_prefix">Korzystając z usługi, zgadzasz się z </string>
-    <string name="privacy_policy">Polityką prywatności</string>
     <string name="settings_tab_general">Ogólne</string>
     <string name="settings_tab_agent">Agent</string>
     <string name="tool_set_alarm_name">Ustaw alarm</string>
@@ -113,9 +105,6 @@
     <string name="settings_email_poll_failed">Ostatnie pobranie nieudane %1$s</string>
     <string name="settings_email_refresh">Odśwież konto</string>
     <string name="settings_add_service">Dodaj usługę</string>
-    <string name="settings_free_fallback">Użyj jako zapasowy</string>
-    <string name="service_free_fast">Darmowy szybki</string>
-    <string name="service_free_expert">Darmowy ekspert</string>
     <string name="settings_heartbeat">Puls</string>
     <string name="settings_heartbeat_default_prompt">[HEARTBEAT] To jest automatyczna samokontrola. Przejrzyj swoje wspomnienia i oczekujące zadania. Jeśli wszystko wygląda dobrze i nic nie wymaga uwagi, odpowiedz dokładnie: HEARTBEAT_OK
 Jeśli coś wymaga uwagi (przestarzałe wspomnienia, zaległe zadania, dalsze działania użytkownika), zajmij się tym.</string>
@@ -230,8 +219,6 @@ Jeśli coś wymaga uwagi (przestarzałe wspomnienia, zaległe zadania, dalsze dz
     <string name="interactive_title">Oak</string>
     <string name="interactive_exit_content_description">Wyjdź z trybu interaktywnego</string>
     <string name="interactive_ui_parsing_failed">Analiza UI nie powiodła się, ponawiam próbę…</string>
-    <string name="settings_sponsors_monthly">Miesięczni sponsorzy</string>
-    <string name="settings_sponsors_past">Poprzedni sponsorzy</string>
     <string name="snackbar_undo">Cofnij</string>
     <string name="snackbar_memory_deleted">Wspomnienie usunięte</string>
     <string name="snackbar_task_cancelled">Zadanie anulowane</string>
