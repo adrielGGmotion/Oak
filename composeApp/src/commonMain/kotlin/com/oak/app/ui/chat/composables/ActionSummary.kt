@@ -7,8 +7,10 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.net.URI
 import kotlin.math.min
 
 private val errorJsonParser = Json { ignoreUnknownKeys = true }
@@ -35,6 +37,8 @@ data class SearchSource(
     val title: String,
     val faviconLetter: String,
     val url: String,
+    val snippet: String = "",
+    val faviconUrl: String = "",
 )
 
 /**
@@ -51,6 +55,8 @@ data class ToolAction(
     val result: String?,
     val sources: ImmutableList<SearchSource> = persistentListOf(),
     val isFileCreation: Boolean = false,
+    val parsedArguments: JsonObject? = null,
+    val parsedResult: JsonObject? = null,
 )
 
 /**
@@ -125,6 +131,12 @@ fun deriveActionSummaries(history: List<History>): List<ActionSummary> {
                         val toolEntry = allToolResults[tc.id]
                         val resultContent = toolEntry?.content
                         val registry = ToolDisplayRegistry.lookup(tc.name)
+                        val parsedArgs = runCatching {
+                            errorJsonParser.parseToJsonElement(tc.arguments).jsonObject
+                        }.getOrNull()
+                        val parsedResult = runCatching {
+                            resultContent?.let { errorJsonParser.parseToJsonElement(it).jsonObject }
+                        }.getOrNull()
                         pendingActions.add(
                             ToolAction(
                                 id = tc.id,
@@ -140,6 +152,8 @@ fun deriveActionSummaries(history: List<History>): List<ActionSummary> {
                                     persistentListOf()
                                 },
                                 isFileCreation = registry.isFileCreationTool,
+                                parsedArguments = parsedArgs,
+                                parsedResult = parsedResult,
                             ),
                         )
                     }
@@ -279,12 +293,29 @@ private fun extractSearchSources(content: String): ImmutableList<SearchSource> {
             val obj = element.jsonObject
             val title = obj["title"]?.jsonPrimitive?.content ?: return@mapNotNull null
             val url = obj["url"]?.jsonPrimitive?.content ?: obj["link"]?.jsonPrimitive?.content ?: ""
+            val snippet = obj["snippet"]?.jsonPrimitive?.content ?: ""
             val faviconLetter = title.firstOrNull()?.uppercase() ?: "?"
-            SearchSource(title = title, faviconLetter = faviconLetter, url = url)
+            val faviconUrl = extractFaviconUrl(url)
+            SearchSource(
+                title = title,
+                faviconLetter = faviconLetter,
+                url = url,
+                snippet = snippet,
+                faviconUrl = faviconUrl,
+            )
         }
         sources.toImmutableList()
     } catch (_: Exception) {
         persistentListOf()
+    }
+}
+
+private fun extractFaviconUrl(url: String): String {
+    return try {
+        val host = URI(url).host ?: return ""
+        "https://www.google.com/s2/favicons?domain=$host&sz=32"
+    } catch (_: Exception) {
+        ""
     }
 }
 

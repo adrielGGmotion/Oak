@@ -8,7 +8,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -32,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -42,18 +39,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.action_detail_back
-import oak.composeapp.generated.resources.action_no_result
 import oak.composeapp.generated.resources.action_summary_close
 import oak.composeapp.generated.resources.action_summary_error_indicator
 import oak.composeapp.generated.resources.action_summary_title
-import oak.composeapp.generated.resources.action_sources_title
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -140,13 +136,6 @@ private fun SummaryContent(
     ) {
         SummaryHeader(summary = summary, onDismiss = onDismiss)
 
-        if (summary.variant == ActionSummaryVariant.SEARCH) {
-            val searchAction = summary.actions.firstOrNull()
-            if (searchAction != null && searchAction.sources.isNotEmpty()) {
-                SourcesSection(sources = searchAction.sources)
-            }
-        }
-
         Spacer(Modifier.height(8.dp))
 
         ToolActionList(
@@ -167,93 +156,17 @@ private fun SummaryHeader(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (summary.variant == ActionSummaryVariant.SEARCH) {
-            IconButton(onClick = onDismiss) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, closeCd)
-            }
-            Spacer(Modifier.width(4.dp))
-            Text(
-                text = summary.displayText,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        } else {
-            IconButton(onClick = onDismiss) {
-                Icon(Icons.Default.Close, closeCd)
-            }
-            Spacer(Modifier.weight(1f))
-            Text(
-                stringResource(Res.string.action_summary_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.weight(1f))
-            Spacer(Modifier.size(48.dp))
+        IconButton(onClick = onDismiss) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, closeCd)
         }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Sources section
-// ---------------------------------------------------------------------------
-
-@Composable
-private fun SourcesSection(
-    sources: ImmutableList<SearchSource>,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.padding(top = 8.dp, bottom = 4.dp)) {
+        Spacer(Modifier.width(4.dp))
         Text(
-            text = stringResource(Res.string.action_sources_title),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = summary.displayText,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            sources.take(5).forEach { source ->
-                SourceBadge(source)
-            }
-        }
-    }
-}
-
-@Composable
-private fun SourceBadge(
-    source: SearchSource,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-    ) {
-        Row(
-            modifier = modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = source.faviconLetter,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            Spacer(Modifier.width(4.dp))
-            Text(
-                text = source.title,
-                style = MaterialTheme.typography.labelSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
     }
 }
 
@@ -270,6 +183,9 @@ private fun ToolActionList(
 
     Column {
         actions.forEachIndexed { index, action ->
+            val hasRenderer = toolDetailRendererFor(action.name) != null
+            val isSearchTool = action.name == "web_search" || action.name == "fetch_url"
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
@@ -280,7 +196,7 @@ private fun ToolActionList(
                     modifier = Modifier.width(32.dp),
                 ) {
                     if (index > 0) {
-                        Box(
+                        Spacer(
                             modifier = Modifier
                                 .width(2.dp)
                                 .height(12.dp)
@@ -306,7 +222,7 @@ private fun ToolActionList(
                         }
                     }
                     if (index < actions.lastIndex) {
-                        Box(
+                        Spacer(
                             modifier = Modifier
                                 .width(2.dp)
                                 .height(12.dp)
@@ -319,37 +235,112 @@ private fun ToolActionList(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { onDrillDown(action) }
+                        .then(
+                            if (hasRenderer && !isSearchTool) {
+                                Modifier.clickable { onDrillDown(action) }
+                            } else {
+                                Modifier
+                            },
+                        )
                         .padding(start = 8.dp, end = 8.dp, top = 2.dp, bottom = 2.dp),
                 ) {
                     Text(
                         text = action.displayName,
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    val preview = action.result?.take(80)?.let {
-                        it + if (action.result.length > 80) "\u2026" else ""
-                    }
-                    if (!preview.isNullOrEmpty()) {
-                        Text(
-                            text = preview,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+
+                    // For tools with renderers, show a richer preview
+                    if (hasRenderer && !isSearchTool) {
+                        ToolActionPreview(action)
+                    } else {
+                        val preview = action.result?.take(80)?.let {
+                            it + if (action.result.length > 80) "\u2026" else ""
+                        }
+                        if (!preview.isNullOrEmpty()) {
+                            Text(
+                                text = preview,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
 
-                Icon(
-                    Icons.Default.ChevronRight,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .padding(top = 4.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (hasRenderer && !isSearchTool) {
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(top = 4.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
+    }
+}
+
+/**
+ * Shows a short contextual preview for the tool action inline.
+ */
+@Composable
+private fun ToolActionPreview(action: ToolAction) {
+    val preview = when (action.name) {
+        "open_url" -> action.parsedArguments.str("url").ifEmpty { null }
+        "set_alarm" -> {
+            val h = action.parsedArguments.int("hour")
+            val m = action.parsedArguments.int("minutes")
+            val dur = action.parsedArguments.int("duration_seconds")
+            when {
+                dur > 0 -> "Timer: ${dur}s"
+                h > 0 || m > 0 -> "Alarm at $h:${m.toString().padStart(2, '0')}"
+                else -> null
+            }
+        }
+        "create_calendar_event" -> action.parsedArguments.str("title").ifEmpty { null }
+        "send_notification" -> action.parsedArguments.str("title").ifEmpty { null }
+        "read_email" -> action.parsedResult?.str("subject")?.ifEmpty { null }
+        "compose_email", "reply_email" -> {
+            val to = action.parsedArguments.str("to")
+            if (to.isNotEmpty()) "To: $to" else null
+        }
+        "send_sms", "reply_sms" -> {
+            val to = action.parsedArguments.str("to")
+            if (to.isNotEmpty()) "To: $to" else null
+        }
+        "execute_shell_command" -> {
+            val cmd = action.parsedArguments.str("command").ifEmpty { action.parsedArguments.str("cmd") }
+            cmd.takeIf { it.isNotEmpty() }?.take(50)
+        }
+        "read_file" -> {
+            val path = action.parsedArguments.str("path").ifEmpty { action.parsedArguments.str("file_path") }
+            path.substringAfterLast("/").ifEmpty { null }
+        }
+        "edit_file" -> {
+            val path = action.parsedArguments.str("path").ifEmpty { action.parsedArguments.str("file_path") }
+            path.substringAfterLast("/").ifEmpty { null }
+        }
+        "schedule_task" -> action.parsedArguments.str("description").ifEmpty { null }
+        "memory_store" -> action.parsedArguments.str("key").ifEmpty { null }
+        "memory_learn" -> {
+            val key = action.parsedArguments.str("key")
+            val cat = action.parsedArguments.str("category")
+            if (key.isNotEmpty()) "$cat: $key" else null
+        }
+        else -> null
+    }
+
+    if (preview != null) {
+        Text(
+            text = preview,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -364,7 +355,7 @@ private fun DetailContent(
     onDismiss: () -> Unit,
 ) {
     val backCd = stringResource(Res.string.action_detail_back)
-    val noResultCd = stringResource(Res.string.action_no_result)
+    val renderer = toolDetailRendererFor(action.name)
 
     Column(
         modifier = Modifier
@@ -392,18 +383,45 @@ private fun DetailContent(
 
         Spacer(Modifier.height(8.dp))
 
-        // Full result content
-        val result = action.result
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        // Dispatch to tool-specific renderer, or fall back to raw JSON
+        if (renderer != null) {
+            renderer(action, Modifier)
+        } else {
+            FallbackDetail(action)
+        }
+    }
+}
+
+/**
+ * Fallback for tools without a dedicated renderer — shows raw result as JSON.
+ */
+@Composable
+private fun FallbackDetail(action: ToolAction) {
+    val result = action.result
+    if (result != null) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    MaterialTheme.colorScheme.surfaceContainerLow,
+                    RoundedCornerShape(8.dp),
+                )
+                .padding(12.dp),
         ) {
             Text(
-                text = result ?: noResultCd,
-                modifier = Modifier.padding(12.dp),
+                text = result,
                 style = MaterialTheme.typography.bodySmall,
             )
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Helpers used by ToolActionPreview
+// ---------------------------------------------------------------------------
+
+private fun JsonObject?.str(key: String): String =
+    this?.get(key)?.jsonPrimitive?.content ?: ""
+
+private fun JsonObject?.int(key: String): Int =
+    this?.get(key)?.jsonPrimitive?.content?.toIntOrNull() ?: 0
