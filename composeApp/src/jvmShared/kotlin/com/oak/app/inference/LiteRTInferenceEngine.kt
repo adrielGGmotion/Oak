@@ -73,6 +73,50 @@ val MODEL_CATALOG = listOf(
         maxContextTokens = 4_096,
         kvPerTokenBytes = 25_000,
     ),
+    LocalModel(
+        id = "gemma-3n-e2b-it",
+        displayName = "Gemma 3n E2B IT",
+        fileName = "gemma-3n-E2B-it-int4.litertlm",
+        sizeBytes = 3_655_827_456L,
+        downloadUrl = "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm",
+        gpuMemoryMb = 500,
+        defaultContextTokens = 4_096,
+        maxContextTokens = 4_096,
+        kvPerTokenBytes = 40_000,
+    ),
+    LocalModel(
+        id = "gemma-3n-e4b-it",
+        displayName = "Gemma 3n E4B IT",
+        fileName = "gemma-3n-E4B-it-int4.litertlm",
+        sizeBytes = 4_919_541_760L,
+        downloadUrl = "https://huggingface.co/google/gemma-3n-E4B-it-litert-lm/resolve/main/gemma-3n-E4B-it-int4.litertlm",
+        gpuMemoryMb = 600,
+        defaultContextTokens = 4_096,
+        maxContextTokens = 4_096,
+        kvPerTokenBytes = 60_000,
+    ),
+    LocalModel(
+        id = "qwen2.5-1.5b-instruct",
+        displayName = "Qwen2.5 1.5B Instruct",
+        fileName = "Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.litertlm",
+        sizeBytes = 1_597_931_520L,
+        downloadUrl = "https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.litertlm",
+        gpuMemoryMb = 350,
+        defaultContextTokens = 4_096,
+        maxContextTokens = 4_096,
+        kvPerTokenBytes = 30_000,
+    ),
+    LocalModel(
+        id = "deepseek-r1-distill-qwen-1.5b",
+        displayName = "DeepSeek R1 Distill Qwen 1.5B",
+        fileName = "DeepSeek-R1-Distill-Qwen-1.5B_multi-prefill-seq_q8_ekv4096.litertlm",
+        sizeBytes = 1_833_451_520L,
+        downloadUrl = "https://huggingface.co/litert-community/DeepSeek-R1-Distill-Qwen-1.5B/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B_multi-prefill-seq_q8_ekv4096.litertlm",
+        gpuMemoryMb = 380,
+        defaultContextTokens = 4_096,
+        maxContextTokens = 4_096,
+        kvPerTokenBytes = 30_000,
+    ),
 )
 
 class LiteRTInferenceEngine : LocalInferenceEngine {
@@ -348,7 +392,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
 
     override fun getFreeSpaceBytes(): Long = getAvailableDiskSpaceBytes(getModelStorageDirectory())
 
-    override fun startDownload(model: LocalModel, hfToken: String) {
+    override fun startDownload(model: LocalModel) {
         cancelDownload()
         downloadJob = scope.launch {
             _downloadingModelId.value = model.id
@@ -376,9 +420,6 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                 connection.instanceFollowRedirects = true
                 connection.connectTimeout = 30_000
                 connection.readTimeout = 60_000
-                if (hfToken.isNotBlank()) {
-                    connection.setRequestProperty("Authorization", "Bearer $hfToken")
-                }
                 connection.connect()
 
                 val responseCode = connection.responseCode
