@@ -5,10 +5,13 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.FolderOpen
@@ -18,6 +21,7 @@ import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sms
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -71,10 +75,14 @@ internal object ToolDisplayRegistry {
             displayName = "Ran command",
             icon = Icons.Default.Code,
         ),
+        "manage_process" to ToolDisplayInfo(
+            displayName = "Managed process",
+            icon = Icons.Default.Code,
+        ),
 
         // Memory
         "memory_store" to ToolDisplayInfo(
-            displayName = "Stored memory",
+            displayName = "Saved memory",
             icon = Icons.Default.Memory,
         ),
         "memory_forget" to ToolDisplayInfo(
@@ -82,11 +90,15 @@ internal object ToolDisplayRegistry {
             icon = Icons.Default.Memory,
         ),
         "memory_learn" to ToolDisplayInfo(
-            displayName = "Learned memory",
+            displayName = "Stored learning",
             icon = Icons.Default.Memory,
         ),
         "memory_reinforce" to ToolDisplayInfo(
             displayName = "Reinforced memory",
+            icon = Icons.Default.Memory,
+        ),
+        "promote_learning" to ToolDisplayInfo(
+            displayName = "Promoted learning",
             icon = Icons.Default.Memory,
         ),
 
@@ -126,6 +138,10 @@ internal object ToolDisplayRegistry {
             displayName = "Replied to email",
             icon = Icons.Default.Email,
         ),
+        "setup_email" to ToolDisplayInfo(
+            displayName = "Set up email",
+            icon = Icons.Default.Email,
+        ),
 
         // SMS
         "check_sms" to ToolDisplayInfo(
@@ -139,6 +155,14 @@ internal object ToolDisplayRegistry {
         "search_sms" to ToolDisplayInfo(
             displayName = "Searched SMS",
             icon = Icons.Default.Search,
+        ),
+        "send_sms" to ToolDisplayInfo(
+            displayName = "Drafted SMS",
+            icon = Icons.Default.Sms,
+        ),
+        "reply_sms" to ToolDisplayInfo(
+            displayName = "Drafted SMS reply",
+            icon = Icons.Default.Sms,
         ),
 
         // Calendar / alarms
@@ -162,6 +186,68 @@ internal object ToolDisplayRegistry {
         ),
         "search_notifications" to ToolDisplayInfo(
             displayName = "Searched notifications",
+            icon = Icons.Default.Search,
+        ),
+        "send_notification" to ToolDisplayInfo(
+            displayName = "Sent notification",
+            icon = Icons.Default.Notifications,
+        ),
+
+        // SSH
+        "ssh_connect" to ToolDisplayInfo(
+            displayName = "Connected to server",
+            icon = Icons.Default.Cloud,
+        ),
+        "ssh_disconnect" to ToolDisplayInfo(
+            displayName = "Disconnected from server",
+            icon = Icons.Default.Cloud,
+        ),
+        "ssh_execute_command" to ToolDisplayInfo(
+            displayName = "Ran remote command",
+            icon = Icons.Default.Code,
+        ),
+        "ssh_status" to ToolDisplayInfo(
+            displayName = "Checked connection",
+            icon = Icons.Default.Cloud,
+        ),
+        "ssh_transfer_file" to ToolDisplayInfo(
+            displayName = "Transferred file",
+            icon = Icons.Default.SwapHoriz,
+        ),
+        "ssh_read_file" to ToolDisplayInfo(
+            displayName = "Read remote file",
+            icon = Icons.Default.Description,
+        ),
+        "ssh_write_file" to ToolDisplayInfo(
+            displayName = "Wrote remote file",
+            icon = Icons.Default.Edit,
+        ),
+        "ssh_edit_file" to ToolDisplayInfo(
+            displayName = "Edited remote file",
+            icon = Icons.Default.Edit,
+        ),
+        "ssh_list_directory" to ToolDisplayInfo(
+            displayName = "Listed directory",
+            icon = Icons.Default.FolderOpen,
+        ),
+        "ssh_delete_path" to ToolDisplayInfo(
+            displayName = "Deleted remote path",
+            icon = Icons.Default.Delete,
+        ),
+        "ssh_make_directory" to ToolDisplayInfo(
+            displayName = "Created directory",
+            icon = Icons.Default.FolderOpen,
+        ),
+        "ssh_file_info" to ToolDisplayInfo(
+            displayName = "Checked file info",
+            icon = Icons.Default.Info,
+        ),
+        "ssh_search_files" to ToolDisplayInfo(
+            displayName = "Searched files",
+            icon = Icons.Default.Search,
+        ),
+        "ssh_grep" to ToolDisplayInfo(
+            displayName = "Searched file contents",
             icon = Icons.Default.Search,
         ),
 
