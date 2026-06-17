@@ -1,40 +1,39 @@
 package com.oak.app.ui.settings
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.oak.app.data.OakFontFamily
-import com.oak.app.ui.handCursor
 import com.oak.app.ui.resolve
 import com.oak.app.ui.toTypography
 import oak.composeapp.generated.resources.Res
@@ -43,6 +42,7 @@ import oak.composeapp.generated.resources.settings_font_family_description
 import oak.composeapp.generated.resources.settings_font_preview
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FontFamilyPicker(
     selectedFontFamily: OakFontFamily,
@@ -50,6 +50,8 @@ fun FontFamilyPicker(
     title: String = stringResource(Res.string.settings_font_family),
     description: String = stringResource(Res.string.settings_font_family_description),
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = title,
@@ -62,76 +64,58 @@ fun FontFamilyPicker(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
         )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
         ) {
-            OakFontFamily.entries.forEach { fontFamily ->
-                FontFamilyCard(
-                    fontFamily = fontFamily,
-                    isSelected = fontFamily == selectedFontFamily,
-                    onClick = { onChangeFontFamily(fontFamily) },
-                )
+            OutlinedTextField(
+                value = stringResource(selectedFontFamily.displayNameRes),
+                onValueChange = {},
+                readOnly = true,
+                textStyle = TextStyle(
+                    fontFamily = selectedFontFamily.resolve(),
+                    fontSize = 16.sp,
+                ),
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                OakFontFamily.entries.forEach { fontFamily ->
+                    val isSelected = fontFamily == selectedFontFamily
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(fontFamily.displayNameRes),
+                                style = TextStyle(
+                                    fontFamily = fontFamily.resolve(),
+                                    fontSize = 16.sp,
+                                ),
+                            )
+                        },
+                        leadingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        } else null,
+                        onClick = {
+                            onChangeFontFamily(fontFamily)
+                            expanded = false
+                        },
+                    )
+                }
             }
         }
         FontFamilyPreview(
             fontFamily = selectedFontFamily,
             modifier = Modifier.padding(top = 16.dp),
         )
-    }
-}
-
-@Composable
-private fun FontFamilyCard(
-    fontFamily: OakFontFamily,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    val borderWidth by animateDpAsState(
-        targetValue = if (isSelected) 2.dp else 1.dp,
-        animationSpec = tween(durationMillis = 200),
-    )
-
-    Card(
-        onClick = onClick,
-        modifier = Modifier
-            .width(72.dp)
-            .height(40.dp)
-            .handCursor(),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            },
-        ),
-        border = BorderStroke(
-            borderWidth,
-            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-        ),
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = stringResource(fontFamily.displayNameRes),
-                style = TextStyle(
-                    fontFamily = fontFamily.resolve(),
-                    fontSize = 11.sp,
-                ),
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-            )
-        }
     }
 }
 
