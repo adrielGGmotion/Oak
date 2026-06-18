@@ -49,6 +49,7 @@ import com.oak.app.ui.components.VerticalScrollbarForScroll
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
+import kotlinx.collections.immutable.ImmutableList
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.settings_mcp_add
 import oak.composeapp.generated.resources.settings_mcp_add_header
@@ -66,9 +67,7 @@ import oak.composeapp.generated.resources.settings_mcp_servers_description
 import oak.composeapp.generated.resources.settings_mcp_status_connected
 import oak.composeapp.generated.resources.settings_mcp_status_connecting
 import oak.composeapp.generated.resources.settings_mcp_status_error
-import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.stringResource
-
 
 @Composable
 internal fun McpServersSection(

@@ -8,8 +8,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 /**
@@ -27,55 +27,66 @@ class OakToolProvider(private val tool: Tool) : OpenApiTool {
             put("name", schema.name)
             put("description", schema.description)
             if (schema.parameters.isNotEmpty()) {
-                put("parameters", buildJsonObject {
-                    put("type", "object")
-                    put("properties", buildJsonObject {
-                        for ((name, param) in schema.parameters) {
-                            put(name, buildJsonObject {
-                                put("type", param.type)
-                                put("description", param.description)
-                            })
-                        }
-                    })
-                    put("required", buildJsonArray {
-                        for ((name, param) in schema.parameters) {
-                            if (param.required) add(JsonPrimitive(name))
-                        }
-                    })
-                })
+                put(
+                    "parameters",
+                    buildJsonObject {
+                        put("type", "object")
+                        put(
+                            "properties",
+                            buildJsonObject {
+                                for ((name, param) in schema.parameters) {
+                                    put(
+                                        name,
+                                        buildJsonObject {
+                                            put("type", param.type)
+                                            put("description", param.description)
+                                        },
+                                    )
+                                }
+                            },
+                        )
+                        put(
+                            "required",
+                            buildJsonArray {
+                                for ((name, param) in schema.parameters) {
+                                    if (param.required) add(JsonPrimitive(name))
+                                }
+                            },
+                        )
+                    },
+                )
             }
         }
         return Json.encodeToString(JsonObject.serializer(), jsonObject)
     }
 
-    override fun execute(paramsJsonString: String): String {
-        return runBlocking {
-            try {
-                val parsed = Json.parseToJsonElement(paramsJsonString)
-                val convertedArgs = mutableMapOf<String, Any>()
-                if (parsed is JsonObject) {
-                    for ((key, value) in parsed) {
-                        convertedArgs[key] = when (value) {
-                            is JsonPrimitive -> {
-                                val content = value.content
-                                when {
-                                    content.equals("true", ignoreCase = true) -> true
-                                    content.equals("false", ignoreCase = true) -> false
-                                    content.toIntOrNull() != null -> content.toInt()
-                                    content.toLongOrNull() != null -> content.toLong()
-                                    content.toDoubleOrNull() != null -> content.toDouble()
-                                    else -> content
-                                }
+    override fun execute(paramsJsonString: String): String = runBlocking {
+        try {
+            val parsed = Json.parseToJsonElement(paramsJsonString)
+            val convertedArgs = mutableMapOf<String, Any>()
+            if (parsed is JsonObject) {
+                for ((key, value) in parsed) {
+                    convertedArgs[key] = when (value) {
+                        is JsonPrimitive -> {
+                            val content = value.content
+                            when {
+                                content.equals("true", ignoreCase = true) -> true
+                                content.equals("false", ignoreCase = true) -> false
+                                content.toIntOrNull() != null -> content.toInt()
+                                content.toLongOrNull() != null -> content.toLong()
+                                content.toDoubleOrNull() != null -> content.toDouble()
+                                else -> content
                             }
-                            else -> value.toString()
                         }
+
+                        else -> value.toString()
                     }
                 }
-                val result = tool.execute(convertedArgs)
-                result.toString()
-            } catch (e: Exception) {
-                """{"error": "${e.message ?: "Unknown error"}"}"""
             }
+            val result = tool.execute(convertedArgs)
+            result.toString()
+        } catch (e: Exception) {
+            """{"error": "${e.message ?: "Unknown error"}"}"""
         }
     }
 
@@ -83,9 +94,7 @@ class OakToolProvider(private val tool: Tool) : OpenApiTool {
         /**
          * Converts a list of Oak [Tool] instances to litertlm [ToolProvider]s.
          */
-        fun toToolProviders(tools: List<Tool>): List<ToolProvider> {
-            return tools.map { tool -> tool(OakToolProvider(tool)) }
-        }
+        fun toToolProviders(tools: List<Tool>): List<ToolProvider> = tools.map { tool -> tool(OakToolProvider(tool)) }
     }
 }
 
@@ -106,13 +115,11 @@ class LocalToolAdapter(private val localTool: LocalTool) : OpenApiTool {
         return Json.encodeToString(JsonObject.serializer(), jsonObject)
     }
 
-    override fun execute(paramsJsonString: String): String {
-        return runBlocking {
-            try {
-                localTool.execute(paramsJsonString)
-            } catch (e: Exception) {
-                """{"error": "${e.message ?: "Unknown error"}"}"""
-            }
+    override fun execute(paramsJsonString: String): String = runBlocking {
+        try {
+            localTool.execute(paramsJsonString)
+        } catch (e: Exception) {
+            """{"error": "${e.message ?: "Unknown error"}"}"""
         }
     }
 }

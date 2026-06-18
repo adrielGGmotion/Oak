@@ -215,9 +215,11 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                             throw e
                         }
                     }
+
                     "cpu" -> {
                         initWithBackend(Backend.CPU(), requestedTokens).also { _activeBackend.value = "cpu" }
                     }
+
                     else -> {
                         try {
                             try {
@@ -358,7 +360,9 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                     else -> Message.model(sanitized)
                 }
             }
-        } else emptyList()
+        } else {
+            emptyList()
+        }
 
         // Enable constrained decoding for reliable tool calling
         ExperimentalFlags.enableConversationConstrainedDecoding = true

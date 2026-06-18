@@ -87,8 +87,8 @@ import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.SetupCalendarPermissionHandler
 import com.oak.app.tools.SetupNotificationPermissionHandler
 import com.oak.app.tools.SetupSmsPermissionHandler
-import com.oak.app.tools.SetupStoragePermissionHandler
 import com.oak.app.tools.SetupSmsSendPermissionHandler
+import com.oak.app.tools.SetupStoragePermissionHandler
 import com.oak.app.tools.SmsPermissionController
 import com.oak.app.tools.SmsSendPermissionController
 import com.oak.app.tools.StoragePermissionController
@@ -419,10 +419,10 @@ private fun AppContent(
                                                         Row(
                                                             verticalAlignment = Alignment.CenterVertically,
                                                         ) {
-                                                    val fallbackTitle = stringResource(Res.string.drawer_new_chat)
-                                                    Column(modifier = Modifier.weight(1f)) {
-                                                            Text(
-                                                                text = conversation.title.ifEmpty { fallbackTitle },
+                                                            val fallbackTitle = stringResource(Res.string.drawer_new_chat)
+                                                            Column(modifier = Modifier.weight(1f)) {
+                                                                Text(
+                                                                    text = conversation.title.ifEmpty { fallbackTitle },
                                                                     style = MaterialTheme.typography.bodyMedium,
                                                                     fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
                                                                     color = if (isActive) {
@@ -457,11 +457,11 @@ private fun AppContent(
                                                                     onDismissRequest = { showMenu = false },
                                                                 ) {
                                                                     DropdownMenuItem(
-                                                                text = { Text(stringResource(Res.string.drawer_delete)) },
-                                                                    onClick = {
-                                                                        showMenu = false
-                                                                        deleteTarget = conversation
-                                                                    },
+                                                                        text = { Text(stringResource(Res.string.drawer_delete)) },
+                                                                        onClick = {
+                                                                            showMenu = false
+                                                                            deleteTarget = conversation
+                                                                        },
                                                                         leadingIcon = {
                                                                             Icon(
                                                                                 Icons.Outlined.Delete,

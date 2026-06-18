@@ -1,13 +1,13 @@
 package com.oak.app.data
 
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.suspendCancellableCoroutine
 data class AskQuestion(
     val id: String,
     val text: String,
@@ -62,17 +62,15 @@ class AskQuestionsManager {
         cont.resumeWith(Result.success(""))
     }
 
-    private fun buildResultText(questions: List<AskQuestion>, answers: Map<String, String>): String {
-        return buildString {
-            questions.forEachIndexed { index, q ->
-                if (index > 0) appendLine()
-                appendLine("Q${index + 1}: ${q.text}")
-                val answer = answers[q.id]
-                if (answer.isNullOrBlank()) {
-                    appendLine("A: (Skipped)")
-                } else {
-                    appendLine("A: $answer")
-                }
+    private fun buildResultText(questions: List<AskQuestion>, answers: Map<String, String>): String = buildString {
+        questions.forEachIndexed { index, q ->
+            if (index > 0) appendLine()
+            appendLine("Q${index + 1}: ${q.text}")
+            val answer = answers[q.id]
+            if (answer.isNullOrBlank()) {
+                appendLine("A: (Skipped)")
+            } else {
+                appendLine("A: $answer")
             }
         }
     }

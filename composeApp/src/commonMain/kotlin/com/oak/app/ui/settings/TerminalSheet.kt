@@ -58,18 +58,18 @@ import com.oak.app.SandboxSessions
 import com.oak.app.TerminalLine
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.sandbox.SandboxSessionViewModel
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.terminal_help_text
-import oak.composeapp.generated.resources.terminal_input_placeholder
-import oak.composeapp.generated.resources.terminal_run_content_description
-import oak.composeapp.generated.resources.terminal_stop_content_description
-import oak.composeapp.generated.resources.terminal_title
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.terminal_help_text
+import oak.composeapp.generated.resources.terminal_input_placeholder
+import oak.composeapp.generated.resources.terminal_run_content_description
+import oak.composeapp.generated.resources.terminal_stop_content_description
+import oak.composeapp.generated.resources.terminal_title
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
 

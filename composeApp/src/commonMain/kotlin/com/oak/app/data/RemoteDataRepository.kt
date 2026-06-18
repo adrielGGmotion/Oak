@@ -8,7 +8,6 @@ import com.oak.app.currentPlatform
 import com.oak.app.email.EmailPoller
 import com.oak.app.formatFileSize
 import com.oak.app.getAvailableTools
-import com.oak.app.smartTruncate
 import com.oak.app.getPlatformToolDefinitions
 import com.oak.app.inference.DownloadError
 import com.oak.app.inference.DownloadedModel
@@ -25,8 +24,6 @@ import com.oak.app.network.AnthropicInsufficientCreditsException
 import com.oak.app.network.ContextWindowExceededException
 import com.oak.app.network.FileTooLargeException
 import com.oak.app.network.OpenAICompatibleEmptyResponseException
-import com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatResponseDto
-import com.oak.app.network.dtos.openaicompatible.toolCallMarkerRegex
 import com.oak.app.network.OpenAICompatibleInvalidApiKeyException
 import com.oak.app.network.OpenAICompatibleQuotaExhaustedException
 import com.oak.app.network.Requests
@@ -35,18 +32,21 @@ import com.oak.app.network.UnsupportedFileTypeException
 import com.oak.app.network.dtos.anthropic.AnthropicChatRequestDto
 import com.oak.app.network.dtos.anthropic.extractText
 import com.oak.app.network.dtos.gemini.extractText
+import com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatResponseDto
+import com.oak.app.network.dtos.openaicompatible.toolCallMarkerRegex
 import com.oak.app.network.toUiError
 import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
+import com.oak.app.smartTruncate
 import com.oak.app.sms.SmsPoller
 import com.oak.app.sms.SmsReader
 import com.oak.app.sms.SmsSendResult
 import com.oak.app.sms.SmsSender
-import com.oak.app.tools.CommonTools
-import com.oak.app.tools.NotificationListenerController
 import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshServerConfig
 import com.oak.app.ssh.SshServerManager
+import com.oak.app.tools.CommonTools
+import com.oak.app.tools.NotificationListenerController
 import com.oak.app.tools.SmsPermissionController
 import com.oak.app.tools.SmsSendPermissionController
 import com.oak.app.ui.chat.History
@@ -60,19 +60,17 @@ import io.github.vinceglb.filekit.mimeType
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.size
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.default_soul
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toLocalDateTime
@@ -85,6 +83,8 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.default_soul
 import org.jetbrains.compose.resources.getString
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -433,22 +433,34 @@ class RemoteDataRepository(
                     put("name", schema.name)
                     put("description", schema.description)
                     if (schema.parameters.isNotEmpty()) {
-                        put("parameters", kotlinx.serialization.json.buildJsonObject {
-                            put("type", "object")
-                            put("properties", kotlinx.serialization.json.buildJsonObject {
-                                for ((name, param) in schema.parameters) {
-                                    put(name, kotlinx.serialization.json.buildJsonObject {
-                                        put("type", param.type)
-                                        put("description", param.description)
-                                    })
-                                }
-                            })
-                            put("required", kotlinx.serialization.json.buildJsonArray {
-                                for ((name, param) in schema.parameters) {
-                                    if (param.required) add(kotlinx.serialization.json.JsonPrimitive(name))
-                                }
-                            })
-                        })
+                        put(
+                            "parameters",
+                            kotlinx.serialization.json.buildJsonObject {
+                                put("type", "object")
+                                put(
+                                    "properties",
+                                    kotlinx.serialization.json.buildJsonObject {
+                                        for ((name, param) in schema.parameters) {
+                                            put(
+                                                name,
+                                                kotlinx.serialization.json.buildJsonObject {
+                                                    put("type", param.type)
+                                                    put("description", param.description)
+                                                },
+                                            )
+                                        }
+                                    },
+                                )
+                                put(
+                                    "required",
+                                    kotlinx.serialization.json.buildJsonArray {
+                                        for ((name, param) in schema.parameters) {
+                                            if (param.required) add(kotlinx.serialization.json.JsonPrimitive(name))
+                                        }
+                                    },
+                                )
+                            },
+                        )
                     }
                 },
             )
@@ -465,7 +477,9 @@ class RemoteDataRepository(
                                     else -> v.toString()
                                 }
                             }
-                        } else emptyMap<String, Any>()
+                        } else {
+                            emptyMap<String, Any>()
+                        }
                     } catch (e: Exception) {
                         emptyMap<String, Any>()
                     }
@@ -492,11 +506,13 @@ class RemoteDataRepository(
                 }
             }
             try {
-                stripThinkBlocks(engine.chat(
-                    messages = inferenceMessages,
-                    systemPrompt = systemPrompt,
-                    tools = localTools,
-                ))
+                stripThinkBlocks(
+                    engine.chat(
+                        messages = inferenceMessages,
+                        systemPrompt = systemPrompt,
+                        tools = localTools,
+                    ),
+                )
             } finally {
                 streamingJob.cancel()
             }
@@ -559,6 +575,7 @@ class RemoteDataRepository(
             if (!inString) {
                 when (c) {
                     '{' -> depth++
+
                     '}' -> {
                         depth--
                         if (depth == 0) return s.substring(startIdx, idx + 1)
@@ -603,20 +620,18 @@ class RemoteDataRepository(
         return JsonPrimitive(trimmed)
     }
 
-    private fun parseInvokeBlocks(text: String): List<ParsedInvokeCall> {
-        return invokeBlockRegex.findAll(text).map { match ->
-            val name = match.groupValues[1]
-            val body = match.groupValues[2]
-            val params = buildJsonObject {
-                parameterRegex.findAll(body).forEach { paramMatch ->
-                    val paramName = paramMatch.groupValues[1]
-                    val paramValue = paramMatch.groupValues[2].trim()
-                    put(paramName, coerceValue(paramValue))
-                }
+    private fun parseInvokeBlocks(text: String): List<ParsedInvokeCall> = invokeBlockRegex.findAll(text).map { match ->
+        val name = match.groupValues[1]
+        val body = match.groupValues[2]
+        val params = buildJsonObject {
+            parameterRegex.findAll(body).forEach { paramMatch ->
+                val paramName = paramMatch.groupValues[1]
+                val paramValue = paramMatch.groupValues[2].trim()
+                put(paramName, coerceValue(paramValue))
             }
-            ParsedInvokeCall(name = name, arguments = params.toString())
-        }.toList()
-    }
+        }
+        ParsedInvokeCall(name = name, arguments = params.toString())
+    }.toList()
 
     private data class InlineToolCallResult(
         val toolCalls: List<ToolCallInfo>,
@@ -897,160 +912,160 @@ class RemoteDataRepository(
         val recentSignatures = mutableListOf<String>()
 
         try {
-        while (true) {
-            iteration++
-            if (iteration > MAX_TOOL_ITERATIONS) {
-                return makeFinalCallWithoutTools(service, credentials, currentMessages)
-            }
-
-            _streamingContent.value = null
-            _streamingReasoning.value = null
-
-            var (textContent, fullReasoning, toolCalls) = try {
-                retryApiCall {
-                    if (appSettings.isStreamingEnabled()) {
-                        _streamingContent.value = null
-                        _streamingReasoning.value = null
-                        val contentBuilder = StringBuilder()
-                        val reasoningBuilder = StringBuilder()
-                        val toolCallAccumulators = mutableMapOf<Int, MutableMap<String, String>>()
-
-                        requests.openAICompatibleChatStream(service, credentials, currentMessages, tools)
-                            .collect { chunk ->
-                                val choice = chunk.choices?.firstOrNull()
-                                val delta = choice?.delta ?: return@collect
-
-                                delta.content?.let { c ->
-                                    contentBuilder.append(c)
-                                    _streamingContent.value = contentBuilder.toString()
-                                }
-                                delta.reasoningContent?.let { r ->
-                                    reasoningBuilder.append(r)
-                                    _streamingReasoning.value = reasoningBuilder.toString()
-                                }
-                                delta.toolCalls?.forEach { tc ->
-                                    val acc = toolCallAccumulators.getOrPut(tc.index) { mutableMapOf() }
-                                    tc.id?.let { acc["id"] = it }
-                                    tc.type?.let { acc["type"] = it }
-                                    tc.function?.name?.let { acc["function_name"] = (acc["function_name"] ?: "") + it }
-                                    tc.function?.arguments?.let { acc["function_arguments"] = (acc["function_arguments"] ?: "") + it }
-                                }
-                            }
-
-                        val calls = toolCallAccumulators.entries.map { (_, acc) ->
-                            OpenAICompatibleChatResponseDto.ToolCall(
-                                id = acc["id"] ?: "",
-                                type = acc["type"] ?: "function",
-                                function = OpenAICompatibleChatResponseDto.FunctionCall(
-                                    name = acc["function_name"] ?: "",
-                                    arguments = acc["function_arguments"] ?: "",
-                                ),
-                            )
-                        }
-
-                        Triple(
-                            contentBuilder.toString().ifEmpty { null },
-                            reasoningBuilder.toString().ifEmpty { null },
-                            calls,
-                        )
-                    } else {
-                        val response = requests.openAICompatibleChat(service, credentials, currentMessages, tools).getOrThrow()
-                        val choice = response.choices.firstOrNull()
-                        val message = choice?.message
-                        Triple(
-                            message?.effectiveContent,
-                            message?.effectiveReasoning,
-                            message?.toolCalls ?: emptyList(),
-                        )
-                    }
+            while (true) {
+                iteration++
+                if (iteration > MAX_TOOL_ITERATIONS) {
+                    return makeFinalCallWithoutTools(service, credentials, currentMessages)
                 }
-            } catch (e: Exception) {
+
                 _streamingContent.value = null
                 _streamingReasoning.value = null
-                throw e
-            }
 
-            if (toolCalls.isEmpty()) {
-                if (textContent != null) {
-                    val inlineResult = parseInlineToolCalls(textContent)
-                    if (inlineResult != null) {
-                        toolCalls = inlineResult.toolCalls.map { tc ->
-                            OpenAICompatibleChatResponseDto.ToolCall(
-                                id = tc.id,
-                                type = "function",
-                                function = OpenAICompatibleChatResponseDto.FunctionCall(
-                                    name = tc.name,
-                                    arguments = tc.arguments,
-                                ),
+                var (textContent, fullReasoning, toolCalls) = try {
+                    retryApiCall {
+                        if (appSettings.isStreamingEnabled()) {
+                            _streamingContent.value = null
+                            _streamingReasoning.value = null
+                            val contentBuilder = StringBuilder()
+                            val reasoningBuilder = StringBuilder()
+                            val toolCallAccumulators = mutableMapOf<Int, MutableMap<String, String>>()
+
+                            requests.openAICompatibleChatStream(service, credentials, currentMessages, tools)
+                                .collect { chunk ->
+                                    val choice = chunk.choices?.firstOrNull()
+                                    val delta = choice?.delta ?: return@collect
+
+                                    delta.content?.let { c ->
+                                        contentBuilder.append(c)
+                                        _streamingContent.value = contentBuilder.toString()
+                                    }
+                                    delta.reasoningContent?.let { r ->
+                                        reasoningBuilder.append(r)
+                                        _streamingReasoning.value = reasoningBuilder.toString()
+                                    }
+                                    delta.toolCalls?.forEach { tc ->
+                                        val acc = toolCallAccumulators.getOrPut(tc.index) { mutableMapOf() }
+                                        tc.id?.let { acc["id"] = it }
+                                        tc.type?.let { acc["type"] = it }
+                                        tc.function?.name?.let { acc["function_name"] = (acc["function_name"] ?: "") + it }
+                                        tc.function?.arguments?.let { acc["function_arguments"] = (acc["function_arguments"] ?: "") + it }
+                                    }
+                                }
+
+                            val calls = toolCallAccumulators.entries.map { (_, acc) ->
+                                OpenAICompatibleChatResponseDto.ToolCall(
+                                    id = acc["id"] ?: "",
+                                    type = acc["type"] ?: "function",
+                                    function = OpenAICompatibleChatResponseDto.FunctionCall(
+                                        name = acc["function_name"] ?: "",
+                                        arguments = acc["function_arguments"] ?: "",
+                                    ),
+                                )
+                            }
+
+                            Triple(
+                                contentBuilder.toString().ifEmpty { null },
+                                reasoningBuilder.toString().ifEmpty { null },
+                                calls,
                             )
-                        }
-                        textContent = inlineResult.cleanContent.ifEmpty { null }
-                    } else {
-                        val stripped = textContent.stripToolMarkup()
-                        return stripped.ifEmpty { "" }
-                    }
-                } else {
-                    return ""
-                }
-            }
-
-            val signatures = toolCalls.map { "${it.function.name}:${it.function.arguments.hashCode()}" }
-            if (isRepeatingToolCalls(recentSignatures, signatures)) {
-                return makeFinalCallWithoutTools(service, credentials, currentMessages)
-            }
-            recentSignatures.addAll(signatures)
-
-            history.update {
-                it.toMutableList().apply {
-                    add(
-                        History(
-                            role = History.Role.ASSISTANT,
-                            content = textContent?.stripToolMarkup() ?: "",
-                            isThinking = textContent == null && fullReasoning != null,
-                            toolCalls = toolCalls.map { tc ->
-                                ToolCallInfo(id = tc.id, name = tc.function.name, arguments = tc.function.arguments)
-                            }.toImmutableList(),
-                            reasoningContent = fullReasoning,
-                        ),
-                    )
-                }
-            }
-
-            val toolResults = executeToolCallsInParallel(toolCalls.map { Triple(it.id, it.function.name, it.function.arguments) })
-
-            history.update { h ->
-                buildList<History>(h.size + toolResults.size) {
-                    for (entry in h) {
-                        if (entry.role != History.Role.TOOL_EXECUTING) {
-                            val cleaned = entry.withoutAskQuestionsToolCall()
-                            if (cleaned != null) add(cleaned)
-                        }
-                    }
-                    for ((callId, name, result) in toolResults) {
-                        if (name == ASK_QUESTIONS_TOOL_NAME) {
-                            add(History(role = History.Role.USER, content = result))
                         } else {
-                            add(
-                                History(
-                                    role = History.Role.TOOL,
-                                    content = result,
-                                    toolCallId = callId,
-                                    toolName = name,
-                                ),
+                            val response = requests.openAICompatibleChat(service, credentials, currentMessages, tools).getOrThrow()
+                            val choice = response.choices.firstOrNull()
+                            val message = choice?.message
+                            Triple(
+                                message?.effectiveContent,
+                                message?.effectiveReasoning,
+                                message?.toolCalls ?: emptyList(),
                             )
                         }
                     }
+                } catch (e: Exception) {
+                    _streamingContent.value = null
+                    _streamingReasoning.value = null
+                    throw e
                 }
-            }
 
-            currentMessages = trimMessagesForContext(
-                buildOpenAIMessages(
-                    history.value.filter { it.role != History.Role.TOOL_EXECUTING },
-                    systemPrompt,
-                ),
-                contextWindowTokens,
-            )
-        }
+                if (toolCalls.isEmpty()) {
+                    if (textContent != null) {
+                        val inlineResult = parseInlineToolCalls(textContent)
+                        if (inlineResult != null) {
+                            toolCalls = inlineResult.toolCalls.map { tc ->
+                                OpenAICompatibleChatResponseDto.ToolCall(
+                                    id = tc.id,
+                                    type = "function",
+                                    function = OpenAICompatibleChatResponseDto.FunctionCall(
+                                        name = tc.name,
+                                        arguments = tc.arguments,
+                                    ),
+                                )
+                            }
+                            textContent = inlineResult.cleanContent.ifEmpty { null }
+                        } else {
+                            val stripped = textContent.stripToolMarkup()
+                            return stripped.ifEmpty { "" }
+                        }
+                    } else {
+                        return ""
+                    }
+                }
+
+                val signatures = toolCalls.map { "${it.function.name}:${it.function.arguments.hashCode()}" }
+                if (isRepeatingToolCalls(recentSignatures, signatures)) {
+                    return makeFinalCallWithoutTools(service, credentials, currentMessages)
+                }
+                recentSignatures.addAll(signatures)
+
+                history.update {
+                    it.toMutableList().apply {
+                        add(
+                            History(
+                                role = History.Role.ASSISTANT,
+                                content = textContent?.stripToolMarkup() ?: "",
+                                isThinking = textContent == null && fullReasoning != null,
+                                toolCalls = toolCalls.map { tc ->
+                                    ToolCallInfo(id = tc.id, name = tc.function.name, arguments = tc.function.arguments)
+                                }.toImmutableList(),
+                                reasoningContent = fullReasoning,
+                            ),
+                        )
+                    }
+                }
+
+                val toolResults = executeToolCallsInParallel(toolCalls.map { Triple(it.id, it.function.name, it.function.arguments) })
+
+                history.update { h ->
+                    buildList<History>(h.size + toolResults.size) {
+                        for (entry in h) {
+                            if (entry.role != History.Role.TOOL_EXECUTING) {
+                                val cleaned = entry.withoutAskQuestionsToolCall()
+                                if (cleaned != null) add(cleaned)
+                            }
+                        }
+                        for ((callId, name, result) in toolResults) {
+                            if (name == ASK_QUESTIONS_TOOL_NAME) {
+                                add(History(role = History.Role.USER, content = result))
+                            } else {
+                                add(
+                                    History(
+                                        role = History.Role.TOOL,
+                                        content = result,
+                                        toolCallId = callId,
+                                        toolName = name,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                currentMessages = trimMessagesForContext(
+                    buildOpenAIMessages(
+                        history.value.filter { it.role != History.Role.TOOL_EXECUTING },
+                        systemPrompt,
+                    ),
+                    contextWindowTokens,
+                )
+            }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             try {
@@ -1068,112 +1083,112 @@ class RemoteDataRepository(
         val recentSignatures = mutableListOf<String>()
 
         try {
-        while (true) {
-            iteration++
+            while (true) {
+                iteration++
 
-            if (iteration > MAX_TOOL_ITERATIONS) {
-                // Bail out: make a final Gemini call without tools
+                if (iteration > MAX_TOOL_ITERATIONS) {
+                    // Bail out: make a final Gemini call without tools
+                    val currentMessages = history.value.filter { it.role != History.Role.TOOL_EXECUTING }
+                    val geminiMessages = currentMessages.map { it.toGeminiMessageDto() }
+                    val bailoutResponse = retryApiCall {
+                        requests.geminiChat(
+                            credentials = credentials,
+                            messages = geminiMessages,
+                            systemInstruction = "You have reached the tool call limit. Please respond with the best answer you have so far based on the information gathered. $systemPrompt",
+                        ).getOrThrow()
+                    }
+                    return bailoutResponse.extractText()
+                }
+
                 val currentMessages = history.value.filter { it.role != History.Role.TOOL_EXECUTING }
                 val geminiMessages = currentMessages.map { it.toGeminiMessageDto() }
-                val bailoutResponse = retryApiCall {
-                    requests.geminiChat(
-                        credentials = credentials,
-                        messages = geminiMessages,
-                        systemInstruction = "You have reached the tool call limit. Please respond with the best answer you have so far based on the information gathered. $systemPrompt",
-                    ).getOrThrow()
+
+                val response = retryApiCall {
+                    requests.geminiChat(credentials = credentials, messages = geminiMessages, tools = tools, systemInstruction = systemPrompt).getOrThrow()
                 }
-                return bailoutResponse.extractText()
-            }
+                val parts = response.candidates.firstOrNull()?.content?.parts ?: return ""
 
-            val currentMessages = history.value.filter { it.role != History.Role.TOOL_EXECUTING }
-            val geminiMessages = currentMessages.map { it.toGeminiMessageDto() }
+                val partsWithFunctionCalls = parts.filter { it.functionCall != null }
+                val toolCallInfos: List<ToolCallInfo>
+                val textContent: String
 
-            val response = retryApiCall {
-                requests.geminiChat(credentials = credentials, messages = geminiMessages, tools = tools, systemInstruction = systemPrompt).getOrThrow()
-            }
-            val parts = response.candidates.firstOrNull()?.content?.parts ?: return ""
-
-            val partsWithFunctionCalls = parts.filter { it.functionCall != null }
-            val toolCallInfos: List<ToolCallInfo>
-            val textContent: String
-
-            if (partsWithFunctionCalls.isEmpty()) {
-                val text = parts.filterNot { it.isThought }.joinToString("\n") { it.text ?: "" }
-                val inlineResult = parseInlineToolCalls(text)
-                if (inlineResult == null) {
-                    return text
-                }
-                toolCallInfos = inlineResult.toolCalls
-                textContent = inlineResult.cleanContent
-            } else {
-                toolCallInfos = partsWithFunctionCalls.map { part ->
-                    val fc = part.functionCall!!
-                    val argsJson = fc.args?.let { JsonObject(it).toString() } ?: "{}"
-                    ToolCallInfo(
-                        id = "gemini-${Uuid.random()}",
-                        name = fc.name,
-                        arguments = argsJson,
-                        thoughtSignature = part.thoughtSignature,
-                    )
-                }
-                textContent = parts.filterNot { it.isThought }.mapNotNull { it.text }.joinToString("\n")
-                    .replace(invokeBlockRegex, "").trim()
-            }
-
-            val signatures = toolCallInfos.map { "${it.name}:${it.arguments.hashCode()}" }
-            if (isRepeatingToolCalls(recentSignatures, signatures)) {
-                val bailoutMessages = currentMessages.map { it.toGeminiMessageDto() }
-                val bailoutResponse = retryApiCall {
-                    requests.geminiChat(
-                        credentials = credentials,
-                        messages = bailoutMessages,
-                        systemInstruction = "You are repeating the same tool calls. Please respond with the best answer you have so far. $systemPrompt",
-                    ).getOrThrow()
-                }
-                return bailoutResponse.extractText()
-            }
-            recentSignatures.addAll(signatures)
-
-            history.update {
-                it.toMutableList().apply {
-                    add(
-                        History(
-                            role = History.Role.ASSISTANT,
-                            content = textContent.stripToolMarkup(),
-                            toolCalls = toolCallInfos.toImmutableList(),
-                        ),
-                    )
-                }
-            }
-
-            val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
-
-            history.update { h ->
-                val updated = buildList<History>(h.size + toolResults.size) {
-                    for (entry in h) {
-                        if (entry.role != History.Role.TOOL_EXECUTING) {
-                            val cleaned = entry.withoutAskQuestionsToolCall()
-                            if (cleaned != null) add(cleaned)
-                        }
+                if (partsWithFunctionCalls.isEmpty()) {
+                    val text = parts.filterNot { it.isThought }.joinToString("\n") { it.text ?: "" }
+                    val inlineResult = parseInlineToolCalls(text)
+                    if (inlineResult == null) {
+                        return text
                     }
-                    for ((callId, name, result) in toolResults) {
-                        if (name == ASK_QUESTIONS_TOOL_NAME) {
-                            add(History(role = History.Role.USER, content = result))
-                        } else {
-                            add(
-                                History(
-                                    role = History.Role.TOOL,
-                                    content = result,
-                                    toolCallId = callId,
-                                    toolName = name,
-                                ),
-                            )
-                        }
+                    toolCallInfos = inlineResult.toolCalls
+                    textContent = inlineResult.cleanContent
+                } else {
+                    toolCallInfos = partsWithFunctionCalls.map { part ->
+                        val fc = part.functionCall!!
+                        val argsJson = fc.args?.let { JsonObject(it).toString() } ?: "{}"
+                        ToolCallInfo(
+                            id = "gemini-${Uuid.random()}",
+                            name = fc.name,
+                            arguments = argsJson,
+                            thoughtSignature = part.thoughtSignature,
+                        )
+                    }
+                    textContent = parts.filterNot { it.isThought }.mapNotNull { it.text }.joinToString("\n")
+                        .replace(invokeBlockRegex, "").trim()
+                }
+
+                val signatures = toolCallInfos.map { "${it.name}:${it.arguments.hashCode()}" }
+                if (isRepeatingToolCalls(recentSignatures, signatures)) {
+                    val bailoutMessages = currentMessages.map { it.toGeminiMessageDto() }
+                    val bailoutResponse = retryApiCall {
+                        requests.geminiChat(
+                            credentials = credentials,
+                            messages = bailoutMessages,
+                            systemInstruction = "You are repeating the same tool calls. Please respond with the best answer you have so far. $systemPrompt",
+                        ).getOrThrow()
+                    }
+                    return bailoutResponse.extractText()
+                }
+                recentSignatures.addAll(signatures)
+
+                history.update {
+                    it.toMutableList().apply {
+                        add(
+                            History(
+                                role = History.Role.ASSISTANT,
+                                content = textContent.stripToolMarkup(),
+                                toolCalls = toolCallInfos.toImmutableList(),
+                            ),
+                        )
                     }
                 }
-                trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+
+                val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
+
+                history.update { h ->
+                    val updated = buildList<History>(h.size + toolResults.size) {
+                        for (entry in h) {
+                            if (entry.role != History.Role.TOOL_EXECUTING) {
+                                val cleaned = entry.withoutAskQuestionsToolCall()
+                                if (cleaned != null) add(cleaned)
+                            }
+                        }
+                        for ((callId, name, result) in toolResults) {
+                            if (name == ASK_QUESTIONS_TOOL_NAME) {
+                                add(History(role = History.Role.USER, content = result))
+                            } else {
+                                add(
+                                    History(
+                                        role = History.Role.TOOL,
+                                        content = result,
+                                        toolCallId = callId,
+                                        toolName = name,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                    trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+                }
             }
-        }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             try {
@@ -1329,112 +1344,111 @@ class RemoteDataRepository(
         val recentSignatures = mutableListOf<String>()
 
         try {
-        while (true) {
-            iteration++
+            while (true) {
+                iteration++
 
-            val currentMessages = buildAnthropicMessages(
-                history.value.filter { it.role != History.Role.TOOL_EXECUTING },
-            )
+                val currentMessages = buildAnthropicMessages(
+                    history.value.filter { it.role != History.Role.TOOL_EXECUTING },
+                )
 
-            if (iteration > MAX_TOOL_ITERATIONS) {
-                val bailoutResponse = retryApiCall {
+                if (iteration > MAX_TOOL_ITERATIONS) {
+                    val bailoutResponse = retryApiCall {
+                        requests.anthropicChat(
+                            credentials = credentials,
+                            messages = currentMessages,
+                            systemInstruction = "You have reached the tool call limit. Please respond with the best answer you have so far based on the information gathered. $systemPrompt",
+                        ).getOrThrow()
+                    }
+                    return bailoutResponse.extractText()
+                }
+
+                val response = retryApiCall {
                     requests.anthropicChat(
                         credentials = credentials,
                         messages = currentMessages,
-                        systemInstruction = "You have reached the tool call limit. Please respond with the best answer you have so far based on the information gathered. $systemPrompt",
+                        tools = tools,
+                        systemInstruction = systemPrompt,
                     ).getOrThrow()
                 }
-                return bailoutResponse.extractText()
-            }
 
-            val response = retryApiCall {
-                requests.anthropicChat(
-                    credentials = credentials,
-                    messages = currentMessages,
-                    tools = tools,
-                    systemInstruction = systemPrompt,
-                ).getOrThrow()
-            }
+                val toolUseBlocks = response.content.filter { it.type == "tool_use" }
+                val toolCallInfos: List<ToolCallInfo>
+                val textContent: String
 
-            val toolUseBlocks = response.content.filter { it.type == "tool_use" }
-            val toolCallInfos: List<ToolCallInfo>
-            val textContent: String
-
-            if (toolUseBlocks.isEmpty()) {
-                val text = response.extractText()
-                val inlineResult = parseInlineToolCalls(text)
-                if (inlineResult == null) {
-                    return text
-                }
-                toolCallInfos = inlineResult.toolCalls
-                textContent = inlineResult.cleanContent
-            } else {
-                toolCallInfos = toolUseBlocks.map { block ->
-                    val argsJson = block.input?.toString() ?: "{}"
-                    ToolCallInfo(
-                        id = block.id ?: "anthropic-${Uuid.random()}",
-                        name = block.name ?: "unknown",
-                        arguments = argsJson,
-                    )
-                }
-                textContent = response.content.filter { it.type == "text" }.mapNotNull { it.text }.joinToString("\n")
-                    .replace(invokeBlockRegex, "").trim()
-            }
-
-            val signatures = toolCallInfos.map { "${it.name}:${it.arguments.hashCode()}" }
-            if (isRepeatingToolCalls(recentSignatures, signatures)) {
-                val bailoutResponse = retryApiCall {
-                    requests.anthropicChat(
-                        credentials = credentials,
-                        messages = currentMessages,
-                        systemInstruction = "You are repeating the same tool calls. Please respond with the best answer you have so far. $systemPrompt",
-                    ).getOrThrow()
-                }
-                return bailoutResponse.extractText()
-            }
-            recentSignatures.addAll(signatures)
-
-
-            history.update {
-                it.toMutableList().apply {
-                    add(
-                        History(
-                            role = History.Role.ASSISTANT,
-                            content = textContent.stripToolMarkup(),
-                            toolCalls = toolCallInfos.toImmutableList(),
-                        ),
-                    )
-                }
-            }
-
-            val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
-
-            history.update { h ->
-                val updated = buildList<History>(h.size + toolResults.size) {
-                    for (entry in h) {
-                        if (entry.role != History.Role.TOOL_EXECUTING) {
-                            val cleaned = entry.withoutAskQuestionsToolCall()
-                            if (cleaned != null) add(cleaned)
-                        }
+                if (toolUseBlocks.isEmpty()) {
+                    val text = response.extractText()
+                    val inlineResult = parseInlineToolCalls(text)
+                    if (inlineResult == null) {
+                        return text
                     }
-                    for ((callId, name, result) in toolResults) {
-                        if (name == ASK_QUESTIONS_TOOL_NAME) {
-                            add(History(role = History.Role.USER, content = result))
-                        } else {
-                            add(
-                                History(
-                                    role = History.Role.TOOL,
-                                    content = result,
-                                    toolCallId = callId,
-                                    toolName = name,
-                                ),
-                            )
-                        }
+                    toolCallInfos = inlineResult.toolCalls
+                    textContent = inlineResult.cleanContent
+                } else {
+                    toolCallInfos = toolUseBlocks.map { block ->
+                        val argsJson = block.input?.toString() ?: "{}"
+                        ToolCallInfo(
+                            id = block.id ?: "anthropic-${Uuid.random()}",
+                            name = block.name ?: "unknown",
+                            arguments = argsJson,
+                        )
+                    }
+                    textContent = response.content.filter { it.type == "text" }.mapNotNull { it.text }.joinToString("\n")
+                        .replace(invokeBlockRegex, "").trim()
+                }
+
+                val signatures = toolCallInfos.map { "${it.name}:${it.arguments.hashCode()}" }
+                if (isRepeatingToolCalls(recentSignatures, signatures)) {
+                    val bailoutResponse = retryApiCall {
+                        requests.anthropicChat(
+                            credentials = credentials,
+                            messages = currentMessages,
+                            systemInstruction = "You are repeating the same tool calls. Please respond with the best answer you have so far. $systemPrompt",
+                        ).getOrThrow()
+                    }
+                    return bailoutResponse.extractText()
+                }
+                recentSignatures.addAll(signatures)
+
+                history.update {
+                    it.toMutableList().apply {
+                        add(
+                            History(
+                                role = History.Role.ASSISTANT,
+                                content = textContent.stripToolMarkup(),
+                                toolCalls = toolCallInfos.toImmutableList(),
+                            ),
+                        )
                     }
                 }
-                trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+
+                val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
+
+                history.update { h ->
+                    val updated = buildList<History>(h.size + toolResults.size) {
+                        for (entry in h) {
+                            if (entry.role != History.Role.TOOL_EXECUTING) {
+                                val cleaned = entry.withoutAskQuestionsToolCall()
+                                if (cleaned != null) add(cleaned)
+                            }
+                        }
+                        for ((callId, name, result) in toolResults) {
+                            if (name == ASK_QUESTIONS_TOOL_NAME) {
+                                add(History(role = History.Role.USER, content = result))
+                            } else {
+                                add(
+                                    History(
+                                        role = History.Role.TOOL,
+                                        content = result,
+                                        toolCallId = callId,
+                                        toolName = name,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                    trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+                }
             }
-        }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             try {
@@ -1755,11 +1769,14 @@ class RemoteDataRepository(
             for (msg in olderMessages) {
                 when (msg.role) {
                     History.Role.USER -> appendLine("User: ${msg.content}")
+
                     History.Role.ASSISTANT -> appendLine("Assistant: ${msg.content}")
+
                     History.Role.TOOL -> {
                         val preview = msg.content.take(200).replace('\n', ' ')
                         appendLine("Tool${msg.toolName?.let { " ($it)" } ?: ""}: $preview")
                     }
+
                     else -> {}
                 }
             }
@@ -1805,9 +1822,7 @@ class RemoteDataRepository(
         )
     }
 
-    override suspend fun triggerCompaction(keepRecent: Int, focus: String?): Map<String, Any> {
-        return compactHistory(keepRecent = keepRecent, focus = focus)
-    }
+    override suspend fun triggerCompaction(keepRecent: Int, focus: String?): Map<String, Any> = compactHistory(keepRecent = keepRecent, focus = focus)
 
     private fun trimToRecentExchanges(history: List<History>, maxExchanges: Int): List<History> {
         val userIndices = history.mapIndexedNotNull { index, h ->
@@ -1878,15 +1893,12 @@ class RemoteDataRepository(
         return if (service.supportsPdf) supportedFileExtensions + "pdf" else supportedFileExtensions
     }
 
-    private fun firstRunnableInstance(): ServiceInstance? =
-        getConfiguredServiceInstances().firstOrNull { instance ->
-            val service = Service.fromId(instance.serviceId)
-            !service.isOnDevice || localInferenceEngine != null
-        }
-
-    override fun currentService(): Service {
-        return firstRunnableInstance()?.let { Service.fromId(it.serviceId) } ?: Service.OpenAICompatible
+    private fun firstRunnableInstance(): ServiceInstance? = getConfiguredServiceInstances().firstOrNull { instance ->
+        val service = Service.fromId(instance.serviceId)
+        !service.isOnDevice || localInferenceEngine != null
     }
+
+    override fun currentService(): Service = firstRunnableInstance()?.let { Service.fromId(it.serviceId) } ?: Service.OpenAICompatible
 
     private fun setCurrentConversationId(id: String?) {
         _currentConversationId.value = id

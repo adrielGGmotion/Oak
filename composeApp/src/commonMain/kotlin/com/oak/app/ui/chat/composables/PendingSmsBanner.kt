@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -27,11 +29,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.oak.app.data.SmsDraft
 import com.oak.app.data.SmsDraftStatus
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
+import kotlinx.collections.immutable.ImmutableList
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.sms_draft_banner_discard
 import oak.composeapp.generated.resources.sms_draft_banner_dismiss
@@ -40,9 +41,7 @@ import oak.composeapp.generated.resources.sms_draft_banner_send
 import oak.composeapp.generated.resources.sms_draft_banner_sending
 import oak.composeapp.generated.resources.sms_draft_banner_sent
 import oak.composeapp.generated.resources.sms_draft_banner_to
-import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.stringResource
-
 
 /**
  * Stack of cards, one per pending/sending/sent/failed SMS draft. Explicit

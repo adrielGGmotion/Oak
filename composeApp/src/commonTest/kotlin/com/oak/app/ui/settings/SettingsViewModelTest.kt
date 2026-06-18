@@ -571,8 +571,6 @@ class SettingsViewModelTest {
         }
     }
 
-
-
     @Test
     fun `onToggleStorageAccess requests permission when toggling on`() = runTest {
         val viewModel = SettingsViewModel(fakeRepository, fakeDaemonController, fakeNotificationPermissionController, fakeStoragePermissionController, noOpScheduler, testDispatcher)

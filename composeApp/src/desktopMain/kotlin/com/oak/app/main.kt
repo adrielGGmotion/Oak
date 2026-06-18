@@ -14,12 +14,12 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.navigation.compose.rememberNavController
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.logo
 import nl.marc_apps.tts.TextToSpeechEngine
 import nl.marc_apps.tts.TextToSpeechInstance
 import nl.marc_apps.tts.experimental.ExperimentalDesktopTarget
 import nl.marc_apps.tts.rememberTextToSpeechOrNull
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.logo
 import org.jetbrains.compose.resources.painterResource
 
 fun main() {

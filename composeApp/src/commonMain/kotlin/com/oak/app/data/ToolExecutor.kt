@@ -43,7 +43,11 @@ class ToolExecutor {
         for (segment in raw.split("/")) {
             when (segment) {
                 "", "." -> { /* skip */ }
-                ".." -> { if (parts.isNotEmpty() && parts.last() != "..") parts.removeLast() else parts.add(segment) }
+
+                ".." -> {
+                    if (parts.isNotEmpty() && parts.last() != "..") parts.removeLast() else parts.add(segment)
+                }
+
                 else -> parts.add(segment)
             }
         }

@@ -40,14 +40,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.delay
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.tools_count
 import oak.composeapp.generated.resources.waiting_brewing
 import oak.composeapp.generated.resources.waiting_content_description
 import oak.composeapp.generated.resources.waiting_thinking
 import oak.composeapp.generated.resources.waiting_working
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
 

@@ -3,10 +3,8 @@ package com.oak.app.ui.chat.composables
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -18,12 +16,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.ShortText
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,24 +44,15 @@ import com.oak.app.data.Attachment
 import com.oak.app.decodeToImageBitmap
 import com.oak.app.ui.components.LocalShowFullScreenImage
 import com.oak.app.ui.handCursor
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.bot_message_copy_content_description
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.compose.resources.stringResource
-import kotlin.io.encoding.Base64
-import androidx.compose.foundation.layout.Box
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.automirrored.filled.ShortText
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import kotlin.io.encoding.ExperimentalEncodingApi
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.bot_message_copy_content_description
 import oak.composeapp.generated.resources.user_message_edit
 import oak.composeapp.generated.resources.user_message_select_text
+import org.jetbrains.compose.resources.stringResource
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 @OptIn(ExperimentalEncodingApi::class, ExperimentalLayoutApi::class)
 @Composable
@@ -61,6 +61,7 @@ internal fun UserMessage(
     attachments: ImmutableList<Attachment> = persistentListOf(),
 ) {
     val showFullScreen = LocalShowFullScreenImage.current
+
     @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
     Row(Modifier.padding(16.dp)) {
@@ -109,10 +110,10 @@ internal fun UserMessage(
                                 SuggestionChip(
                                     onClick = {},
                                     icon = {
-                                                Icon(
-                                                    modifier = Modifier.size(16.dp),
-                                                    imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
-                                                    contentDescription = null,
+                                        Icon(
+                                            modifier = Modifier.size(16.dp),
+                                            imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
+                                            contentDescription = null,
                                             tint = MaterialTheme.colorScheme.onBackground,
                                         )
                                     },
@@ -132,7 +133,6 @@ internal fun UserMessage(
                     }
                 }
             }
-
         }
         if (message.isNotEmpty()) {
             Box {

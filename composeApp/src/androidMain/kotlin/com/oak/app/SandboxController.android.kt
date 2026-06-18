@@ -11,6 +11,7 @@ import com.oak.app.sandbox.SandboxState
 import com.oak.app.sandbox.SessionShell
 import com.oak.app.sandbox.openFileWithIntent
 import com.oak.app.sandbox.resolveSandboxAbsolute
+import com.oak.app.shared.R
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.oak.app.shared.R
 import org.koin.java.KoinJavaComponent.inject
 import java.io.File
 import java.io.IOException

@@ -9,7 +9,6 @@ import oak.composeapp.generated.resources.ic_service_cohere
 import oak.composeapp.generated.resources.ic_service_deepinfra
 import oak.composeapp.generated.resources.ic_service_deepseek
 import oak.composeapp.generated.resources.ic_service_fireworksai
-
 import oak.composeapp.generated.resources.ic_service_gemini
 import oak.composeapp.generated.resources.ic_service_github
 import oak.composeapp.generated.resources.ic_service_groqcloud
@@ -39,7 +38,6 @@ import oak.composeapp.generated.resources.service_github_models
 import oak.composeapp.generated.resources.service_ovhcloud
 import oak.composeapp.generated.resources.service_sambanova
 import oak.composeapp.generated.resources.service_siliconflow
-
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 

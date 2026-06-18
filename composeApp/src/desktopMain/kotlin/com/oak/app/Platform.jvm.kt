@@ -24,17 +24,17 @@ import com.oak.app.network.tools.ToolInfo
 import com.oak.app.ssh.SshClient
 import com.oak.app.ssh.SshClientImpl
 import com.oak.app.tools.CommonTools
-import com.oak.app.tools.compressContextTool
 import com.oak.app.tools.EditFileTool
 import com.oak.app.tools.EmailTools
 import com.oak.app.tools.HeartbeatTools
 import com.oak.app.tools.ProcessManagerTool
 import com.oak.app.tools.ReadFileTool
-import com.oak.app.tools.askQuestionsToolInfo
-import com.oak.app.tools.createAskQuestionsTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
 import com.oak.app.tools.SshTools
+import com.oak.app.tools.askQuestionsToolInfo
+import com.oak.app.tools.compressContextTool
+import com.oak.app.tools.createAskQuestionsTool
 import com.russhwolf.settings.Settings
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
@@ -195,9 +195,11 @@ actual fun getAvailableTools(): List<Tool> {
 
         if (appSettings.isToolEnabled(CommonTools.compressContextToolInfo.id, defaultEnabled = true)) {
             val dataRepository: DataRepository by inject(DataRepository::class.java)
-            add(compressContextTool { keepRecent, focus ->
-                dataRepository.triggerCompaction(keepRecent, focus)
-            })
+            add(
+                compressContextTool { keepRecent, focus ->
+                    dataRepository.triggerCompaction(keepRecent, focus)
+                },
+            )
         }
 
         if (appSettings.isToolEnabled(askQuestionsToolInfo.id, defaultEnabled = true)) {

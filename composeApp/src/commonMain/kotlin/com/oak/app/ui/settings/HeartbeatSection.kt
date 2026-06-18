@@ -48,6 +48,11 @@ import com.oak.app.ui.components.OakSlider
 import com.oak.app.ui.components.RefreshIconButton
 import com.oak.app.ui.components.SettingsListItem
 import com.oak.app.ui.handCursor
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.settings_email
 import oak.composeapp.generated.resources.settings_email_description
@@ -94,11 +99,6 @@ import oak.composeapp.generated.resources.settings_sms_send_permission_required
 import oak.composeapp.generated.resources.settings_soul_reset
 import oak.composeapp.generated.resources.settings_soul_reset_cancel
 import oak.composeapp.generated.resources.settings_soul_save
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.collections.immutable.ImmutableSet
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.math.roundToInt

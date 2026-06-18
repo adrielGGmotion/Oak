@@ -1,6 +1,5 @@
 package com.oak.app.ssh
 
-import org.apache.sshd.client.SshClient as MinaSshClient
 import org.apache.sshd.client.channel.ClientChannelEvent
 import org.apache.sshd.client.session.ClientSession
 import org.apache.sshd.common.config.keys.FilePasswordProvider
@@ -10,6 +9,7 @@ import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
+import org.apache.sshd.client.SshClient as MinaSshClient
 
 private const val MAX_OUTPUT_CHARS = 20_000
 
@@ -49,11 +49,15 @@ class SshClientImpl : SshClient {
         if (config.authType == SshAuthType.Key && config.privateKey.isNotBlank()) {
             val passwordProvider = if (config.passphrase.isNotBlank()) {
                 FilePasswordProvider.of(config.passphrase)
-            } else null
+            } else {
+                null
+            }
             MinaSshClient.setKeyPairProvider(
                 sshClient,
                 Paths.get(config.privateKey),
-                false, true, passwordProvider,
+                false,
+                true,
+                passwordProvider,
             )
         }
 
@@ -83,9 +87,13 @@ class SshClientImpl : SshClient {
             connectionInfo = info
         } catch (e: Exception) {
             if (sshSession != null) {
-                try { sshSession.close(true) } catch (_: Exception) {}
+                try {
+                    sshSession.close(true)
+                } catch (_: Exception) {}
             }
-            try { sshClient.stop() } catch (_: Exception) {}
+            try {
+                sshClient.stop()
+            } catch (_: Exception) {}
             throw e
         }
     }

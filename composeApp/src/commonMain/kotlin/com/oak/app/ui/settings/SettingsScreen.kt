@@ -125,6 +125,7 @@ import com.oak.app.inference.estimateGpuMemoryMb
 import com.oak.app.mcp.PopularMcpServer
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.saveFileToDevice
+import com.oak.app.tools.SetupStoragePermissionHandler
 import com.oak.app.ui.OakClearableTextField
 import com.oak.app.ui.OakOutlinedTextField
 import com.oak.app.ui.components.OakSlider
@@ -134,7 +135,6 @@ import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import com.oak.app.ui.oakAdaptiveCardSurface
-import com.oak.app.tools.SetupStoragePermissionHandler
 import com.oak.app.ui.sandbox.SandboxProgressRow
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
@@ -150,8 +150,8 @@ import kotlinx.serialization.json.jsonObject
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.default_soul
 import oak.composeapp.generated.resources.device_storage_description_disabled
-import oak.composeapp.generated.resources.device_storage_description_enabled_granted
 import oak.composeapp.generated.resources.device_storage_description_enabled_denied
+import oak.composeapp.generated.resources.device_storage_description_enabled_granted
 import oak.composeapp.generated.resources.device_storage_title
 import oak.composeapp.generated.resources.github_mark
 import oak.composeapp.generated.resources.litert_cancel
@@ -168,6 +168,8 @@ import oak.composeapp.generated.resources.litert_performance_poor
 import oak.composeapp.generated.resources.litert_recommended
 import oak.composeapp.generated.resources.litert_tool_support
 import oak.composeapp.generated.resources.settings_add_service
+import oak.composeapp.generated.resources.settings_ai_font_family
+import oak.composeapp.generated.resources.settings_ai_font_family_description
 import oak.composeapp.generated.resources.settings_ai_mistakes_warning
 import oak.composeapp.generated.resources.settings_api_key_label
 import oak.composeapp.generated.resources.settings_api_key_optional_label
@@ -239,8 +241,6 @@ import oak.composeapp.generated.resources.settings_soul_reset
 import oak.composeapp.generated.resources.settings_soul_reset_cancel
 import oak.composeapp.generated.resources.settings_soul_reset_confirm
 import oak.composeapp.generated.resources.settings_soul_save
-import oak.composeapp.generated.resources.settings_streaming_description
-import oak.composeapp.generated.resources.settings_streaming_enabled
 import oak.composeapp.generated.resources.settings_status_checking
 import oak.composeapp.generated.resources.settings_status_connected
 import oak.composeapp.generated.resources.settings_status_error
@@ -248,6 +248,8 @@ import oak.composeapp.generated.resources.settings_status_error_connection_faile
 import oak.composeapp.generated.resources.settings_status_error_invalid_key
 import oak.composeapp.generated.resources.settings_status_error_quota_exhausted
 import oak.composeapp.generated.resources.settings_status_error_rate_limited
+import oak.composeapp.generated.resources.settings_streaming_description
+import oak.composeapp.generated.resources.settings_streaming_enabled
 import oak.composeapp.generated.resources.settings_tab_agent
 import oak.composeapp.generated.resources.settings_tab_general
 import oak.composeapp.generated.resources.settings_tab_integrations
@@ -273,8 +275,6 @@ import oak.composeapp.generated.resources.settings_theme_oled
 import oak.composeapp.generated.resources.settings_theme_system
 import oak.composeapp.generated.resources.settings_tools_description
 import oak.composeapp.generated.resources.settings_tools_none_available
-import oak.composeapp.generated.resources.settings_ai_font_family
-import oak.composeapp.generated.resources.settings_ai_font_family_description
 import oak.composeapp.generated.resources.settings_ui_scale
 import oak.composeapp.generated.resources.settings_version
 import oak.composeapp.generated.resources.snackbar_email_removed
@@ -826,7 +826,7 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
             Text(stringResource(Res.string.settings_add_service))
         }
     }
-    
+
     // Free AI Access Guide
     Spacer(Modifier.height(12.dp))
     val uriHandler = LocalUriHandler.current

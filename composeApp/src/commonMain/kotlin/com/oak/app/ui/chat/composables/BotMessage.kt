@@ -14,13 +14,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,21 +38,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
-import com.oak.app.ui.LocalOakAiFontFamily
-import com.oak.app.ui.toTypography
 import com.oak.app.getBackgroundDispatcher
+import com.oak.app.ui.LocalOakAiFontFamily
 import com.oak.app.ui.dynamicui.FrozenSubmission
 import com.oak.app.ui.dynamicui.toSpeakableText
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.markdown.MarkdownContent
 import com.oak.app.ui.markdown.parseMarkdown
+import com.oak.app.ui.toTypography
+import kotlinx.coroutines.launch
+import nl.marc_apps.tts.TextToSpeechInstance
+import nl.marc_apps.tts.errors.TextToSpeechSynthesisInterruptedError
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.bot_message_copy_content_description
 import oak.composeapp.generated.resources.bot_message_regenerate_content_description
 import oak.composeapp.generated.resources.bot_message_speech_content_description
-import kotlinx.coroutines.launch
-import nl.marc_apps.tts.TextToSpeechInstance
-import nl.marc_apps.tts.errors.TextToSpeechSynthesisInterruptedError
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

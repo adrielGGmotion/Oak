@@ -1,16 +1,16 @@
 package com.oak.app.data
 
 import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.font_family_system
 import oak.composeapp.generated.resources.font_family_inter
+import oak.composeapp.generated.resources.font_family_jetbrains_mono
 import oak.composeapp.generated.resources.font_family_josefin_sans
 import oak.composeapp.generated.resources.font_family_lexend_deca
-import oak.composeapp.generated.resources.font_family_noto_sans
-import oak.composeapp.generated.resources.font_family_plus_jakarta_sans
 import oak.composeapp.generated.resources.font_family_lora
 import oak.composeapp.generated.resources.font_family_merriweather
+import oak.composeapp.generated.resources.font_family_noto_sans
+import oak.composeapp.generated.resources.font_family_plus_jakarta_sans
 import oak.composeapp.generated.resources.font_family_prata
-import oak.composeapp.generated.resources.font_family_jetbrains_mono
+import oak.composeapp.generated.resources.font_family_system
 import org.jetbrains.compose.resources.StringResource
 
 enum class OakFontFamily(val displayNameRes: StringResource) {
