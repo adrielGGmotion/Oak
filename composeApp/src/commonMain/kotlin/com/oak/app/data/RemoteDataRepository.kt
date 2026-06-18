@@ -540,9 +540,9 @@ class RemoteDataRepository(
         }
     }
 
-    private val THINK_BLOCK_REGEX = Regex("<think>.*?</think>", RegexOption.DOT_MATCHES_ALL)
+    private val thinkBlockRegex = Regex("<think>.*?</think>", RegexOption.DOT_MATCHES_ALL)
 
-    private fun stripThinkBlocks(text: String): String = THINK_BLOCK_REGEX.replace(text, "").trim()
+    private fun stripThinkBlocks(text: String): String = thinkBlockRegex.replace(text, "").trim()
 
     /**
      * Extracts a balanced JSON object string starting at [startIdx] in [s].
@@ -572,24 +572,24 @@ class RemoteDataRepository(
 
     private data class ParsedInvokeCall(val name: String, val arguments: String)
 
-    private val INVOKE_BLOCK_REGEX = Regex(
+    private val invokeBlockRegex = Regex(
         """<invoke\s+(?:[^>]*\s)?name\s*=\s*["']([^"']+)["'](?:[^>]*)>([\s\S]*?)</invoke>""",
         setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE),
     )
 
-    private val PARAMETER_REGEX = Regex(
+    private val parameterRegex = Regex(
         """<parameter\s+(?:[^>]*\s)?name\s*=\s*["']([^"']+)["'](?:[^>]*)>([\s\S]*?)</parameter>""",
         setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE),
     )
 
-    private val INVOKE_STRIP_REGEX = Regex(
+    private val invokeStripRegex = Regex(
         """<invoke\b[^>]*>[\s\S]*?</invoke>""",
         setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE),
     )
 
     private fun String.stripToolMarkup(): String = this
         .replace(toolCallMarkerRegex, "")
-        .replace(INVOKE_STRIP_REGEX, "")
+        .replace(invokeStripRegex, "")
         .trim()
 
     private fun coerceValue(raw: String): JsonElement {
@@ -604,11 +604,11 @@ class RemoteDataRepository(
     }
 
     private fun parseInvokeBlocks(text: String): List<ParsedInvokeCall> {
-        return INVOKE_BLOCK_REGEX.findAll(text).map { match ->
+        return invokeBlockRegex.findAll(text).map { match ->
             val name = match.groupValues[1]
             val body = match.groupValues[2]
             val params = buildJsonObject {
-                PARAMETER_REGEX.findAll(body).forEach { paramMatch ->
+                parameterRegex.findAll(body).forEach { paramMatch ->
                     val paramName = paramMatch.groupValues[1]
                     val paramValue = paramMatch.groupValues[2].trim()
                     put(paramName, coerceValue(paramValue))
@@ -629,17 +629,17 @@ class RemoteDataRepository(
         if (calls.isEmpty()) return null
         return InlineToolCallResult(
             toolCalls = calls.map { ToolCallInfo(id = "invoke-${Uuid.random()}", name = it.name, arguments = it.arguments) },
-            cleanContent = cleaned.replace(INVOKE_BLOCK_REGEX, "").trim(),
+            cleanContent = cleaned.replace(invokeBlockRegex, "").trim(),
         )
     }
 
-    private val JSON_TOOL_CALL_REGEX = Regex(
+    private val jsonToolCallRegex = Regex(
         """\{"function"\s*:\s*"([^"]+)"\s*,\s*"arguments"\s*:\s*(\{.*?\})\s*\}""",
         RegexOption.DOT_MATCHES_ALL,
     )
 
     private fun parseJsonToolCalls(text: String): List<ParsedInvokeCall> {
-        return JSON_TOOL_CALL_REGEX.findAll(text).mapNotNull { match ->
+        return jsonToolCallRegex.findAll(text).mapNotNull { match ->
             val name = match.groupValues[1]
             val rawArgs = match.groupValues[2]
             val balanced = extractBalancedBraceBlock(rawArgs, 0) ?: return@mapNotNull null
@@ -1117,7 +1117,7 @@ class RemoteDataRepository(
                     )
                 }
                 textContent = parts.filterNot { it.isThought }.mapNotNull { it.text }.joinToString("\n")
-                    .replace(INVOKE_BLOCK_REGEX, "").trim()
+                    .replace(invokeBlockRegex, "").trim()
             }
 
             val signatures = toolCallInfos.map { "${it.name}:${it.arguments.hashCode()}" }
@@ -1378,7 +1378,7 @@ class RemoteDataRepository(
                     )
                 }
                 textContent = response.content.filter { it.type == "text" }.mapNotNull { it.text }.joinToString("\n")
-                    .replace(INVOKE_BLOCK_REGEX, "").trim()
+                    .replace(invokeBlockRegex, "").trim()
             }
 
             val signatures = toolCallInfos.map { "${it.name}:${it.arguments.hashCode()}" }
@@ -1719,10 +1719,10 @@ class RemoteDataRepository(
         }
 
         // Step 1: Compress oversized tool outputs (>5K chars) to short summaries
-        val TOOL_RESULT_COMPRESS_THRESHOLD = 5_000
+        val toolResultCompressThreshold = 5_000
         var toolOutputsCompressed = 0
         history = history.map { msg ->
-            if (msg.role == History.Role.TOOL && msg.content.length > TOOL_RESULT_COMPRESS_THRESHOLD) {
+            if (msg.role == History.Role.TOOL && msg.content.length > toolResultCompressThreshold) {
                 toolOutputsCompressed++
                 val toolLabel = msg.toolName?.let { " ($it)" } ?: ""
                 val compressed = msg.content.smartTruncate(500)
