@@ -118,7 +118,6 @@ kotlin {
             implementation(libs.sshd.core)
             implementation(libs.sshd.sftp)
         }
-
     }
 }
 
@@ -196,8 +195,6 @@ class VersionGeneratorPlugin : Plugin<Project> {
                 }
                 """.trimIndent(),
             )
-
-
         }
     }
 }

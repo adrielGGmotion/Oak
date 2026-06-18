@@ -23,9 +23,7 @@ import kotlinx.serialization.json.longOrNull
 // This replaces the old field-name-keyed coercion pipeline in OakUiParser with direct
 // construction, so each LLM-mistake handler lives next to the field it owns.
 
-// =============================================================================================
 // Top-level dispatcher
-// =============================================================================================
 
 /**
  * Build a [OakUiNode] from an arbitrary [JsonElement], or return null if the element can't
@@ -70,9 +68,7 @@ private fun parseObjectNode(obj: JsonObject): OakUiNode? = when (obj.readNullabl
     else -> null // unknown type → silently dropped
 }
 
-// =============================================================================================
 // Scalar readers
-// =============================================================================================
 
 /**
  * Preferred keys when extracting a string from an arbitrary JsonObject, in priority order.
@@ -162,9 +158,7 @@ internal fun JsonObject.readNullableFloat(key: String): Float? {
     return element.content.toFloatOrNull()
 }
 
-// =============================================================================================
 // String-like coercion — the single source of truth for primitive/array/object → string
-// =============================================================================================
 
 /**
  * Coerce any [JsonElement] to a string, best-effort:
@@ -184,9 +178,7 @@ internal fun JsonElement.toStringLike(): String = when (this) {
     }
 }
 
-// =============================================================================================
 // Enum parsers — hand-rolled to avoid reflection, match @SerialName strings exactly
-// =============================================================================================
 
 private fun parseTextStyle(raw: String?): TextNodeStyle? = when (raw) {
     "headline" -> TextNodeStyle.HEADLINE
@@ -212,9 +204,7 @@ private fun parseAlertSeverity(raw: String?): AlertSeverity? = when (raw) {
     else -> null
 }
 
-// =============================================================================================
 // Collection readers
-// =============================================================================================
 
 /**
  * Read a list of strings. Accepts:
@@ -320,9 +310,7 @@ internal fun JsonObject.readTabList(key: String): ImmutableList<TabItem> {
     }.toImmutableList()
 }
 
-// =============================================================================================
 // inferBareObject — typeless shortcuts used by LLMs
-// =============================================================================================
 
 /**
  * Recover a typed node from an object that lacks a `type` discriminator by matching
@@ -371,9 +359,7 @@ private fun inferBareObject(obj: JsonObject): OakUiNode? {
     return null
 }
 
-// =============================================================================================
 // Layout node builders
-// =============================================================================================
 
 private fun parseColumnNode(obj: JsonObject): ColumnNode = ColumnNode(
     id = obj.readId(),
@@ -398,9 +384,7 @@ private fun parseBoxNode(obj: JsonObject): BoxNode = BoxNode(
 
 private fun parseDividerNode(obj: JsonObject): DividerNode = DividerNode(id = obj.readId())
 
-// =============================================================================================
 // Content node builders
-// =============================================================================================
 
 private fun parseTextNode(obj: JsonObject): TextNode = TextNode(
     id = obj.readId(),
@@ -440,9 +424,7 @@ private fun parseQuoteNode(obj: JsonObject): QuoteNode = QuoteNode(
     source = obj.readNullableString("source"),
 )
 
-// =============================================================================================
 // Interactive node builders
-// =============================================================================================
 
 private fun parseButtonNode(obj: JsonObject): ButtonNode = ButtonNode(
     id = obj.readId(),
@@ -514,9 +496,7 @@ private fun parseChipGroupNode(obj: JsonObject): ChipGroupNode {
     )
 }
 
-// =============================================================================================
 // Feedback / display node builders
-// =============================================================================================
 
 private fun parseProgressNode(obj: JsonObject): ProgressNode = ProgressNode(
     id = obj.readId(),
@@ -558,9 +538,7 @@ private fun parseAvatarNode(obj: JsonObject): AvatarNode = AvatarNode(
     size = obj.readNullableInt("size"),
 )
 
-// =============================================================================================
 // Data display node builders
-// =============================================================================================
 
 private fun parseListNode(obj: JsonObject): ListNode = ListNode(
     id = obj.readId(),
@@ -587,9 +565,7 @@ private fun parseAccordionNode(obj: JsonObject): AccordionNode = AccordionNode(
     expanded = obj.readNullableBoolean("expanded"),
 )
 
-// =============================================================================================
 // Action readers
-// =============================================================================================
 
 /**
  * Read a [UiAction] field. Absent or `JsonNull` → null. Primitive/array → wrapped as a

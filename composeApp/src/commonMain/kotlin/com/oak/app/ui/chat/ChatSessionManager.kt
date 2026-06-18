@@ -2,9 +2,8 @@ package com.oak.app.ui.chat
 
 import com.oak.app.data.Conversation
 import com.oak.app.data.DataRepository
-import com.oak.app.network.UiError
 import com.oak.app.getBackgroundDispatcher
-import kotlin.coroutines.CoroutineContext
+import com.oak.app.network.UiError
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 class ChatSessionManager(
     private val dataRepository: DataRepository,
@@ -29,19 +29,17 @@ class ChatSessionManager(
     private val _generatingSessionIds = MutableStateFlow<Set<String>>(emptySet())
     val generatingSessionIds: StateFlow<Set<String>> = _generatingSessionIds.asStateFlow()
 
-    fun getOrCreateSession(id: String): ChatSession {
-        return sessions.getOrPut(id) {
-            val conversation = dataRepository.savedConversations.value.find { it.id == id }
-            ChatSession(
-                conversationId = id,
-                conversation = conversation ?: Conversation(
-                    id = id,
-                    messages = emptyList(),
-                    createdAt = 0L,
-                    updatedAt = 0L,
-                ),
-            )
-        }
+    fun getOrCreateSession(id: String): ChatSession = sessions.getOrPut(id) {
+        val conversation = dataRepository.savedConversations.value.find { it.id == id }
+        ChatSession(
+            conversationId = id,
+            conversation = conversation ?: Conversation(
+                id = id,
+                messages = emptyList(),
+                createdAt = 0L,
+                updatedAt = 0L,
+            ),
+        )
     }
 
     fun startGeneration(sessionId: String, block: suspend () -> Unit) {
@@ -86,13 +84,9 @@ class ChatSessionManager(
         updateSession(sessionId) { it.copy(chatboxDraft = draft) }
     }
 
-    fun getChatboxDraft(sessionId: String): String {
-        return sessions[sessionId]?.chatboxDraft ?: ""
-    }
+    fun getChatboxDraft(sessionId: String): String = sessions[sessionId]?.chatboxDraft ?: ""
 
-    fun getGeneratingSessionIds(): Set<String> {
-        return sessions.filter { it.value.isGenerating }.keys
-    }
+    fun getGeneratingSessionIds(): Set<String> = sessions.filter { it.value.isGenerating }.keys
 
     fun setSessionError(sessionId: String, error: UiError?) {
         updateSession(sessionId) { it.copy(lastError = error) }

@@ -98,7 +98,6 @@ object WebSearchTool : Tool {
         if (uddgParam != null) {
             return decodeURLComponent(uddgParam)
         }
-        // Not a redirect, use as-is (add https: if protocol-relative)
         return if (href.startsWith("//")) "https:$href" else href
     }
 

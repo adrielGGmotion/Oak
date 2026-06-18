@@ -86,19 +86,17 @@ The find-and-replace must match exactly including whitespace and indentation."""
         )
     }
 
-    private fun doWrite(file: File, path: String, content: String): Any {
-        return try {
-            file.parentFile?.mkdirs()
-            file.writeText(content)
-            mapOf(
-                "success" to true,
-                "path" to file.absolutePath,
-                "type" to "write",
-                "chars_written" to content.length,
-            )
-        } catch (e: Exception) {
-            mapOf("success" to false, "error" to "Failed to write file: ${e.message}")
-        }
+    private fun doWrite(file: File, path: String, content: String): Any = try {
+        file.parentFile?.mkdirs()
+        file.writeText(content)
+        mapOf(
+            "success" to true,
+            "path" to file.absolutePath,
+            "type" to "write",
+            "chars_written" to content.length,
+        )
+    } catch (e: Exception) {
+        mapOf("success" to false, "error" to "Failed to write file: ${e.message}")
     }
 
     val toolInfo = ToolInfo(

@@ -111,11 +111,9 @@ fun parseAnsiToAnnotatedString(
                 next == '[' -> {
                     flushBuffer()
                     i += 2
-                    // Read parameters and final byte
                     val paramStart = i
                     while (i < len && text[i] in '\u0020'..'\u003F') i++
                     val params = if (i > paramStart) text.substring(paramStart, i) else ""
-                    // Read final byte
                     if (i < len && text[i] in '\u0040'..'\u007E') {
                         val finalByte = text[i]
                         i++
@@ -190,7 +188,6 @@ private fun applySgr(current: AnsiState, params: String): AnsiState {
             in 30..37 -> state = state.copy(fg = ansiStandardColors[code - 30])
 
             38 -> {
-                // Extended foreground color
                 if (idx + 1 < codes.size && codes[idx + 1] == 5 && idx + 2 < codes.size) {
                     state = state.copy(fg = ansi256Color(codes[idx + 2]))
                     idx += 2
@@ -199,11 +196,9 @@ private fun applySgr(current: AnsiState, params: String): AnsiState {
 
             39 -> state = state.copy(fg = null)
 
-            // Default foreground
             in 40..47 -> state = state.copy(bg = ansiStandardColors[code - 40])
 
             48 -> {
-                // Extended background color
                 if (idx + 1 < codes.size && codes[idx + 1] == 5 && idx + 2 < codes.size) {
                     state = state.copy(bg = ansi256Color(codes[idx + 2]))
                     idx += 2
@@ -212,7 +207,6 @@ private fun applySgr(current: AnsiState, params: String): AnsiState {
 
             49 -> state = state.copy(bg = null)
 
-            // Default background
             in 90..97 -> state = state.copy(fg = ansiBrightColors[code - 90])
 
             in 100..107 -> state = state.copy(bg = ansiBrightColors[code - 100])

@@ -48,6 +48,7 @@ import com.oak.app.ui.OakOutlinedTextField
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
+import kotlinx.collections.immutable.ImmutableList
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.common_cancel
 import oak.composeapp.generated.resources.settings_ssh_add
@@ -70,7 +71,6 @@ import oak.composeapp.generated.resources.settings_ssh_status_connecting
 import oak.composeapp.generated.resources.settings_ssh_status_disconnected
 import oak.composeapp.generated.resources.settings_ssh_status_error
 import oak.composeapp.generated.resources.settings_ssh_username
-import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -279,8 +279,10 @@ private fun AddSshServerDialog(
     var passphrase by remember { mutableStateOf("") }
 
     val fieldsValid = (name.isNotBlank() && host.isNotBlank() && username.isNotBlank()) &&
-        ((authType == SshAuthType.Password && password.isNotBlank()) ||
-            (authType == SshAuthType.Key && privateKey.isNotBlank()))
+        (
+            (authType == SshAuthType.Password && password.isNotBlank()) ||
+                (authType == SshAuthType.Key && privateKey.isNotBlank())
+            )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,

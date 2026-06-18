@@ -51,6 +51,11 @@ import com.oak.app.ui.chat.ConversationSummary
 import com.oak.app.ui.components.VerticalScrollbarForList
 import com.oak.app.ui.components.oakOutlinedBorder
 import com.oak.app.ui.handCursor
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.datetime.format
+import kotlinx.datetime.format.DateTimeComponents.Companion.Format
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.chat_history_delete_content_description
 import oak.composeapp.generated.resources.chat_history_empty
@@ -58,11 +63,6 @@ import oak.composeapp.generated.resources.chat_history_heartbeat_label
 import oak.composeapp.generated.resources.chat_history_title
 import oak.composeapp.generated.resources.snackbar_conversation_deleted
 import oak.composeapp.generated.resources.snackbar_undo
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.datetime.format
-import kotlinx.datetime.format.DateTimeComponents.Companion.Format
-import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
 
 private val dateFormat = Format {
@@ -172,8 +172,8 @@ internal fun ChatHistorySheet(
                                                         .padding(horizontal = 6.dp, vertical = 2.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                 ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.History,
+                                                    Icon(
+                                                        imageVector = Icons.Filled.History,
                                                         contentDescription = null,
                                                         tint = MaterialTheme.colorScheme.onTertiaryContainer,
                                                         modifier = Modifier.size(12.dp),

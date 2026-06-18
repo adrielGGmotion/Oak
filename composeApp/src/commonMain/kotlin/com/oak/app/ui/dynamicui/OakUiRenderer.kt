@@ -219,10 +219,10 @@ import com.oak.app.ui.components.OakChip
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.bot_message_copy_content_description
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.bot_message_copy_content_description
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -484,6 +484,7 @@ private fun RenderButton(
     onCallback: (String, Map<String, String>) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
+
     @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
     var clicked by remember { mutableStateOf(false) }

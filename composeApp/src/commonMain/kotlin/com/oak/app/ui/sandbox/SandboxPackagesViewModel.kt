@@ -5,6 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.oak.app.SandboxController
 import com.oak.app.SandboxSessions
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.sandbox_packages_install_failed
 import oak.composeapp.generated.resources.sandbox_packages_install_success
@@ -13,13 +20,6 @@ import oak.composeapp.generated.resources.sandbox_packages_uninstall_success
 import oak.composeapp.generated.resources.sandbox_packages_up_to_date
 import oak.composeapp.generated.resources.sandbox_packages_upgrade_count
 import oak.composeapp.generated.resources.sandbox_packages_upgrade_failed
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import kotlin.time.Duration.Companion.milliseconds
 

@@ -8,8 +8,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.oak.app.data.OakFontFamily
-import org.jetbrains.compose.resources.Font
-import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.Inter_Variable
 import oak.composeapp.generated.resources.JetBrainsMono_Variable
 import oak.composeapp.generated.resources.JosefinSans_Variable
@@ -19,42 +17,53 @@ import oak.composeapp.generated.resources.Merriweather_Variable
 import oak.composeapp.generated.resources.NotoSans_Variable
 import oak.composeapp.generated.resources.PlusJakartaSans_Variable
 import oak.composeapp.generated.resources.Prata_Regular
+import oak.composeapp.generated.resources.Res
+import org.jetbrains.compose.resources.Font
 
 @Composable
 fun OakFontFamily.resolve(): FontFamily = when (this) {
     OakFontFamily.System -> FontFamily.Default
+
     OakFontFamily.Inter -> {
         val font = Font(resource = Res.font.Inter_Variable, weight = FontWeight.Normal)
         remember(this) { FontFamily(font) }
     }
+
     OakFontFamily.JosefinSans -> {
         val font = Font(resource = Res.font.JosefinSans_Variable, weight = FontWeight.Normal)
         remember(this) { FontFamily(font) }
     }
+
     OakFontFamily.LexendDeca -> {
         val font = Font(resource = Res.font.LexendDeca_Regular, weight = FontWeight.Normal)
         remember(this) { FontFamily(font) }
     }
+
     OakFontFamily.NotoSans -> {
         val font = Font(resource = Res.font.NotoSans_Variable, weight = FontWeight.Normal)
         remember(this) { FontFamily(font) }
     }
+
     OakFontFamily.PlusJakartaSans -> {
         val font = Font(resource = Res.font.PlusJakartaSans_Variable, weight = FontWeight.Normal)
         remember(this) { FontFamily(font) }
     }
+
     OakFontFamily.Lora -> {
         val font = Font(resource = Res.font.Lora_Regular, weight = FontWeight.Normal)
         remember(this) { FontFamily(font) }
     }
+
     OakFontFamily.Merriweather -> {
         val font = Font(resource = Res.font.Merriweather_Variable, weight = FontWeight.Normal)
         remember(this) { FontFamily(font) }
     }
+
     OakFontFamily.Prata -> {
         val font = Font(resource = Res.font.Prata_Regular, weight = FontWeight.Normal)
         remember(this) { FontFamily(font) }
     }
+
     OakFontFamily.JetBrainsMono -> {
         val font = Font(resource = Res.font.JetBrainsMono_Variable, weight = FontWeight.Normal)
         remember(this) { FontFamily(font) }

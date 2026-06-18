@@ -22,15 +22,16 @@ object SshTools {
         serverManager = manager
     }
 
-    private fun requireManager(): SshServerManager =
-        serverManager ?: error("SshTools not initialized")
+    private fun requireManager(): SshServerManager = serverManager ?: error("SshTools not initialized")
 
     private fun resolveServerId(serverId: String?): Result<String> {
         val activeIds = requireManager().getActiveServerIds()
         if (activeIds.isEmpty()) {
             return Result.failure(Exception("No active SSH connections. Use ssh_connect first."))
         }
-        val targetId = serverId ?: if (activeIds.size == 1) activeIds.first() else {
+        val targetId = serverId ?: if (activeIds.size == 1) {
+            activeIds.first()
+        } else {
             return Result.failure(Exception("Multiple active SSH connections. Please specify server_id. Active: ${activeIds.joinToString()}"))
         }
         if (targetId !in activeIds) {
@@ -113,6 +114,7 @@ object SshTools {
             }
 
             val client = createSshClient()
+
             @OptIn(ExperimentalUuidApi::class)
             val adhocId = "_adhoc_${host}_${port}_${Uuid.random()}"
 
@@ -339,7 +341,7 @@ object SshTools {
             }
 
             val readCmd = "awk 'NR>=$offset && NR<${offset + limit} {print NR\": \"\$0}' $escapedPath 2>/dev/null || " +
-                "sed -n '${offset},${offset + limit - 1}p' $escapedPath 2>/dev/null"
+                "sed -n '$offset,${offset + limit - 1}p' $escapedPath 2>/dev/null"
             val contentResult = requireManager().executeCommand(sid, readCmd, 30)
             if (contentResult.exitCode != 0) {
                 return mapOf(
@@ -455,7 +457,7 @@ object SshTools {
             val sizeResult = requireManager().executeCommand(sid, "wc -c < $escapedPath 2>/dev/null || echo 0", 10)
             val fileSize = sizeResult.stdout.trim().toLongOrNull() ?: 0
             if (fileSize > 14_500) {
-                return mapOf("success" to false, "error" to "File too large for editing (${fileSize} bytes). Max: ~14KB (limited by 20KB output cap + base64 overhead)")
+                return mapOf("success" to false, "error" to "File too large for editing ($fileSize bytes). Max: ~14KB (limited by 20KB output cap + base64 overhead)")
             }
 
             val readCmd = "cat $escapedPath | base64 2>/dev/null || cat $escapedPath | base64 -e 2>/dev/null"
@@ -528,7 +530,6 @@ object SshTools {
 
             val escapedPath = escapeShellArg(path)
 
-            // Single remote command: check existence, then emit name|type|size per entry
             val cmd = "if [ ! -d $escapedPath ]; then echo ___NOT_A_DIR___; exit 0; fi;" +
                 " ls -1a $escapedPath 2>/dev/null | head -n 202 | while IFS= read -r f; do" +
                 " if [ -z \"\$f\" ] || [ \"\$f\" = \".\" ] || [ \"\$f\" = \"..\" ]; then continue; fi;" +
@@ -603,7 +604,9 @@ object SshTools {
                 val fallback = if (!recursive) {
                     val dirCheck = requireManager().executeCommand(sid, "test -d $escapedPath && echo 1 || echo 0", 10)
                     if (dirCheck.stdout.trim() == "1") ". Use recursive=true for non-empty directories" else ""
-                } else ""
+                } else {
+                    ""
+                }
                 mapOf("success" to false, "error" to "Failed to delete: ${truncate(result.stderr)}$fallback")
             }
         }
@@ -670,19 +673,22 @@ object SshTools {
                 return mapOf("success" to true, "path" to path, "exists" to false)
             }
 
-            val typeResult = requireManager().executeCommand(sid,
+            val typeResult = requireManager().executeCommand(
+                sid,
                 "test -f $escapedPath && echo file || (test -d $escapedPath && echo dir || (test -L $escapedPath && echo symlink || echo other))",
                 10,
             )
             val type = typeResult.stdout.trim()
 
-            val sizeResult = requireManager().executeCommand(sid,
+            val sizeResult = requireManager().executeCommand(
+                sid,
                 "stat -c '%s' $escapedPath 2>/dev/null || stat -f '%z' $escapedPath 2>/dev/null || echo 0",
                 10,
             )
             val size = sizeResult.stdout.trim().toLongOrNull() ?: 0
 
-            val permResult = requireManager().executeCommand(sid,
+            val permResult = requireManager().executeCommand(
+                sid,
                 "stat -c '%a|%U|%G' $escapedPath 2>/dev/null || stat -f '%Lp|%Su|%Sg' $escapedPath 2>/dev/null || echo '||'",
                 10,
             )
@@ -831,7 +837,7 @@ object SshTools {
             )
         }
         return mapOf("raw" to truncate(record))
- }
+    }
 
     val toolDefinitions: List<ToolInfo> = listOf(
         ToolInfo(

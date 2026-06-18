@@ -7,6 +7,7 @@ import com.oak.app.Platform
 import com.oak.app.currentPlatform
 import com.oak.app.data.DataRepository
 import com.oak.app.data.ImportSection
+import com.oak.app.data.OakFontFamily
 import com.oak.app.data.Service
 import com.oak.app.data.TaskScheduler
 import com.oak.app.data.ThemeMode
@@ -31,7 +32,6 @@ import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.StoragePermissionController
-import com.oak.app.data.OakFontFamily
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toPersistentSet

@@ -7,13 +7,13 @@ import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.error_context_window_exceeded
 import oak.composeapp.generated.resources.error_empty_response
 import oak.composeapp.generated.resources.error_file_too_large
-import oak.composeapp.generated.resources.error_request_too_large
 import oak.composeapp.generated.resources.error_insufficient_credits
 import oak.composeapp.generated.resources.error_invalid_api_key
 import oak.composeapp.generated.resources.error_openai_compatible_connection
 import oak.composeapp.generated.resources.error_openai_compatible_model_not_found
 import oak.composeapp.generated.resources.error_quota_exhausted
 import oak.composeapp.generated.resources.error_rate_limit_exceeded
+import oak.composeapp.generated.resources.error_request_too_large
 import oak.composeapp.generated.resources.error_unknown
 import oak.composeapp.generated.resources.error_unsupported_file_type
 import oak.composeapp.generated.resources.litert_error_inference_timeout

@@ -16,7 +16,6 @@ class SmtpClient(
 
     suspend fun connect() {
         connection = createEmailConnection(host, port, tls = !useStartTls)
-        // Read server greeting
         readResponse()
     }
 
@@ -45,14 +44,12 @@ class SmtpClient(
             throw Exception("AUTH LOGIN not supported: $authResponse")
         }
 
-        // Send base64-encoded username
         writeLine(Base64.encode(username.encodeToByteArray()))
         val userResponse = readResponse()
         if (!userResponse.startsWith("334")) {
             throw Exception("Auth username rejected: $userResponse")
         }
 
-        // Send base64-encoded password
         writeLine(Base64.encode(password.encodeToByteArray()))
         val passResponse = readResponse()
         if (!passResponse.startsWith("235")) {
@@ -79,7 +76,6 @@ class SmtpClient(
         response = readResponse()
         if (!response.startsWith("354")) throw Exception("DATA failed: $response")
 
-        // Build email headers + body
         val headers = buildString {
             appendLine("From: $from")
             appendLine("To: $to")
@@ -100,7 +96,6 @@ class SmtpClient(
             writeLine(escaped)
         }
 
-        // End with <CRLF>.<CRLF>
         writeLine(".")
         response = readResponse()
         return response.startsWith("250")
@@ -112,7 +107,6 @@ class SmtpClient(
             readResponse()
             connection?.close()
         } catch (_: Exception) {
-            // Best-effort quit
         } finally {
             connection = null
         }

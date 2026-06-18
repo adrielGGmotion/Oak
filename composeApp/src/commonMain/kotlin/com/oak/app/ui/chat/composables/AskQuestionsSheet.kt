@@ -149,7 +149,10 @@ fun AskQuestionsSheet(
                             answers = currentAnswers,
                             onSubmit = onSubmit,
                             onCancel = onCancel,
-                            onBackToQuestions = { direction = -1; showSummary = false },
+                            onBackToQuestions = {
+                                direction = -1
+                                showSummary = false
+                            },
                         )
                     } else {
                         val question = questions.getOrNull(state) ?: return@AnimatedContent
@@ -247,7 +250,11 @@ private fun QuestionContent(
         OutlinedTextField(
             value = if (currentAnswer.isNotEmpty() && currentAnswer !in question.options &&
                 !question.options.any { currentAnswer.split(", ").contains(it) }
-            ) currentAnswer else customInput,
+            ) {
+                currentAnswer
+            } else {
+                customInput
+            },
             onValueChange = onCustomInput,
             label = { Text("Type your own answer...") },
             placeholder = { Text("Type your own answer...") },

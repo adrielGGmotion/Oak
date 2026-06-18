@@ -5,6 +5,7 @@ import com.oak.app.data.EmailAccount
 import com.oak.app.data.EmailSyncState
 import com.oak.app.data.HeartbeatLogEntry
 import com.oak.app.data.MemoryEntry
+import com.oak.app.data.OakFontFamily
 import com.oak.app.data.ScheduledTask
 import com.oak.app.data.Service
 import com.oak.app.data.ServiceEntry
@@ -15,7 +16,6 @@ import com.oak.app.inference.LocalModel
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshConnectionStatus
-import com.oak.app.data.OakFontFamily
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet

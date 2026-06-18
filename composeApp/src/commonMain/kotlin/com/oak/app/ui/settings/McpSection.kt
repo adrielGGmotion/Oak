@@ -49,6 +49,7 @@ import com.oak.app.ui.components.VerticalScrollbarForScroll
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
+import kotlinx.collections.immutable.ImmutableList
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.settings_mcp_add
 import oak.composeapp.generated.resources.settings_mcp_add_header
@@ -66,9 +67,7 @@ import oak.composeapp.generated.resources.settings_mcp_servers_description
 import oak.composeapp.generated.resources.settings_mcp_status_connected
 import oak.composeapp.generated.resources.settings_mcp_status_connecting
 import oak.composeapp.generated.resources.settings_mcp_status_error
-import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.stringResource
-
 
 @Composable
 internal fun McpServersSection(
@@ -146,7 +145,6 @@ private fun McpServerCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Status dot
                 val statusColor = when (server.connectionStatus) {
                     McpConnectionStatus.Connected -> StatusColorConnected
                     McpConnectionStatus.Connecting -> StatusColorChecking
@@ -192,7 +190,6 @@ private fun McpServerCard(
             if (expanded) {
                 Spacer(Modifier.height(12.dp))
 
-                // Status text
                 val statusText = when (server.connectionStatus) {
                     McpConnectionStatus.Connected -> stringResource(Res.string.settings_mcp_status_connected)
                     McpConnectionStatus.Connecting -> stringResource(Res.string.settings_mcp_status_connecting)
@@ -211,7 +208,6 @@ private fun McpServerCard(
                     Spacer(Modifier.height(8.dp))
                 }
 
-                // Tools list
                 if (server.tools.isNotEmpty()) {
                     for (tool in server.tools) {
                         Row(

@@ -32,7 +32,6 @@ class ImapClient(
 
     suspend fun connect() {
         connection = createEmailConnection(host, port, tls)
-        // Read server greeting
         readUntilTaggedOrGreeting(null)
     }
 
@@ -117,7 +116,6 @@ class ImapClient(
             readUntilTaggedOrGreeting(tag)
             conn.close()
         } catch (_: Exception) {
-            // Best-effort logout
         } finally {
             connection = null
         }
@@ -135,10 +133,8 @@ class ImapClient(
             lineCount++
 
             if (tag == null) {
-                // Reading greeting - stop at first line starting with *
                 if (line.startsWith("* OK") || line.startsWith("* NO") || line.startsWith("* BAD")) break
             } else {
-                // Reading tagged response - stop when we see our tag
                 if (line.startsWith("$tag ")) break
             }
         }
@@ -186,7 +182,6 @@ class ImapClient(
             }
         }
 
-        // Check flags for \Seen
         if (raw.contains("\\Seen")) isRead = true
 
         // When the email has no text/plain part, derive a readable plain body
@@ -218,7 +213,6 @@ class ImapClient(
      * (plainText, htmlText) — htmlText is empty when the message has no HTML part.
      */
     private fun extractBodyFromResponse(raw: String): Pair<String, String> {
-        // Find BODY[TEXT] or BODY.PEEK[TEXT] section
         val bodyIdx = raw.indexOfAny("BODY[TEXT]", "BODY.PEEK[TEXT]")
         if (bodyIdx == -1) {
             // Fallback: try to find body after double newline
@@ -239,7 +233,6 @@ class ImapClient(
             }
             .joinToString("\n")
 
-        // Check if it's multipart MIME content
         val boundary = detectMimeBoundary(cleaned)
         if (boundary != null) {
             return extractPartsFromMultipart(cleaned, boundary)

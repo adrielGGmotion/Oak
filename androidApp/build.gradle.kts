@@ -86,7 +86,7 @@ android {
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "../composeApp/proguard-rules.pro",
-                "proguard-android.pro"
+                "proguard-android.pro",
             )
             signingConfig =
                 if (rootProject.file("release.keystore").exists()) {
