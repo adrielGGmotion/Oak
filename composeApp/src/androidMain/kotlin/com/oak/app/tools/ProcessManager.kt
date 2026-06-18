@@ -37,12 +37,16 @@ class ProcessManager(private val sandboxManager: LinuxSandboxManager) {
 
         val executor = sandboxManager.createProotExecutor()
         CompletableFuture.runAsync {
-            val result = executor.execute(command, timeoutSeconds, workingDir, envMap)
-            session.stdout = result["stdout"] as? String ?: ""
-            session.stderr = result["stderr"] as? String ?: ""
-            session.exitCode = result["exit_code"] as? Int ?: -1
-            session.timedOut = result["timed_out"] as? Boolean ?: false
-            session.finished = true
+            try {
+                val result = executor.execute(command, timeoutSeconds, workingDir, envMap)
+                session.stdout = result["stdout"] as? String ?: ""
+                session.stderr = result["stderr"] as? String ?: ""
+                session.exitCode = result["exit_code"] as? Int ?: -1
+                session.timedOut = result["timed_out"] as? Boolean ?: false
+                session.finished = true
+            } finally {
+                executor.shutdown()
+            }
         }
 
         return mapOf(

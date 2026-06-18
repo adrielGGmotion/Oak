@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -159,6 +160,17 @@ class PersistentSandboxShell(
         currentSink.getAndSet(null)?.done?.complete(
             Result(exitCode = -1, cwd = "/root", bashPid = 0, shellDied = true),
         )
+    }
+
+    /**
+     * Permanent teardown. Unlike [reset], this also reclaims the thread pool
+     * and cancels the coroutine scope so the shell cannot be restarted. Call
+     * when the shell will no longer be used (e.g. [LinuxSandboxManager.closeShell]).
+     */
+    fun destroy() {
+        reset()
+        executor.shutdown()
+        scope.cancel()
     }
 
     private fun ensureShell() {

@@ -12,6 +12,7 @@ expect fun readLegacyConversationFile(): ByteArray?
 expect fun deleteLegacyConversationFile()
 
 private const val MAX_SHELL_TRANSCRIPT_CHARS = 10_000
+private const val MAX_CONVERSATIONS = 100
 
 class ConversationStorage(private val appSettings: AppSettings) {
     private val mutableConversations = MutableStateFlow<List<Conversation>>(emptyList())
@@ -34,7 +35,7 @@ class ConversationStorage(private val appSettings: AppSettings) {
     fun saveConversation(conversation: Conversation) {
         mutableConversations.update { current ->
             val index = current.indexOfFirst { it.id == conversation.id }
-            if (index >= 0) {
+            val updated = if (index >= 0) {
                 val existing = current[index]
                 // Chat-layer save paths rebuild Conversation without the shell
                 // transcript; preserve the stored tail rather than wiping it.
@@ -46,6 +47,13 @@ class ConversationStorage(private val appSettings: AppSettings) {
                 current.toMutableList().apply { set(index, merged) }
             } else {
                 current + conversation
+            }
+            // Cap total conversations, evicting oldest (by updatedAt).
+            if (updated.size > MAX_CONVERSATIONS) {
+                updated.sortedByDescending { it.updatedAt }
+                    .take(MAX_CONVERSATIONS)
+            } else {
+                updated
             }
         }
         persist()

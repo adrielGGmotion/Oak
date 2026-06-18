@@ -64,6 +64,9 @@ class SessionShell(
 
     fun reset() = inner.reset()
 
+    /** Permanent teardown. Call when the shell will no longer be used. */
+    fun destroy() = inner.destroy()
+
     private fun appendBounded(line: TerminalLine) {
         // Add+trim must commit as a single snapshot. Otherwise a LazyColumn
         // measure pass can capture size=N+1 then read index N after the trim

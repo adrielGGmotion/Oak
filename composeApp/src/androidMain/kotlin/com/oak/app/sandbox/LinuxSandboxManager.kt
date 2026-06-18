@@ -222,18 +222,22 @@ class LinuxSandboxManager(
             downloader.writeResolvConf(rootfsDir)
 
             val executor = createProotExecutor()
-            updateSandboxSetupNotification("Updating package lists (apk update)...")
-            var updated = false
-            for (mirror in downloader.mirrors) {
-                downloader.writeRepositories(rootfsDir, mirror)
-                val result = executor.execute("apk update", timeoutSeconds = 60)
-                if (result["success"] as? Boolean == true) {
-                    updated = true
-                    break
+            try {
+                updateSandboxSetupNotification("Updating package lists (apk update)...")
+                var updated = false
+                for (mirror in downloader.mirrors) {
+                    downloader.writeRepositories(rootfsDir, mirror)
+                    val result = executor.execute("apk update", timeoutSeconds = 60)
+                    if (result["success"] as? Boolean == true) {
+                        updated = true
+                        break
+                    }
                 }
-            }
-            if (!updated) {
-                throw IllegalStateException("apk update failed on all Alpine mirrors")
+                if (!updated) {
+                    throw IllegalStateException("apk update failed on all Alpine mirrors")
+                }
+            } finally {
+                executor.shutdown()
             }
 
             _state.value = SandboxState.Ready
@@ -322,7 +326,7 @@ class LinuxSandboxManager(
             _sessions.value = shells.keys.toList()
             s
         }
-        removed?.reset()
+        removed?.destroy()
     }
 
     private fun closeAllShells() {
@@ -332,7 +336,7 @@ class LinuxSandboxManager(
             _sessions.value = emptyList()
             snapshot
         }
-        all.forEach { it.reset() }
+        all.forEach { it.destroy() }
     }
 
     fun installPackages() {
@@ -349,26 +353,30 @@ class LinuxSandboxManager(
             acquireSetupWakeLock()
             try {
                 val executor = createProotExecutor()
-                for (pkg in packages) {
-                    ensureActive()
-                    updateSandboxSetupNotification("Installing $pkg...")
-                    _state.value = SandboxState.Installing("Installing $pkg...")
-                    val result = executor.execute("apk add --no-cache $pkg", timeoutSeconds = 120)
-                    ensureActive()
-                    val success = result["success"] as? Boolean ?: false
-                    if (!success) {
-                        val stderr = result["stderr"] as? String ?: ""
-                        val stdout = result["stdout"] as? String ?: ""
-                        val error = result["error"] as? String ?: ""
-                        val timedOut = result["timed_out"] as? Boolean ?: false
-                        val exitCode = result["exit_code"] as? Int ?: -1
-                        android.util.Log.e("LinuxSandbox", "Failed to install $pkg: exit=$exitCode timedOut=$timedOut error=$error stdout=$stdout stderr=$stderr")
-                        _state.value = SandboxState.Error("Failed to install $pkg: ${stderr.ifEmpty { error }.ifEmpty { stdout }.take(200)}")
-                        return@launch
+                try {
+                    for (pkg in packages) {
+                        ensureActive()
+                        updateSandboxSetupNotification("Installing $pkg...")
+                        _state.value = SandboxState.Installing("Installing $pkg...")
+                        val result = executor.execute("apk add --no-cache $pkg", timeoutSeconds = 120)
+                        ensureActive()
+                        val success = result["success"] as? Boolean ?: false
+                        if (!success) {
+                            val stderr = result["stderr"] as? String ?: ""
+                            val stdout = result["stdout"] as? String ?: ""
+                            val error = result["error"] as? String ?: ""
+                            val timedOut = result["timed_out"] as? Boolean ?: false
+                            val exitCode = result["exit_code"] as? Int ?: -1
+                            android.util.Log.e("LinuxSandbox", "Failed to install $pkg: exit=$exitCode timedOut=$timedOut error=$error stdout=$stdout stderr=$stderr")
+                            _state.value = SandboxState.Error("Failed to install $pkg: ${stderr.ifEmpty { error }.ifEmpty { stdout }.take(200)}")
+                            return@launch
+                        }
                     }
+                    _state.value = SandboxState.Ready
+                    postSandboxCompleteNotification("Packages installed")
+                } finally {
+                    executor.shutdown()
                 }
-                _state.value = SandboxState.Ready
-                postSandboxCompleteNotification("Packages installed")
             } catch (_: kotlinx.coroutines.CancellationException) {
                 _state.value = SandboxState.Ready
             } catch (e: Exception) {

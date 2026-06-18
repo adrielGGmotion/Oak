@@ -76,7 +76,11 @@ object ShellCommandTool : Tool {
         val fresh = args["fresh"] as? Boolean ?: false
         if (fresh) {
             val executor = sandboxManager.createProotExecutor()
-            return executor.execute(command, timeoutSeconds, workingDir ?: "/root", envMap)
+            try {
+                return executor.execute(command, timeoutSeconds, workingDir ?: "/root", envMap)
+            } finally {
+                executor.shutdown()
+            }
         }
 
         // Persistent shell path. Each conversation gets its own bash session so

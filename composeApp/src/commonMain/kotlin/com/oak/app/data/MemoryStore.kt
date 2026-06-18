@@ -48,6 +48,14 @@ class MemoryStore(private val appSettings: AppSettings) {
         appSettings.setMemoriesJson(json.encodeToString(memories))
     }
 
+    /** Evict oldest entries when the store exceeds [MAX_MEMORIES]. */
+    private fun trimToMax(memories: MutableList<MemoryEntry>) {
+        if (memories.size > MAX_MEMORIES) {
+            memories.sortByDescending { it.updatedAt }
+            memories.subList(MAX_MEMORIES, memories.size).clear()
+        }
+    }
+
     suspend fun store(
         key: String,
         content: String,
@@ -66,6 +74,7 @@ class MemoryStore(private val appSettings: AppSettings) {
             memories.add(newEntry)
             newEntry
         }
+        trimToMax(memories)
         saveMemories(memories)
         entry
     }
@@ -102,4 +111,9 @@ class MemoryStore(private val appSettings: AppSettings) {
     }
 
     fun getAllMemories(): List<MemoryEntry> = loadMemories()
+
+    companion object {
+        /** Soft cap on stored memory entries. Oldest entries are evicted when exceeded. */
+        const val MAX_MEMORIES = 500
+    }
 }
