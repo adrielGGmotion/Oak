@@ -32,8 +32,6 @@ import com.oak.app.sms.SmsSender
 import com.oak.app.sms.declaresReadSms
 import com.oak.app.ssh.SshClient
 import com.oak.app.ssh.SshClientImpl
-import org.apache.sshd.common.util.io.PathUtils
-import java.nio.file.Paths
 import com.oak.app.tools.CalendarPermissionController
 import com.oak.app.tools.CalendarRepository
 import com.oak.app.tools.CalendarResult
@@ -48,14 +46,14 @@ import com.oak.app.tools.NotificationTools
 import com.oak.app.tools.OpenFileTool
 import com.oak.app.tools.ProcessManagerTool
 import com.oak.app.tools.ReadFileTool
-import com.oak.app.tools.askQuestionsToolInfo
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
-import com.oak.app.tools.createAskQuestionsTool
 import com.oak.app.tools.SmsTools
 import com.oak.app.tools.SshTools
 import com.oak.app.tools.WebSearchTool
+import com.oak.app.tools.askQuestionsToolInfo
 import com.oak.app.tools.compressContextTool
+import com.oak.app.tools.createAskQuestionsTool
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import dev.spght.encryptedprefs.EncryptedSharedPreferences
@@ -77,7 +75,9 @@ import oak.composeapp.generated.resources.tool_send_notification_description
 import oak.composeapp.generated.resources.tool_send_notification_name
 import oak.composeapp.generated.resources.tool_set_alarm_description
 import oak.composeapp.generated.resources.tool_set_alarm_name
+import org.apache.sshd.common.util.io.PathUtils
 import org.koin.java.KoinJavaComponent.inject
+import java.nio.file.Paths
 import kotlin.coroutines.CoroutineContext
 
 actual fun httpClient(config: HttpClientConfig<*>.() -> Unit): HttpClient = HttpClient(Android) {

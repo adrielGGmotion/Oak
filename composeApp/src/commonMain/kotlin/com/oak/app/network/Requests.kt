@@ -33,19 +33,19 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.preparePost
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.client.request.preparePost
-import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -227,7 +227,6 @@ class Requests {
         Result.failure(OpenAICompatibleConnectionException())
     }
 
-
     /**
      * SSE-streaming variant of [openAICompatibleChat].
      * Emits each parsed chunk via a Flow. Closes when [OpenAICompatibleChatChunkDto.DONE_MARKER]
@@ -264,12 +263,21 @@ class Requests {
                     val statusCode = response.status.value
                     when (statusCode) {
                         401 -> close(OpenAICompatibleInvalidApiKeyException())
+
                         402 -> close(OpenAICompatibleQuotaExhaustedException())
+
                         404 -> close(OpenAICompatibleModelNotFoundException())
+
                         413 -> close(OpenAICompatibleRequestTooLargeException())
+
                         429 -> close(OpenAICompatibleRateLimitExceededException())
+
                         else -> {
-                            val responseBody = try { response.bodyAsText() } catch (_: Exception) { "" }
+                            val responseBody = try {
+                                response.bodyAsText()
+                            } catch (_: Exception) {
+                                ""
+                            }
                             if (responseBody.contains("credit", ignoreCase = true) ||
                                 responseBody.contains("exhausted", ignoreCase = true) ||
                                 responseBody.contains("spending limit", ignoreCase = true) ||

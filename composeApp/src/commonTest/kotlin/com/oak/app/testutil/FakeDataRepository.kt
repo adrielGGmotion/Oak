@@ -9,6 +9,7 @@ import com.oak.app.data.HeartbeatConfig
 import com.oak.app.data.HeartbeatLogEntry
 import com.oak.app.data.ImportSection
 import com.oak.app.data.MemoryEntry
+import com.oak.app.data.OakFontFamily
 import com.oak.app.data.ScheduledTask
 import com.oak.app.data.Service
 import com.oak.app.data.ServiceEntry
@@ -27,7 +28,6 @@ import com.oak.app.ssh.SshAuthType
 import com.oak.app.ssh.SshServerConfig
 import com.oak.app.tools.CommonTools
 import com.oak.app.ui.chat.History
-import com.oak.app.data.OakFontFamily
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.CompletableDeferred

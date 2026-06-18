@@ -84,7 +84,6 @@ class McpServerManager(private val appSettings: AppSettings) {
         val server = getServers().find { it.id == serverId }
             ?: return Result.failure(McpException("Server not found: $serverId"))
 
-        // Close existing client if any
         mutex.withLock { clients[serverId] }?.close()
 
         val client = McpClient(server.url, server.headers)

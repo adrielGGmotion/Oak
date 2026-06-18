@@ -80,6 +80,8 @@ import com.oak.app.data.ServiceEntry
 import com.oak.app.data.supportsAgenticFlows
 import com.oak.app.getBackgroundDispatcher
 import com.oak.app.onDragAndDropEventDropped
+import com.oak.app.ui.LocalOakAiFontFamily
+import com.oak.app.ui.chat.composables.AskQuestionsSheet
 import com.oak.app.ui.chat.composables.BotAvatar
 import com.oak.app.ui.chat.composables.BotMessage
 import com.oak.app.ui.chat.composables.CircleIconButton
@@ -87,7 +89,6 @@ import com.oak.app.ui.chat.composables.EmptyState
 import com.oak.app.ui.chat.composables.ErrorMessage
 import com.oak.app.ui.chat.composables.HeartbeatBanner
 import com.oak.app.ui.chat.composables.PendingSmsBanners
-import com.oak.app.ui.chat.composables.AskQuestionsSheet
 import com.oak.app.ui.chat.composables.QuestionInput
 import com.oak.app.ui.chat.composables.ServiceSelector
 import com.oak.app.ui.chat.composables.TopBar
@@ -101,13 +102,12 @@ import com.oak.app.ui.dynamicui.FrozenSubmission
 import com.oak.app.ui.dynamicui.OakUiRenderer
 import com.oak.app.ui.dynamicui.toSpeakableText
 import com.oak.app.ui.handCursor
-import com.oak.app.ui.LocalOakAiFontFamily
-import com.oak.app.ui.toTypography
 import com.oak.app.ui.markdown.MarkdownContent
 import com.oak.app.ui.markdown.OakUiBlock
 import com.oak.app.ui.markdown.parseMarkdown
 import com.oak.app.ui.sandbox.SandboxTabsContent
 import com.oak.app.ui.settings.SandboxViewModel
+import com.oak.app.ui.toTypography
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -227,7 +227,6 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
             Box(
                 modifier = Modifier.fillMaxSize(),
             ) {
-                // Content area fills remaining space
                 if (!hasAssistantResponse && !uiState.isLoading) {
                     Column(
                         modifier = Modifier.align(Alignment.Center),
@@ -258,7 +257,6 @@ private fun InteractiveModeScreen(uiState: ChatUiState) {
                     }
                 }
 
-                // Full QuestionInput stays in the column flow
                 if (showFullInput) {
                     QuestionInput(
                         modifier = Modifier.align(Alignment.BottomEnd),
@@ -442,7 +440,6 @@ private fun InteractiveModeContent(
             }
         }
 
-        // Error state
         uiState.error?.let { error ->
             Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
                 ErrorMessage(error = error, retry = uiState.actions.retry)
@@ -625,9 +622,7 @@ private fun ChatModeScreen(
                                             try {
                                                 textToSpeech?.say(lastMessage.content.toSpeakableText())
                                             } catch (_: TextToSpeechSynthesisInterruptedError) {
-                                                // Speech was interrupted by user
                                             } catch (_: Exception) {
-                                                // Handle TTS errors gracefully (service failure, audio issues, etc.)
                                             } finally {
                                                 uiState.actions.setIsSpeaking(false, lastMessage.id)
                                             }

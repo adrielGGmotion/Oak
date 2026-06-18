@@ -6,8 +6,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import kotlinx.coroutines.runBlocking
 import com.oak.app.shared.R
+import kotlinx.coroutines.runBlocking
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.notification_channel_description
 import oak.composeapp.generated.resources.notification_channel_name

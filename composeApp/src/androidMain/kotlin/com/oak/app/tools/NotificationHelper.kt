@@ -7,10 +7,10 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.oak.app.shared.R
+import kotlinx.coroutines.runBlocking
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.notification_channel_description
 import oak.composeapp.generated.resources.notification_channel_name
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import java.util.concurrent.atomic.AtomicInteger
 

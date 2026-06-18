@@ -54,7 +54,6 @@ import oak.composeapp.generated.resources.settings_content_description
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
-
 @Composable
 internal fun TopBar(
     onNavigateToSettings: () -> Unit,

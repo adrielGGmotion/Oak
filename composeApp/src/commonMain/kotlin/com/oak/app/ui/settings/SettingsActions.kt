@@ -2,12 +2,12 @@ package com.oak.app.ui.settings
 
 import androidx.compose.runtime.Immutable
 import com.oak.app.data.ImportSection
+import com.oak.app.data.OakFontFamily
 import com.oak.app.data.Service
 import com.oak.app.data.ThemeMode
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.PopularMcpServer
 import com.oak.app.ssh.SshAuthType
-import com.oak.app.data.OakFontFamily
 
 @Immutable
 data class SettingsActions(

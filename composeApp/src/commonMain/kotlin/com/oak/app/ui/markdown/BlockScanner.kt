@@ -169,9 +169,7 @@ internal object BlockScanner {
         return blocks.toImmutableList()
     }
 
-    // =========================================================================================
     // Fenced code (including oak-ui)
-    // =========================================================================================
 
     private fun parseFence(
         lines: List<String>,
@@ -282,9 +280,7 @@ internal object BlockScanner {
         return decodeOakUi(body) to next
     }
 
-    // =========================================================================================
     // Blockquote
-    // =========================================================================================
 
     private fun parseBlockquote(lines: List<String>, start: Int, end: Int, depth: Int): Pair<BlockNode, Int> {
         val inner = mutableListOf<String>()
@@ -310,9 +306,7 @@ internal object BlockScanner {
         return persistentListOf(Paragraph(InlineTokenizer.tokenize(text)))
     }
 
-    // =========================================================================================
     // Lists
-    // =========================================================================================
 
     private fun isListOpener(line: String): Boolean = BULLET_REGEX.matchEntire(line) != null || ORDERED_REGEX.matchEntire(line) != null
 
@@ -410,9 +404,7 @@ internal object BlockScanner {
         return n
     }
 
-    // =========================================================================================
     // Table
-    // =========================================================================================
 
     private fun parseTable(
         lines: List<String>,
@@ -479,9 +471,7 @@ internal object BlockScanner {
         return cells
     }
 
-    // =========================================================================================
     // Paragraph
-    // =========================================================================================
 
     private fun parseParagraph(lines: List<String>, start: Int, end: Int): Pair<BlockNode, Int> {
         val accum = StringBuilder()

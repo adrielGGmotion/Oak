@@ -14,10 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,16 +45,15 @@ import com.oak.app.ui.OakOutlinedTextField
 import com.oak.app.ui.components.OakSearchField
 import com.oak.app.ui.components.VerticalScrollbarForGrid
 import com.oak.app.ui.handCursor
+import kotlinx.collections.immutable.ImmutableList
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.model_sort_context
 import oak.composeapp.generated.resources.model_sort_date
 import oak.composeapp.generated.resources.model_sort_score
 import oak.composeapp.generated.resources.settings_model_label
 import oak.composeapp.generated.resources.settings_model_search
-import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

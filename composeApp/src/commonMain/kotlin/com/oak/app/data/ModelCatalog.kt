@@ -31,9 +31,7 @@ internal data class CuratedModelInfo(
 internal object ModelCatalog {
 
     private val baseEntries: Map<String, CuratedModelInfo> = mapOf(
-        // ==============================================================
         // Anthropic Claude
-        // ==============================================================
         "claude-opus-4-5" to CuratedModelInfo("Claude Opus 4.5", 200_000, "2025-11"),
         "claude-opus-4.5" to CuratedModelInfo("Claude Opus 4.5", 200_000, "2025-11"),
         "claude-opus-4-5-20251101" to CuratedModelInfo("Claude Opus 4.5", 200_000, "2025-11"),
@@ -71,9 +69,7 @@ internal object ModelCatalog {
         "claude-3-haiku" to CuratedModelInfo("Claude 3 Haiku", 200_000, "2024-03"),
         "claude-3-haiku-20240307" to CuratedModelInfo("Claude 3 Haiku", 200_000, "2024-03"),
 
-        // ==============================================================
         // OpenAI
-        // ==============================================================
         "gpt-5" to CuratedModelInfo("GPT-5", 400_000, "2025-08"),
         "gpt-5-2025-08-07" to CuratedModelInfo("GPT-5", 400_000, "2025-08"),
         "gpt-5-mini" to CuratedModelInfo("GPT-5 mini", 400_000, "2025-08"),
@@ -123,9 +119,7 @@ internal object ModelCatalog {
         "o1-mini" to CuratedModelInfo("o1-mini", 128_000, "2024-09"),
         "o1-mini-2024-09-12" to CuratedModelInfo("o1-mini", 128_000, "2024-09"),
 
-        // ==============================================================
         // Google Gemini
-        // ==============================================================
         "gemini-3-pro" to CuratedModelInfo("Gemini 3 Pro", 2_000_000, "2025-11"),
         "gemini-3-pro-preview" to CuratedModelInfo("Gemini 3 Pro (Preview)", 2_000_000, "2025-11"),
         "gemini-3-pro-latest" to CuratedModelInfo("Gemini 3 Pro (Latest)", 2_000_000, "2025-11"),
@@ -173,9 +167,7 @@ internal object ModelCatalog {
         "gemini-1.5-flash-8b-latest" to CuratedModelInfo("Gemini 1.5 Flash 8B (Latest)", 1_000_000, "2024-10", "8B"),
         "gemini-1.5-flash-8b-001" to CuratedModelInfo("Gemini 1.5 Flash 8B", 1_000_000, "2024-10", "8B"),
 
-        // ==============================================================
         // xAI Grok
-        // ==============================================================
         "grok-4" to CuratedModelInfo("Grok 4", 256_000, "2025-07"),
         "grok-4-latest" to CuratedModelInfo("Grok 4 (Latest)", 256_000, "2025-07"),
         "grok-4-0709" to CuratedModelInfo("Grok 4", 256_000, "2025-07"),
@@ -197,9 +189,7 @@ internal object ModelCatalog {
         "grok-beta" to CuratedModelInfo("Grok Beta", 131_072, "2024-10"),
         "grok-vision-beta" to CuratedModelInfo("Grok Vision Beta", 8_192, "2024-11"),
 
-        // ==============================================================
         // DeepSeek
-        // ==============================================================
         "deepseek-v3.2" to CuratedModelInfo("DeepSeek V3.2", 128_000, "2025-09", "671B"),
         "deepseek-v3-2" to CuratedModelInfo("DeepSeek V3.2", 128_000, "2025-09", "671B"),
         "deepseek-v3.2-exp" to CuratedModelInfo("DeepSeek V3.2 Exp", 128_000, "2025-09", "671B"),
@@ -219,9 +209,7 @@ internal object ModelCatalog {
         "deepseek-coder-v2" to CuratedModelInfo("DeepSeek Coder V2", 128_000, "2024-06", "236B"),
         "deepseek-coder" to CuratedModelInfo("DeepSeek Coder", 128_000, "2024-06"),
 
-        // ==============================================================
         // Mistral
-        // ==============================================================
         "mistral-large-3" to CuratedModelInfo("Mistral Large 3", 128_000, "2025-12"),
         "mistral-large-latest" to CuratedModelInfo("Mistral Large 2 (Latest)", 128_000, "2024-11"),
         "mistral-large-2411" to CuratedModelInfo("Mistral Large 2", 128_000, "2024-11"),
@@ -272,9 +260,7 @@ internal object ModelCatalog {
         "devstral-small" to CuratedModelInfo("Devstral Small", 128_000, "2025-05", "24B"),
         "devstral-small-latest" to CuratedModelInfo("Devstral Small (Latest)", 128_000, "2025-05", "24B"),
 
-        // ==============================================================
         // Meta Llama
-        // ==============================================================
         "llama-4-scout" to CuratedModelInfo("Llama 4 Scout", 10_000_000, "2025-04", "109B"),
         "llama-4-scout-17b-16e" to CuratedModelInfo("Llama 4 Scout", 10_000_000, "2025-04", "109B"),
         "llama-4-scout-17b-16e-instruct" to CuratedModelInfo("Llama 4 Scout", 10_000_000, "2025-04", "109B"),
@@ -321,9 +307,7 @@ internal object ModelCatalog {
         "llama3-groq-70b-8192-tool-use-preview" to CuratedModelInfo("Llama 3 Groq Tool Use (Preview)", 8_192, "2024-07", "70B"),
         "llama3-groq-8b-8192-tool-use-preview" to CuratedModelInfo("Llama 3 Groq Tool Use (Preview)", 8_192, "2024-07", "8B"),
 
-        // ==============================================================
         // Qwen (Alibaba)
-        // ==============================================================
         "qwen-max" to CuratedModelInfo("Qwen Max", 32_000, "2025-01"),
         "qwen-max-latest" to CuratedModelInfo("Qwen Max (Latest)", 32_000, "2025-01"),
         "qwen-max-2025-01-25" to CuratedModelInfo("Qwen Max", 32_000, "2025-01"),
@@ -370,9 +354,7 @@ internal object ModelCatalog {
         "qwq-32b-preview" to CuratedModelInfo("QwQ 32B (Preview)", 32_000, "2024-11", "32B"),
         "qwq-plus" to CuratedModelInfo("QwQ Plus", 131_072, "2025-03"),
 
-        // ==============================================================
         // Cohere Command
-        // ==============================================================
         "command-a-03-2025" to CuratedModelInfo("Command A", 256_000, "2025-03"),
         "command-a" to CuratedModelInfo("Command A", 256_000, "2025-03"),
         "command-a-vision-07-2025" to CuratedModelInfo("Command A Vision", 256_000, "2025-07"),
@@ -389,9 +371,7 @@ internal object ModelCatalog {
         "c4ai-aya-vision-32b" to CuratedModelInfo("Aya Vision 32B", 16_000, "2025-03", "32B"),
         "c4ai-aya-vision-8b" to CuratedModelInfo("Aya Vision 8B", 16_000, "2025-03", "8B"),
 
-        // ==============================================================
         // GLM / Zhipu
-        // ==============================================================
         "glm-4.6" to CuratedModelInfo("GLM-4.6", 200_000, "2025-09"),
         "glm-4.6-air" to CuratedModelInfo("GLM-4.6 Air", 128_000, "2025-09"),
         "glm-4.5" to CuratedModelInfo("GLM-4.5", 128_000, "2025-07"),
@@ -408,9 +388,7 @@ internal object ModelCatalog {
         "glm-z1-air" to CuratedModelInfo("GLM-Z1 Air", 128_000, "2025-04"),
         "glm-z1-flash" to CuratedModelInfo("GLM-Z1 Flash", 128_000, "2025-04"),
 
-        // ==============================================================
         // Moonshot Kimi
-        // ==============================================================
         "kimi-k2.6" to CuratedModelInfo("Kimi K2.6", 256_000, "2026-04", "1T"),
         "kimi-k2-6" to CuratedModelInfo("Kimi K2.6", 256_000, "2026-04", "1T"),
         "kimi-k2.5" to CuratedModelInfo("Kimi K2.5", 256_000, "2025-10"),
@@ -426,9 +404,7 @@ internal object ModelCatalog {
         "moonshot-v1-32k" to CuratedModelInfo("Moonshot v1 32K", 32_000, "2024-09"),
         "moonshot-v1-8k" to CuratedModelInfo("Moonshot v1 8K", 8_192, "2024-09"),
 
-        // ==============================================================
         // MiniMax
-        // ==============================================================
         "minimax-m2.7" to CuratedModelInfo("MiniMax M2.7", 1_000_000, "2026-03"),
         "minimax-m2" to CuratedModelInfo("MiniMax M2", 1_000_000, "2025-10"),
         "minimax-m1" to CuratedModelInfo("MiniMax M1", 1_000_000, "2025-06"),
@@ -436,9 +412,7 @@ internal object ModelCatalog {
         "abab6.5s-chat" to CuratedModelInfo("ABAB 6.5s", 245_000, "2024-05"),
         "abab6.5-chat" to CuratedModelInfo("ABAB 6.5", 32_000, "2024-04"),
 
-        // ==============================================================
         // Google Gemma (open weight)
-        // ==============================================================
         "gemma-3-27b-it" to CuratedModelInfo("Gemma 3 27B", 128_000, "2025-03", "27B"),
         "gemma-3-27b" to CuratedModelInfo("Gemma 3 27B", 128_000, "2025-03", "27B"),
         "gemma3:27b" to CuratedModelInfo("Gemma 3 27B", 128_000, "2025-03", "27B"),
@@ -459,9 +433,7 @@ internal object ModelCatalog {
         "gemma-2-2b-it" to CuratedModelInfo("Gemma 2 2B", 8_192, "2024-06", "2B"),
         "gemma2:2b" to CuratedModelInfo("Gemma 2 2B", 8_192, "2024-06", "2B"),
 
-        // ==============================================================
         // Microsoft Phi
-        // ==============================================================
         "phi-4" to CuratedModelInfo("Phi-4", 16_384, "2024-12", "14B"),
         "phi4" to CuratedModelInfo("Phi-4", 16_384, "2024-12", "14B"),
         "phi4:14b" to CuratedModelInfo("Phi-4", 16_384, "2024-12", "14B"),
@@ -483,9 +455,7 @@ internal object ModelCatalog {
         "phi-3-mini-128k-instruct" to CuratedModelInfo("Phi-3 Mini", 128_000, "2024-04", "3.8B"),
         "phi-3-mini-4k-instruct" to CuratedModelInfo("Phi-3 Mini", 4_000, "2024-04", "3.8B"),
 
-        // ==============================================================
         // NVIDIA Nemotron
-        // ==============================================================
         "llama-3.1-nemotron-ultra-253b-v1" to CuratedModelInfo("Nemotron Ultra", 128_000, "2025-04", "253B"),
         "nemotron-ultra" to CuratedModelInfo("Nemotron Ultra", 128_000, "2025-04", "253B"),
         "llama-3.3-nemotron-super-49b-v1" to CuratedModelInfo("Nemotron Super", 128_000, "2025-03", "49B"),
@@ -496,9 +466,7 @@ internal object ModelCatalog {
         "nemotron-4-340b-instruct" to CuratedModelInfo("Nemotron 4 340B", 4_096, "2024-06", "340B"),
         "ai-synthetic-video-detector" to CuratedModelInfo("AI Synthetic Video Detector", 0, "2025-12"),
 
-        // ==============================================================
         // NousResearch Hermes
-        // ==============================================================
         "hermes-4-405b" to CuratedModelInfo("Hermes 4 405B", 128_000, "2025-08", "405B"),
         "hermes-4-70b" to CuratedModelInfo("Hermes 4 70B", 128_000, "2025-08", "70B"),
         "hermes-3-llama-3.1-405b" to CuratedModelInfo("Hermes 3 405B", 128_000, "2024-08", "405B"),
@@ -506,9 +474,7 @@ internal object ModelCatalog {
         "hermes-3-llama-3.1-8b" to CuratedModelInfo("Hermes 3 8B", 128_000, "2024-08", "8B"),
         "nous-hermes-2-mixtral-8x7b-dpo" to CuratedModelInfo("Nous Hermes 2 Mixtral", 32_000, "2024-01", "8x7B"),
 
-        // ==============================================================
         // 01.AI Yi
-        // ==============================================================
         "yi-lightning" to CuratedModelInfo("Yi Lightning", 16_000, "2024-10"),
         "yi-large" to CuratedModelInfo("Yi Large", 32_000, "2024-05"),
         "yi-large-turbo" to CuratedModelInfo("Yi Large Turbo", 32_000, "2024-05"),
@@ -516,18 +482,14 @@ internal object ModelCatalog {
         "yi-vision" to CuratedModelInfo("Yi Vision", 16_000, "2024-05"),
         "yi-34b-chat" to CuratedModelInfo("Yi 34B", 4_096, "2023-11", "34B"),
 
-        // ==============================================================
         // Perplexity Sonar
-        // ==============================================================
         "sonar" to CuratedModelInfo("Sonar", 128_000, "2025-01"),
         "sonar-pro" to CuratedModelInfo("Sonar Pro", 200_000, "2025-01"),
         "sonar-reasoning" to CuratedModelInfo("Sonar Reasoning", 127_072, "2025-02"),
         "sonar-reasoning-pro" to CuratedModelInfo("Sonar Reasoning Pro", 127_072, "2025-03"),
         "sonar-deep-research" to CuratedModelInfo("Sonar Deep Research", 128_000, "2025-03"),
 
-        // ==============================================================
         // Amazon Nova
-        // ==============================================================
         "nova-pro-v1" to CuratedModelInfo("Nova Pro", 300_000, "2024-12"),
         "nova-pro" to CuratedModelInfo("Nova Pro", 300_000, "2024-12"),
         "nova-lite-v1" to CuratedModelInfo("Nova Lite", 300_000, "2024-12"),
@@ -537,9 +499,7 @@ internal object ModelCatalog {
         "nova-premier-v1" to CuratedModelInfo("Nova Premier", 1_000_000, "2025-04"),
         "nova-premier" to CuratedModelInfo("Nova Premier", 1_000_000, "2025-04"),
 
-        // ==============================================================
         // AI21 Jamba
-        // ==============================================================
         "jamba-large-1.7" to CuratedModelInfo("Jamba Large 1.7", 256_000, "2025-07"),
         "jamba-mini-1.7" to CuratedModelInfo("Jamba Mini 1.7", 256_000, "2025-07"),
         "jamba-1.6-large" to CuratedModelInfo("Jamba 1.6 Large", 256_000, "2025-03"),
@@ -547,81 +507,59 @@ internal object ModelCatalog {
         "jamba-1.5-large" to CuratedModelInfo("Jamba 1.5 Large", 256_000, "2024-08"),
         "jamba-1.5-mini" to CuratedModelInfo("Jamba 1.5 Mini", 256_000, "2024-08"),
 
-        // ==============================================================
         // Inflection Pi
-        // ==============================================================
         "inflection-3-pi" to CuratedModelInfo("Inflection 3 Pi", 8_000, "2024-10"),
         "inflection-3-productivity" to CuratedModelInfo("Inflection 3 Productivity", 8_000, "2024-10"),
 
-        // ==============================================================
         // Reka
-        // ==============================================================
         "reka-core" to CuratedModelInfo("Reka Core", 128_000, "2024-04"),
         "reka-core-20240904" to CuratedModelInfo("Reka Core", 128_000, "2024-09"),
         "reka-flash" to CuratedModelInfo("Reka Flash", 128_000, "2024-04"),
         "reka-flash-3" to CuratedModelInfo("Reka Flash 3", 32_000, "2025-03", "21B"),
         "reka-edge" to CuratedModelInfo("Reka Edge", 64_000, "2024-04"),
 
-        // ==============================================================
         // Liquid
-        // ==============================================================
         "lfm-40b" to CuratedModelInfo("LFM 40B", 32_000, "2024-09", "40B"),
         "lfm-7b" to CuratedModelInfo("LFM 7B", 32_000, "2025-01", "7B"),
         "lfm-3b" to CuratedModelInfo("LFM 3B", 32_000, "2025-01", "3B"),
         "lfm-1.3b" to CuratedModelInfo("LFM 1.3B", 32_000, "2024-09", "1.3B"),
 
-        // ==============================================================
         // Databricks / MosaicML
-        // ==============================================================
         "dbrx-instruct" to CuratedModelInfo("DBRX Instruct", 32_000, "2024-03", "132B"),
 
-        // ==============================================================
         // Microsoft WizardLM
-        // ==============================================================
         "wizardlm-2-8x22b" to CuratedModelInfo("WizardLM-2 8x22B", 65_536, "2024-04", "8x22B"),
         "wizardlm-2-7b" to CuratedModelInfo("WizardLM-2 7B", 32_000, "2024-04", "7B"),
 
-        // ==============================================================
         // IBM Granite
-        // ==============================================================
         "granite-3.1-8b-instruct" to CuratedModelInfo("Granite 3.1 8B", 128_000, "2024-12", "8B"),
         "granite-3.1-2b-instruct" to CuratedModelInfo("Granite 3.1 2B", 128_000, "2024-12", "2B"),
         "granite-3.0-8b-instruct" to CuratedModelInfo("Granite 3.0 8B", 4_096, "2024-10", "8B"),
         "granite-3.0-2b-instruct" to CuratedModelInfo("Granite 3.0 2B", 4_096, "2024-10", "2B"),
 
-        // ==============================================================
         // Allen AI OLMo
-        // ==============================================================
         "olmo-2-0325-32b-instruct" to CuratedModelInfo("OLMo 2 32B", 4_096, "2025-03", "32B"),
         "olmo-2-1124-13b-instruct" to CuratedModelInfo("OLMo 2 13B", 4_096, "2024-11", "13B"),
         "olmo-2-1124-7b-instruct" to CuratedModelInfo("OLMo 2 7B", 4_096, "2024-11", "7B"),
 
-        // ==============================================================
         // Tencent Hunyuan
-        // ==============================================================
         "hunyuan-large" to CuratedModelInfo("Hunyuan Large", 256_000, "2024-11", "389B"),
         "hunyuan-turbo" to CuratedModelInfo("Hunyuan Turbo", 32_000, "2024-10"),
         "hunyuan-standard" to CuratedModelInfo("Hunyuan Standard", 32_000, "2024-10"),
 
-        // ==============================================================
         // Baidu Ernie
-        // ==============================================================
         "ernie-4.5-turbo" to CuratedModelInfo("Ernie 4.5 Turbo", 128_000, "2025-03"),
         "ernie-4.5" to CuratedModelInfo("Ernie 4.5", 128_000, "2025-03"),
         "ernie-x1" to CuratedModelInfo("Ernie X1", 128_000, "2025-03"),
         "ernie-4.0-turbo" to CuratedModelInfo("Ernie 4.0 Turbo", 32_000, "2024-08"),
         "ernie-4.0" to CuratedModelInfo("Ernie 4.0", 8_192, "2024-03"),
 
-        // ==============================================================
         // Misc
-        // ==============================================================
         "allam-2-7b" to CuratedModelInfo("ALLaM 2", 4_096, "2024-12", "7B"),
         "command-light" to CuratedModelInfo("Command Light", 4_096, "2023-09"),
         "llamaguard-7b" to CuratedModelInfo("Llama Guard", 4_096, "2023-12", "7B"),
 
-        // ==============================================================
         // OpenAI — additional / newer variants
-        // ==============================================================
         "gpt-oss-120b" to CuratedModelInfo("GPT-OSS 120B", 131_072, "2025-08", "120B"),
         "gpt-oss:120b" to CuratedModelInfo("GPT-OSS 120B", 131_072, "2025-08", "120B"),
         "gpt-oss-120b:free" to CuratedModelInfo("GPT-OSS 120B", 131_072, "2025-08", "120B"),
@@ -682,9 +620,7 @@ internal object ModelCatalog {
         "gpt-4.5-preview-2025-02-27" to CuratedModelInfo("GPT-4.5 (Preview)", 128_000, "2025-02"),
         "chatgpt-4o-latest-20250326" to CuratedModelInfo("ChatGPT-4o (2025-03)", 128_000, "2025-03"),
 
-        // ==============================================================
         // Anthropic — additional
-        // ==============================================================
         "claude-opus-4.7" to CuratedModelInfo("Claude Opus 4.7", 1_000_000, "2026-04"),
         "claude-opus-4-7" to CuratedModelInfo("Claude Opus 4.7", 1_000_000, "2026-04"),
         "claude-opus-4.7-fast" to CuratedModelInfo("Claude Opus 4.7 Fast", 1_000_000, "2026-04"),
@@ -705,9 +641,7 @@ internal object ModelCatalog {
         "claude-sonnet-4-20250514-thinking-32k" to CuratedModelInfo("Claude Sonnet 4 (Thinking 32k)", 200_000, "2025-05"),
         "claude-3-7-sonnet-20250219-thinking-32k" to CuratedModelInfo("Claude 3.7 Sonnet (Thinking 32k)", 200_000, "2025-02"),
 
-        // ==============================================================
         // Google Gemini — additional
-        // ==============================================================
         "gemini-flash-latest" to CuratedModelInfo("Gemini Flash (Latest)", 1_000_000, "2025-11"),
         "gemini-flash-lite-latest" to CuratedModelInfo("Gemini Flash Lite (Latest)", 1_000_000, "2025-11"),
         "gemini-pro-latest" to CuratedModelInfo("Gemini Pro (Latest)", 2_000_000, "2025-11"),
@@ -727,9 +661,7 @@ internal object ModelCatalog {
         "lyria-3-clip-preview" to CuratedModelInfo("Lyria 3 Clip (Preview)", 0, "2025-10"),
         "deep-research-pro-preview-12-2025" to CuratedModelInfo("Deep Research Pro (Preview)", 1_000_000, "2025-12"),
 
-        // ==============================================================
         // Google Gemma — additional
-        // ==============================================================
         "gemma-7b" to CuratedModelInfo("Gemma 7B", 8_192, "2024-02", "7B"),
         "gemma-2b" to CuratedModelInfo("Gemma 2B", 8_192, "2024-02", "2B"),
         "gemma-3n-e2b-it" to CuratedModelInfo("Gemma 3n E2B", 32_000, "2025-06", "2B"),
@@ -753,9 +685,7 @@ internal object ModelCatalog {
         "shieldgemma-9b" to CuratedModelInfo("ShieldGemma 9B", 8_192, "2024-07", "9B"),
         "deplot" to CuratedModelInfo("DePlot", 4_096, "2023-12"),
 
-        // ==============================================================
         // DeepSeek — additional
-        // ==============================================================
         "deepseek-v3.1:671b" to CuratedModelInfo("DeepSeek V3.1", 128_000, "2025-08", "671B"),
         "deepseek-v3.1-terminus" to CuratedModelInfo("DeepSeek V3.1 Terminus", 128_000, "2025-09", "671B"),
         "deepseek-v3.1-nex-n1" to CuratedModelInfo("DeepSeek V3.1 Nex N1", 128_000, "2025-09", "671B"),
@@ -775,9 +705,7 @@ internal object ModelCatalog {
         "cogito-2.1:671b" to CuratedModelInfo("Cogito 2.1", 128_000, "2025-10", "671B"),
         "cogito-v2.1-671b" to CuratedModelInfo("Cogito 2.1", 128_000, "2025-10", "671B"),
 
-        // ==============================================================
         // xAI Grok — additional
-        // ==============================================================
         "grok-3-beta" to CuratedModelInfo("Grok 3 Beta", 131_072, "2025-02"),
         "grok-3-mini-beta" to CuratedModelInfo("Grok 3 Mini Beta", 131_072, "2025-02"),
         "grok-4.1" to CuratedModelInfo("Grok 4.1", 2_000_000, "2025-10"),
@@ -793,9 +721,7 @@ internal object ModelCatalog {
         "grok-4-fast-chat" to CuratedModelInfo("Grok 4 Fast Chat", 2_000_000, "2025-09"),
         "grok-3-preview-02-24" to CuratedModelInfo("Grok 3 (Preview)", 131_072, "2025-02"),
 
-        // ==============================================================
         // GLM / Zhipu / Z-AI — additional
-        // ==============================================================
         "glm-5" to CuratedModelInfo("GLM-5", 200_000, "2026-02"),
         "glm5" to CuratedModelInfo("GLM-5", 200_000, "2026-02"),
         "glm-5.1" to CuratedModelInfo("GLM-5.1", 200_000, "2026-03"),
@@ -809,9 +735,7 @@ internal object ModelCatalog {
         "glm-4-32b" to CuratedModelInfo("GLM-4 32B", 128_000, "2024-06", "32B"),
         "glm-4.5-air:free" to CuratedModelInfo("GLM-4.5 Air", 128_000, "2025-07"),
 
-        // ==============================================================
         // Mistral — additional
-        // ==============================================================
         "mistral-large" to CuratedModelInfo("Mistral Large", 128_000, "2024-02"),
         "mistral-large-2-instruct" to CuratedModelInfo("Mistral Large 2", 128_000, "2024-07"),
         "mistral-large-2512" to CuratedModelInfo("Mistral Large 3", 128_000, "2025-12"),
@@ -895,9 +819,7 @@ internal object ModelCatalog {
         "mistral-ocr-2505" to CuratedModelInfo("Mistral OCR", 32_000, "2025-05"),
         "mistral-ocr-2512" to CuratedModelInfo("Mistral OCR", 32_000, "2025-12"),
 
-        // ==============================================================
         // Llama — additional
-        // ==============================================================
         "llama-prompt-guard-2-22m" to CuratedModelInfo("Llama Prompt Guard 2", 512, "2025-04", "22M"),
         "llama-prompt-guard-2-86m" to CuratedModelInfo("Llama Prompt Guard 2", 512, "2025-04", "86M"),
         "llama-3.3-70b-instruct:free" to CuratedModelInfo("Llama 3.3 70B", 128_000, "2024-12", "70B"),
@@ -920,9 +842,7 @@ internal object ModelCatalog {
         "llama-3-swallow-70b-instruct-v0.1" to CuratedModelInfo("Llama 3 Swallow 70B", 8_192, "2024-06", "70B"),
         "llama-3-taiwan-70b-instruct" to CuratedModelInfo("Llama 3 Taiwan 70B", 8_192, "2024-08", "70B"),
 
-        // ==============================================================
         // Qwen — additional (OpenRouter + Ollama + Alibaba variants)
-        // ==============================================================
         "qwen-2.5-72b-instruct" to CuratedModelInfo("Qwen 2.5 72B", 131_072, "2024-09", "72B"),
         "qwen-2.5-7b-instruct" to CuratedModelInfo("Qwen 2.5 7B", 131_072, "2024-09", "7B"),
         "qwen-2.5-coder-32b-instruct" to CuratedModelInfo("Qwen 2.5 Coder 32B", 131_072, "2024-11", "32B"),
@@ -976,9 +896,7 @@ internal object ModelCatalog {
         "qwen3.6-35b-a3b" to CuratedModelInfo("Qwen 3.6 35B", 131_072, "2026-04", "35B"),
         "qwen3.6-27b" to CuratedModelInfo("Qwen 3.6 27B", 131_072, "2026-04", "27B"),
 
-        // ==============================================================
         // Kimi / Moonshot — additional
-        // ==============================================================
         "kimi-k2:1t" to CuratedModelInfo("Kimi K2", 200_000, "2025-07", "1T"),
         "kimi-k2-instruct-0905" to CuratedModelInfo("Kimi K2", 200_000, "2025-09"),
         "kimi-k2-thinking-turbo" to CuratedModelInfo("Kimi K2 Thinking Turbo", 200_000, "2025-11"),
@@ -986,18 +904,14 @@ internal object ModelCatalog {
         "kimi-k2.5-instant" to CuratedModelInfo("Kimi K2.5 Instant", 256_000, "2026-01"),
         "kimi-latest" to CuratedModelInfo("Kimi (Latest)", 256_000, "2026-04"),
 
-        // ==============================================================
         // MiniMax — additional
-        // ==============================================================
         "minimax-m2.1" to CuratedModelInfo("MiniMax M2.1", 1_000_000, "2025-11"),
         "minimax-m2.5" to CuratedModelInfo("MiniMax M2.5", 1_000_000, "2026-02"),
         "minimax-m2.5:free" to CuratedModelInfo("MiniMax M2.5", 1_000_000, "2026-02"),
         "minimax-m2-her" to CuratedModelInfo("MiniMax M2 Her", 1_000_000, "2025-10"),
         "minimax-01" to CuratedModelInfo("MiniMax 01", 4_000_000, "2025-01"),
 
-        // ==============================================================
         // NVIDIA / Nemotron — additional
-        // ==============================================================
         "nemotron-3-super" to CuratedModelInfo("Nemotron 3 Super", 128_000, "2025-10", "120B"),
         "nemotron-3-nano:30b" to CuratedModelInfo("Nemotron 3 Nano", 128_000, "2025-10", "30B"),
         "nemotron-3-nano-30b-a3b" to CuratedModelInfo("Nemotron 3 Nano", 128_000, "2025-10", "30B"),
@@ -1051,9 +965,7 @@ internal object ModelCatalog {
         "riva-translate-4b-instruct-v1.1" to CuratedModelInfo("Riva Translate", 4_096, "2025-06", "4B"),
         "streampetr" to CuratedModelInfo("StreamPETR", 4_096, "2024-04"),
 
-        // ==============================================================
         // IBM Granite — additional
-        // ==============================================================
         "granite-3.3-8b-instruct" to CuratedModelInfo("Granite 3.3 8B", 128_000, "2025-04", "8B"),
         "granite-3.0-3b-a800m-instruct" to CuratedModelInfo("Granite 3.0 3B MoE", 4_096, "2024-10", "3B"),
         "granite-4.0-h-micro" to CuratedModelInfo("Granite 4.0 Micro", 128_000, "2025-10", "3B"),
@@ -1062,25 +974,19 @@ internal object ModelCatalog {
         "granite-8b-code-instruct" to CuratedModelInfo("Granite 8B Code", 4_096, "2024-05", "8B"),
         "granite-guardian-3.0-8b" to CuratedModelInfo("Granite Guardian 3.0", 8_192, "2024-10", "8B"),
 
-        // ==============================================================
         // Phi / Microsoft — additional
-        // ==============================================================
         "phi-3-vision-128k-instruct" to CuratedModelInfo("Phi-3 Vision", 128_000, "2024-05", "4.2B"),
         "phi-3.5-vision-instruct" to CuratedModelInfo("Phi-3.5 Vision", 128_000, "2024-08", "4.2B"),
         "phi-4-mini-flash-reasoning" to CuratedModelInfo("Phi-4 Mini Flash Reasoning", 128_000, "2025-04", "3.8B"),
         "kosmos-2" to CuratedModelInfo("Kosmos-2", 2_048, "2024-02"),
 
-        // ==============================================================
         // Groq-specific
-        // ==============================================================
         "compound" to CuratedModelInfo("Groq Compound", 128_000, "2025-07"),
         "compound-mini" to CuratedModelInfo("Groq Compound Mini", 128_000, "2025-07"),
         "whisper-large-v3" to CuratedModelInfo("Whisper Large v3", 0, "2023-11"),
         "whisper-large-v3-turbo" to CuratedModelInfo("Whisper Large v3 Turbo", 0, "2024-10"),
 
-        // ==============================================================
         // OpenRouter routing / meta
-        // ==============================================================
         "free" to CuratedModelInfo("OpenRouter Auto (Free)"),
         "auto" to CuratedModelInfo("OpenRouter Auto"),
         "bodybuilder" to CuratedModelInfo("OpenRouter Bodybuilder"),
@@ -1088,9 +994,7 @@ internal object ModelCatalog {
         "elephant-alpha" to CuratedModelInfo("Elephant Alpha", 200_000, "2026-04"),
         "owl-alpha" to CuratedModelInfo("Owl Alpha", 200_000, "2026-04"),
 
-        // ==============================================================
         // Baidu Ernie — additional
-        // ==============================================================
         "ernie-4.5-21b-a3b" to CuratedModelInfo("Ernie 4.5 21B", 128_000, "2025-06", "21B"),
         "ernie-4.5-21b-a3b-thinking" to CuratedModelInfo("Ernie 4.5 21B Thinking", 128_000, "2025-06", "21B"),
         "ernie-4.5-vl-28b-a3b" to CuratedModelInfo("Ernie 4.5 VL 28B", 128_000, "2025-06", "28B"),
@@ -1103,9 +1007,7 @@ internal object ModelCatalog {
         "ernie-5.1-preview" to CuratedModelInfo("Ernie 5.1 (Preview)", 128_000, "2026-04"),
         "cobuddy:free" to CuratedModelInfo("Baidu CoBuddy", 128_000, "2026-04"),
 
-        // ==============================================================
         // Tencent Hunyuan — additional
-        // ==============================================================
         "hunyuan-a13b-instruct" to CuratedModelInfo("Hunyuan A13B", 128_000, "2025-06", "13B"),
         "hy3-preview" to CuratedModelInfo("Hunyuan 3 (Preview)", 256_000, "2026-04"),
         "hy3-preview:free" to CuratedModelInfo("Hunyuan 3 (Preview)", 256_000, "2026-04"),
@@ -1115,27 +1017,19 @@ internal object ModelCatalog {
         "hunyuan-turbos-20250226" to CuratedModelInfo("Hunyuan TurboS", 128_000, "2025-02"),
         "hunyuan-turbo-0110" to CuratedModelInfo("Hunyuan Turbo", 32_000, "2025-01"),
 
-        // ==============================================================
         // Perceptron
-        // ==============================================================
         "perceptron-mk1" to CuratedModelInfo("Perceptron MK1", 128_000, "2026-04"),
 
-        // ==============================================================
         // Inception Mercury
-        // ==============================================================
         "mercury" to CuratedModelInfo("Mercury", 32_000, "2025-02"),
         "mercury-2" to CuratedModelInfo("Mercury 2", 32_000, "2025-09"),
         "mercury-coder" to CuratedModelInfo("Mercury Coder", 32_000, "2025-03"),
 
-        // ==============================================================
         // AI21 Jamba — additional
-        // ==============================================================
         "jamba-1.5-large-instruct" to CuratedModelInfo("Jamba 1.5 Large", 256_000, "2024-08"),
         "jamba-1.5-mini-instruct" to CuratedModelInfo("Jamba 1.5 Mini", 256_000, "2024-08"),
 
-        // ==============================================================
         // Arcee AI
-        // ==============================================================
         "spotlight" to CuratedModelInfo("Arcee Spotlight", 128_000, "2025-03"),
         "maestro-reasoning" to CuratedModelInfo("Arcee Maestro Reasoning", 128_000, "2025-03"),
         "virtuoso-large" to CuratedModelInfo("Arcee Virtuoso Large", 128_000, "2025-03"),
@@ -1147,35 +1041,25 @@ internal object ModelCatalog {
         "trinity-mini" to CuratedModelInfo("Arcee Trinity Mini", 128_000, "2025-11"),
         "dracarys-llama-3.1-70b-instruct" to CuratedModelInfo("Dracarys Llama 3.1", 128_000, "2024-09", "70B"),
 
-        // ==============================================================
         // Perplexity — additional
-        // ==============================================================
         "sonar-pro-search" to CuratedModelInfo("Sonar Pro Search", 200_000, "2025-06"),
 
-        // ==============================================================
         // Writer Palmyra
-        // ==============================================================
         "palmyra-x5" to CuratedModelInfo("Palmyra X5", 1_000_000, "2025-03"),
         "palmyra-med-70b" to CuratedModelInfo("Palmyra Med 70B", 8_192, "2024-06", "70B"),
         "palmyra-med-70b-32k" to CuratedModelInfo("Palmyra Med 70B", 32_000, "2024-06", "70B"),
         "palmyra-fin-70b-32k" to CuratedModelInfo("Palmyra Fin 70B", 32_000, "2024-06", "70B"),
         "palmyra-creative-122b" to CuratedModelInfo("Palmyra Creative", 128_000, "2024-10", "122B"),
 
-        // ==============================================================
         // Liquid
-        // ==============================================================
         "lfm-2-24b-a2b" to CuratedModelInfo("LFM-2 24B", 32_000, "2025-04", "24B"),
         "lfm-2.5-1.2b-thinking:free" to CuratedModelInfo("LFM-2.5 1.2B Thinking", 32_000, "2025-08", "1.2B"),
         "lfm-2.5-1.2b-instruct:free" to CuratedModelInfo("LFM-2.5 1.2B", 32_000, "2025-08", "1.2B"),
 
-        // ==============================================================
         // Amazon Nova — additional
-        // ==============================================================
         "nova-2-lite-v1" to CuratedModelInfo("Nova 2 Lite", 300_000, "2025-11"),
 
-        // ==============================================================
         // ByteDance Seed / UI-TARS
-        // ==============================================================
         "seed-1.6" to CuratedModelInfo("Seed 1.6", 256_000, "2025-07"),
         "seed-1.6-flash" to CuratedModelInfo("Seed 1.6 Flash", 256_000, "2025-07"),
         "seed-2.0-lite" to CuratedModelInfo("Seed 2.0 Lite", 256_000, "2025-11"),
@@ -1183,9 +1067,7 @@ internal object ModelCatalog {
         "seed-oss-36b-instruct" to CuratedModelInfo("Seed OSS 36B", 512_000, "2025-08", "36B"),
         "ui-tars-1.5-7b" to CuratedModelInfo("UI-TARS 1.5", 128_000, "2025-04", "7B"),
 
-        // ==============================================================
         // StepFun, Xiaomi, Kwaipilot, Others
-        // ==============================================================
         "step-3.5-flash" to CuratedModelInfo("Step 3.5 Flash", 128_000, "2025-09"),
         "step-3" to CuratedModelInfo("Step 3", 128_000, "2025-07"),
         "step-2-16k-exp-202412" to CuratedModelInfo("Step 2 16k", 16_000, "2024-12"),
@@ -1212,22 +1094,16 @@ internal object ModelCatalog {
         "amazon-nova-experimental-chat-10-20" to CuratedModelInfo("Nova Experimental Chat", 300_000, "2025-10"),
         "amazon-nova-experimental-chat-10-09" to CuratedModelInfo("Nova Experimental Chat", 300_000, "2025-10"),
 
-        // ==============================================================
         // Allen AI OLMo — additional
-        // ==============================================================
         "olmo-3-32b-think" to CuratedModelInfo("OLMo 3 32B Think", 8_192, "2025-11", "32B"),
         "olmo-3.1-32b-instruct" to CuratedModelInfo("OLMo 3.1 32B", 8_192, "2026-01", "32B"),
         "molmo-2-8b" to CuratedModelInfo("Molmo 2 8B", 8_192, "2025-12", "8B"),
 
-        // ==============================================================
         // Upstage Solar
-        // ==============================================================
         "solar-10.7b-instruct" to CuratedModelInfo("Solar 10.7B", 4_096, "2023-12", "10.7B"),
         "solar-pro-3" to CuratedModelInfo("Solar Pro 3", 32_000, "2025-11"),
 
-        // ==============================================================
         // Fine-tunes / role play / community
-        // ==============================================================
         "magnum-v4-72b" to CuratedModelInfo("Magnum v4 72B", 32_000, "2024-10", "72B"),
         "goliath-120b" to CuratedModelInfo("Goliath 120B", 6_144, "2023-11", "120B"),
         "mythomax-l2-13b" to CuratedModelInfo("MythoMax L2 13B", 4_096, "2023-08", "13B"),
@@ -1263,9 +1139,7 @@ internal object ModelCatalog {
         "relace-search" to CuratedModelInfo("Relace Search", 32_000, "2025-10"),
         "relace-apply-3" to CuratedModelInfo("Relace Apply 3", 32_000, "2025-09"),
 
-        // ==============================================================
         // HuggingFace / misc open models
-        // ==============================================================
         "fuyu-8b" to CuratedModelInfo("Fuyu 8B", 16_000, "2023-10", "8B"),
         "sea-lion-7b-instruct" to CuratedModelInfo("SEA-LION 7B", 4_096, "2024-02", "7B"),
         "bge-m3" to CuratedModelInfo("BGE-M3", 8_192, "2024-01"),

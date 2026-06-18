@@ -27,9 +27,11 @@ class OakDocumentsProvider : DocumentsProvider() {
 
         val root = baseDir
         val modelDir = File(root, "models")
-        val modelCount = if (modelDir.isDirectory)
+        val modelCount = if (modelDir.isDirectory) {
             modelDir.listFiles()?.count { it.isFile && !it.name.startsWith('.') } ?: 0
-        else 0
+        } else {
+            0
+        }
         val totalItems = root.listFiles()?.count { !it.name.startsWith('.') } ?: 0
 
         val summary = buildString {
@@ -45,7 +47,7 @@ class OakDocumentsProvider : DocumentsProvider() {
                 summary,
                 FLAG_ROOT,
                 root.usableSpace,
-            )
+            ),
         )
         return c
     }
@@ -91,8 +93,11 @@ class OakDocumentsProvider : DocumentsProvider() {
     override fun getDocumentType(documentId: String): String? {
         val file = File(documentId)
         if (!file.exists() || !isUnderOak(file)) return null
-        return if (file.isDirectory) DocumentsContract.Document.MIME_TYPE_DIR
-        else getMimeType(file.name)
+        return if (file.isDirectory) {
+            DocumentsContract.Document.MIME_TYPE_DIR
+        } else {
+            getMimeType(file.name)
+        }
     }
 
     override fun getDocumentMetadata(documentId: String): Bundle? {
@@ -107,11 +112,9 @@ class OakDocumentsProvider : DocumentsProvider() {
         }
     }
 
-    override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean {
-        return File(documentId).canonicalPath.startsWith(
-            File(parentDocumentId).canonicalPath + File.separator
-        )
-    }
+    override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean = File(documentId).canonicalPath.startsWith(
+        File(parentDocumentId).canonicalPath + File.separator,
+    )
 
     private fun documentRow(file: File): Array<Any?> = arrayOf(
         file.absolutePath,
@@ -129,10 +132,8 @@ class OakDocumentsProvider : DocumentsProvider() {
             ?: "application/octet-stream"
     }
 
-    private fun isUnderOak(file: File): Boolean {
-        return file.canonicalPath == baseDir.canonicalPath ||
-            file.canonicalPath.startsWith(baseDir.canonicalPath + File.separator)
-    }
+    private fun isUnderOak(file: File): Boolean = file.canonicalPath == baseDir.canonicalPath ||
+        file.canonicalPath.startsWith(baseDir.canonicalPath + File.separator)
 
     companion object {
         private const val ROOT_ID = "Oak"
