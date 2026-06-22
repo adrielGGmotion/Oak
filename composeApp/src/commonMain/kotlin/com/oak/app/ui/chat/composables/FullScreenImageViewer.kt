@@ -29,6 +29,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.oak.app.ui.handCursor
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.common_close
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Fullscreen image overlay. Rendered at the App root (not in a Dialog) so it
@@ -96,7 +99,7 @@ internal fun FullScreenImageViewerOverlay(
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
+                contentDescription = stringResource(Res.string.common_close),
                 tint = Color.White,
             )
         }

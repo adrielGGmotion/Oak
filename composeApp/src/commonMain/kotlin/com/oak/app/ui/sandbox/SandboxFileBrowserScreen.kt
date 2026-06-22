@@ -67,7 +67,10 @@ import oak.composeapp.generated.resources.sandbox_files_delete_message_directory
 import oak.composeapp.generated.resources.sandbox_files_delete_message_file
 import oak.composeapp.generated.resources.sandbox_files_delete_title
 import oak.composeapp.generated.resources.sandbox_files_dialog_cancel
+import oak.composeapp.generated.resources.common_save
 import oak.composeapp.generated.resources.sandbox_files_editor_open_externally
+import oak.composeapp.generated.resources.sandbox_files_force_open_text
+import oak.composeapp.generated.resources.sandbox_files_open_in_app
 import oak.composeapp.generated.resources.sandbox_files_rename_confirm
 import oak.composeapp.generated.resources.sandbox_files_rename_label
 import oak.composeapp.generated.resources.sandbox_files_rename_title
@@ -422,10 +425,10 @@ private fun EditorBody(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { onOpenExternal(editor.path) }, modifier = Modifier.handCursor()) {
-                    Text("Open in app")
+                    Text(stringResource(Res.string.sandbox_files_open_in_app))
                 }
                 TextButton(onClick = { onLoadAsText(editor.path) }, modifier = Modifier.handCursor()) {
-                    Text("Force open as text")
+                    Text(stringResource(Res.string.sandbox_files_force_open_text))
                 }
             }
             Spacer(Modifier.weight(1f))
@@ -464,7 +467,7 @@ private fun EditorBody(
                     enabled = editor.dirty,
                     modifier = Modifier.handCursor(),
                 ) {
-                    Text("Save")
+                    Text(stringResource(Res.string.common_save))
                 }
             }
         }

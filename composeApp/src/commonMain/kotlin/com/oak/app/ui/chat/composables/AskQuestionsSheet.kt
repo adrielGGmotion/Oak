@@ -29,6 +29,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.rememberBottomSheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,7 +40,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,6 +56,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.oak.app.data.AskQuestion
 import com.oak.app.ui.handCursor
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.ask_questions_back
+import oak.composeapp.generated.resources.ask_questions_back_to_questions
+import oak.composeapp.generated.resources.ask_questions_of
+import oak.composeapp.generated.resources.ask_questions_q_label
+import oak.composeapp.generated.resources.ask_questions_review_your_answers
+import oak.composeapp.generated.resources.ask_questions_skipped
+import oak.composeapp.generated.resources.ask_questions_submit_answers
+import oak.composeapp.generated.resources.ask_questions_type_answer
+import oak.composeapp.generated.resources.common_cancel
+import oak.composeapp.generated.resources.common_close
+import oak.composeapp.generated.resources.summary_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AskQuestionsSheet(
@@ -69,7 +83,7 @@ fun AskQuestionsSheet(
     var customInput by remember { mutableStateOf("") }
     var direction by remember { mutableIntStateOf(1) }
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
     LaunchedEffect(questions) {
         currentIndex = 0
@@ -97,7 +111,7 @@ fun AskQuestionsSheet(
             ) {
                 if (!showSummary && currentIndex > 0) {
                     Text(
-                        text = "← Back",
+                        text = stringResource(Res.string.ask_questions_back),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -113,7 +127,7 @@ fun AskQuestionsSheet(
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = if (showSummary) "Summary" else "${currentIndex + 1} of ${questions.size}",
+                    text = if (showSummary) stringResource(Res.string.summary_title) else "${currentIndex + 1} ${stringResource(Res.string.ask_questions_of)} ${questions.size}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -125,7 +139,7 @@ fun AskQuestionsSheet(
                 ) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.common_close),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp),
                     )
@@ -256,8 +270,8 @@ private fun QuestionContent(
                 customInput
             },
             onValueChange = onCustomInput,
-            label = { Text("Type your own answer...") },
-            placeholder = { Text("Type your own answer...") },
+            label = { Text(stringResource(Res.string.ask_questions_type_answer)) },
+            placeholder = { Text(stringResource(Res.string.ask_questions_type_answer)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = false,
@@ -377,7 +391,7 @@ private fun SummaryContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = "← Back to questions",
+            text = stringResource(Res.string.ask_questions_back_to_questions),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
@@ -386,7 +400,7 @@ private fun SummaryContent(
         )
 
         Text(
-            text = "Review your answers",
+            text = stringResource(Res.string.ask_questions_review_your_answers),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -406,14 +420,14 @@ private fun SummaryContent(
                     .padding(12.dp),
             ) {
                 Text(
-                    text = "Q${index + 1}: ${question.text}",
+                    text = "${stringResource(Res.string.ask_questions_q_label)}${index + 1}: ${question.text}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = if (answer.isNullOrBlank()) "(Skipped)" else answer,
+                    text = if (answer.isNullOrBlank()) stringResource(Res.string.ask_questions_skipped) else answer,
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (answer.isNullOrBlank()) {
                         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
@@ -440,7 +454,7 @@ private fun SummaryContent(
                 modifier = Modifier.size(18.dp),
             )
             Spacer(Modifier.width(8.dp))
-            Text("Submit answers")
+            Text(stringResource(Res.string.ask_questions_submit_answers))
         }
 
         OutlinedButton(
@@ -448,7 +462,7 @@ private fun SummaryContent(
             modifier = Modifier.fillMaxWidth().height(48.dp).handCursor(),
             shape = RoundedCornerShape(12.dp),
         ) {
-            Text("Cancel")
+            Text(stringResource(Res.string.common_cancel))
         }
     }
 }

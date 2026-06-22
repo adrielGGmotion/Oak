@@ -223,6 +223,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.bot_message_copy_content_description
+import oak.composeapp.generated.resources.common_copy
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -1229,7 +1230,7 @@ private fun RenderCode(node: CodeNode) {
             ) {
                 Icon(
                     imageVector = Icons.Filled.ContentCopy,
-                    contentDescription = "Copy",
+                    contentDescription = stringResource(Res.string.common_copy),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp),
                 )
