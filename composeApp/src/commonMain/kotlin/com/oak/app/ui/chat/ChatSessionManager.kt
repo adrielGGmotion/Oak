@@ -95,6 +95,7 @@ class ChatSessionManager(
     fun removeSession(id: String) {
         sessions[id]?.generationJob?.cancel()
         sessions.remove(id)
+        generationCounter.remove(id)
         refreshGeneratingIds()
     }
 

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -40,8 +39,6 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.rememberBottomSheetState
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,7 +47,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -59,6 +55,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -68,6 +65,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -103,7 +101,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.oak.app.BackIcon
-import com.oak.app.SandboxController
 import com.oak.app.TerminalLine
 import com.oak.app.Version
 import com.oak.app.data.EmailAccount
@@ -113,7 +110,6 @@ import com.oak.app.data.MemoryEntry
 import com.oak.app.data.ScheduledTask
 import com.oak.app.data.Service
 import com.oak.app.data.SharedJson
-import com.oak.app.data.TaskStatus
 import com.oak.app.data.TaskTrigger
 import com.oak.app.data.ThemeMode
 import com.oak.app.data.detectImportSections
@@ -148,8 +144,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.jsonObject
-import kotlin.math.roundToInt
-import kotlin.time.Instant
+import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.default_soul
 import oak.composeapp.generated.resources.device_storage_description_disabled
 import oak.composeapp.generated.resources.device_storage_description_enabled_denied
@@ -169,7 +164,6 @@ import oak.composeapp.generated.resources.litert_performance_ok
 import oak.composeapp.generated.resources.litert_performance_poor
 import oak.composeapp.generated.resources.litert_recommended
 import oak.composeapp.generated.resources.litert_tool_support
-import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.settings_add_service
 import oak.composeapp.generated.resources.settings_ai_font_family
 import oak.composeapp.generated.resources.settings_ai_font_family_description
@@ -287,13 +281,15 @@ import oak.composeapp.generated.resources.snackbar_service_removed
 import oak.composeapp.generated.resources.snackbar_ssh_server_removed
 import oak.composeapp.generated.resources.snackbar_task_cancelled
 import oak.composeapp.generated.resources.snackbar_undo
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import sh.calvin.reorderable.ReorderableColumn
+import kotlin.math.roundToInt
+import kotlin.time.Instant
 
 internal val StatusColorConnected = Color(0xFF4CAF50)
 internal val StatusColorChecking = Color(0xFFFF9800)

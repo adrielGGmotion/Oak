@@ -61,8 +61,5 @@ fun classifyFile(mimeType: String?, fileName: String?): FileCategory {
     if (ext != null && ext in textExtensions) return FileCategory.TEXT
     if (ext == "pdf") return FileCategory.PDF
 
-    // If mimeType is null and no recognized extension, unsupported
-    if (mimeType == null) return FileCategory.UNSUPPORTED
-
     return FileCategory.UNSUPPORTED
 }
