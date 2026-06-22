@@ -42,7 +42,7 @@ class ChatViewModelExtendedTest {
 
     private fun createViewModel(): ChatViewModel {
         val noOpScheduler = TaskScheduler(fakeRepository, enabled = false)
-        val sessionManager = ChatSessionManager(fakeRepository)
+        val sessionManager = ChatSessionManager(fakeRepository, unconfinedDispatcher)
         return ChatViewModel(fakeRepository, noOpScheduler, sessionManager, AskQuestionsManager(), unconfinedDispatcher)
     }
 

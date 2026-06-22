@@ -148,7 +148,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.jsonObject
-import oak.composeapp.generated.resources.Res
+import kotlin.math.roundToInt
+import kotlin.time.Instant
 import oak.composeapp.generated.resources.default_soul
 import oak.composeapp.generated.resources.device_storage_description_disabled
 import oak.composeapp.generated.resources.device_storage_description_enabled_denied
@@ -168,6 +169,7 @@ import oak.composeapp.generated.resources.litert_performance_ok
 import oak.composeapp.generated.resources.litert_performance_poor
 import oak.composeapp.generated.resources.litert_recommended
 import oak.composeapp.generated.resources.litert_tool_support
+import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.settings_add_service
 import oak.composeapp.generated.resources.settings_ai_font_family
 import oak.composeapp.generated.resources.settings_ai_font_family_description
@@ -285,15 +287,13 @@ import oak.composeapp.generated.resources.snackbar_service_removed
 import oak.composeapp.generated.resources.snackbar_ssh_server_removed
 import oak.composeapp.generated.resources.snackbar_task_cancelled
 import oak.composeapp.generated.resources.snackbar_undo
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import sh.calvin.reorderable.ReorderableColumn
-import kotlin.math.roundToInt
-import kotlin.time.Instant
 
 internal val StatusColorConnected = Color(0xFF4CAF50)
 internal val StatusColorChecking = Color(0xFFFF9800)
