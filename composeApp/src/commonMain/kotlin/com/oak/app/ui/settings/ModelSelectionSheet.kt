@@ -47,10 +47,10 @@ import com.oak.app.ui.components.OakSearchField
 import com.oak.app.ui.components.VerticalScrollbarForGrid
 import com.oak.app.ui.handCursor
 import kotlinx.collections.immutable.ImmutableList
-import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.model_sort_context
 import oak.composeapp.generated.resources.model_sort_date
 import oak.composeapp.generated.resources.model_sort_score
+import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.settings_model_label
 import oak.composeapp.generated.resources.settings_model_search
 import org.jetbrains.compose.resources.StringResource

@@ -111,6 +111,7 @@ import kotlinx.serialization.Serializable
 import nl.marc_apps.tts.TextToSpeechInstance
 import nl.marc_apps.tts.experimental.ExperimentalVoiceApi
 import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.common_cancel
 import oak.composeapp.generated.resources.drawer_artifacts
 import oak.composeapp.generated.resources.drawer_cancel
 import oak.composeapp.generated.resources.drawer_chats
@@ -125,7 +126,6 @@ import oak.composeapp.generated.resources.drawer_settings
 import oak.composeapp.generated.resources.drawer_user
 import oak.composeapp.generated.resources.tab_chat
 import oak.composeapp.generated.resources.tab_settings
-import oak.composeapp.generated.resources.common_cancel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject

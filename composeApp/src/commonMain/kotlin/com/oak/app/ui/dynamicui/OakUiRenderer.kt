@@ -221,12 +221,12 @@ import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
-import oak.composeapp.generated.resources.Res
-import oak.composeapp.generated.resources.bot_message_copy_content_description
-import oak.composeapp.generated.resources.common_copy
-import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import oak.composeapp.generated.resources.bot_message_copy_content_description
+import oak.composeapp.generated.resources.common_copy
+import oak.composeapp.generated.resources.Res
+import org.jetbrains.compose.resources.stringResource
 
 val LocalPreviewImages = staticCompositionLocalOf<Map<String, ImageBitmap>> { emptyMap() }
 

@@ -50,8 +50,8 @@ import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
 import kotlinx.collections.immutable.ImmutableList
-import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.common_cancel
+import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.settings_ssh_add
 import oak.composeapp.generated.resources.settings_ssh_add_server
 import oak.composeapp.generated.resources.settings_ssh_auth_type
