@@ -57,8 +57,8 @@ import com.oak.app.formatFileSize
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
 import com.oak.app.ui.oakAdaptiveCardColors
-import oak.composeapp.generated.resources.common_save
 import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.common_save
 import oak.composeapp.generated.resources.sandbox_files_action_delete
 import oak.composeapp.generated.resources.sandbox_files_action_more
 import oak.composeapp.generated.resources.sandbox_files_action_open_external

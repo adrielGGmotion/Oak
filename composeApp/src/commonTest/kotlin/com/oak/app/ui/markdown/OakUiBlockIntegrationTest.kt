@@ -17,7 +17,7 @@ class OakUiBlockIntegrationTest {
         """.trimIndent()
         val block = parseMarkdown(md).blocks.single()
         assertTrue(block is OakUiBlock)
-        val alert = (block as OakUiBlock).node as AlertNode
+        val alert = block.node as AlertNode
         assertEquals("Heads up", alert.title)
         assertEquals("Hello", alert.message)
     }
@@ -43,7 +43,7 @@ class OakUiBlockIntegrationTest {
         """.trimIndent()
         val block = parseMarkdown(md).blocks.single()
         assertTrue(block is OakUiBlock)
-        val col = (block as OakUiBlock).node as ColumnNode
+        val col = block.node as ColumnNode
         assertEquals(2, col.children.size)
     }
 

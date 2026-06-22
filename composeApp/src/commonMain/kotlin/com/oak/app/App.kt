@@ -113,7 +113,6 @@ import nl.marc_apps.tts.experimental.ExperimentalVoiceApi
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.common_cancel
 import oak.composeapp.generated.resources.drawer_artifacts
-import oak.composeapp.generated.resources.drawer_cancel
 import oak.composeapp.generated.resources.drawer_chats
 import oak.composeapp.generated.resources.drawer_delete
 import oak.composeapp.generated.resources.drawer_delete_conversation_text
