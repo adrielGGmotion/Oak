@@ -125,6 +125,7 @@ import oak.composeapp.generated.resources.drawer_settings
 import oak.composeapp.generated.resources.drawer_user
 import oak.composeapp.generated.resources.tab_chat
 import oak.composeapp.generated.resources.tab_settings
+import oak.composeapp.generated.resources.common_cancel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
@@ -551,7 +552,7 @@ private fun AppContent(
                                     },
                                     dismissButton = {
                                         TextButton(onClick = { deleteTarget = null }) {
-                                            Text("Cancel")
+                                            Text(stringResource(Res.string.common_cancel))
                                         }
                                     },
                                 )

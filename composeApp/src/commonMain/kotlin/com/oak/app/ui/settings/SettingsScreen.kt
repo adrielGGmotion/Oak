@@ -40,6 +40,8 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.rememberBottomSheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -66,7 +68,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -879,7 +880,7 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
     if (showAddServiceSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAddServiceSheet = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
         ) {
             val addServiceScrollState = rememberScrollState()
             Box {
@@ -2704,7 +2705,7 @@ private fun AllMemoriesSheet(
     val deleteContentDescription = stringResource(Res.string.settings_memories_delete)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
     ) {
         Column(
             modifier = Modifier
@@ -2746,7 +2747,7 @@ private fun EditMemorySheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
     ) {
         Column(
             modifier = Modifier
@@ -2864,7 +2865,7 @@ private fun TaskDetailsSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
     ) {
         Column(
             modifier = Modifier

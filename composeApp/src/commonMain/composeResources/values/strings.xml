@@ -442,4 +442,21 @@
     <string name="new_chat_fallback">New Chat</string>
     <string name="settings_streaming_enabled">Streaming responses</string>
     <string name="settings_streaming_description">Disable if your provider has issues with streaming responses</string>
+    <string name="common_close">Close</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_copy">Copy</string>
+    <string name="common_save">Save</string>
+    <string name="type_answer">Type your answer…</string>
+    <string name="summary_title">Summary</string>
+    <string name="summary_download_artifacts">Download artifacts</string>
+    <string name="ask_questions_back">← Back</string>
+    <string name="ask_questions_back_to_questions">← Back to questions</string>
+    <string name="ask_questions_submit_answers">Submit answers</string>
+    <string name="ask_questions_type_answer">Type your own answer…</string>
+    <string name="ask_questions_of">of</string>
+    <string name="ask_questions_review_your_answers">Review your answers</string>
+    <string name="ask_questions_skipped">(Skipped)</string>
+    <string name="ask_questions_q_label">Q</string>
+    <string name="sandbox_files_open_in_app">Open in app</string>
+    <string name="sandbox_files_force_open_text">Force open as text</string>
 </resources>
