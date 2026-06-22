@@ -48,9 +48,7 @@ class McpClient(
             contentType(ContentType.Application.Json)
             header("Accept", "application/json, text/event-stream")
             sessionId?.let { header("Mcp-Session-Id", it) }
-            this@McpClient.headers.keys.forEach { key ->
-                header(key, this@McpClient.headers[key]!!)
-            }
+            this@McpClient.headers.forEach { (key, value) -> header(key, value) }
             setBody(requestBody)
         }
 
@@ -112,9 +110,7 @@ class McpClient(
         client.post(url) {
             contentType(ContentType.Application.Json)
             sessionId?.let { header("Mcp-Session-Id", it) }
-            this@McpClient.headers.keys.forEach { key ->
-                header(key, this@McpClient.headers[key]!!)
-            }
+            this@McpClient.headers.forEach { (key, value) -> header(key, value) }
             setBody(requestBody)
         }
     }

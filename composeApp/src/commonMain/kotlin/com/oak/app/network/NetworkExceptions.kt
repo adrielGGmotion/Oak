@@ -58,20 +58,39 @@ sealed interface UiError {
 
 fun Exception.toUiError(): UiError = when (this) {
     is UnsupportedFileTypeException -> UiError.Resource(Res.string.error_unsupported_file_type)
+
     is FileTooLargeException -> UiError.Resource(Res.string.error_file_too_large)
+
     is ContextWindowExceededException -> UiError.Resource(Res.string.error_context_window_exceeded)
+
     is OpenAICompatibleRequestTooLargeException -> UiError.Resource(Res.string.error_request_too_large)
+
     is GeminiInvalidApiKeyException, is OpenAICompatibleInvalidApiKeyException, is AnthropicInvalidApiKeyException -> UiError.Resource(Res.string.error_invalid_api_key)
+
     is GeminiRateLimitExceededException, is OpenAICompatibleRateLimitExceededException, is AnthropicRateLimitExceededException -> UiError.Resource(Res.string.error_rate_limit_exceeded)
+
     is AnthropicOverloadedException -> UiError.Resource(Res.string.error_rate_limit_exceeded)
+
     is AnthropicInsufficientCreditsException -> UiError.Resource(Res.string.error_insufficient_credits)
+
     is OpenAICompatibleQuotaExhaustedException -> UiError.Resource(Res.string.error_quota_exhausted)
+
     is OpenAICompatibleConnectionException -> UiError.Resource(Res.string.error_openai_compatible_connection)
+
     is OpenAICompatibleModelNotFoundException -> UiError.Resource(Res.string.error_openai_compatible_model_not_found)
+
     is OpenAICompatibleEmptyResponseException -> UiError.Resource(Res.string.error_empty_response)
+
     is InsufficientMemoryException -> UiError.Resource(Res.string.litert_error_insufficient_memory)
+
     is InferenceTimeoutException -> UiError.Resource(Res.string.litert_error_inference_timeout)
+
     is NoModelDownloadedException -> UiError.Resource(Res.string.litert_error_no_model)
+
     is GeminiGenericException, is OpenAICompatibleGenericException, is AnthropicGenericException, is GenericNetworkException -> UiError.Text(message ?: "An unexpected error occurred.")
-    else -> if (!message.isNullOrBlank()) UiError.Text(message!!) else UiError.Resource(Res.string.error_unknown)
+
+    else -> {
+        val msg = message
+        if (!msg.isNullOrBlank()) UiError.Text(msg) else UiError.Resource(Res.string.error_unknown)
+    }
 }
