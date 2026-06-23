@@ -28,11 +28,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberBottomSheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -276,7 +275,7 @@ private fun AddMcpServerDialog(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         val mcpScrollState = rememberScrollState()
         Box {
