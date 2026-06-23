@@ -133,18 +133,20 @@ compose.desktop {
         }
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm, TargetFormat.AppImage)
             packageName = "Oak"
             packageVersion = libs.versions.appVersion.get()
 
             macOS {
+                targetFormats(TargetFormat.Dmg)
                 iconFile.set(project.file("icon.icns"))
             }
             windows {
+                targetFormats(TargetFormat.Msi)
                 iconFile.set(project.file("icon.ico"))
                 menuGroup = "Oak"
             }
             linux {
+                targetFormats(TargetFormat.Deb, TargetFormat.Rpm, TargetFormat.AppImage)
                 iconFile.set(project.file("icon.png"))
                 modules("jdk.security.auth")
             }
