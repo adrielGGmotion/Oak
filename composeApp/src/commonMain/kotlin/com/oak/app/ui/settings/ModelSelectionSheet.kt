@@ -25,9 +25,8 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberBottomSheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -98,7 +97,7 @@ internal fun ModelSelection(
         }
         if (expanded) {
             ModalBottomSheet(
-                sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
                 onDismissRequest = {
                     expanded = false
                 },
