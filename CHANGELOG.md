@@ -19,7 +19,6 @@
 
 ### Fixes
 - Fix DeepSeek tool execution
-- Fix sponsors display
 
 ### Improvements
 - Improve Ollama error handling
@@ -334,7 +333,6 @@
 ### Features
 - Add Splinterlands LLM auto-battle integration
 - Add web loading spinner
-- List sponsors on free tier UI
 - Add bottom scroll pointer icon and rounded corners stop icon
 
 ### Fixes
