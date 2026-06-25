@@ -63,11 +63,10 @@ internal data class EmailAccountSummary(
  * Total character budget for the memory category sections (`## Your Memories`, etc.)
  * when building the `CHAT_LOCAL` variant. Memories are appended in order — general →
  * preferences → learnings → errors — and entries that would push the combined size
- * past this budget are dropped silently at the entry boundary. Set generously enough
- * to cover a typical user's memory set (~20-40 entries) without starving the model's
- * attention budget on a 16K-context local model.
+ * past this budget are dropped silently at the entry boundary. Removed the cap
+ * (was 800) — modern local models handle larger context windows without issue.
  */
-private const val LOCAL_MEMORY_BUDGET_CHARS = 800
+private const val LOCAL_MEMORY_BUDGET_CHARS = Int.MAX_VALUE
 
 /**
  * Advanced memory guidance — references `memory_learn` (not in `LOCAL_TOOL_ALLOWLIST`)
