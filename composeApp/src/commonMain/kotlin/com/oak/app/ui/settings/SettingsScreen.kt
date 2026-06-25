@@ -2523,7 +2523,7 @@ private fun SoulEditor(
     val displayText = soulText.ifEmpty { localizedDefault }
     var editedText by remember(displayText) { mutableStateOf(displayText) }
     val hasChanges = editedText != displayText
-    val maxChars = 4000
+    val maxChars = 40000
 
     var showResetDialog by remember { mutableStateOf(false) }
 
