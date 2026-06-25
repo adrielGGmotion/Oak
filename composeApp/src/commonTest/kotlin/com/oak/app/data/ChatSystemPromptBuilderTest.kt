@@ -324,9 +324,9 @@ class ChatSystemPromptBuilderTest {
     }
 
     @Test
-    fun `CHAT_LOCAL truncates memories at entry boundary when over budget`() {
-        // A bloated memory set: 50 entries with long content. Combined size will far
-        // exceed LOCAL_MEMORY_BUDGET_CHARS (2000). Later entries should be silently dropped.
+    fun `CHAT_LOCAL includes all memories with unlimited budget`() {
+        // 50 entries with long content — combined size far exceeds the old 800-char cap.
+        // With Int.MAX_VALUE budget, all entries should be present.
         val big = (1..50).map { i ->
             memory(
                 key = "key_$i",
@@ -339,21 +339,12 @@ class ChatSystemPromptBuilderTest {
             generalMemories = big,
         )
         assertTrue("## Your Memories" in out)
-        // Budget is 2000 chars; with ~100-char entries we'd fit ~18 entries max.
         assertTrue("- **key_1**:" in out, "First entry should be included")
-        assertFalse("- **key_50**:" in out, "Last entry should be dropped (budget exhausted)")
-        // Sanity: the memory section portion shouldn't exceed the budget by more than one
-        // entry's worth (we cut at boundaries).
-        val memStart = out.indexOf("## Your Memories")
-        val memEnd = out.indexOf("## Context")
-        val memSectionLen = memEnd - memStart
-        assertTrue(memSectionLen <= 2100, "Memory section should be ~2000 chars, was $memSectionLen")
+        assertTrue("- **key_50**:" in out, "All entries should be included (unlimited budget)")
     }
 
     @Test
-    fun `CHAT_LOCAL drops lower-priority categories when earlier ones exhaust budget`() {
-        // Fill the GENERAL category to ~1900 chars (close to budget); later categories
-        // should be dropped entirely because the budget is exhausted.
+    fun `CHAT_LOCAL includes all categories with unlimited budget`() {
         val bigGeneral = (1..19).map { i ->
             memory(
                 key = "g_$i",
@@ -369,12 +360,9 @@ class ChatSystemPromptBuilderTest {
             errorMemories = listOf(memory("err_key", "small content", category = MemoryCategory.ERROR)),
         )
         assertTrue("## Your Memories" in out)
-        // Later categories may or may not render depending on exact byte count —
-        // but the total combined memory section must still be within budget + one entry.
-        val memStart = out.indexOf("## Your Memories")
-        val memEnd = out.indexOf("## Context")
-        val memLen = memEnd - memStart
-        assertTrue(memLen <= 2200, "Combined memory sections should respect budget, was $memLen")
+        assertTrue("## User Preferences" in out, "Preference category should be present (unlimited budget)")
+        assertTrue("## Learnings" in out, "Learning category should be present (unlimited budget)")
+        assertTrue("## Known Issues & Resolutions" in out, "Error category should be present (unlimited budget)")
     }
 
     @Test
