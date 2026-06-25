@@ -24,4 +24,5 @@ android-sdk/
 debug.keystore
 release.keystore
 .claude/
-.opencode.jdk/
+.opencode
+.jdk/
