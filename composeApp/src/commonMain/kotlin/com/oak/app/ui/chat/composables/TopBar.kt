@@ -1,5 +1,7 @@
 package com.oak.app.ui.chat.composables
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -15,11 +17,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +55,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.open_navigation_content_description
+import oak.composeapp.generated.resources.sandbox_content_description
 import oak.composeapp.generated.resources.settings_content_description
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -61,6 +67,10 @@ internal fun TopBar(
     navigationTabBar: (@Composable () -> Unit)? = null,
     availableServices: ImmutableList<ServiceEntry> = kotlinx.collections.immutable.persistentListOf(),
     onSelectService: (String) -> Unit = {},
+    isSandboxAvailable: Boolean = false,
+    isSandboxOpen: Boolean = false,
+    onToggleSandbox: () -> Unit = {},
+    isShellExecuting: Boolean = false,
 ) {
     if (navigationTabBar != null) {
         Box(
@@ -94,6 +104,13 @@ internal fun TopBar(
                 navigationTabBar()
             }
             Row(modifier = Modifier.align(Alignment.CenterEnd)) {
+                if (isSandboxAvailable) {
+                    SandboxToggleButton(
+                        isSandboxOpen = isSandboxOpen,
+                        isShellExecuting = isShellExecuting,
+                        onToggleSandbox = onToggleSandbox,
+                    )
+                }
                 IconButton(
                     modifier = Modifier.handCursor(),
                     onClick = onNavigateToSettings,
@@ -136,6 +153,14 @@ internal fun TopBar(
 
             Spacer(Modifier.weight(1f))
 
+            if (isSandboxAvailable) {
+                SandboxToggleButton(
+                    isSandboxOpen = isSandboxOpen,
+                    isShellExecuting = isShellExecuting,
+                    onToggleSandbox = onToggleSandbox,
+                )
+            }
+
             IconButton(
                 modifier = Modifier.handCursor(),
                 onClick = onNavigateToSettings,
@@ -147,6 +172,47 @@ internal fun TopBar(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SandboxToggleButton(
+    isSandboxOpen: Boolean,
+    isShellExecuting: Boolean,
+    onToggleSandbox: () -> Unit,
+) {
+    val flashAlpha = remember { Animatable(0f) }
+    LaunchedEffect(isShellExecuting) {
+        if (isShellExecuting) {
+            flashAlpha.snapTo(0.4f)
+            flashAlpha.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+            )
+        }
+    }
+    val primary = MaterialTheme.colorScheme.primary
+    val checkedContainer = primary.copy(alpha = 0.2f)
+    val flashContainer = primary.copy(alpha = flashAlpha.value)
+    IconToggleButton(
+        checked = isSandboxOpen,
+        onCheckedChange = { onToggleSandbox() },
+        modifier = Modifier.size(42.dp).handCursor(),
+        colors = IconButtonDefaults.iconToggleButtonColors(
+            containerColor = flashContainer,
+            checkedContainerColor = if (flashAlpha.value > 0f) flashContainer else checkedContainer,
+            checkedContentColor = MaterialTheme.colorScheme.primary,
+        ),
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Dns,
+            contentDescription = stringResource(Res.string.sandbox_content_description),
+            tint = if (isSandboxOpen) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
     }
 }
 
