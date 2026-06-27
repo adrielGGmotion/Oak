@@ -504,6 +504,10 @@ private fun ChatModeScreen(
                 navigationTabBar = navigationTabBar,
                 availableServices = uiState.availableServices,
                 onSelectService = uiState.actions.selectService,
+                isSandboxAvailable = isSandboxAvailable,
+                isSandboxOpen = isSandboxOpen,
+                onToggleSandbox = { isSandboxOpen = !isSandboxOpen },
+                isShellExecuting = isShellExecuting,
             )
 
             HeartbeatBanner(
@@ -821,10 +825,6 @@ private fun ChatModeScreen(
                         supportedFileExtensions = uiState.supportedFileExtensions,
                         isLoading = uiState.isLoading,
                         cancel = uiState.actions.cancel,
-                        isSandboxAvailable = isSandboxAvailable,
-                        isSandboxOpen = isSandboxOpen,
-                        isShellExecuting = isShellExecuting,
-                        onToggleSandbox = { isSandboxOpen = !isSandboxOpen },
                         initialText = onGetDraft(),
                         onTextChanged = onSaveDraft,
                     )
