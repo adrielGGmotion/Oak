@@ -295,10 +295,26 @@ class SandboxPackagesViewModel(
         .map { it.trim() }
         .filter { it.isNotEmpty() && !it.startsWith("WARNING:") && !it.startsWith("ERROR:") && !it.startsWith("E:") }
         .mapNotNull { line ->
-            val sepIdx = line.indexOf(" - ")
-            val nameVer = if (sepIdx >= 0) line.substring(0, sepIdx) else line
-            val description = if (sepIdx >= 0) line.substring(sepIdx + 3).trim() else null
-            parseNameVersion(nameVer)?.let { (n, v) -> PackageEntry(n, v, description?.takeIf { it.isNotEmpty() }) }
+            var cleaned = line
+            // Strip pacman repo prefix (e.g. "core/package" -> "package")
+            if (cleaned.contains('/') && (cleaned.contains(' ') || cleaned.contains('\t'))) {
+                cleaned = cleaned.substringAfter('/')
+            }
+            // Strip pacman status suffix (e.g. "package [installed]" -> "package")
+            if (cleaned.endsWith("]")) {
+                cleaned = cleaned.substringBeforeLast('[').trim()
+            }
+            val sepIdx = cleaned.indexOf(" - ")
+            val nameVer = if (sepIdx >= 0) cleaned.substring(0, sepIdx) else cleaned
+            val parsed = parseNameVersion(nameVer)
+            if (parsed != null) {
+                PackageEntry(parsed.first, parsed.second)
+            } else if (sepIdx >= 0 && !nameVer.contains(' ') && !nameVer.contains('\t')) {
+                // Debian/Ubuntu apt-cache search outputs "package - description" without version
+                PackageEntry(nameVer, "")
+            } else {
+                null
+            }
         }
         .distinctBy { "${it.name}@${it.version}" }
         .toList()

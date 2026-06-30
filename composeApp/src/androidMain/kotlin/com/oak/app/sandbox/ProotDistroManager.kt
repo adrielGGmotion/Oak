@@ -112,8 +112,13 @@ class ProotDistroManager(
     /**
      * Download and extract a distro rootfs. Suspends until complete.
      * @param onProgress called with 0..1 progress for download phase.
+     * @param onExtracting called when extraction begins (after download completes).
      */
-    suspend fun download(id: String, onProgress: (Float) -> Unit = {}) = withContext(Dispatchers.IO) {
+    suspend fun download(
+        id: String,
+        onProgress: (Float) -> Unit = {},
+        onExtracting: () -> Unit = {},
+    ) = withContext(Dispatchers.IO) {
         val env = SandboxEnvironment.fromId(id)
         val targetDir = rootfsDir(id)
         if (targetDir.isDirectory && targetDir.listFiles().orEmpty().isNotEmpty()) return@withContext
@@ -128,6 +133,7 @@ class ProotDistroManager(
         downloader.download(env, arch, tarGzFile, onProgress)
 
         // Extract
+        onExtracting()
         downloader.extractTarGz(tarGzFile, targetDir)
         tarGzFile.delete()
 

@@ -207,12 +207,16 @@ class LinuxSandboxManager(
                 try {
                     updateSandboxSetupNotification("Downloading ${env.displayName}...")
                     _state.value = SandboxState.Downloading(0f, env.id)
-                    distroManager.download(env.id) { progress ->
-                        _state.value = SandboxState.Downloading(progress, env.id)
-                    }
-
-                    updateSandboxSetupNotification("Extracting rootfs...")
-                    _state.value = SandboxState.Extracting
+                    distroManager.download(
+                        id = env.id,
+                        onProgress = { progress ->
+                            _state.value = SandboxState.Downloading(progress, env.id)
+                        },
+                        onExtracting = {
+                            updateSandboxSetupNotification("Extracting rootfs...")
+                            _state.value = SandboxState.Extracting
+                        },
+                    )
                 } catch (e: Exception) {
                     android.util.Log.e("LinuxSandbox", "Download/extract failed for ${env.id}", e)
                     throw e
@@ -394,11 +398,24 @@ class LinuxSandboxManager(
 
     fun getDistroManager(): ProotDistroManager = distroManager
 
+    fun removeDistro(id: String) {
+        val wasActive = (activeDistroId == id)
+        if (wasActive) {
+            closeAllShells()
+        }
+        distroManager.remove(id)
+        if (wasActive) {
+            appSettings.setActiveSandboxDistro(activeDistroId)
+            checkExistingInstallation()
+        }
+    }
+
     fun reset() {
         val id = activeDistroId
         scope.launch {
             closeAllShells()
             distroManager.remove(id)
+            appSettings.setActiveSandboxDistro(activeDistroId)
             _state.value = SandboxState.NotInstalled
         }
     }

@@ -204,7 +204,7 @@ class AndroidSandboxController : SandboxController {
     }
 
     override fun removeDistro(id: String) {
-        sandboxManager.getDistroManager().remove(id)
+        sandboxManager.removeDistro(id)
     }
 
     override fun getPackageCommands(): PackageManagerCommands {
