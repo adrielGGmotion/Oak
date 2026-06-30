@@ -272,6 +272,8 @@ import oak.composeapp.generated.resources.settings_theme_system
 import oak.composeapp.generated.resources.settings_tools_description
 import oak.composeapp.generated.resources.settings_tools_none_available
 import oak.composeapp.generated.resources.settings_ui_scale
+import oak.composeapp.generated.resources.settings_unlimited_tool_calls
+import oak.composeapp.generated.resources.settings_unlimited_tool_calls_description
 import oak.composeapp.generated.resources.settings_version
 import oak.composeapp.generated.resources.snackbar_email_removed
 import oak.composeapp.generated.resources.snackbar_mcp_server_removed
@@ -1890,6 +1892,12 @@ private fun AgentContent(uiState: SettingsUiState, actions: SettingsActions) {
                             onRefresh = actions.onRefreshHeartbeat,
                         )
                     }
+                    SettingsCard {
+                        UnlimitedToolCallsToggle(
+                            isUnlimitedToolCallsEnabled = uiState.isUnlimitedToolCallsEnabled,
+                            onToggleUnlimitedToolCalls = actions.onToggleUnlimitedToolCalls,
+                        )
+                    }
                     if (uiState.showEmailToggle) {
                         SettingsCard {
                             EmailSection(
@@ -1982,6 +1990,12 @@ private fun AgentContent(uiState: SettingsUiState, actions: SettingsActions) {
                         onSaveHeartbeatPrompt = actions.onSaveHeartbeatPrompt,
                         onChangeHeartbeatService = actions.onChangeHeartbeatService,
                         onRefresh = actions.onRefreshHeartbeat,
+                    )
+                }
+                SettingsCard {
+                    UnlimitedToolCallsToggle(
+                        isUnlimitedToolCallsEnabled = uiState.isUnlimitedToolCallsEnabled,
+                        onToggleUnlimitedToolCalls = actions.onToggleUnlimitedToolCalls,
                     )
                 }
                 if (uiState.showEmailToggle) {
@@ -3060,6 +3074,21 @@ private fun DynamicUiToggle(
             description = stringResource(Res.string.settings_dynamic_ui_description),
             checked = isDynamicUiEnabled,
             onCheckedChange = onToggleDynamicUi,
+        )
+    }
+}
+
+@Composable
+private fun UnlimitedToolCallsToggle(
+    isUnlimitedToolCallsEnabled: Boolean,
+    onToggleUnlimitedToolCalls: (Boolean) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ToggleableHeadline(
+            title = stringResource(Res.string.settings_unlimited_tool_calls),
+            description = stringResource(Res.string.settings_unlimited_tool_calls_description),
+            checked = isUnlimitedToolCallsEnabled,
+            onCheckedChange = onToggleUnlimitedToolCalls,
         )
     }
 }
