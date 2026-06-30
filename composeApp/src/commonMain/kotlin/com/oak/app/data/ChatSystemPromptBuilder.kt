@@ -99,6 +99,20 @@ internal const val DEFAULT_AUTOMATION_SECTION =
         "Heartbeat itself (on/off toggle, interval, active hours) is user-controlled in Settings → Agent → Heartbeat — you cannot enable, disable, or reschedule it. If the user asks for recurring updates and heartbeat seems off, either schedule a cron task or tell them to enable Heartbeat in settings — never claim to have \"enabled\" or \"turned on\" heartbeat."
 
 /**
+ * Tells remote models that tools are handled through the API's native `tool_calls`
+ * mechanism, so they don't fall back to inline `<tool_call>` or `<invoke>` blocks.
+ * Only composed into the `CHAT_REMOTE` variant — on-device models get separate
+ * instructions from `buildLocalToolPrompt()`.
+ */
+internal const val DEFAULT_TOOL_CALL_GUIDANCE =
+    "## Tool Use\n" +
+        "All available tools are provided to you through the API's structured `tools` parameter. " +
+        "Use the native `tool_calls` mechanism to invoke them — do not output inline tool call " +
+        "markup (such as `<tool_call>`, `<invoke>`, or `<TOOLCALL>` blocks) in your text responses. " +
+        "If you need a tool, call it through the API; your text responses should contain only " +
+        "natural language and, when appropriate, ```oak-ui blocks for interactive UI."
+
+/**
  * Composes the full chat system prompt for the given [variant].
  *
  * Returns an empty string when there is literally nothing to render (which the caller
@@ -162,6 +176,15 @@ internal fun buildChatSystemPrompt(
         if (heartbeatAdditions.isNotEmpty()) {
             appendHeartbeatAdditionsSection(heartbeatAdditions)
         }
+    }
+
+    // Tool call guidance — remote-only. Remote models receive tools through the API's
+    // structured `tools` parameter and should respond via the API's native tool_call
+    // mechanism, not by emitting inline markup in the text. Local models get their own
+    // tool-use instructions injected by buildLocalToolPrompt().
+    if (variant == SystemPromptVariant.CHAT_REMOTE) {
+        if (isNotEmpty()) append("\n\n")
+        append(DEFAULT_TOOL_CALL_GUIDANCE)
     }
 
     appendContextSection(runtime)

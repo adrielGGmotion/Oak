@@ -394,6 +394,14 @@ class FakeDataRepository : DataRepository {
         soulText = text
     }
 
+    private var unlimitedToolCalls = false
+
+    override fun isUnlimitedToolCallsEnabled(): Boolean = unlimitedToolCalls
+
+    override fun setUnlimitedToolCallsEnabled(enabled: Boolean) {
+        unlimitedToolCalls = enabled
+    }
+
     override suspend fun getActiveSystemPrompt(variant: SystemPromptVariant): String? = soulText.ifEmpty { null }
 
     // Memory management

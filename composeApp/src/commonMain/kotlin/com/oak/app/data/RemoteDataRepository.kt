@@ -1110,7 +1110,7 @@ class RemoteDataRepository(
                         requests.geminiChat(
                             credentials = credentials,
                             messages = geminiMessages,
-                            systemInstruction = "You have reached the tool call limit. Please respond with the best answer you have so far based on the information gathered. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1158,7 +1158,7 @@ class RemoteDataRepository(
                         requests.geminiChat(
                             credentials = credentials,
                             messages = bailoutMessages,
-                            systemInstruction = "You are repeating the same tool calls. Please respond with the best answer you have so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1372,7 +1372,7 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            systemInstruction = "You have reached the tool call limit. Please respond with the best answer you have so far based on the information gathered. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1418,7 +1418,7 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            systemInstruction = "You are repeating the same tool calls. Please respond with the best answer you have so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1532,7 +1532,7 @@ class RemoteDataRepository(
             add(
                 com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatRequestDto.Message(
                     role = "user",
-                    content = JsonPrimitive("You have reached the tool call limit. Please respond with the best answer you have so far based on the information gathered."),
+                    content = JsonPrimitive("Please synthesize your best answer based on the information you have gathered so far."),
                 ),
             )
         }
