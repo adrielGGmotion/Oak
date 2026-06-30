@@ -179,15 +179,14 @@ class AndroidSandboxController : SandboxController {
         sandboxManager.installPackages()
     }
 
-    override fun getDistros(): List<DistroInfo> =
-        sandboxManager.getDistroManager().getAllDistroStates(sandboxManager.activeDistroId).map { state ->
-            DistroInfo(
-                id = state.id,
-                displayName = state.displayName,
-                isDownloaded = state.downloadState == DistroDownloadState.Ready,
-                isActive = state.isActive,
-            )
-        }
+    override fun getDistros(): List<DistroInfo> = sandboxManager.getDistroManager().getAllDistroStates(sandboxManager.activeDistroId).map { state ->
+        DistroInfo(
+            id = state.id,
+            displayName = state.displayName,
+            isDownloaded = state.downloadState == DistroDownloadState.Ready,
+            isActive = state.isActive,
+        )
+    }
 
     override fun getActiveDistroId(): String = sandboxManager.activeDistroId
 

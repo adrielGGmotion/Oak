@@ -762,7 +762,7 @@ private fun DistroDropdownItem(
                 }
             }
         },
-        onClick = if (hasRemove) {} else onClick,
+        onClick = if (hasRemove) ({}) else onClick,
         trailingIcon = {
             when {
                 distro.isActive -> Icon(
