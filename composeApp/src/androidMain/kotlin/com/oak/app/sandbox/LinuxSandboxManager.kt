@@ -369,7 +369,12 @@ class LinuxSandboxManager(
                         val timedOut = result["timed_out"] as? Boolean ?: false
                         val exitCode = result["exit_code"] as? Int ?: -1
                         android.util.Log.e("LinuxSandbox", "Failed to install $pkg: exit=$exitCode timedOut=$timedOut error=$error stdout=$stdout stderr=$stderr")
-                        _state.value = SandboxState.Error("Failed to install $pkg: ${stderr.ifEmpty { error }.ifEmpty { stdout }.take(200)}")
+                        // Rootfs is still valid — transition to Ready so the UI
+                        // shows "Install packages" (not a misleading re-download
+                        // prompt). The partial state is surfaced via the
+                        // packagesInstalled / arePackagesInstalled() check.
+                        _state.value = SandboxState.Ready
+                        postSandboxCompleteNotification("Package install failed for: $pkg")
                         return@launch
                     }
                 }
