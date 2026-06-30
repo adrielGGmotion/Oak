@@ -4,7 +4,6 @@ import android.content.Context
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -34,7 +33,9 @@ class ProotDistroManager(
         HttpClient(Android) {
             followRedirects = true
             install(HttpTimeout) {
-                requestTimeoutMillis = 60_000
+                // No requestTimeoutMillis — rootfs archives can be hundreds of MB
+                // and may take many minutes on slow networks. socketTimeoutMillis
+                // handles per-packet inactivity, which is sufficient.
                 socketTimeoutMillis = 60_000
             }
         },
@@ -155,14 +156,13 @@ class ProotDistroManager(
         val archiveFile = File(sandboxesBase, "${env.id}/rootfs.$ext")
         archiveFile.parentFile?.mkdirs()
 
-        // Download
-        downloader.download(env, arch, archiveFile, onProgress)
-
         // Extract into a temp directory, then move into place so partial
-        // extraction is never mistaken for a complete rootfs.
+        // extraction is never mistaken for a complete rootfs. Download is
+        // inside the try block so archiveFile is always cleaned up on failure.
         onExtracting()
         val tmpDir = File(sandboxesBase, "${env.id}/.tmp-${System.nanoTime()}")
         try {
+            downloader.download(env, arch, archiveFile, onProgress)
             tmpDir.mkdirs()
             downloader.extract(archiveFile, tmpDir, env.compression)
             downloader.makeWritable(tmpDir)
