@@ -329,6 +329,9 @@ fun SettingsScreen(
         onCancelSandbox = sandboxViewModel::onCancelSandbox,
         onResetSandbox = sandboxViewModel::onResetSandbox,
         onInstallPackages = sandboxViewModel::onInstallPackages,
+        onSelectDistro = sandboxViewModel::onSelectDistro,
+        onDownloadDistro = sandboxViewModel::onDownloadDistro,
+        onRemoveDistro = sandboxViewModel::onRemoveDistro,
         onNavigateBack = onNavigateBack,
         navigationTabBar = navigationTabBar,
     )
@@ -344,6 +347,9 @@ fun SettingsScreenContent(
     onCancelSandbox: () -> Unit = {},
     onResetSandbox: () -> Unit = {},
     onInstallPackages: () -> Unit = {},
+    onSelectDistro: (String) -> Unit = {},
+    onDownloadDistro: (String) -> Unit = {},
+    onRemoveDistro: (String) -> Unit = {},
     onNavigateBack: () -> Unit = {},
     navigationTabBar: (@Composable () -> Unit)? = null,
     terminalPreviewLines: ImmutableList<TerminalLine> = persistentListOf(),
@@ -485,6 +491,9 @@ fun SettingsScreenContent(
                                     onCancelSandbox = onCancelSandbox,
                                     onResetSandbox = onResetSandbox,
                                     onInstallPackages = onInstallPackages,
+                                    onSelectDistro = onSelectDistro,
+                                    onDownloadDistro = onDownloadDistro,
+                                    onRemoveDistro = onRemoveDistro,
                                 )
                                 Spacer(Modifier.height(8.dp))
                                 DeviceStorageCard(
@@ -542,9 +551,15 @@ private fun SandboxSettingsCard(
     onCancelSandbox: () -> Unit,
     onResetSandbox: () -> Unit,
     onInstallPackages: () -> Unit,
+    onSelectDistro: (String) -> Unit,
+    onDownloadDistro: (String) -> Unit,
+    onRemoveDistro: (String) -> Unit,
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
+    var showDistroSelector by remember { mutableStateOf(false) }
+
     SettingsCard {
+        // Active distro header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -552,7 +567,7 @@ private fun SandboxSettingsCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Alpine Linux",
+                    text = sandboxState.activeDistroName,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
@@ -596,6 +611,17 @@ private fun SandboxSettingsCard(
 
         if (!sandboxState.isWorking) {
             Spacer(Modifier.height(8.dp))
+
+            // Distro selector button
+            OutlinedButton(
+                onClick = { showDistroSelector = true },
+                modifier = Modifier.handCursor().fillMaxWidth(),
+            ) {
+                Text("Switch distribution")
+            }
+
+            Spacer(Modifier.height(8.dp))
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!sandboxState.sandboxReady) {
                     Button(onClick = onSetupSandbox, modifier = Modifier.handCursor()) {
@@ -613,6 +639,79 @@ private fun SandboxSettingsCard(
                 }
             }
         }
+    }
+
+    // Distro selector dialog
+    if (showDistroSelector) {
+        AlertDialog(
+            onDismissRequest = { showDistroSelector = false },
+            title = { Text("Sandbox distribution") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    sandboxState.distros.forEach { distro ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    if (distro.isDownloaded) {
+                                        onSelectDistro(distro.id)
+                                        showDistroSelector = false
+                                    } else {
+                                        onDownloadDistro(distro.id)
+                                        showDistroSelector = false
+                                    }
+                                }
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = distro.displayName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                                Text(
+                                    text = when {
+                                        distro.isActive -> "Active"
+                                        distro.isDownloaded -> "Downloaded"
+                                        else -> "Not downloaded"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (distro.isActive) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Active",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                            if (distro.isDownloaded && !distro.isActive) {
+                                IconButton(
+                                    onClick = {
+                                        onRemoveDistro(distro.id)
+                                    },
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove",
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDistroSelector = false }) {
+                    Text("Close")
+                }
+            },
+        )
     }
 
     if (showResetDialog) {

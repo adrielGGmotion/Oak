@@ -113,7 +113,7 @@ internal fun SandboxTabsContent(
         Column(modifier = modifier.fillMaxWidth()) {
             SettingsCard {
                 Text(
-                    text = "Alpine Linux",
+                    text = sandboxState.activeDistroName,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                 )

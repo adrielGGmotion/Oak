@@ -16,6 +16,22 @@ data class SandboxStatus(
     val error: Boolean = false,
 )
 
+data class DistroInfo(
+    val id: String,
+    val displayName: String,
+    val isDownloaded: Boolean,
+    val isActive: Boolean,
+)
+
+class PackageManagerCommands(
+    val install: (String) -> String,
+    val remove: (String) -> String,
+    val update: () -> String,
+    val upgrade: () -> String,
+    val search: (String) -> String,
+    val listInstalled: () -> String,
+)
+
 interface CommandHandle {
     fun cancel()
     fun isCancelled(): Boolean
@@ -62,6 +78,28 @@ interface SandboxController {
     fun cancel()
     fun reset()
     fun installPackages()
+
+    /** List all available sandbox distributions with their states. */
+    fun getDistros(): List<DistroInfo>
+
+    /** Get the currently active distro id. */
+    fun getActiveDistroId(): String
+
+    /** Get the display name of the active distro. */
+    fun getActiveDistroName(): String
+
+    /** Switch the active distro. */
+    fun setActiveDistro(id: String)
+
+    /** Start downloading a distro. Caller observes status flow for progress. */
+    fun downloadDistro(id: String)
+
+    /** Remove a downloaded distro's files. */
+    fun removeDistro(id: String)
+
+    /** Get package manager commands for the active distro. */
+    fun getPackageCommands(): PackageManagerCommands
+
     suspend fun executeCommand(
         command: String,
         sessionId: String = SandboxSessions.DEFAULT,

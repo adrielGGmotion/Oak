@@ -58,6 +58,7 @@ class ProotExecutor(
     private val rootfsPath: String,
     private val homePath: String,
     private val tmpPath: String,
+    private val extraProotArgs: List<String> = emptyList(),
 ) {
 
     fun execute(
@@ -145,6 +146,7 @@ class ProotExecutor(
         "--bind=/sys",
         "--bind=$homePath:/root",
         "--bind=$tmpPath:/tmp",
+        *extraProotArgs.toTypedArray(),
         "-0",
         "-w", workingDir,
         "/bin/sh", "-c", command,

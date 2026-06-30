@@ -14,18 +14,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.zip.GZIPInputStream
 
-private const val ALPINE_VERSION = "3.21.3"
-private const val ALPINE_BRANCH = "v3.21"
 private const val BUFFER_SIZE = 8192
-
-private val ALPINE_MIRRORS = listOf(
-    "https://dl-cdn.alpinelinux.org/alpine",
-    "https://mirrors.edge.kernel.org/alpine",
-    "https://ftp.halifax.rwth-aachen.de/alpine",
-    "https://alpine.ethz.ch/alpine",
-    "https://mirror.csclub.uwaterloo.ca/alpine",
-    "https://mirrors.tuna.tsinghua.edu.cn/alpine",
-)
 private const val TAR_BLOCK_SIZE = 512
 private const val TAR_NAME_OFFSET = 0
 private const val TAR_MODE_OFFSET = 100
@@ -36,18 +25,13 @@ private const val TAR_PREFIX_OFFSET = 345
 
 class RootfsDownloader(private val httpClient: HttpClient) {
 
-    val mirrors: List<String> = ALPINE_MIRRORS
-
-    fun getDownloadUrls(arch: String): List<String> = ALPINE_MIRRORS.map { base ->
-        "$base/$ALPINE_BRANCH/releases/$arch/alpine-minirootfs-$ALPINE_VERSION-$arch.tar.gz"
-    }
-
     suspend fun download(
+        env: SandboxEnvironment,
         arch: String,
         targetFile: File,
         onProgress: (Float) -> Unit,
     ) {
-        val urls = getDownloadUrls(arch)
+        val urls = env.getDownloadUrls(arch)
         var lastError: Exception? = null
         for ((index, url) in urls.withIndex()) {
             try {
@@ -61,7 +45,7 @@ class RootfsDownloader(private val httpClient: HttpClient) {
                 if (index < urls.lastIndex) onProgress(0f)
             }
         }
-        throw IOException("All Alpine mirrors failed", lastError)
+        throw IOException("All mirrors failed for ${env.displayName}", lastError)
     }
 
     private suspend fun downloadFrom(
@@ -227,14 +211,6 @@ class RootfsDownloader(private val httpClient: HttpClient) {
         etcDir.mkdirs()
         File(etcDir, "resolv.conf").writeText(
             "nameserver 8.8.8.8\nnameserver 8.8.4.4\n",
-        )
-    }
-
-    fun writeRepositories(rootfsDir: File, mirrorBase: String) {
-        val apkDir = File(rootfsDir, "etc/apk")
-        apkDir.mkdirs()
-        File(apkDir, "repositories").writeText(
-            "$mirrorBase/$ALPINE_BRANCH/main\n$mirrorBase/$ALPINE_BRANCH/community\n",
         )
     }
 }

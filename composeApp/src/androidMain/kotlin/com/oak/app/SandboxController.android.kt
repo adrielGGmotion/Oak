@@ -6,6 +6,7 @@ import android.os.Environment
 import android.os.storage.StorageManager
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.oak.app.data.StorageVolume
+import com.oak.app.sandbox.DistroDownloadState
 import com.oak.app.sandbox.LinuxSandboxManager
 import com.oak.app.sandbox.SandboxState
 import com.oak.app.sandbox.SessionShell
@@ -176,6 +177,46 @@ class AndroidSandboxController : SandboxController {
 
     override fun installPackages() {
         sandboxManager.installPackages()
+    }
+
+    override fun getDistros(): List<DistroInfo> =
+        sandboxManager.getDistroManager().getAllDistroStates(sandboxManager.activeDistroId).map { state ->
+            DistroInfo(
+                id = state.id,
+                displayName = state.displayName,
+                isDownloaded = state.downloadState == DistroDownloadState.Ready,
+                isActive = state.isActive,
+            )
+        }
+
+    override fun getActiveDistroId(): String = sandboxManager.activeDistroId
+
+    override fun getActiveDistroName(): String = sandboxManager.activeEnvironment.displayName
+
+    override fun setActiveDistro(id: String) {
+        sandboxManager.switchDistro(id)
+    }
+
+    override fun downloadDistro(id: String) {
+        // Switch to the target distro, then setup will download its rootfs
+        sandboxManager.switchDistro(id)
+        sandboxManager.setup()
+    }
+
+    override fun removeDistro(id: String) {
+        sandboxManager.getDistroManager().remove(id)
+    }
+
+    override fun getPackageCommands(): PackageManagerCommands {
+        val pm = sandboxManager.activeEnvironment.packageManager
+        return PackageManagerCommands(
+            install = { pm.install(it) },
+            remove = { pm.remove(it) },
+            update = { pm.update() },
+            upgrade = { pm.upgrade() },
+            search = { pm.search(it) },
+            listInstalled = { pm.listInstalled() },
+        )
     }
 
     override fun closeSession(sessionId: String) {

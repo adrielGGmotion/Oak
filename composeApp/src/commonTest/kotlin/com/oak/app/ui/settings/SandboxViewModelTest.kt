@@ -3,6 +3,8 @@ package com.oak.app.ui.settings
 import app.cash.turbine.test
 import com.oak.app.CommandHandle
 import com.oak.app.NoOpCommandHandle
+import com.oak.app.DistroInfo
+import com.oak.app.PackageManagerCommands
 import com.oak.app.SandboxController
 import com.oak.app.SandboxFileEntry
 import com.oak.app.SandboxStatus
@@ -52,6 +54,21 @@ class SandboxViewModelTest {
         override fun installPackages() {
             installPackagesCalls++
         }
+
+        override fun getDistros(): List<DistroInfo> = emptyList()
+        override fun getActiveDistroId(): String = "alpine"
+        override fun getActiveDistroName(): String = "Alpine Linux"
+        override fun setActiveDistro(id: String) {}
+        override fun downloadDistro(id: String) {}
+        override fun removeDistro(id: String) {}
+        override fun getPackageCommands(): PackageManagerCommands = PackageManagerCommands(
+            install = { "apk add --no-cache $it" },
+            remove = { "apk del $it" },
+            update = { "apk update" },
+            upgrade = { "apk upgrade" },
+            search = { "apk search -v $it" },
+            listInstalled = { "apk info -v" },
+        )
 
         override suspend fun executeCommand(command: String, sessionId: String): String = ""
 

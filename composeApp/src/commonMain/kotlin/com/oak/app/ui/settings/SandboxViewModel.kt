@@ -3,6 +3,7 @@ package com.oak.app.ui.settings
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.oak.app.DistroInfo
 import com.oak.app.Platform
 import com.oak.app.SandboxController
 import com.oak.app.SandboxStatus
@@ -25,6 +26,8 @@ data class SandboxUiState(
     val isSandboxEnabled: Boolean = true,
     val isWorking: Boolean = false,
     val hasError: Boolean = false,
+    val distros: List<DistroInfo> = emptyList(),
+    val activeDistroName: String = "Alpine Linux",
 )
 
 class SandboxViewModel(
@@ -42,6 +45,8 @@ class SandboxViewModel(
             SandboxUiState(
                 showSandbox = currentPlatform is Platform.Mobile.Android,
                 isSandboxEnabled = dataRepository.isSandboxEnabled(),
+                distros = sandboxController.getDistros(),
+                activeDistroName = sandboxController.getActiveDistroName(),
             ),
         ),
     )
@@ -51,7 +56,12 @@ class SandboxViewModel(
     init {
         viewModelScope.launch {
             sandboxController.status.collect { sandboxStatus ->
-                _state.update { applyStatus(sandboxStatus, it) }
+                _state.update {
+                    applyStatus(sandboxStatus, it).copy(
+                        distros = sandboxController.getDistros(),
+                        activeDistroName = sandboxController.getActiveDistroName(),
+                    )
+                }
             }
         }
     }
@@ -66,6 +76,15 @@ class SandboxViewModel(
         isWorking = status.working,
         hasError = status.error,
     )
+
+    fun refreshDistros() {
+        _state.update {
+            it.copy(
+                distros = sandboxController.getDistros(),
+                activeDistroName = sandboxController.getActiveDistroName(),
+            )
+        }
+    }
 
     fun onToggleSandbox(enabled: Boolean) {
         dataRepository.setSandboxEnabled(enabled)
@@ -86,5 +105,19 @@ class SandboxViewModel(
 
     fun onInstallPackages() {
         sandboxController.installPackages()
+    }
+
+    fun onSelectDistro(id: String) {
+        sandboxController.setActiveDistro(id)
+        refreshDistros()
+    }
+
+    fun onDownloadDistro(id: String) {
+        sandboxController.downloadDistro(id)
+    }
+
+    fun onRemoveDistro(id: String) {
+        sandboxController.removeDistro(id)
+        refreshDistros()
     }
 }
