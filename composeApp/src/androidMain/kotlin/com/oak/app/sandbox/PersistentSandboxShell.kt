@@ -169,8 +169,11 @@ class PersistentSandboxShell(
         // them in-process (so cd/export/. preserve state), and inherits its
         // stdin to any foreground child (so ssh can read passwords typed via
         // writeInput).
+        // Set ulimit guards to prevent runaway processes from burning CPU or
+        // exhausting memory: 120s CPU time, 256MB virtual memory, 100
+        // concurrent processes. These apply to all children of the shell.
         val h = executor.executeStreaming(
-            command = "exec bash --noprofile --norc",
+            command = "ulimit -t 120 -v 268435456 -u 100 && exec bash --noprofile --norc",
             onStdout = { line -> dispatchStdout(line) },
             onStderr = { line -> dispatchStderr(line) },
         )

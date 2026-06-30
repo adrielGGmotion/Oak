@@ -52,7 +52,7 @@ class ProotHandle internal constructor(
 }
 
 class ProotExecutor(
-    private val readerPool: ExecutorService = Executors.newCachedThreadPool(),
+    private val readerPool: ExecutorService = Executors.newFixedThreadPool(4),
     private val prootPath: String,
     private val libDir: String,
     private val rootfsPath: String,
@@ -139,6 +139,7 @@ class ProotExecutor(
     }
 
     private fun buildProcessArgs(command: String, workingDir: String): Array<String> = arrayOf(
+        "nice", "-n", "19",
         prootPath,
         "--rootfs=$rootfsPath",
         "--bind=/dev",
@@ -149,7 +150,8 @@ class ProotExecutor(
         *extraProotArgs.toTypedArray(),
         "-0",
         "-w", workingDir,
-        "/bin/sh", "-c", command,
+        "/bin/sh", "-c",
+        "ulimit -t 120 -v 268435456 -u 100 2>/dev/null; $command",
     )
 
     private fun buildEnvVars(extraEnv: Map<String, String>): Array<String> {
