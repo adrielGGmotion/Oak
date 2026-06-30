@@ -125,17 +125,21 @@ class ProotDistroManager(
 
         targetDir.parentFile?.mkdirs()
         val arch = getLinuxArch()
+        val ext = when (env.compression) {
+            Compression.Gzip -> "tar.gz"
+            Compression.Xz -> "tar.xz"
+        }
 
-        val tarGzFile = File(sandboxesBase, "$id/rootfs.tar.gz")
-        tarGzFile.parentFile?.mkdirs()
+        val archiveFile = File(sandboxesBase, "$id/rootfs.$ext")
+        archiveFile.parentFile?.mkdirs()
 
         // Download
-        downloader.download(env, arch, tarGzFile, onProgress)
+        downloader.download(env, arch, archiveFile, onProgress)
 
         // Extract
         onExtracting()
-        downloader.extractTarGz(tarGzFile, targetDir)
-        tarGzFile.delete()
+        downloader.extract(archiveFile, targetDir, env.compression)
+        archiveFile.delete()
 
         // Make writable
         downloader.makeWritable(targetDir)

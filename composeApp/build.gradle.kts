@@ -63,6 +63,7 @@ kotlin {
             implementation(libs.litert.lm)
             implementation(libs.sshd.core)
             implementation(libs.sshd.sftp)
+            implementation(libs.xz)
         }
         commonMain.dependencies {
             implementation(libs.compose.material3)

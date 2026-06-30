@@ -7,6 +7,7 @@ import io.ktor.http.contentLength
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.CancellationException
+import org.tukaani.xz.XZInputStream
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -31,7 +32,8 @@ class RootfsDownloader(private val httpClient: HttpClient) {
         targetFile: File,
         onProgress: (Float) -> Unit,
     ) {
-        val urls = env.getDownloadUrls(arch)
+        val mappedArch = env.mapArch(arch)
+        val urls = env.getDownloadUrls(mappedArch)
         var lastError: Exception? = null
         for ((index, url) in urls.withIndex()) {
             try {
@@ -76,10 +78,15 @@ class RootfsDownloader(private val httpClient: HttpClient) {
         }
     }
 
-    fun extractTarGz(tarGzFile: File, targetDir: File) {
+    fun extract(archiveFile: File, targetDir: File, compression: Compression) {
         targetDir.mkdirs()
-        GZIPInputStream(BufferedInputStream(FileInputStream(tarGzFile))).use { gzipStream ->
-            extractTar(gzipStream, targetDir)
+        val fis = FileInputStream(archiveFile)
+        val decompressed = when (compression) {
+            Compression.Gzip -> GZIPInputStream(BufferedInputStream(fis))
+            Compression.Xz -> XZInputStream(BufferedInputStream(fis))
+        }
+        decompressed.use { inputStream ->
+            extractTar(inputStream, targetDir)
         }
     }
 

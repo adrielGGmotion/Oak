@@ -556,7 +556,7 @@ private fun SandboxSettingsCard(
     onRemoveDistro: (String) -> Unit,
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
-    var showDistroSelector by remember { mutableStateOf(false) }
+    var distroSelectorExpanded by remember { mutableStateOf(false) }
 
     SettingsCard {
         // Active distro header
@@ -596,6 +596,7 @@ private fun SandboxSettingsCard(
             }
         }
 
+        // Progress / error section — always occupies consistent space when visible
         if (sandboxState.sandboxProgress != null) {
             SandboxProgressRow(sandboxState.sandboxProgress, sandboxState.sandboxStatusText, onCancelSandbox)
         } else if (sandboxState.isWorking) {
@@ -609,15 +610,46 @@ private fun SandboxSettingsCard(
             )
         }
 
+        // Actions section — only shown when not working
         if (!sandboxState.isWorking) {
             Spacer(Modifier.height(8.dp))
 
-            // Distro selector button
-            OutlinedButton(
-                onClick = { showDistroSelector = true },
-                modifier = Modifier.handCursor().fillMaxWidth(),
-            ) {
-                Text("Switch distribution")
+            // Distro selector with dropdown
+            Box {
+                OutlinedButton(
+                    onClick = { distroSelectorExpanded = true },
+                    modifier = Modifier.handCursor().fillMaxWidth(),
+                ) {
+                    Text(
+                        text = sandboxState.activeDistroName,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = distroSelectorExpanded,
+                    onDismissRequest = { distroSelectorExpanded = false },
+                    modifier = Modifier.widthIn(min = 240.dp),
+                ) {
+                    sandboxState.distros.forEach { distro ->
+                        DistroDropdownItem(
+                            distro = distro,
+                            onClick = {
+                                distroSelectorExpanded = false
+                                if (distro.isDownloaded) {
+                                    onSelectDistro(distro.id)
+                                } else {
+                                    onDownloadDistro(distro.id)
+                                }
+                            },
+                            onRemove = { onRemoveDistro(distro.id) },
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(8.dp))
@@ -639,79 +671,6 @@ private fun SandboxSettingsCard(
                 }
             }
         }
-    }
-
-    // Distro selector dialog
-    if (showDistroSelector) {
-        AlertDialog(
-            onDismissRequest = { showDistroSelector = false },
-            title = { Text("Sandbox distribution") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    sandboxState.distros.forEach { distro ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable {
-                                    if (distro.isDownloaded) {
-                                        onSelectDistro(distro.id)
-                                        showDistroSelector = false
-                                    } else {
-                                        onDownloadDistro(distro.id)
-                                        showDistroSelector = false
-                                    }
-                                }
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = distro.displayName,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                )
-                                Text(
-                                    text = when {
-                                        distro.isActive -> "Active"
-                                        distro.isDownloaded -> "Downloaded"
-                                        else -> "Not downloaded"
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            if (distro.isActive) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = "Active",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                            if (distro.isDownloaded && !distro.isActive) {
-                                IconButton(
-                                    onClick = {
-                                        onRemoveDistro(distro.id)
-                                    },
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Remove",
-                                        tint = MaterialTheme.colorScheme.error,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showDistroSelector = false }) {
-                    Text("Close")
-                }
-            },
-        )
     }
 
     if (showResetDialog) {
@@ -740,6 +699,52 @@ private fun SandboxSettingsCard(
             },
         )
     }
+}
+
+@Composable
+private fun DistroDropdownItem(
+    distro: com.oak.app.DistroInfo,
+    onClick: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    DropdownMenuItem(
+        text = {
+            Column {
+                Text(text = distro.displayName)
+                Text(
+                    text = when {
+                        distro.isActive -> "Active"
+                        distro.isDownloaded -> "Downloaded"
+                        else -> "Not downloaded"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        onClick = onClick,
+        trailingIcon = {
+            if (distro.isActive) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Active",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            } else if (distro.isDownloaded) {
+                IconButton(
+                    onClick = onRemove,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Remove",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+        },
+    )
 }
 
 @Composable

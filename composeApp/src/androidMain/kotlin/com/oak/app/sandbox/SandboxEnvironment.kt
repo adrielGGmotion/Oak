@@ -2,15 +2,24 @@ package com.oak.app.sandbox
 
 import java.io.File
 
+enum class Compression {
+    Gzip,
+    Xz,
+}
+
 sealed class SandboxEnvironment(
     val id: String,
     val displayName: String,
     val packageManager: PackageManager,
     val defaultPackages: List<String>,
+    val compression: Compression,
     val extraProotArgs: List<String> = emptyList(),
 ) {
-    /** Generate download URLs for a given CPU arch (aarch64, armhf, x86_64). */
+    /** Generate download URLs for a given CPU arch (aarch64, armhf, x86_64, x86). */
     abstract fun getDownloadUrls(arch: String): List<String>
+
+    /** Map the standard Linux arch name to this distro's naming convention. */
+    open fun mapArch(arch: String): String = arch
 
     /** First-boot commands to configure the package manager. */
     abstract val firstBootCommands: List<String>
@@ -24,6 +33,7 @@ sealed class SandboxEnvironment(
         packageManager = AlpinePackageManager(),
         defaultPackages = listOf("bash", "curl", "wget", "git", "jq", "python3", "py3-pip", "nodejs",
             "openssh-client", "lftp", "rsync"),
+        compression = Compression.Gzip,
     ) {
         private const val VERSION = "3.21.3"
         private const val BRANCH = "v3.21"
@@ -60,10 +70,12 @@ sealed class SandboxEnvironment(
         packageManager = AptPackageManager(),
         defaultPackages = listOf("bash", "curl", "wget", "git", "jq", "python3", "python3-pip",
             "nodejs", "openssh-client", "lftp", "rsync"),
+        compression = Compression.Xz,
         extraProotArgs = listOf("--link2symlink"),
     ) {
-        // See https://github.com/termux-user-repository/proot-distro-rootfs
-        private const val ROOTFS_RELEASE = "v1.0"
+        // Rootfs tarballs from termux/proot-distro
+        private const val ROOTFS_TAG = "v4.29.0"
+        private const val ROOTFS_RELEASE = "debian-trixie"
 
         override val firstBootCommands: List<String>
             get() = listOf("apt-get update")
@@ -71,8 +83,14 @@ sealed class SandboxEnvironment(
         override val installedCheckPaths: List<String>
             get() = listOf("usr/bin/python3", "usr/bin/ssh")
 
+        override fun mapArch(arch: String): String = when (arch) {
+            "armhf" -> "arm"
+            "x86" -> "i686"
+            else -> arch
+        }
+
         override fun getDownloadUrls(arch: String): List<String> = listOf(
-            "https://github.com/termux-user-repository/proot-distro-rootfs/releases/download/$ROOTFS_RELEASE/debian-rootfs-$arch.tar.gz",
+            "https://github.com/termux/proot-distro/releases/download/$ROOTFS_TAG/${ROOTFS_RELEASE}-$arch-pd-$ROOTFS_TAG.tar.xz",
         )
     }
 
@@ -82,9 +100,12 @@ sealed class SandboxEnvironment(
         packageManager = UbuntuPackageManager(),
         defaultPackages = listOf("bash", "curl", "wget", "git", "jq", "python3", "python3-pip",
             "nodejs", "openssh-client", "lftp", "rsync"),
+        compression = Compression.Xz,
         extraProotArgs = listOf("--link2symlink"),
     ) {
-        private const val ROOTFS_RELEASE = "v1.0"
+        // Rootfs tarballs from termux/proot-distro
+        private const val ROOTFS_TAG = "v4.29.0"
+        private const val ROOTFS_RELEASE = "ubuntu-plucky"
 
         override val firstBootCommands: List<String>
             get() = listOf("apt-get update")
@@ -92,8 +113,14 @@ sealed class SandboxEnvironment(
         override val installedCheckPaths: List<String>
             get() = listOf("usr/bin/python3", "usr/bin/ssh")
 
+        override fun mapArch(arch: String): String = when (arch) {
+            "armhf" -> "arm"
+            "x86" -> "i686"
+            else -> arch
+        }
+
         override fun getDownloadUrls(arch: String): List<String> = listOf(
-            "https://github.com/termux-user-repository/proot-distro-rootfs/releases/download/$ROOTFS_RELEASE/ubuntu-rootfs-$arch.tar.gz",
+            "https://github.com/termux/proot-distro/releases/download/$ROOTFS_TAG/${ROOTFS_RELEASE}-$arch-pd-$ROOTFS_TAG.tar.xz",
         )
     }
 
@@ -103,9 +130,12 @@ sealed class SandboxEnvironment(
         packageManager = PacmanPackageManager(),
         defaultPackages = listOf("bash", "curl", "wget", "git", "jq", "python", "python-pip",
             "nodejs", "openssh", "lftp", "rsync"),
+        compression = Compression.Xz,
         extraProotArgs = listOf("--link2symlink"),
     ) {
-        private const val ROOTFS_RELEASE = "v1.0"
+        // Rootfs tarballs from termux/proot-distro
+        private const val ROOTFS_TAG = "v4.34.2"
+        private const val ROOTFS_RELEASE = "archlinux"
 
         override val firstBootCommands: List<String>
             get() = listOf(
@@ -115,8 +145,14 @@ sealed class SandboxEnvironment(
         override val installedCheckPaths: List<String>
             get() = listOf("usr/bin/python3", "usr/bin/ssh")
 
+        override fun mapArch(arch: String): String = when (arch) {
+            "armhf" -> "arm"
+            "x86" -> "i686"
+            else -> arch
+        }
+
         override fun getDownloadUrls(arch: String): List<String> = listOf(
-            "https://github.com/termux-user-repository/proot-distro-rootfs/releases/download/$ROOTFS_RELEASE/archlinux-rootfs-$arch.tar.gz",
+            "https://github.com/termux/proot-distro/releases/download/$ROOTFS_TAG/${ROOTFS_RELEASE}-$arch-pd-$ROOTFS_TAG.tar.xz",
         )
     }
 
