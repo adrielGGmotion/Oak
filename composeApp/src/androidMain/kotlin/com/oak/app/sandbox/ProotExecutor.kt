@@ -59,6 +59,8 @@ class ProotExecutor(
     private val homePath: String,
     private val tmpPath: String,
     private val extraProotArgs: List<String> = emptyList(),
+    /** Distro-specific env vars applied to every command (e.g. PACMAN for Arch). */
+    private val extraEnv: Map<String, String> = emptyMap(),
 ) {
 
     fun execute(
@@ -68,11 +70,12 @@ class ProotExecutor(
         extraEnv: Map<String, String> = emptyMap(),
     ): Map<String, Any> {
         val effectiveTimeout = timeoutSeconds.coerceIn(1, MAX_TIMEOUT_SECONDS)
+        val mergedEnv = this.extraEnv + extraEnv
 
         return try {
             val process = Runtime.getRuntime().exec(
                 buildProcessArgs(command, workingDir),
-                buildEnvVars(extraEnv),
+                buildEnvVars(mergedEnv),
                 File(rootfsPath).parentFile,
             )
 
@@ -121,9 +124,10 @@ class ProotExecutor(
         onStdout: (String) -> Unit,
         onStderr: (String) -> Unit,
     ): ProotHandle {
+        val mergedEnv = this.extraEnv + extraEnv
         val process = Runtime.getRuntime().exec(
             buildProcessArgs(command, workingDir),
-            buildEnvVars(extraEnv),
+            buildEnvVars(mergedEnv),
             File(rootfsPath).parentFile,
         )
         val cancelled = AtomicBoolean(false)

@@ -271,6 +271,7 @@ class LinuxSandboxManager(
         homePath = homePath,
         tmpPath = tmpPath,
         extraProotArgs = activeEnvironment.extraProotArgs,
+        extraEnv = ProotConfig.envFor(activeEnvironment),
     )
 
     // One bash session per logical caller (chat conversation, terminal scratch,

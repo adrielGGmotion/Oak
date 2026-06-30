@@ -731,24 +731,39 @@ private fun DistroDropdownItem(
     onClick: () -> Unit,
     onRemove: () -> Unit,
 ) {
+    // Items with both a main action and a delete action need click routing
+    // to avoid the delete icon's clickable overlapping with DropdownMenuItem's
+    // onClick. We put both actions behind separate clickable surfaces:
+    // the text area for the main action, the trailing icon for remove.
+    val hasRemove = distro.isDownloaded && !distro.isActive
     DropdownMenuItem(
         text = {
-            Column {
-                Text(text = distro.displayName)
-                Text(
-                    text = when {
-                        distro.isActive -> stringResource(Res.string.settings_distro_status_active)
-                        distro.isDownloaded -> stringResource(Res.string.settings_distro_status_downloaded)
-                        else -> stringResource(Res.string.settings_distro_status_not_downloaded)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Row(
+                modifier = if (hasRemove) {
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onClick)
+                } else {
+                    Modifier.fillMaxWidth()
+                },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = distro.displayName)
+                    Text(
+                        text = when {
+                            distro.isActive -> stringResource(Res.string.settings_distro_status_active)
+                            distro.isDownloaded -> stringResource(Res.string.settings_distro_status_downloaded)
+                            else -> stringResource(Res.string.settings_distro_status_not_downloaded)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         },
-        onClick = onClick,
+        onClick = if (hasRemove) {} else onClick,
         trailingIcon = {
-            // Always show a trailing icon so all items have consistent width
             when {
                 distro.isActive -> Icon(
                     imageVector = Icons.Default.CheckCircle,

@@ -261,9 +261,28 @@ class RootfsDownloader(private val httpClient: HttpClient) {
     }
 
     fun makeWritable(rootfsDir: File) {
-        rootfsDir.walkTopDown().forEach { file ->
-            if (file.isDirectory && !file.canWrite()) {
-                file.setWritable(true, true)
+        // Manual stack walk instead of walkTopDown(): the latter throws an
+        // AssertionError if a child transitions from directory→non-directory
+        // between the iterator's isDirectory check and DirectoryState construction
+        // (e.g. from concurrent extraction or broken symlinks).
+        val stack = ArrayDeque<File>()
+        stack.addLast(rootfsDir)
+        while (stack.isNotEmpty()) {
+            val dir = stack.removeLast()
+            val children = try {
+                dir.listFiles()
+            } catch (_: Throwable) {
+                null
+            } ?: continue
+            for (child in children) {
+                try {
+                    if (child.isDirectory) {
+                        if (!child.canWrite()) child.setWritable(true, true)
+                        stack.addLast(child)
+                    }
+                } catch (_: Throwable) {
+                    // skip transient/inaccessible entry
+                }
             }
         }
     }

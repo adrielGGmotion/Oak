@@ -53,6 +53,7 @@ private val ERROR_SUMMARY_MAX_CHARS = 200
 private const val LOG_TAG = "SandboxPackages"
 
 private val UPGRADE_PROGRESS_LINE = Regex("""^\(\d+/\d+\)\s+Upgrading\s""")
+private val PACMAN_PROGRESS_LINE = Regex("""^\(\d+/\d+\)""")
 
 class SandboxPackagesViewModel(
     private val sandboxController: SandboxController,
@@ -241,7 +242,8 @@ class SandboxPackagesViewModel(
 
         fun hasErrors(): Boolean = stdout.lineSequence().any { it.startsWith("ERROR:") } ||
             stderr.lineSequence().any { it.startsWith("ERROR:") } ||
-            stdout.lineSequence().any { it.startsWith("E:") }
+            stdout.lineSequence().any { it.startsWith("E:") } ||
+            stderr.lineSequence().any { it.startsWith("E:") }
     }
 
     private suspend fun runAndCapture(cmd: String): CommandResult {
@@ -279,10 +281,28 @@ class SandboxPackagesViewModel(
         }
     }
 
-    // apk upgrade emits one progress line per package: `(N/M) Upgrading <pkg> (...)`.
-    // No matches → nothing was actually upgraded (e.g. system already up to date).
-    private fun countUpgradedPackages(stdout: String): Int = stdout.lineSequence()
-        .count { UPGRADE_PROGRESS_LINE.containsMatchIn(it) }
+    /**
+     * Count the number of packages actually upgraded across distro families.
+     *
+     * - Alpine (apk): progress line `(N/M) Upgrading <pkg>` per package.
+     * - Debian/Ubuntu (apt): summary line `X upgraded, ...`.
+     * - Arch (pacman): `(N/M)` progress lines during full-system upgrade.
+     *
+     * Returns 0 when the system was already up to date.
+     */
+    private fun countUpgradedPackages(stdout: String): Int {
+        val lines = stdout.lineSequence().toList()
+        // Alpine apk: "(N/M) Upgrading <pkg>"
+        val apkCount = lines.count { UPGRADE_PROGRESS_LINE.containsMatchIn(it) }
+        if (apkCount > 0) return apkCount
+        // Debian/Ubuntu apt: "X upgraded" in summary
+        val aptMatch = Regex("""(\d+)\s+upgraded""").find(stdout)
+        if (aptMatch != null) return aptMatch.groupValues[1].toIntOrNull() ?: 0
+        // Arch pacman: "(N/M)" progress lines
+        val pacmanCount = lines.count { PACMAN_PROGRESS_LINE.containsMatchIn(it) }
+        if (pacmanCount > 0) return pacmanCount
+        return 0
+    }
 
     private fun parseInfoLines(raw: String): List<PackageEntry> = raw.lineSequence()
         .map { it.trim() }
