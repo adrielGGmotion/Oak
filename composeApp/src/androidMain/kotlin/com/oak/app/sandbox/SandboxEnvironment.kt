@@ -106,6 +106,8 @@ sealed class SandboxEnvironment(
         // Rootfs tarballs from termux/proot-distro
         private const val ROOTFS_TAG = "v4.29.0"
         private const val ROOTFS_RELEASE = "ubuntu-plucky"
+        private const val UBUNTU_RELEASE = "plucky"
+        private const val UBUNTU_VERSION = "25.04"
 
         override val firstBootCommands: List<String>
             get() = listOf("apt-get update")
@@ -119,9 +121,21 @@ sealed class SandboxEnvironment(
             else -> arch
         }
 
-        override fun getDownloadUrls(arch: String): List<String> = listOf(
-            "https://github.com/termux/proot-distro/releases/download/$ROOTFS_TAG/${ROOTFS_RELEASE}-$arch-pd-$ROOTFS_TAG.tar.xz",
-        )
+        override fun getDownloadUrls(arch: String): List<String> {
+            val officialArch = when (arch) {
+                "aarch64" -> "arm64"
+                "x86_64" -> "amd64"
+                "arm" -> "armhf"
+                "i686" -> "i386"
+                else -> arch
+            }
+            return listOf(
+                // Primary: termux/proot-distro GitHub release
+                "https://github.com/termux/proot-distro/releases/download/$ROOTFS_TAG/${ROOTFS_RELEASE}-$arch-pd-$ROOTFS_TAG.tar.xz",
+                // Fallback: official Ubuntu base image (gzip compressed)
+                "https://cdimage.ubuntu.com/ubuntu-base/releases/$UBUNTU_RELEASE/release/ubuntu-base-$UBUNTU_VERSION-base-$officialArch.tar.gz",
+            )
+        }
     }
 
     data object ArchLinux : SandboxEnvironment(
@@ -152,7 +166,10 @@ sealed class SandboxEnvironment(
         }
 
         override fun getDownloadUrls(arch: String): List<String> = listOf(
+            // Primary: termux/proot-distro GitHub release
             "https://github.com/termux/proot-distro/releases/download/$ROOTFS_TAG/${ROOTFS_RELEASE}-$arch-pd-$ROOTFS_TAG.tar.xz",
+            // Fallback: official Arch Linux bootstrap image (gzip compressed)
+            "https://archive.archlinux.org/iso/latest/archlinux-bootstrap-$arch.tar.gz",
         )
     }
 

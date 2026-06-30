@@ -26,6 +26,19 @@ private const val TAR_TYPE_OFFSET = 156
 private const val TAR_LINK_OFFSET = 157
 private const val TAR_PREFIX_OFFSET = 345
 
+/** Detect compression format from file header magic bytes. */
+private fun detectCompression(file: File): Compression {
+    val magic = ByteArray(6)
+    file.inputStream().use { it.read(magic) }
+    // Gzip: 1f 8b
+    if (magic[0] == 0x1f.toByte() && magic[1] == 0x8b.toByte()) return Compression.Gzip
+    // Xz: fd 37 7a 58 5a 00
+    if (magic[0] == 0xfd.toByte() && magic[1] == 0x37.toByte() && magic[2] == 0x7a.toByte() &&
+        magic[3] == 0x58.toByte() && magic[4] == 0x5a.toByte() && magic[5] == 0x00.toByte()
+    ) return Compression.Xz
+    return Compression.Gzip // safe fallback
+}
+
 class RootfsDownloader(private val httpClient: HttpClient) {
 
     suspend fun download(
@@ -83,7 +96,13 @@ class RootfsDownloader(private val httpClient: HttpClient) {
         }
     }
 
-    fun extract(archiveFile: File, targetDir: File, compression: Compression) {
+    /**
+     * Extract a tar archive into [targetDir]. Compression is auto-detected
+     * from the file header magic bytes (gzip or xz), so callers do not need
+     * to specify it — this allows mixing URL sources with different formats.
+     */
+    fun extract(archiveFile: File, targetDir: File) {
+        val compression = detectCompression(archiveFile)
         targetDir.mkdirs()
         FileInputStream(archiveFile).use { fis ->
             val buffered = BufferedInputStream(fis)

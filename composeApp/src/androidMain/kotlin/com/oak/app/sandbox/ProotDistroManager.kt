@@ -33,10 +33,13 @@ class ProotDistroManager(
         HttpClient(Android) {
             followRedirects = true
             install(HttpTimeout) {
-                // No requestTimeoutMillis — rootfs archives can be hundreds of MB
-                // and may take many minutes on slow networks. socketTimeoutMillis
-                // handles per-packet inactivity, which is sufficient.
+                // requestTimeoutMillis must be null (not omitted) because the
+                // plugin applies a 20-second default. Rootfs archives are
+                // hundreds of MB and can take many minutes on slow networks.
+                // socketTimeoutMillis handles per-packet inactivity.
+                requestTimeoutMillis = null
                 socketTimeoutMillis = 60_000
+                connectTimeoutMillis = 30_000
             }
         },
     )
@@ -156,15 +159,16 @@ class ProotDistroManager(
         val archiveFile = File(sandboxesBase, "${env.id}/rootfs.$ext")
         archiveFile.parentFile?.mkdirs()
 
-        // Extract into a temp directory, then move into place so partial
-        // extraction is never mistaken for a complete rootfs. Download is
-        // inside the try block so archiveFile is always cleaned up on failure.
-        onExtracting()
+        // Download into archiveFile, then extract into a temp directory and
+        // atomically move into place so partial extraction is never mistaken
+        // for a complete rootfs. Download is inside the try block so the
+        // archive file is always cleaned up on failure.
         val tmpDir = File(sandboxesBase, "${env.id}/.tmp-${System.nanoTime()}")
         try {
             downloader.download(env, arch, archiveFile, onProgress)
+            onExtracting()
             tmpDir.mkdirs()
-            downloader.extract(archiveFile, tmpDir, env.compression)
+            downloader.extract(archiveFile, tmpDir)
             downloader.makeWritable(tmpDir)
             downloader.writeResolvConf(tmpDir)
             if (targetDir.isDirectory) targetDir.deleteRecursively()

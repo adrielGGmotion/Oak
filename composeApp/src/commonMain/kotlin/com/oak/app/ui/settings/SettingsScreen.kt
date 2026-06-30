@@ -748,14 +748,14 @@ private fun DistroDropdownItem(
         },
         onClick = onClick,
         trailingIcon = {
-            if (distro.isActive) {
-                Icon(
+            // Always show a trailing icon so all items have consistent width
+            when {
+                distro.isActive -> Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = stringResource(Res.string.settings_distro_status_active),
                     tint = MaterialTheme.colorScheme.primary,
                 )
-            } else if (distro.isDownloaded) {
-                Icon(
+                distro.isDownloaded -> Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = stringResource(Res.string.settings_distro_action_remove),
                     tint = MaterialTheme.colorScheme.error,
@@ -763,6 +763,11 @@ private fun DistroDropdownItem(
                         .clickable(onClick = onRemove)
                         .padding(4.dp)
                         .size(18.dp),
+                )
+                else -> Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = stringResource(Res.string.settings_distro_status_not_downloaded),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 )
             }
         },
