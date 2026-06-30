@@ -173,6 +173,10 @@ import oak.composeapp.generated.resources.settings_base_url_label
 import oak.composeapp.generated.resources.settings_daemon_mode
 import oak.composeapp.generated.resources.settings_daemon_mode_description
 import oak.composeapp.generated.resources.settings_documentation
+import oak.composeapp.generated.resources.settings_distro_action_remove
+import oak.composeapp.generated.resources.settings_distro_status_active
+import oak.composeapp.generated.resources.settings_distro_status_downloaded
+import oak.composeapp.generated.resources.settings_distro_status_not_downloaded
 import oak.composeapp.generated.resources.settings_dynamic_ui
 import oak.composeapp.generated.resources.settings_dynamic_ui_description
 import oak.composeapp.generated.resources.settings_export
