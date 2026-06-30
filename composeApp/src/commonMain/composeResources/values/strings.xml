@@ -459,4 +459,6 @@
     <string name="ask_questions_q_label">Q</string>
     <string name="sandbox_files_open_in_app">Open in app</string>
     <string name="sandbox_files_force_open_text">Force open as text</string>
+    <string name="settings_unlimited_tool_calls">Unlimited tool calls</string>
+    <string name="settings_unlimited_tool_calls_description">Disable tool-call limits at your own risk. Without a cap, the AI may hallucinate about hitting a \"quota\" or \"tool-call limit\" and waste tokens spinning in loops instead of completing the task.</string>
 </resources>

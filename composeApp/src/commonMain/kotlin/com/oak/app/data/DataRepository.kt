@@ -124,6 +124,12 @@ interface DataRepository {
     suspend fun disconnectSshServer(serverId: String)
     suspend fun connectEnabledSshServers()
 
+    // Unlimited tool calls — disabling limits lets the agent run until it naturally
+    // produces a text response, but may cause the AI to hallucinate about hitting
+    // "tool call limits" / "quotas" and waste tokens in infinite loops.
+    fun isUnlimitedToolCallsEnabled(): Boolean
+    fun setUnlimitedToolCallsEnabled(enabled: Boolean)
+
     // Linux Sandbox
     fun isSandboxEnabled(): Boolean
     fun setSandboxEnabled(enabled: Boolean)

@@ -106,6 +106,7 @@ data class SettingsUiState(
     val notificationListenerBound: Boolean = false,
     val notificationPendingCount: Int = 0,
     val isStreamingEnabled: Boolean = true,
+    val isUnlimitedToolCallsEnabled: Boolean = false,
     val uiScale: Float = 1.0f,
     val showUiScale: Boolean = false,
     val mcpServers: ImmutableList<McpServerUiState> = persistentListOf(),
