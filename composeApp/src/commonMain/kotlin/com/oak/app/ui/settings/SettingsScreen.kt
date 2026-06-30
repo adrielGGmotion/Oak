@@ -559,35 +559,17 @@ private fun SandboxSettingsCard(
     var distroSelectorExpanded by remember { mutableStateOf(false) }
 
     SettingsCard {
-        // Active distro header
+        // Title row: "Sandbox" label + toggle
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = sandboxState.activeDistroName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                if (sandboxState.sandboxReady) {
-                    if (sandboxState.sandboxDiskUsageMB > 0) {
-                        Text(
-                            text = stringResource(Res.string.settings_sandbox_disk_usage, sandboxState.sandboxDiskUsageMB),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                } else {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(Res.string.settings_sandbox_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            Text(
+                text = "Sandbox",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
             if (sandboxState.sandboxReady) {
                 Switch(
                     checked = sandboxState.isSandboxEnabled,
@@ -596,10 +578,29 @@ private fun SandboxSettingsCard(
             }
         }
 
-        // Progress / error section — always occupies consistent space when visible
+        Spacer(Modifier.height(4.dp))
+
+        // Description or disk usage
+        if (sandboxState.sandboxReady && sandboxState.sandboxDiskUsageMB > 0) {
+            Text(
+                text = stringResource(Res.string.settings_sandbox_disk_usage, sandboxState.sandboxDiskUsageMB),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else if (!sandboxState.sandboxReady) {
+            Text(
+                text = stringResource(Res.string.settings_sandbox_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        // Progress / error section
         if (sandboxState.sandboxProgress != null) {
+            Spacer(Modifier.height(8.dp))
             SandboxProgressRow(sandboxState.sandboxProgress, sandboxState.sandboxStatusText, onCancelSandbox)
         } else if (sandboxState.isWorking) {
+            Spacer(Modifier.height(8.dp))
             SandboxProgressRow(null, sandboxState.sandboxStatusText, onCancelSandbox)
         } else if (sandboxState.hasError) {
             Spacer(Modifier.height(8.dp))
@@ -612,21 +613,36 @@ private fun SandboxSettingsCard(
 
         // Actions section — only shown when not working
         if (!sandboxState.isWorking) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
 
-            // Distro selector with dropdown
-            Box {
-                OutlinedButton(
-                    onClick = { distroSelectorExpanded = true },
-                    modifier = Modifier.handCursor().fillMaxWidth(),
+            // Distro selector row — compact inline dropdown like other pickers
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { distroSelectorExpanded = true }
+                        .handCursor()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = CenterVertically,
                 ) {
-                    Text(
-                        text = sandboxState.activeDistroName,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Distribution",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = sandboxState.activeDistroName,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
@@ -652,8 +668,9 @@ private fun SandboxSettingsCard(
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
 
+            // Action buttons
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!sandboxState.sandboxReady) {
                     Button(onClick = onSetupSandbox, modifier = Modifier.handCursor()) {
@@ -731,17 +748,15 @@ private fun DistroDropdownItem(
                     tint = MaterialTheme.colorScheme.primary,
                 )
             } else if (distro.isDownloaded) {
-                IconButton(
-                    onClick = onRemove,
-                    modifier = Modifier.size(32.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = stringResource(Res.string.settings_distro_action_remove),
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(Res.string.settings_distro_action_remove),
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .clickable(onClick = onRemove)
+                        .padding(4.dp)
+                        .size(18.dp),
+                )
             }
         },
     )

@@ -3,6 +3,8 @@ package com.oak.app.sandbox
 import android.content.Context
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -28,7 +30,15 @@ data class DistroState(
 class ProotDistroManager(
     private val context: Context,
 ) {
-    private val downloader = RootfsDownloader(HttpClient(Android))
+    private val downloader = RootfsDownloader(
+        HttpClient(Android) {
+            followRedirects = true
+            install(HttpTimeout) {
+                requestTimeoutMillis = 60_000
+                socketTimeoutMillis = 60_000
+            }
+        },
+    )
 
     /** Base directory for all sandbox distros. */
     private val sandboxesBase: File

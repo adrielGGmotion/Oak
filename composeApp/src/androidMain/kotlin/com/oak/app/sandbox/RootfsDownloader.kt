@@ -1,8 +1,10 @@
 package com.oak.app.sandbox
 
 import io.ktor.client.HttpClient
+import io.ktor.client.request.header
 import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentLength
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.readAvailable
@@ -47,7 +49,8 @@ class RootfsDownloader(private val httpClient: HttpClient) {
                 if (index < urls.lastIndex) onProgress(0f)
             }
         }
-        throw IOException("All mirrors failed for ${env.displayName}", lastError)
+        val detail = lastError?.message ?: "unknown error"
+        throw IOException("All mirrors failed for ${env.displayName}: $detail", lastError)
     }
 
     private suspend fun downloadFrom(
@@ -55,7 +58,9 @@ class RootfsDownloader(private val httpClient: HttpClient) {
         targetFile: File,
         onProgress: (Float) -> Unit,
     ) {
-        httpClient.prepareGet(url).execute { response ->
+        httpClient.prepareGet(url) {
+            header(HttpHeaders.UserAgent, "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36")
+        }.execute { response ->
             if (!response.status.isSuccess()) {
                 throw IOException("HTTP ${response.status.value} from $url")
             }
