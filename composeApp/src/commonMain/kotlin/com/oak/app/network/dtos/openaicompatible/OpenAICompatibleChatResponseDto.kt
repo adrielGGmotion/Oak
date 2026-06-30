@@ -3,7 +3,11 @@ package com.oak.app.network.dtos.openaicompatible
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-internal val toolCallMarkerRegex = Regex("<TOOLCALL>[\\s\\S]*?</TOOLCALL>|<TOOLCALL>[\\s\\S]*$|<tool_call>[\\s\\S]*?</tool_call>|<tool_call>[\\s\\S]*$")
+internal val toolCallMarkerRegex = Regex(
+    "<tool_call\\b[^>]*>[\\s\\S]*?</tool_call>|<tool_call\\b[^>]*>[\\s\\S]*$" +
+        "|<toolcall\\b[^>]*>[\\s\\S]*?</toolcall>|<toolcall\\b[^>]*>[\\s\\S]*$",
+    RegexOption.IGNORE_CASE,
+)
 
 @Serializable
 data class OpenAICompatibleChatResponseDto(
