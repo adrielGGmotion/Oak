@@ -271,9 +271,9 @@ import oak.composeapp.generated.resources.settings_theme_oled
 import oak.composeapp.generated.resources.settings_theme_system
 import oak.composeapp.generated.resources.settings_tools_description
 import oak.composeapp.generated.resources.settings_tools_none_available
+import oak.composeapp.generated.resources.settings_ui_scale
 import oak.composeapp.generated.resources.settings_unlimited_tool_calls
 import oak.composeapp.generated.resources.settings_unlimited_tool_calls_description
-import oak.composeapp.generated.resources.settings_ui_scale
 import oak.composeapp.generated.resources.settings_version
 import oak.composeapp.generated.resources.snackbar_email_removed
 import oak.composeapp.generated.resources.snackbar_mcp_server_removed

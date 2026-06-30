@@ -237,6 +237,14 @@ class RemoteDataRepository(
         appSettings.setUnlimitedToolCallsEnabled(enabled)
     }
 
+    /** Max iterations before forcing a text-only response. 500 = effectively unlimited. */
+    private fun maxToolIterations(): Int =
+        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_TOOL_ITERATIONS else MAX_TOOL_ITERATIONS
+
+    /** Max repeated tool-call sequences before bailing out. 100 = effectively unlimited. */
+    private fun maxRepeatedToolCalls(): Int =
+        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_REPEATED_TOOL_CALLS else MAX_REPEATED_TOOL_CALLS
+
     override fun isStreamingEnabled(): Boolean = appSettings.isStreamingEnabled()
 
     override fun setStreamingEnabled(enabled: Boolean) {
@@ -1493,14 +1501,6 @@ class RemoteDataRepository(
     /**
      * Detects if the current batch of tool calls is repeating a recent pattern.
      */
-    /** Max iterations before forcing a text-only response. 500 = effectively unlimited. */
-    private fun maxToolIterations(): Int =
-        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_TOOL_ITERATIONS else MAX_TOOL_ITERATIONS
-
-    /** Max repeated tool-call sequences before bailing out. 100 = effectively unlimited. */
-    private fun maxRepeatedToolCalls(): Int =
-        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_REPEATED_TOOL_CALLS else MAX_REPEATED_TOOL_CALLS
-
     private fun isRepeatingToolCalls(recentSignatures: List<String>, currentSignatures: List<String>): Boolean {
         if (currentSignatures.isEmpty()) return false
         // Count how many consecutive times the same signature set appeared at the tail
