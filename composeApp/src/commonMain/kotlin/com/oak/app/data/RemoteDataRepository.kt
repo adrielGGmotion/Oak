@@ -97,10 +97,12 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private const val MAX_TOOL_ITERATIONS = 15
+private const val MAX_UNLIMITED_TOOL_ITERATIONS = 500
 
 private const val MIN_TOOL_DISPLAY_MS = 2000L
 
 private const val MAX_REPEATED_TOOL_CALLS = 3
+private const val MAX_UNLIMITED_REPEATED_TOOL_CALLS = 100
 
 private const val ASK_QUESTIONS_TOOL_NAME = "ask_questions"
 private const val MAX_API_RETRIES = 2
@@ -227,6 +229,12 @@ class RemoteDataRepository(
             modelId = modelId,
             icon = service.icon,
         )
+    }
+
+    override fun isUnlimitedToolCallsEnabled(): Boolean = appSettings.isUnlimitedToolCallsEnabled()
+
+    override fun setUnlimitedToolCallsEnabled(enabled: Boolean) {
+        appSettings.setUnlimitedToolCallsEnabled(enabled)
     }
 
     override fun isStreamingEnabled(): Boolean = appSettings.isStreamingEnabled()
@@ -914,7 +922,7 @@ class RemoteDataRepository(
         try {
             while (true) {
                 iteration++
-                if (iteration > MAX_TOOL_ITERATIONS) {
+                if (iteration > maxToolIterations()) {
                     return makeFinalCallWithoutTools(service, credentials, currentMessages)
                 }
 
@@ -1086,7 +1094,7 @@ class RemoteDataRepository(
             while (true) {
                 iteration++
 
-                if (iteration > MAX_TOOL_ITERATIONS) {
+                if (iteration > maxToolIterations()) {
                     // Bail out: make a final Gemini call without tools
                     val currentMessages = history.value.filter { it.role != History.Role.TOOL_EXECUTING }
                     val geminiMessages = currentMessages.map { it.toGeminiMessageDto() }
@@ -1351,7 +1359,7 @@ class RemoteDataRepository(
                     history.value.filter { it.role != History.Role.TOOL_EXECUTING },
                 )
 
-                if (iteration > MAX_TOOL_ITERATIONS) {
+                if (iteration > maxToolIterations()) {
                     val bailoutResponse = retryApiCall {
                         requests.anthropicChat(
                             credentials = credentials,
@@ -1485,6 +1493,14 @@ class RemoteDataRepository(
     /**
      * Detects if the current batch of tool calls is repeating a recent pattern.
      */
+    /** Max iterations before forcing a text-only response. 500 = effectively unlimited. */
+    private fun maxToolIterations(): Int =
+        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_TOOL_ITERATIONS else MAX_TOOL_ITERATIONS
+
+    /** Max repeated tool-call sequences before bailing out. 100 = effectively unlimited. */
+    private fun maxRepeatedToolCalls(): Int =
+        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_REPEATED_TOOL_CALLS else MAX_REPEATED_TOOL_CALLS
+
     private fun isRepeatingToolCalls(recentSignatures: List<String>, currentSignatures: List<String>): Boolean {
         if (currentSignatures.isEmpty()) return false
         // Count how many consecutive times the same signature set appeared at the tail
@@ -1501,7 +1517,7 @@ class RemoteDataRepository(
             }
         }
         // +1 for the current batch that's about to be executed
-        return consecutiveCount + 1 >= MAX_REPEATED_TOOL_CALLS
+        return consecutiveCount + 1 >= maxRepeatedToolCalls()
     }
 
     /**

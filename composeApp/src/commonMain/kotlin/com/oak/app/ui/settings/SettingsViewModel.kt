@@ -116,6 +116,7 @@ class SettingsViewModel(
         notificationListenerBound = dataRepository.getNotificationSyncState().listenerBound,
         notificationPendingCount = dataRepository.getPendingNotificationCount(),
         isStreamingEnabled = dataRepository.isStreamingEnabled(),
+        isUnlimitedToolCallsEnabled = dataRepository.isUnlimitedToolCallsEnabled(),
         uiScale = dataRepository.getUiScale(),
         showUiScale = currentPlatform is Platform.Desktop,
         mcpServers = buildMcpServerEntries().toImmutableList(),
@@ -173,6 +174,7 @@ class SettingsViewModel(
         onClearPendingNotifications = ::onClearPendingNotifications,
         onToggleStorageAccess = ::onToggleStorageAccess,
         onToggleStreaming = ::onToggleStreaming,
+        onToggleUnlimitedToolCalls = ::onToggleUnlimitedToolCalls,
         onChangeUiScale = ::onChangeUiScale,
         onAddMcpServer = ::onAddMcpServer,
         onRemoveMcpServer = ::onRemoveMcpServer,
@@ -657,6 +659,11 @@ class SettingsViewModel(
     private fun onToggleStreaming(enabled: Boolean) {
         dataRepository.setStreamingEnabled(enabled)
         _state.update { it.copy(isStreamingEnabled = enabled) }
+    }
+
+    private fun onToggleUnlimitedToolCalls(enabled: Boolean) {
+        dataRepository.setUnlimitedToolCallsEnabled(enabled)
+        _state.update { it.copy(isUnlimitedToolCallsEnabled = enabled) }
     }
 
     private fun onDownloadLocalModel(model: LocalModel) {

@@ -468,6 +468,15 @@ class AppSettings(private val settings: Settings) {
         settings.putBoolean(KEY_STREAMING_ENABLED, enabled)
     }
 
+    // Unlimited tool calls — disabling limits lets the agent run until it naturally
+    // produces a text response, but may cause the AI to hallucinate about hitting
+    // "tool call limits" / "quotas" and waste tokens in infinite loops.
+    fun isUnlimitedToolCallsEnabled(): Boolean = settings.getBoolean(KEY_UNLIMITED_TOOL_CALLS, false)
+
+    fun setUnlimitedToolCallsEnabled(enabled: Boolean) {
+        settings.putBoolean(KEY_UNLIMITED_TOOL_CALLS, enabled)
+    }
+
     // Soul (system prompt)
     fun getSoulText(): String = settings.getString(KEY_SOUL, "")
 
@@ -1267,6 +1276,7 @@ class AppSettings(private val settings: Settings) {
         const val KEY_SANDBOX_ENABLED = "sandbox_enabled"
         const val KEY_STORAGE_ACCESS_ENABLED = "storage_access_enabled"
         const val KEY_STREAMING_ENABLED = "streaming_enabled"
+        const val KEY_UNLIMITED_TOOL_CALLS = "unlimited_tool_calls"
 
         // Basic memory guidance shared by every chat variant. The advanced `## Structured
         // Learning` block lives in `ChatSystemPromptBuilder.DEFAULT_STRUCTURED_LEARNING_SECTION`
