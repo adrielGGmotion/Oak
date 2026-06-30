@@ -2,7 +2,7 @@ package com.oak.app.sandbox
 
 sealed interface SandboxState {
     data object NotInstalled : SandboxState
-    data class Downloading(val progress: Float, val distroId: String = "alpine") : SandboxState
+    data class Downloading(val progress: Float, val distroId: String) : SandboxState
     data object Extracting : SandboxState
     data class Installing(val detail: String = "") : SandboxState
     data object Ready : SandboxState

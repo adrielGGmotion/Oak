@@ -146,7 +146,11 @@ class RootfsDownloader(private val httpClient: HttpClient) {
 
             val outFile = File(targetDir, entryName)
 
-            if (!outFile.canonicalPath.startsWith(targetDir.canonicalPath)) {
+            // Use Path.startsWith for component-aware boundary check
+            // (String.startsWith would let /rootfs_evil bypass /rootfs).
+            val targetPath = targetDir.canonicalFile.toPath()
+            val outPath = outFile.canonicalFile.toPath()
+            if (!outPath.startsWith(targetPath)) {
                 skipBytes(inputStream, alignToBlock(size))
                 continue
             }

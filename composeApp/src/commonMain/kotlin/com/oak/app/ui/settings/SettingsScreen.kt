@@ -662,7 +662,10 @@ private fun SandboxSettingsCard(
                                     onDownloadDistro(distro.id)
                                 }
                             },
-                            onRemove = { onRemoveDistro(distro.id) },
+                            onRemove = {
+                                distroSelectorExpanded = false
+                                onRemoveDistro(distro.id)
+                            },
                         )
                     }
                 }

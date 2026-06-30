@@ -210,4 +210,14 @@ class ProotDistroManager(
     fun writeResolvConf(rootfsDir: java.io.File) {
         downloader.writeResolvConf(rootfsDir)
     }
+
+    /** Clean up any stale archive file for the given distro. */
+    fun cleanupArchive(id: String) {
+        val env = requireEnvironment(id)
+        val ext = when (env.compression) {
+            Compression.Gzip -> "tar.gz"
+            Compression.Xz -> "tar.xz"
+        }
+        File(sandboxesBase, "${env.id}/rootfs.$ext").delete()
+    }
 }

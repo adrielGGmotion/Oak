@@ -169,8 +169,8 @@ class LinuxSandboxManager(
     fun cancel() {
         currentJob?.cancel()
         currentJob = null
-        // Clean up partial downloads
-        File(supportDir, "rootfs.tar.gz").delete()
+        // Clean up partial downloads — distroManager now owns the archive
+        distroManager.cleanupArchive(activeDistroId)
         // Determine correct state based on what exists
         if (distroManager.isActiveReady && File(prootPath).exists()) {
             _state.value = SandboxState.Ready
