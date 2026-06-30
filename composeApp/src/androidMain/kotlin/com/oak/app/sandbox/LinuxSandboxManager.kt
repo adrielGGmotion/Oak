@@ -229,8 +229,9 @@ class LinuxSandboxManager(
 
             // Create a temporary executor for setup
             val executor = createProotExecutor()
-            val tmpDownloader = RootfsDownloader(io.ktor.client.HttpClient(io.ktor.client.engine.android.Android))
-            tmpDownloader.writeResolvConf(rootfsDir)
+            // Ensure resolv.conf exists (download already writes it, but this
+            // covers the case where rootfs was already present on disk).
+            distroManager.writeResolvConf(rootfsDir)
 
             // Run first-boot commands (package manager init, etc.)
             for (cmd in env.firstBootCommands) {

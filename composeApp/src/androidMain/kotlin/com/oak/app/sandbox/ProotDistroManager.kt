@@ -6,6 +6,7 @@ import io.ktor.client.engine.android.Android
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 
 enum class DistroDownloadState {
     NotDownloaded,
@@ -54,7 +55,10 @@ class ProotDistroManager(
         if (oldRootfs.isDirectory && !newRootfs.isDirectory) {
             try {
                 newRootfs.parentFile?.mkdirs()
-                oldRootfs.renameTo(newRootfs)
+                if (!oldRootfs.renameTo(newRootfs)) {
+                    android.util.Log.w("ProotDistro", "Legacy rootfs migration failed")
+                    return
+                }
                 // Also migrate tmp and home if they exist
                 File(legacyAlpineDir, "tmp").takeIf { it.isDirectory }
                     ?.renameTo(File(sandboxesBase, "alpine/tmp"))
@@ -66,8 +70,16 @@ class ProotDistroManager(
         }
     }
 
+    /** Validate and return a known distro environment for the given id. */
+    private fun requireEnvironment(id: String): SandboxEnvironment =
+        SandboxEnvironment.ALL.firstOrNull { it.id == id }
+            ?: throw IllegalArgumentException("Unknown distro: $id")
+
     /** Directory where a distro's rootfs lives. */
-    fun rootfsDir(id: String): File = File(sandboxesBase, "$id/rootfs")
+    fun rootfsDir(id: String): File {
+        val env = requireEnvironment(id)
+        return File(File(sandboxesBase, env.id), "rootfs")
+    }
 
     /** Absolute path to a distro's rootfs. */
     fun rootfsPath(id: String): String = rootfsDir(id).absolutePath
@@ -119,7 +131,7 @@ class ProotDistroManager(
         onProgress: (Float) -> Unit = {},
         onExtracting: () -> Unit = {},
     ) = withContext(Dispatchers.IO) {
-        val env = SandboxEnvironment.fromId(id)
+        val env = requireEnvironment(id)
         val targetDir = rootfsDir(id)
         if (targetDir.isDirectory && targetDir.listFiles().orEmpty().isNotEmpty()) return@withContext
 
@@ -130,38 +142,46 @@ class ProotDistroManager(
             Compression.Xz -> "tar.xz"
         }
 
-        val archiveFile = File(sandboxesBase, "$id/rootfs.$ext")
+        val archiveFile = File(sandboxesBase, "${env.id}/rootfs.$ext")
         archiveFile.parentFile?.mkdirs()
 
         // Download
         downloader.download(env, arch, archiveFile, onProgress)
 
-        // Extract
+        // Extract into a temp directory, then move into place so partial
+        // extraction is never mistaken for a complete rootfs.
         onExtracting()
-        downloader.extract(archiveFile, targetDir, env.compression)
-        archiveFile.delete()
-
-        // Make writable
-        downloader.makeWritable(targetDir)
-
-        // Write resolv.conf (distro-agnostic)
-        downloader.writeResolvConf(targetDir)
+        val tmpDir = File(sandboxesBase, "${env.id}/.tmp-${System.nanoTime()}")
+        try {
+            tmpDir.mkdirs()
+            downloader.extract(archiveFile, tmpDir, env.compression)
+            downloader.makeWritable(tmpDir)
+            downloader.writeResolvConf(tmpDir)
+            if (targetDir.isDirectory) targetDir.deleteRecursively()
+            if (!tmpDir.renameTo(targetDir)) {
+                throw IOException("Failed to move extracted rootfs into place")
+            }
+        } finally {
+            archiveFile.delete()
+            if (tmpDir.isDirectory) tmpDir.deleteRecursively()
+        }
     }
 
     /** Remove a downloaded distro's files. */
     fun remove(id: String) {
-        val dir = File(sandboxesBase, id)
+        val env = requireEnvironment(id)
+        val dir = File(sandboxesBase, env.id)
         if (dir.isDirectory) dir.deleteRecursively()
         // If this was the active distro, fall back to Alpine
-        if (activeDistroId == id) {
+        if (activeDistroId == env.id) {
             activeDistroId = SandboxEnvironment.DEFAULT.id
         }
     }
 
     /** Get the download URLs for a distro given current arch. */
     fun getDownloadUrls(id: String): List<String> {
-        val env = SandboxEnvironment.fromId(id)
-        return env.getDownloadUrls(getLinuxArch())
+        val env = requireEnvironment(id)
+        return env.getDownloadUrls(env.mapArch(getLinuxArch()))
     }
 
     /** Get the Linux arch string for the current device. */
@@ -174,5 +194,10 @@ class ProotDistroManager(
             abi.startsWith("x86") -> "x86"
             else -> "aarch64"
         }
+    }
+
+    /** Write a basic resolv.conf into a distro rootfs (does not need HttpClient). */
+    fun writeResolvConf(rootfsDir: java.io.File) {
+        downloader.writeResolvConf(rootfsDir)
     }
 }

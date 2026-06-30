@@ -296,9 +296,12 @@ class SandboxPackagesViewModel(
         .filter { it.isNotEmpty() && !it.startsWith("WARNING:") && !it.startsWith("ERROR:") && !it.startsWith("E:") }
         .mapNotNull { line ->
             var cleaned = line
-            // Strip pacman repo prefix (e.g. "core/package" -> "package")
-            if (cleaned.contains('/') && (cleaned.contains(' ') || cleaned.contains('\t'))) {
-                cleaned = cleaned.substringAfter('/')
+            // Strip pacman repo prefix on the leading token only (e.g. "core/package" -> "package").
+            // The guard requires a '/' in the first token so apt/apk lines (which may have a '/'
+            // in the description) are never affected.
+            val firstToken = cleaned.substringBefore(' ').substringBefore('\t')
+            if (firstToken.contains('/')) {
+                cleaned = cleaned.substring(firstToken.indexOf('/') + 1)
             }
             // Strip pacman status suffix (e.g. "package [installed]" -> "package")
             if (cleaned.endsWith("]")) {

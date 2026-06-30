@@ -80,13 +80,15 @@ class RootfsDownloader(private val httpClient: HttpClient) {
 
     fun extract(archiveFile: File, targetDir: File, compression: Compression) {
         targetDir.mkdirs()
-        val fis = FileInputStream(archiveFile)
-        val decompressed = when (compression) {
-            Compression.Gzip -> GZIPInputStream(BufferedInputStream(fis))
-            Compression.Xz -> XZInputStream(BufferedInputStream(fis))
-        }
-        decompressed.use { inputStream ->
-            extractTar(inputStream, targetDir)
+        FileInputStream(archiveFile).use { fis ->
+            val buffered = BufferedInputStream(fis)
+            val decompressed = when (compression) {
+                Compression.Gzip -> GZIPInputStream(buffered)
+                Compression.Xz -> XZInputStream(buffered)
+            }
+            decompressed.use { inputStream ->
+                extractTar(inputStream, targetDir)
+            }
         }
     }
 
@@ -121,7 +123,7 @@ class RootfsDownloader(private val httpClient: HttpClient) {
             if (!stripPrefixChecked) {
                 stripPrefixChecked = true
                 if (typeFlag.toInt().toChar() == '5' && fullName != "." && fullName != "./") {
-                    stripPrefix = fullName
+                    stripPrefix = fullName.trimEnd('/')
                     // Skip the top-level directory itself (its children will be
                     // reassembled at the root of targetDir via prefix stripping).
                     skipBytes(inputStream, alignToBlock(size))
@@ -130,8 +132,9 @@ class RootfsDownloader(private val httpClient: HttpClient) {
             }
 
             // Apply prefix stripping to every subsequent entry
-            val entryName = if (stripPrefix != null && fullName.startsWith("$stripPrefix/")) {
-                fullName.removePrefix("$stripPrefix/")
+            val prefixToStrip = stripPrefix
+            val entryName = if (prefixToStrip != null && fullName.startsWith("$prefixToStrip/")) {
+                fullName.removePrefix("$prefixToStrip/")
             } else {
                 fullName
             }

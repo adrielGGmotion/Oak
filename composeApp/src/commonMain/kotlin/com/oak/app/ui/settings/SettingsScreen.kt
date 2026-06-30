@@ -713,9 +713,9 @@ private fun DistroDropdownItem(
                 Text(text = distro.displayName)
                 Text(
                     text = when {
-                        distro.isActive -> "Active"
-                        distro.isDownloaded -> "Downloaded"
-                        else -> "Not downloaded"
+                        distro.isActive -> stringResource(Res.string.settings_distro_status_active)
+                        distro.isDownloaded -> stringResource(Res.string.settings_distro_status_downloaded)
+                        else -> stringResource(Res.string.settings_distro_status_not_downloaded)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -727,7 +727,7 @@ private fun DistroDropdownItem(
             if (distro.isActive) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Active",
+                    contentDescription = stringResource(Res.string.settings_distro_status_active),
                     tint = MaterialTheme.colorScheme.primary,
                 )
             } else if (distro.isDownloaded) {
@@ -737,7 +737,7 @@ private fun DistroDropdownItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Remove",
+                        contentDescription = stringResource(Res.string.settings_distro_action_remove),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(18.dp),
                     )
