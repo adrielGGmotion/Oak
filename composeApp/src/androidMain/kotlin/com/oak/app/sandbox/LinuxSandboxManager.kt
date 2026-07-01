@@ -357,6 +357,22 @@ class LinuxSandboxManager(
             acquireSetupWakeLock()
             try {
                 val executor = createProotExecutor()
+
+                // Ensure package lists are fresh before installing. This is
+                // necessary because first-boot commands (run during setup) may
+                // have failed silently, or the user may have switched to an
+                // already-downloaded distro whose caches are stale.
+                updateSandboxSetupNotification("Updating package lists...")
+                _state.value = SandboxState.Installing("Updating package lists...")
+                val updateResult = executor.execute(pm.update(), timeoutSeconds = 120)
+                val updateSuccess = updateResult["success"] as? Boolean ?: false
+                if (!updateSuccess) {
+                    val stderr = updateResult["stderr"] as? String ?: ""
+                    android.util.Log.w("LinuxSandbox", "Package list update failed: $stderr")
+                    // Non-fatal — proceed anyway; the install may still work
+                    // if the distro ships with pre-populated caches.
+                }
+
                 for (pkg in packages) {
                     ensureActive()
                     updateSandboxSetupNotification("Installing $pkg...")
