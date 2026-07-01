@@ -108,7 +108,7 @@ class ProotDistroManager(
     /** Check if a distro's rootfs is extracted and ready. */
     fun isDownloaded(id: String): Boolean {
         val dir = rootfsDir(id)
-        return dir.isDirectory && dir.listFiles().orEmpty().isNotEmpty()
+        return dir.isDirectory && File(dir, "bin/sh").exists()
     }
 
     /** Check if the active distro is ready. */
@@ -147,7 +147,7 @@ class ProotDistroManager(
     ) = withContext(Dispatchers.IO) {
         val env = requireEnvironment(id)
         val targetDir = rootfsDir(id)
-        if (targetDir.isDirectory && targetDir.listFiles().orEmpty().isNotEmpty()) return@withContext
+        if (targetDir.isDirectory && File(targetDir, "bin/sh").exists()) return@withContext
 
         targetDir.parentFile?.mkdirs()
         val arch = getLinuxArch()

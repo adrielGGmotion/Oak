@@ -56,9 +56,9 @@ class SandboxFileBrowserViewModelTest {
         override fun getDistros(): List<DistroInfo> = emptyList()
         override fun getActiveDistroId(): String = "alpine"
         override fun getActiveDistroName(): String = "Alpine Linux"
-        override fun setActiveDistro(id: String) {}
-        override fun downloadDistro(id: String) {}
-        override fun removeDistro(id: String) {}
+        override fun setActiveDistro(id: String) = Unit
+        override fun downloadDistro(id: String) = Unit
+        override fun removeDistro(id: String) = Unit
         override fun getPackageCommands(): PackageManagerCommands = PackageManagerCommands(
             install = { "apk add --no-cache $it" },
             remove = { "apk del $it" },
