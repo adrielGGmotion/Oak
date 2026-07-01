@@ -276,7 +276,13 @@ class RootfsDownloader(private val httpClient: HttpClient) {
             } ?: continue
             for (child in children) {
                 try {
-                    if (child.isDirectory) {
+                    // Use NOFOLLOW_LINKS to avoid following symlinks that could
+                    // point outside the rootfs or create traversal loops.
+                    if (java.nio.file.Files.isDirectory(
+                            child.toPath(),
+                            java.nio.file.LinkOption.NOFOLLOW_LINKS,
+                        )
+                    ) {
                         if (!child.canWrite()) child.setWritable(true, true)
                         stack.addLast(child)
                     }
