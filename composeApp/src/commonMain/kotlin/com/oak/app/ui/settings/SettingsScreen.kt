@@ -619,7 +619,7 @@ private fun SandboxSettingsCard(
         if (!sandboxState.isWorking) {
             Spacer(Modifier.height(12.dp))
 
-            // Distro selector row — compact inline dropdown like other pickers
+            // Distro selector row — opens a selection popup like other pickers
             Box(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier
@@ -656,15 +656,18 @@ private fun SandboxSettingsCard(
                     modifier = Modifier.widthIn(min = 240.dp),
                 ) {
                     sandboxState.distros.forEach { distro ->
-                        DistroDropdownItem(
+                        DistroSelectionItem(
                             distro = distro,
-                            onClick = {
+                            isActive = distro.id == sandboxState.activeDistroId,
+                            onSelect = {
                                 distroSelectorExpanded = false
                                 if (distro.isDownloaded) {
                                     onSelectDistro(distro.id)
-                                } else {
-                                    onDownloadDistro(distro.id)
                                 }
+                            },
+                            onDownload = {
+                                distroSelectorExpanded = false
+                                onDownloadDistro(distro.id)
                             },
                             onRemove = {
                                 distroSelectorExpanded = false
@@ -726,33 +729,33 @@ private fun SandboxSettingsCard(
 }
 
 @Composable
-private fun DistroDropdownItem(
+private fun DistroSelectionItem(
     distro: com.oak.app.DistroInfo,
-    onClick: () -> Unit,
+    isActive: Boolean,
+    onSelect: () -> Unit,
+    onDownload: () -> Unit,
     onRemove: () -> Unit,
 ) {
-    // Items with both a main action and a delete action need click routing
-    // to avoid the delete icon's clickable overlapping with DropdownMenuItem's
-    // onClick. We put both actions behind separate clickable surfaces:
-    // the text area for the main action, the trailing icon for remove.
-    val hasRemove = distro.isDownloaded && !distro.isActive
+    // Selection happens via the RadioButton; trailing icon handles download/remove.
+    // DropdownMenuItem onClick is a no-op to avoid overlapping taps.
     DropdownMenuItem(
         text = {
             Row(
-                modifier = if (hasRemove) {
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onClick)
-                } else {
-                    Modifier.fillMaxWidth()
-                },
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                RadioButton(
+                    selected = isActive,
+                    onClick = if (distro.isDownloaded) onSelect else null,
+                    enabled = distro.isDownloaded,
+                    modifier = Modifier.handCursor(),
+                )
+                Spacer(Modifier.width(8.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = distro.displayName)
                     Text(
                         text = when {
-                            distro.isActive -> stringResource(Res.string.settings_distro_status_active)
+                            isActive -> stringResource(Res.string.settings_distro_status_active)
                             distro.isDownloaded -> stringResource(Res.string.settings_distro_status_downloaded)
                             else -> stringResource(Res.string.settings_distro_status_not_downloaded)
                         },
@@ -762,10 +765,10 @@ private fun DistroDropdownItem(
                 }
             }
         },
-        onClick = if (hasRemove) ({}) else onClick,
+        onClick = {},
         trailingIcon = {
             when {
-                distro.isActive -> Icon(
+                isActive -> Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = stringResource(Res.string.settings_distro_status_active),
                     tint = MaterialTheme.colorScheme.primary,
@@ -783,6 +786,10 @@ private fun DistroDropdownItem(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = stringResource(Res.string.settings_distro_status_not_downloaded),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier
+                        .clickable(onClick = onDownload)
+                        .padding(4.dp)
+                        .size(18.dp),
                 )
             }
         },
