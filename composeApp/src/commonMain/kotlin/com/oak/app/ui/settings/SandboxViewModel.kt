@@ -28,6 +28,7 @@ data class SandboxUiState(
     val hasError: Boolean = false,
     val distros: List<DistroInfo> = emptyList(),
     val activeDistroName: String = "Alpine Linux",
+    val activeDistroId: String = "alpine",
 )
 
 class SandboxViewModel(
@@ -47,6 +48,7 @@ class SandboxViewModel(
                 isSandboxEnabled = dataRepository.isSandboxEnabled(),
                 distros = sandboxController.getDistros(),
                 activeDistroName = sandboxController.getActiveDistroName(),
+                activeDistroId = sandboxController.getActiveDistroId(),
             ),
         ),
     )
@@ -60,6 +62,7 @@ class SandboxViewModel(
                     applyStatus(sandboxStatus, it).copy(
                         distros = sandboxController.getDistros(),
                         activeDistroName = sandboxController.getActiveDistroName(),
+                        activeDistroId = sandboxController.getActiveDistroId(),
                     )
                 }
             }
@@ -82,6 +85,7 @@ class SandboxViewModel(
             it.copy(
                 distros = sandboxController.getDistros(),
                 activeDistroName = sandboxController.getActiveDistroName(),
+                activeDistroId = sandboxController.getActiveDistroId(),
             )
         }
     }
