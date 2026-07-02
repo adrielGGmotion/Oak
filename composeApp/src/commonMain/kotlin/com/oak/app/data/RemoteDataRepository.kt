@@ -694,13 +694,16 @@ class RemoteDataRepository(
         }
 
         val creds = instanceCredentials(instanceId, service)
-        val tools = if (supportsTools(creds.modelId)) getAvailableTools() else emptyList()
+        val supportsTools = supportsTools(creds.modelId)
+        val tools = if (supportsTools) getAvailableTools() else emptyList()
+        println("ToolTrace_ASK: service=${service.id} model=${creds.modelId} supportsTools=$supportsTools toolsCount=${tools.size} toolNames=${tools.joinToString { it.schema.name }}")
 
         return when (service) {
             Service.Gemini -> {
                 if (tools.isNotEmpty()) {
                     handleGeminiChatWithTools(creds, messages, tools, systemPrompt, history)
                 } else {
+                    println("ToolTrace_ASK: Gemini fallback to no-tools call (tools empty or unsupported)")
                     val geminiMessages = messages.map { it.toGeminiMessageDto() }
                     val response = requests.geminiChat(creds, geminiMessages, systemInstruction = systemPrompt).getOrThrow()
                     response.extractText()
@@ -711,6 +714,7 @@ class RemoteDataRepository(
                 if (tools.isNotEmpty()) {
                     handleAnthropicChatWithTools(creds, messages, tools, systemPrompt, history)
                 } else {
+                    println("ToolTrace_ASK: Anthropic fallback to no-tools call (tools empty or unsupported)")
                     val anthropicMessages = buildAnthropicMessages(messages)
                     val response = requests.anthropicChat(creds, anthropicMessages, systemInstruction = systemPrompt).getOrThrow()
                     response.extractText()
@@ -718,6 +722,9 @@ class RemoteDataRepository(
             }
 
             else -> {
+                if (tools.isEmpty()) {
+                    println("ToolTrace_ASK: OpenAI fallback to no-tools path (tools empty)")
+                }
                 handleOpenAICompatibleChatWithTools(service, creds, messages, tools, systemPrompt, history)
             }
         }

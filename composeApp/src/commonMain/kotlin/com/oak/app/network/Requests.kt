@@ -542,7 +542,7 @@ class Requests {
                 required = schema.parameters.filter { it.value.required }.keys.toList(),
             ),
         ),
-    )
+    ).also { println("ToolTrace_REQ: toRequestTool name=${it.function.name} descLen=${it.function.description?.length}") }
 
     private fun Tool.toAnthropicTool(): AnthropicChatRequestDto.Tool = AnthropicChatRequestDto.Tool(
         name = schema.name,
@@ -557,7 +557,7 @@ class Requests {
             },
             required = schema.parameters.filter { it.value.required }.keys.toList(),
         ),
-    )
+    ).also { println("ToolTrace_REQ: toAnthropicTool name=${it.name} descLen=${it.description?.length}") }
 
     private fun Tool.toGeminiTool(): GeminiTool = GeminiTool(
         functionDeclarations = listOf(
@@ -576,7 +576,11 @@ class Requests {
                 ),
             ),
         ),
-    )
+    ).also { geminiTool ->
+        geminiTool.functionDeclarations.forEach { fd ->
+            println("ToolTrace_REQ: toGeminiTool name=${fd.name} descLen=${fd.description?.length}")
+        }
+    }
 
     // endregion
 }
