@@ -938,7 +938,7 @@ class RemoteDataRepository(
             while (true) {
                 iteration++
                 if (iteration > maxToolIterations()) {
-                    return makeFinalCallWithoutTools(service, credentials, currentMessages)
+                    return makeFinalCallWithoutTools(service, credentials, currentMessages, tools)
                 }
 
                 _streamingContent.value = null
@@ -1034,7 +1034,7 @@ class RemoteDataRepository(
 
                 val signatures = toolCalls.map { "${it.function.name}:${it.function.arguments.hashCode()}" }
                 if (isRepeatingToolCalls(recentSignatures, signatures)) {
-                    return makeFinalCallWithoutTools(service, credentials, currentMessages)
+                    return makeFinalCallWithoutTools(service, credentials, currentMessages, tools)
                 }
                 recentSignatures.addAll(signatures)
 
@@ -1092,7 +1092,7 @@ class RemoteDataRepository(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             try {
-                return makeFinalCallWithoutTools(service, credentials, currentMessages)
+                return makeFinalCallWithoutTools(service, credentials, currentMessages, tools)
             } catch (e2: Exception) {
                 if (e2 is CancellationException) throw e2
                 return ""
@@ -1110,14 +1110,14 @@ class RemoteDataRepository(
                 iteration++
 
                 if (iteration > maxToolIterations()) {
-                    // Bail out: make a final Gemini call without tools
                     val currentMessages = history.value.filter { it.role != History.Role.TOOL_EXECUTING }
                     val geminiMessages = currentMessages.map { it.toGeminiMessageDto() }
                     val bailoutResponse = retryApiCall {
                         requests.geminiChat(
                             credentials = credentials,
                             messages = geminiMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            tools = tools,
+                            systemInstruction = systemPrompt,
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1165,7 +1165,8 @@ class RemoteDataRepository(
                         requests.geminiChat(
                             credentials = credentials,
                             messages = bailoutMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            tools = tools,
+                            systemInstruction = systemPrompt,
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1221,6 +1222,7 @@ class RemoteDataRepository(
                     requests.geminiChat(
                         credentials = credentials,
                         messages = geminiMessages,
+                        tools = tools,
                         systemInstruction = systemPrompt,
                     ).getOrThrow()
                 }
@@ -1379,7 +1381,8 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            tools = tools,
+                            systemInstruction = systemPrompt,
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1425,7 +1428,8 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            tools = tools,
+                            systemInstruction = systemPrompt,
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1482,6 +1486,7 @@ class RemoteDataRepository(
                     requests.anthropicChat(
                         credentials = credentials,
                         messages = currentMessages,
+                        tools = tools,
                         systemInstruction = systemPrompt,
                     ).getOrThrow()
                 }
@@ -1528,25 +1533,25 @@ class RemoteDataRepository(
     }
 
     /**
-     * Makes a final OpenAI-compatible API call without tools, asking the model to summarize.
+     * Makes a final OpenAI-compatible API call without executing tool calls. Unlike regular
+     * loop iterations, this does not inject a synthetic "synthesize" message — the model
+     * responds naturally from context while still seeing the tool definitions (if provided).
+     * Tool calls in the response are discarded; only text content is returned.
      */
     private suspend fun makeFinalCallWithoutTools(
         service: Service,
         credentials: ServiceCredentials,
         messages: List<com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatRequestDto.Message>,
+        tools: List<Tool> = emptyList(),
     ): String {
-        val bailoutMessages = messages.toMutableList().apply {
-            add(
-                com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatRequestDto.Message(
-                    role = "user",
-                    content = JsonPrimitive("Please synthesize your best answer based on the information you have gathered so far."),
-                ),
-            )
-        }
         val response = retryApiCall {
-            requests.openAICompatibleChat(service, credentials, bailoutMessages).getOrThrow()
+            requests.openAICompatibleChat(service, credentials, messages, tools).getOrThrow()
         }
-        return response.choices.firstOrNull()?.message?.effectiveContent ?: ""
+        val choice = response.choices.firstOrNull()
+        val message = choice?.message
+        val text = message?.effectiveContent
+        if (text != null) return text.stripToolMarkup()
+        return ""
     }
 
     /**
