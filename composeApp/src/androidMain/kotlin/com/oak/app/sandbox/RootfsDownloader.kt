@@ -198,6 +198,16 @@ class RootfsDownloader(private val httpClient: HttpClient) {
                 }
 
                 '0', '\u0000' -> {
+                    // Some tarballs mark __pycache__ directories as regular
+                    // file entries. If the path already exists as a directory
+                    // (created by a child entry's parentFile.mkdirs()), skip
+                    // the data rather than crashing with EISDIR.
+                    if (outFile.isDirectory) {
+                        skipBytes(inputStream, size)
+                        val padding = alignToBlock(size) - size
+                        if (padding > 0) skipBytes(inputStream, padding)
+                        continue
+                    }
                     outFile.parentFile?.mkdirs()
                     FileOutputStream(outFile).use { output ->
                         var remaining = size
