@@ -36,7 +36,8 @@ class LinuxSandboxManager(
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var currentJob: Job? = null
+    private var setupJob: Job? = null
+    private var installJob: Job? = null
     private val _state = MutableStateFlow<SandboxState>(SandboxState.NotInstalled)
     private var setupWakeLock: PowerManager.WakeLock? = null
     private var sandboxCompletionNotificationId = 20000
@@ -151,8 +152,8 @@ class LinuxSandboxManager(
     }
 
     fun setup() {
-        if (currentJob?.isActive == true) return
-        currentJob = scope.launch {
+        if (setupJob?.isActive == true) return
+        setupJob = scope.launch {
             try {
                 // Resolve homePath on IO so the lazy init + legacy migration
                 // never blocks the UI thread via shellFor/transcriptFor.
@@ -167,8 +168,8 @@ class LinuxSandboxManager(
     }
 
     fun cancel() {
-        currentJob?.cancel()
-        currentJob = null
+        setupJob?.cancel()
+        setupJob = null
         // Clean up partial downloads — distroManager now owns the archive
         distroManager.cleanupArchive(activeDistroId)
         // Determine correct state based on what exists
@@ -203,7 +204,8 @@ class LinuxSandboxManager(
 
             // Download and extract rootfs via distro manager
             val rootfsDir = distroManager.rootfsDir(env.id)
-            if (!rootfsDir.isDirectory) {
+            val needsDownload = !rootfsDir.isDirectory
+            if (needsDownload) {
                 try {
                     updateSandboxSetupNotification("Downloading ${env.displayName}...")
                     _state.value = SandboxState.Downloading(0f, env.id)
@@ -246,11 +248,53 @@ class LinuxSandboxManager(
                 }
             }
 
+            // Install default packages automatically when this is a fresh download.
+            // This happens inside the same setup coroutine so there is no race
+            // with separate installPackages() job tracking.
+            if (needsDownload) {
+                installDefaultPackages(executor, env)
+            }
+
             _state.value = SandboxState.Ready
             postSandboxCompleteNotification("${env.displayName} setup complete")
         } finally {
             stopSandboxForegroundService()
             releaseSetupWakeLock()
+        }
+    }
+
+    /** Install default packages for [env] using [executor]. */
+    private suspend fun installDefaultPackages(
+        executor: ProotExecutor,
+        env: SandboxEnvironment,
+    ) {
+        val pm = env.packageManager
+        val packages = env.defaultPackages
+        updateSandboxSetupNotification("Updating package lists...")
+        _state.value = SandboxState.Installing("Updating package lists...")
+        val updateResult = executor.execute(pm.update(), timeoutSeconds = 300)
+        val updateSuccess = updateResult["success"] as? Boolean ?: false
+        if (!updateSuccess) {
+            val stderr = updateResult["stderr"] as? String ?: ""
+            android.util.Log.w("LinuxSandbox", "Package list update failed: $stderr")
+        }
+
+        for (pkg in packages) {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            updateSandboxSetupNotification("Installing $pkg...")
+            _state.value = SandboxState.Installing("Installing $pkg...")
+            val result = executor.execute(pm.install(pkg), timeoutSeconds = 300)
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            val success = result["success"] as? Boolean ?: false
+            if (!success) {
+                val stderr = result["stderr"] as? String ?: ""
+                val stdout = result["stdout"] as? String ?: ""
+                val error = result["error"] as? String ?: ""
+                val timedOut = result["timed_out"] as? Boolean ?: false
+                val exitCode = result["exit_code"] as? Int ?: -1
+                android.util.Log.e("LinuxSandbox", "Failed to install $pkg: exit=$exitCode timedOut=$timedOut error=$error stdout=$stdout stderr=$stderr")
+                return
+            }
         }
     }
 
@@ -348,11 +392,11 @@ class LinuxSandboxManager(
     }
 
     fun installPackages() {
-        if (currentJob?.isActive == true) return
+        if (installJob?.isActive == true || setupJob?.isActive == true) return
         val env = activeEnvironment
         val pm = env.packageManager
         val packages = env.defaultPackages
-        currentJob = scope.launch {
+        installJob = scope.launch {
             startSandboxForegroundService("Installing packages...")
             acquireSetupWakeLock()
             try {

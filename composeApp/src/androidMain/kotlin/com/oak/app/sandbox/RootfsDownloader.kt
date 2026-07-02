@@ -120,7 +120,6 @@ class RootfsDownloader(private val httpClient: HttpClient) {
         val headerBuffer = ByteArray(TAR_BLOCK_SIZE)
         val dataBuffer = ByteArray(BUFFER_SIZE)
         var stripPrefix: String? = null
-        var stripPrefixChecked = false
 
         while (true) {
             val headerBytesRead = readFully(inputStream, headerBuffer)
@@ -143,16 +142,18 @@ class RootfsDownloader(private val httpClient: HttpClient) {
             // Detect and strip the common top-level directory prefix used in
             // some rootfs tarballs (e.g. proot-distro wraps entries in a
             // directory named debian-trixie-aarch64/ or ubuntu-plucky-aarch64/).
-            // The Alpine minirootfs tarball uses ./ and does not trigger this.
-            if (!stripPrefixChecked) {
-                stripPrefixChecked = true
-                if (typeFlag.toInt().toChar() == '5' && fullName != "." && fullName != "./") {
-                    stripPrefix = fullName.trimEnd('/')
-                    // Skip the top-level directory itself (its children will be
-                    // reassembled at the root of targetDir via prefix stripping).
-                    skipBytes(inputStream, alignToBlock(size))
-                    continue
-                }
+            // The Alpine minirootfs tarball has entries like `.`, `./etc/`,
+            // `./bin/`, etc. which do not trigger this.
+            val cleanName = fullName.trimEnd('/')
+            if (stripPrefix == null &&
+                typeFlag.toInt().toChar() == '5' &&
+                cleanName != "." && !cleanName.startsWith("./") && !cleanName.contains('/')
+            ) {
+                stripPrefix = cleanName
+                // Skip the top-level directory itself (its children will be
+                // reassembled at the root of targetDir via prefix stripping).
+                skipBytes(inputStream, alignToBlock(size))
+                continue
             }
 
             // Apply prefix stripping to every subsequent entry
