@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent.inject
@@ -200,6 +201,14 @@ class AndroidSandboxController : SandboxController {
         // Switch to the target distro, then setup will download its rootfs
         sandboxManager.switchDistro(id)
         sandboxManager.setup()
+        // After setup completes (rootfs extracted + first-boot commands run),
+        // trigger default package installation so the distro is immediately usable.
+        scope.launch {
+            sandboxManager.state.first { it is SandboxState.Ready || it is SandboxState.Error }
+            if (sandboxManager.state.value is SandboxState.Ready) {
+                sandboxManager.installPackages()
+            }
+        }
     }
 
     override fun removeDistro(id: String) {

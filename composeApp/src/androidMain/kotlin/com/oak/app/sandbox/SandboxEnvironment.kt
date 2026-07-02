@@ -157,7 +157,7 @@ sealed class SandboxEnvironment(
             )
 
         override val installedCheckPaths: List<String>
-            get() = listOf("usr/bin/python3", "usr/bin/ssh")
+            get() = listOf("usr/bin/python", "usr/bin/ssh")
 
         override fun mapArch(arch: String): String = when (arch) {
             "armhf" -> "arm"

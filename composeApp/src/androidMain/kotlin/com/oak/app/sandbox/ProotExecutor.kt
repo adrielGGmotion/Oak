@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private const val MAX_OUTPUT_LENGTH = 15_000
 private const val DEFAULT_TIMEOUT_SECONDS = 30L
-private const val MAX_TIMEOUT_SECONDS = 180L
+private const val MAX_TIMEOUT_SECONDS = 300L
 
 class ProotHandle internal constructor(
     private val process: Process,
@@ -155,7 +155,7 @@ class ProotExecutor(
         "-0",
         "-w", workingDir,
         "/bin/sh", "-c",
-        "ulimit -t 120 -v 268435456 -u 100 2>/dev/null; $command",
+        "ulimit -t 120 -v 4294967296 -u 512 2>/dev/null; $command",
     )
 
     private fun buildEnvVars(extraEnv: Map<String, String>): Array<String> {

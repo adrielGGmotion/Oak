@@ -237,7 +237,7 @@ class LinuxSandboxManager(
             for (cmd in env.firstBootCommands) {
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 updateSandboxSetupNotification("Running: ${cmd.take(60)}...")
-                val result = executor.execute(cmd, timeoutSeconds = 120)
+                val result = executor.execute(cmd, timeoutSeconds = 300)
                 val success = result["success"] as? Boolean ?: false
                 if (!success) {
                     val stderr = result["stderr"] as? String ?: ""
@@ -364,7 +364,7 @@ class LinuxSandboxManager(
                 // already-downloaded distro whose caches are stale.
                 updateSandboxSetupNotification("Updating package lists...")
                 _state.value = SandboxState.Installing("Updating package lists...")
-                val updateResult = executor.execute(pm.update(), timeoutSeconds = 120)
+                val updateResult = executor.execute(pm.update(), timeoutSeconds = 300)
                 val updateSuccess = updateResult["success"] as? Boolean ?: false
                 if (!updateSuccess) {
                     val stderr = updateResult["stderr"] as? String ?: ""
@@ -377,7 +377,7 @@ class LinuxSandboxManager(
                     ensureActive()
                     updateSandboxSetupNotification("Installing $pkg...")
                     _state.value = SandboxState.Installing("Installing $pkg...")
-                    val result = executor.execute(pm.install(pkg), timeoutSeconds = 120)
+                    val result = executor.execute(pm.install(pkg), timeoutSeconds = 300)
                     ensureActive()
                     val success = result["success"] as? Boolean ?: false
                     if (!success) {
