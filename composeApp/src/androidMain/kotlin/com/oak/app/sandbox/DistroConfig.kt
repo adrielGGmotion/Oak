@@ -25,6 +25,11 @@ data class DistroConfig(
     val basicPackages: List<String>,
     /** Files to check inside rootfs to verify the distro is fully downloaded. */
     val verificationPaths: List<String>,
+    /** Arch name for 32-bit ARM (termux uses "arm", Alpine uses "armhf"). */
+    private val archArm: String = "armhf",
+    /** Arch name for 32-bit x86 (termux uses "i686", Alpine uses "x86"). */
+    private val archX86: String = "x86",
+) {
     /** Architecture names used by this distro's download URLs. */
     fun mapArch(androidAbi: String): String = when {
         androidAbi.startsWith("arm64") -> "aarch64"
@@ -32,12 +37,8 @@ data class DistroConfig(
         androidAbi.startsWith("x86_64") -> "x86_64"
         androidAbi.startsWith("x86") -> archX86
         else -> "aarch64"
-    },
-    /** Arch name for 32-bit ARM (termux uses "arm", Alpine uses "armhf"). */
-    private val archArm: String = "armhf",
-    /** Arch name for 32-bit x86 (termux uses "i686", Alpine uses "x86"). */
-    private val archX86: String = "x86",
-)
+    }
+}
 
 /** Package manager commands for a single distro family. */
 data class PackageManagerDef(
@@ -257,7 +258,7 @@ object DistroConfigs {
                         .replace("\\s*\\[installed\\]\$".toRegex(), "")
                         .trim()
                     val sepIdx = cleaned.indexOf(" ")
-                    if (sepIdx < 0) return@PackageManagerDef cleaned to "" to null
+                    if (sepIdx < 0) return@PackageManagerDef Triple(cleaned, "", null)
                     val name = cleaned.substring(0, sepIdx)
                     val rest = cleaned.substring(sepIdx + 1).trim()
                     val version = rest.takeWhile { !it.isWhitespace() }

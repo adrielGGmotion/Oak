@@ -225,13 +225,17 @@ class LinuxSandboxManager(
                 rootfs.deleteRecursively()
             }
             File(sandboxesDir, distroId).deleteRecursively()
-            // If we removed the active distro, fall back to Alpine
             if (distroId == activeDistroId) {
                 activeDistroId = "alpine"
-                checkActiveDistro()
-            } else {
-                _state.value = _state.value // re-emit current state
             }
+            checkActiveDistro()
+            // MutableStateFlow skips emission when the value equals the
+            // previous one (equality check). For non-active distro removals
+            // the state hasn't changed, so force a re-emission to let the
+            // UI refresh distro availability.
+            val current = _state.value
+            _state.value = SandboxState.NotInstalled
+            _state.value = current
         }
     }
 
