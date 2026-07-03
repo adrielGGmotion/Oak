@@ -1531,10 +1531,12 @@ class RemoteDataRepository(
     }
 
     /**
-     * Makes a final OpenAI-compatible API call without executing tool calls. Unlike regular
-     * loop iterations, this does not inject a synthetic "synthesize" message — the model
-     * responds naturally from context while still seeing the tool definitions (if provided).
-     * Tool calls in the response are discarded; only text content is returned.
+     * Makes a final API call that discards any tool calls and returns only text.
+     *
+     * First attempts with [tools] still visible so the model doesn't hallucinate
+     * about missing tools. If the model returns only tool calls (no text), falls
+     * back to a call without tools and a synthesise instruction so the user always
+     * gets a text response.
      */
     private suspend fun makeFinalCallWithoutTools(
         service: Service,
@@ -1542,14 +1544,27 @@ class RemoteDataRepository(
         messages: List<com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatRequestDto.Message>,
         tools: List<Tool> = emptyList(),
     ): String {
-        val response = retryApiCall {
+        // Try with tools first — model sees tool definitions and can respond naturally.
+        val firstResponse = retryApiCall {
             requests.openAICompatibleChat(service, credentials, messages, tools).getOrThrow()
         }
-        val choice = response.choices.firstOrNull()
-        val message = choice?.message
-        val text = message?.effectiveContent
-        if (text != null) return text.stripToolMarkup()
-        return ""
+        val firstText = firstResponse.choices.firstOrNull()?.message?.effectiveContent
+        if (firstText != null) return firstText.stripToolMarkup()
+
+        // Model returned only tool calls — retry without tools so it must respond in text.
+        val fallbackMessages = messages.toMutableList().apply {
+            add(
+                com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatRequestDto.Message(
+                    role = "user",
+                    content = JsonPrimitive("Please synthesize your best answer based on the information you have gathered so far."),
+                ),
+            )
+        }
+        val fallbackResponse = retryApiCall {
+            requests.openAICompatibleChat(service, credentials, fallbackMessages).getOrThrow()
+        }
+        return fallbackResponse.choices.firstOrNull()?.message?.effectiveContent
+            ?.stripToolMarkup() ?: ""
     }
 
     /**
