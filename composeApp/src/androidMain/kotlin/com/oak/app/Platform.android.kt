@@ -266,7 +266,6 @@ actual fun getAvailableTools(): List<Tool> {
     val emailStore: EmailStore by inject(EmailStore::class.java)
 
     return buildList {
-        android.util.Log.d("ToolTrace", "getAvailableTools() called, isSandboxEnabled=${appSettings.isSandboxEnabled()}")
         if (appSettings.isMemoryEnabled()) {
             addAll(CommonTools.getMemoryTools(memoryStore))
         }
@@ -540,7 +539,6 @@ actual fun getAvailableTools(): List<Tool> {
             }
         }
 
-        android.util.Log.d("ToolTrace", "getAvailableTools() returning ${this.size} tools: ${this.joinToString { it.schema.name }}")
     }
 }
 

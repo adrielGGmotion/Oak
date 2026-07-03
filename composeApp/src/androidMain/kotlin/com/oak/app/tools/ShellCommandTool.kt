@@ -51,9 +51,7 @@ object ShellCommandTool : Tool {
         val command = args["command"] as? String
             ?: return mapOf("success" to false, "error" to "Command is required")
 
-        val state = sandboxManager.state.value
-        android.util.Log.d("ToolTrace", "ShellCommandTool.execute() called, sandboxState=${state::class.simpleName} command='${command.take(100)}'")
-        if (state !is SandboxState.Ready) {
+        if (sandboxManager.state.value !is SandboxState.Ready) {
             return mapOf("success" to false, "error" to "Linux sandbox is not installed. Set it up in Settings > Tools.")
         }
 

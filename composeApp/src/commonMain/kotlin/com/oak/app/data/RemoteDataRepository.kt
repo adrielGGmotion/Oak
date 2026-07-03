@@ -238,10 +238,12 @@ class RemoteDataRepository(
     }
 
     /** Max iterations before forcing a text-only response. 500 = effectively unlimited. */
-    private fun maxToolIterations(): Int = if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_TOOL_ITERATIONS else MAX_TOOL_ITERATIONS
+    private fun maxToolIterations(): Int =
+        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_TOOL_ITERATIONS else MAX_TOOL_ITERATIONS
 
     /** Max repeated tool-call sequences before bailing out. 100 = effectively unlimited. */
-    private fun maxRepeatedToolCalls(): Int = if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_REPEATED_TOOL_CALLS else MAX_REPEATED_TOOL_CALLS
+    private fun maxRepeatedToolCalls(): Int =
+        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_REPEATED_TOOL_CALLS else MAX_REPEATED_TOOL_CALLS
 
     override fun isStreamingEnabled(): Boolean = appSettings.isStreamingEnabled()
 
@@ -692,16 +694,13 @@ class RemoteDataRepository(
         }
 
         val creds = instanceCredentials(instanceId, service)
-        val supportsTools = supportsTools(creds.modelId)
-        val tools = if (supportsTools) getAvailableTools() else emptyList()
-        println("ToolTrace_ASK: service=${service.id} model=${creds.modelId} supportsTools=$supportsTools toolsCount=${tools.size} toolNames=${tools.joinToString { it.schema.name }}")
+        val tools = if (supportsTools(creds.modelId)) getAvailableTools() else emptyList()
 
         return when (service) {
             Service.Gemini -> {
                 if (tools.isNotEmpty()) {
                     handleGeminiChatWithTools(creds, messages, tools, systemPrompt, history)
                 } else {
-                    println("ToolTrace_ASK: Gemini fallback to no-tools call (tools empty or unsupported)")
                     val geminiMessages = messages.map { it.toGeminiMessageDto() }
                     val response = requests.geminiChat(creds, geminiMessages, systemInstruction = systemPrompt).getOrThrow()
                     response.extractText()
@@ -712,7 +711,6 @@ class RemoteDataRepository(
                 if (tools.isNotEmpty()) {
                     handleAnthropicChatWithTools(creds, messages, tools, systemPrompt, history)
                 } else {
-                    println("ToolTrace_ASK: Anthropic fallback to no-tools call (tools empty or unsupported)")
                     val anthropicMessages = buildAnthropicMessages(messages)
                     val response = requests.anthropicChat(creds, anthropicMessages, systemInstruction = systemPrompt).getOrThrow()
                     response.extractText()
@@ -720,9 +718,6 @@ class RemoteDataRepository(
             }
 
             else -> {
-                if (tools.isEmpty()) {
-                    println("ToolTrace_ASK: OpenAI fallback to no-tools path (tools empty)")
-                }
                 handleOpenAICompatibleChatWithTools(service, creds, messages, tools, systemPrompt, history)
             }
         }
@@ -936,7 +931,7 @@ class RemoteDataRepository(
             while (true) {
                 iteration++
                 if (iteration > maxToolIterations()) {
-                    return makeFinalCallWithoutTools(service, credentials, currentMessages, tools)
+                    return makeFinalCallWithoutTools(service, credentials, currentMessages)
                 }
 
                 _streamingContent.value = null
@@ -1032,7 +1027,7 @@ class RemoteDataRepository(
 
                 val signatures = toolCalls.map { "${it.function.name}:${it.function.arguments.hashCode()}" }
                 if (isRepeatingToolCalls(recentSignatures, signatures)) {
-                    return makeFinalCallWithoutTools(service, credentials, currentMessages, tools)
+                    return makeFinalCallWithoutTools(service, credentials, currentMessages)
                 }
                 recentSignatures.addAll(signatures)
 
@@ -1090,7 +1085,7 @@ class RemoteDataRepository(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             try {
-                return makeFinalCallWithoutTools(service, credentials, currentMessages, tools)
+                return makeFinalCallWithoutTools(service, credentials, currentMessages)
             } catch (e2: Exception) {
                 if (e2 is CancellationException) throw e2
                 return ""
@@ -1527,11 +1522,6 @@ class RemoteDataRepository(
     /**
      * Makes a final API call that discards any tool calls and returns only text.
      *
-     * Crucially, [tools] is NOT passed to the API. When tools are visible some
-     * models respond with only tool calls and no text content, producing an empty
-     * response. The conversation history already contains the tool calls and their
-     * results, so the model can see what was done.
-     *
      * We inject a user message that explicitly acknowledges tools were available
      * and used — this prevents models from hallucinating "I don't have the
      * execute_shell_command tool" when they see no tool definitions in the request.
@@ -1540,7 +1530,6 @@ class RemoteDataRepository(
         service: Service,
         credentials: ServiceCredentials,
         messages: List<com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatRequestDto.Message>,
-        @Suppress("UNUSED_PARAMETER") tools: List<Tool> = emptyList(),
     ): String {
         val finalMessages = messages.toMutableList().apply {
             add(
