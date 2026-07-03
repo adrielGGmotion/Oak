@@ -13,7 +13,7 @@ import oak.composeapp.generated.resources.tool_execute_shell_command_description
 import oak.composeapp.generated.resources.tool_execute_shell_command_name
 import org.koin.java.KoinJavaComponent.inject
 
-private const val TOOL_DESCRIPTION = """Execute a shell command in an Alpine Linux sandbox and return stdout, stderr, exit code, and current working directory. The environment is a full Alpine Linux system running via proot.
+private const val TOOL_DESCRIPTION = """Execute a shell command in a Linux sandbox and return stdout, stderr, exit code, and current working directory. The environment is a full Linux system running via proot.
 
 Shell session is PERSISTENT across calls within THIS conversation: cwd, exported environment variables, and any in-shell state carry from one call to the next, just like a normal terminal. So "cd /tmp" in one call, then "pwd" in the next, returns "/tmp". You do NOT need to chain "cd dir && command" unless you want directory changes to be one-shot. Other conversations and the in-app Terminal tab each have their own isolated shells; the rootfs and /root are still shared on disk, so files persist across all of them.
 
@@ -24,9 +24,9 @@ Limits and behavior:
 - Default timeout: 30s, max: 60s. Long-running interactive commands (e.g. ssh sessions held across messages) work because the shell is persistent — but a SINGLE call still hits the timeout if it doesn't return.
 - Fullscreen TUIs (top, htop, vim, less, nano, anything ncurses) WILL NOT WORK — the sandbox has no PTY. Use non-interactive variants: "top -bn1" for a one-shot snapshot, "ps aux" for processes, redirect editor output, etc.
 - Set background=true to run a long-lived process detached from the shell (writes to its own session_id). Use manage_process to check on it.
-- Set fresh=true to run in a one-shot isolated shell that doesn't share state with the persistent session. Useful when you specifically want isolation; rarely needed.
+- Set fresh=true to run a one-shot isolated shell that doesn't share state with the persistent session. Useful when you specifically want isolation; rarely needed.
 
-Install extra packages with: apk add <package>
+Install extra packages using the sandbox's package manager (varies by distro).
 
 To show a file you produced in /root to the user, call open_file with the path relative to /root (e.g. open_file path="page.html"). File needs to be self-contained."""
 

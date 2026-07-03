@@ -6,6 +6,8 @@ import android.os.Environment
 import android.os.storage.StorageManager
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.oak.app.data.StorageVolume
+import com.oak.app.sandbox.Distro
+import com.oak.app.sandbox.DistroConfigs
 import com.oak.app.sandbox.LinuxSandboxManager
 import com.oak.app.sandbox.SandboxState
 import com.oak.app.sandbox.SessionShell
@@ -176,6 +178,52 @@ class AndroidSandboxController : SandboxController {
 
     override fun installPackages() {
         sandboxManager.installPackages()
+    }
+
+    override fun getActiveDistroId(): String = sandboxManager.activeDistroId
+
+    override fun setActiveDistro(distroId: String) {
+        sandboxManager.setActiveDistro(distroId)
+    }
+
+    override fun getAllDistroStates(): List<DistroState> = sandboxManager.getAllDistroStates()
+
+    override fun downloadDistro(distroId: String) {
+        sandboxManager.downloadDistro(distroId)
+    }
+
+    override fun removeDistro(distroId: String) {
+        sandboxManager.removeDistro(distroId)
+    }
+
+    override fun getPackageInstallCmd(): String {
+        val cfg = DistroConfigs.forDistro(Distro.fromId(sandboxManager.activeDistroId))
+        return cfg.packageManager.install
+    }
+
+    override fun getPackageUninstallCmd(): String {
+        val cfg = DistroConfigs.forDistro(Distro.fromId(sandboxManager.activeDistroId))
+        return cfg.packageManager.uninstall
+    }
+
+    override fun getPackageSearchCmd(): String {
+        val cfg = DistroConfigs.forDistro(Distro.fromId(sandboxManager.activeDistroId))
+        return cfg.packageManager.search
+    }
+
+    override fun getPackageListInstalledCmd(): String {
+        val cfg = DistroConfigs.forDistro(Distro.fromId(sandboxManager.activeDistroId))
+        return cfg.packageManager.listInstalled
+    }
+
+    override fun getPackageUpdateCmd(): String {
+        val cfg = DistroConfigs.forDistro(Distro.fromId(sandboxManager.activeDistroId))
+        return cfg.packageManager.update
+    }
+
+    override fun getPackageUpgradeCmd(): String {
+        val cfg = DistroConfigs.forDistro(Distro.fromId(sandboxManager.activeDistroId))
+        return cfg.packageManager.upgrade
     }
 
     override fun closeSession(sessionId: String) {

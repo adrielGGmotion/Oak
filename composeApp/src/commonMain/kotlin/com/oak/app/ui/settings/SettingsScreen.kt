@@ -107,6 +107,7 @@ import com.oak.app.data.HeartbeatLogEntry
 import com.oak.app.data.ImportSection
 import com.oak.app.data.MemoryEntry
 import com.oak.app.data.ScheduledTask
+import com.oak.app.DistroState
 import com.oak.app.data.Service
 import com.oak.app.data.SharedJson
 import com.oak.app.data.TaskTrigger
@@ -329,6 +330,8 @@ fun SettingsScreen(
         onCancelSandbox = sandboxViewModel::onCancelSandbox,
         onResetSandbox = sandboxViewModel::onResetSandbox,
         onInstallPackages = sandboxViewModel::onInstallPackages,
+        onSelectDistro = sandboxViewModel::onSelectDistro,
+        onRemoveDistro = sandboxViewModel::onRemoveDistro,
         onNavigateBack = onNavigateBack,
         navigationTabBar = navigationTabBar,
     )
@@ -344,6 +347,8 @@ fun SettingsScreenContent(
     onCancelSandbox: () -> Unit = {},
     onResetSandbox: () -> Unit = {},
     onInstallPackages: () -> Unit = {},
+    onSelectDistro: (String) -> Unit = {},
+    onRemoveDistro: (String) -> Unit = {},
     onNavigateBack: () -> Unit = {},
     navigationTabBar: (@Composable () -> Unit)? = null,
     terminalPreviewLines: ImmutableList<TerminalLine> = persistentListOf(),
@@ -485,6 +490,8 @@ fun SettingsScreenContent(
                                     onCancelSandbox = onCancelSandbox,
                                     onResetSandbox = onResetSandbox,
                                     onInstallPackages = onInstallPackages,
+                                    onSelectDistro = onSelectDistro,
+                                    onRemoveDistro = onRemoveDistro,
                                 )
                                 Spacer(Modifier.height(8.dp))
                                 DeviceStorageCard(
@@ -542,17 +549,27 @@ private fun SandboxSettingsCard(
     onCancelSandbox: () -> Unit,
     onResetSandbox: () -> Unit,
     onInstallPackages: () -> Unit,
+    onSelectDistro: (String) -> Unit = {},
+    onRemoveDistro: (String) -> Unit = {},
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
+    var distroMenuExpanded by remember { mutableStateOf(false) }
+
+    val activeDistroName = distroDisplayName(sandboxState.activeDistroId)
+
     SettingsCard {
+        // Distro selector row
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .handCursor()
+                .clickable { distroMenuExpanded = true },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Alpine Linux",
+                    text = activeDistroName,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
@@ -573,14 +590,85 @@ private fun SandboxSettingsCard(
                     )
                 }
             }
-            if (sandboxState.sandboxReady) {
-                Switch(
-                    checked = sandboxState.isSandboxEnabled,
-                    onCheckedChange = onToggleSandbox,
+            Row(verticalAlignment = CenterVertically) {
+                if (sandboxState.sandboxReady) {
+                    Switch(
+                        checked = sandboxState.isSandboxEnabled,
+                        onCheckedChange = onToggleSandbox,
+                    )
+                    Spacer(Modifier.width(4.dp))
+                }
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Select distribution",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
 
+        // Distro dropdown menu
+        DropdownMenu(
+            expanded = distroMenuExpanded,
+            onDismissRequest = { distroMenuExpanded = false },
+        ) {
+            sandboxState.distroStates.forEach { ds ->
+                val label = distroDisplayName(ds.distroId)
+                val statusLabel = when {
+                    ds.isActive -> "Active"
+                    ds.isDownloaded -> "Downloaded"
+                    else -> "Not downloaded"
+                }
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(label, style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    statusLabel,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (ds.isActive) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Active",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(start = 8.dp),
+                                )
+                            } else if (ds.isDownloaded) {
+                                IconButton(
+                                    onClick = {
+                                        distroMenuExpanded = false
+                                        onRemoveDistro(ds.distroId)
+                                    },
+                                    modifier = Modifier.size(32.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove",
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    onClick = {
+                        if (!ds.isActive) {
+                            distroMenuExpanded = false
+                            onSelectDistro(ds.distroId)
+                        }
+                    },
+                    enabled = !ds.isActive,
+                )
+            }
+        }
+
+        // Progress/error section
         if (sandboxState.sandboxProgress != null) {
             SandboxProgressRow(sandboxState.sandboxProgress, sandboxState.sandboxStatusText, onCancelSandbox)
         } else if (sandboxState.isWorking) {
@@ -594,6 +682,7 @@ private fun SandboxSettingsCard(
             )
         }
 
+        // Action buttons
         if (!sandboxState.isWorking) {
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -641,6 +730,14 @@ private fun SandboxSettingsCard(
             },
         )
     }
+}
+
+private fun distroDisplayName(distroId: String): String = when (distroId) {
+    "alpine" -> "Alpine Linux"
+    "debian" -> "Debian"
+    "ubuntu" -> "Ubuntu"
+    "arch" -> "Arch Linux"
+    else -> distroId.replaceFirstChar { it.uppercase() }
 }
 
 @Composable

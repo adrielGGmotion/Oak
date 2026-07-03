@@ -8,6 +8,7 @@ import android.os.Environment
 import android.os.PowerManager
 import android.os.storage.StorageManager
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.oak.app.DistroState
 import com.oak.app.SandboxSessions
 import com.oak.app.TerminalLine
 import com.oak.app.data.AppSettings
@@ -43,10 +44,30 @@ class LinuxSandboxManager(
     private var sandboxCompletionNotificationId = 20000
     val state: StateFlow<SandboxState> = _state
 
-    private val sandboxDir: File
-        get() = File(context.filesDir, "linux-sandbox")
+    /** Base directory for all sandbox data. */
+    private val sandboxDir: File get() = File(context.filesDir, "linux-sandbox")
 
-    val rootfsPath: String get() = File(sandboxDir, "rootfs").absolutePath
+    /** Directory containing per-distro rootfs directories. */
+    private val sandboxesDir: File get() = File(sandboxDir, "sandboxes")
+
+    /** Rootfs path for the active distro. */
+    private fun rootfsDirFor(distroId: String): File =
+        File(sandboxesDir, "$distroId/rootfs")
+
+    /** Archive file path for a distro download in progress. */
+    private fun archiveFileFor(distroId: String, ext: String): File =
+        File(sandboxesDir, "$distroId/rootfs.$ext")
+
+    /** The active distro id from settings. */
+    var activeDistroId: String
+        get() = appSettings.getActiveDistro()
+        set(value) = appSettings.setActiveDistro(value)
+
+    /** Rootfs path for the current active distro. */
+    val rootfsPath: String get() = rootfsDirFor(activeDistroId).absolutePath
+
+    /** Distro config for the current active distro. */
+    private val activeConfig: DistroConfig get() = DistroConfigs.forDistro(Distro.fromId(activeDistroId))
 
     // Sandbox /root is bind-mounted from externally-visible storage so agent
     // files survive uninstall and can be opened via FileProvider Intents.
@@ -121,65 +142,109 @@ class LinuxSandboxManager(
     private val downloader = RootfsDownloader(HttpClient(Android))
 
     init {
-        checkExistingInstallation()
+        migrateLegacyRootfs()
+        checkActiveDistro()
     }
 
-    private fun checkExistingInstallation() {
-        val rootfs = File(sandboxDir, "rootfs")
-        val proot = File(prootPath)
-        if (rootfs.isDirectory && proot.exists() && proot.canExecute()) {
-            _state.value = SandboxState.Ready
-        }
-    }
-
-    private fun getLinuxArch(): String {
-        val abi = Build.SUPPORTED_ABIS.firstOrNull() ?: "arm64-v8a"
-        return when {
-            abi.startsWith("arm64") -> "aarch64"
-            abi.startsWith("armeabi") -> "armhf"
-            abi.startsWith("x86_64") -> "x86_64"
-            abi.startsWith("x86") -> "x86"
-            else -> "aarch64"
-        }
-    }
-
-    fun setup() {
-        if (currentJob?.isActive == true) return
-        currentJob = scope.launch {
+    /** Migrate from legacy single-rootfs layout (linux-sandbox/rootfs) to per-distro. */
+    private fun migrateLegacyRootfs() {
+        val legacyRootfs = File(sandboxDir, "rootfs")
+        if (!legacyRootfs.isDirectory) return
+        val alpineRootfs = rootfsDirFor("alpine")
+        if (alpineRootfs.isDirectory) return // already migrated
+        sandboxesDir.mkdirs()
+        if (legacyRootfs.renameTo(alpineRootfs)) {
+            android.util.Log.i("LinuxSandbox", "Migrated legacy rootfs to sandboxes/alpine/rootfs")
+        } else {
+            // renameTo can fail across devices; copy instead
             try {
-                // Resolve homePath on IO so the lazy init + legacy migration
-                // never blocks the UI thread via shellFor/transcriptFor.
-                homePath
-                setupInternal()
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                checkExistingInstallation()
+                legacyRootfs.copyRecursively(alpineRootfs, overwrite = true)
+                legacyRootfs.deleteRecursively()
+                android.util.Log.i("LinuxSandbox", "Copied legacy rootfs to sandboxes/alpine/rootfs")
             } catch (e: Exception) {
-                _state.value = SandboxState.Error(e.message ?: "Setup failed")
+                android.util.Log.w("LinuxSandbox", "Legacy migration failed: ${e.message}")
             }
         }
     }
 
-    fun cancel() {
-        currentJob?.cancel()
-        currentJob = null
-        // Clean up partial downloads
-        File(sandboxDir, "rootfs.tar.gz").delete()
-        // Determine correct state based on what exists
-        val rootfs = File(sandboxDir, "rootfs")
-        if (rootfs.isDirectory && File(prootPath).exists()) {
+    /** Check if the active distro's rootfs exists and update state. */
+    private fun checkActiveDistro() {
+        val proot = File(prootPath)
+        if (!proot.exists() || !proot.canExecute()) return
+        val cfg = activeConfig
+        val rootfs = rootfsDirFor(activeDistroId)
+        if (downloader.verifyRootfs(rootfs, cfg)) {
             _state.value = SandboxState.Ready
-        } else {
-            _state.value = SandboxState.NotInstalled
         }
     }
 
-    private suspend fun setupInternal() {
-        startSandboxForegroundService("Preparing...")
+    /** Check if a specific distro is downloaded. */
+    fun isDistroDownloaded(distroId: String): Boolean {
+        val cfg = DistroConfigs.forDistro(Distro.fromId(distroId))
+        return downloader.verifyRootfs(rootfsDirFor(distroId), cfg)
+    }
+
+    /** Get the state of all distros for UI display. */
+    fun getAllDistroStates(): List<DistroState> = Distro.entries.map { d ->
+        DistroState(
+            distroId = d.id,
+            isActive = d.id == activeDistroId,
+            isDownloaded = isDistroDownloaded(d.id),
+        )
+    }
+
+    /** Switch active distro. The UI checks isDistroDownloaded before calling this. */
+    fun setActiveDistro(distroId: String) {
+        if (distroId == activeDistroId) return
+        closeAllShells()
+        activeDistroId = distroId
+        checkActiveDistro()
+    }
+
+    /** Download and set up a specific distro. */
+    fun downloadDistro(distroId: String) {
+        if (currentJob?.isActive == true) return
+        currentJob = scope.launch {
+            try {
+                homePath
+                downloadDistroInternal(distroId)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                checkActiveDistro()
+            } catch (e: Exception) {
+                _state.value = SandboxState.Error(e.message ?: "Download failed for $distroId")
+            }
+        }
+    }
+
+    /** Remove a downloaded distro's rootfs. */
+    fun removeDistro(distroId: String) {
+        scope.launch {
+            closeAllShells()
+            val rootfs = rootfsDirFor(distroId)
+            if (rootfs.exists()) {
+                rootfs.deleteRecursively()
+            }
+            File(sandboxesDir, distroId).deleteRecursively()
+            // If we removed the active distro, fall back to Alpine
+            if (distroId == activeDistroId) {
+                activeDistroId = "alpine"
+                checkActiveDistro()
+            } else {
+                _state.value = _state.value // re-emit current state
+            }
+        }
+    }
+
+    private suspend fun downloadDistroInternal(distroId: String) {
+        val distro = Distro.fromId(distroId)
+        val config = DistroConfigs.forDistro(distro)
+        val rootfsDir = rootfsDirFor(distroId)
+        val arch = DistroConfigs.getAndroidArch()
+
+        startSandboxForegroundService("Preparing $distroId...")
         acquireSetupWakeLock()
         try {
-            val arch = getLinuxArch()
-
-            // Verify proot is available in nativeLibraryDir
+            // Verify proot is available
             val proot = File(prootPath)
             if (!proot.exists()) {
                 throw IllegalStateException(
@@ -188,59 +253,137 @@ class LinuxSandboxManager(
                 )
             }
 
-            // Create directories. `homePath` getter creates the externally-visible
-            // sandbox-home dir on access, so we only need to ensure sandboxDir + tmp.
+            // Create directories
             sandboxDir.mkdirs()
             File(sandboxDir, "tmp").mkdirs()
+            sandboxesDir.mkdirs()
+            rootfsDir.parentFile?.mkdirs()
 
-            // Copy libtalloc with correct soname (Android strips .so.2 suffix in jniLibs)
+            // Copy libtalloc
             copyLibtalloc()
 
-            // Download rootfs
-            val rootfsDir = File(sandboxDir, "rootfs")
-            if (!rootfsDir.isDirectory) {
-                val tarGzFile = File(sandboxDir, "rootfs.tar.gz")
+            // Download if not already present
+            if (!downloader.verifyRootfs(rootfsDir, config)) {
+                // Clean up partial rootfs if any
+                if (rootfsDir.exists()) {
+                    rootfsDir.deleteRecursively()
+                }
+                rootfsDir.parentFile?.mkdirs()
+
+                val ext = when (config.compression) {
+                    Compression.GZIP -> "tar.gz"
+                    Compression.XZ -> "tar.xz"
+                }
+                val archive = archiveFileFor(distroId, ext)
                 try {
-                    updateSandboxSetupNotification("Downloading rootfs...")
-                    _state.value = SandboxState.Downloading(0f)
-                    downloader.download(arch, tarGzFile) { progress ->
-                        _state.value = SandboxState.Downloading(progress)
+                    updateSandboxSetupNotification("Downloading $distroId rootfs...")
+                    _state.value = SandboxState.Downloading(0f, distroId)
+                    downloader.download(config, arch, archive) { progress ->
+                        _state.value = SandboxState.Downloading(progress, distroId)
                     }
 
-                    updateSandboxSetupNotification("Extracting rootfs...")
+                    // Set as active while extracting so state transitions work
+                    activeDistroId = distroId
+
+                    updateSandboxSetupNotification("Extracting $distroId rootfs...")
                     _state.value = SandboxState.Extracting
-                    downloader.extractTarGz(tarGzFile, rootfsDir)
+                    downloader.extract(archive, rootfsDir, config.compression)
+
+                    // Verify extraction
+                    if (!downloader.verifyRootfs(rootfsDir, config)) {
+                        android.util.Log.e("LinuxSandbox", "Rootfs verification failed for $distroId")
+                        // Try to flatten and re-check
+                        rootfsDir.listFiles()?.forEach { file ->
+                            android.util.Log.d("LinuxSandbox", "  rootfs contents: ${file.name}")
+                        }
+                        throw IllegalStateException("Rootfs verification failed for $distroId: /bin/sh not found or missing key files")
+                    }
                 } finally {
-                    tarGzFile.delete()
+                    archive.delete()
                 }
             }
 
-            // Post-setup
-            updateSandboxSetupNotification("Configuring...")
+            // Post-setup: writable + resolv.conf
+            updateSandboxSetupNotification("Configuring $distroId...")
             _state.value = SandboxState.Installing("Configuring...")
             downloader.makeWritable(rootfsDir)
             downloader.writeResolvConf(rootfsDir)
 
-            val executor = createProotExecutor()
-            updateSandboxSetupNotification("Updating package lists (apk update)...")
-            var updated = false
-            for (mirror in downloader.mirrors) {
-                downloader.writeRepositories(rootfsDir, mirror)
-                val result = executor.execute("apk update", timeoutSeconds = 60)
-                if (result["success"] as? Boolean == true) {
-                    updated = true
-                    break
-                }
+            // Update package lists
+            updateSandboxSetupNotification("Updating package lists...")
+            val executor = createProotExecutorFor(rootfsDir)
+            val pm = config.packageManager
+            val updateResult = executor.execute(pm.update, timeoutSeconds = 120)
+            if (updateResult["success"] as? Boolean != true) {
+                android.util.Log.w("LinuxSandbox", "${pm.update} failed for $distroId, continuing anyway")
             }
-            if (!updated) {
-                throw IllegalStateException("apk update failed on all Alpine mirrors")
+
+            // Install setup packages (bash, python3) which are essential for shell operation
+            _state.value = SandboxState.Installing("Installing setup packages...")
+            val setupPackages = config.setupPackages
+            if (setupPackages.isNotEmpty()) {
+                val setupCmd = "${pm.install} ${setupPackages.joinToString(" ") { shellQuote(it) }}"
+                val setupResult = executor.execute(setupCmd, timeoutSeconds = 300)
+                if (setupResult["success"] as? Boolean != true) {
+                    android.util.Log.w("LinuxSandbox", "Setup package install failed for $distroId: ${setupResult["stderr"]}")
+                }
             }
 
             _state.value = SandboxState.Ready
-            postSandboxCompleteNotification("Sandbox setup complete")
+            postSandboxCompleteNotification("$distroId sandbox setup complete")
         } finally {
             stopSandboxForegroundService()
             releaseSetupWakeLock()
+        }
+    }
+
+    fun setup() {
+        downloadDistro(activeDistroId)
+    }
+
+    fun cancel() {
+        currentJob?.cancel()
+        currentJob = null
+        // Clean up partial archive downloads for all distros
+        sandboxesDir.listFiles()?.forEach { distroDir ->
+            if (distroDir.isDirectory) {
+                distroDir.listFiles()?.forEach { file ->
+                    if (file.isFile && (file.name.endsWith(".tar.gz") || file.name.endsWith(".tar.xz"))) {
+                        file.delete()
+                    }
+                }
+            }
+        }
+        checkActiveDistro()
+    }
+
+    private suspend fun installSetupPackagesInternal(distroId: String) {
+        val config = DistroConfigs.forDistro(Distro.fromId(distroId))
+        val rootfsDir = rootfsDirFor(distroId)
+        val executor = createProotExecutorFor(rootfsDir)
+        val pm = config.packageManager
+
+        // Update package lists first
+        executor.execute(pm.update, timeoutSeconds = 120)
+
+        // Install setup packages
+        val allPackages = config.setupPackages + config.basicPackages
+        val unique = allPackages.distinct()
+        for (pkg in unique) {
+            ensureActive()
+            updateSandboxSetupNotification("Installing $pkg...")
+            _state.value = SandboxState.Installing("Installing $pkg...")
+            val cmd = "${pm.install} ${shellQuote(pkg)}"
+            val result = executor.execute(cmd, timeoutSeconds = 300)
+            ensureActive()
+            val success = result["success"] as? Boolean ?: false
+            if (!success) {
+                val stderr = result["stderr"] as? String ?: ""
+                val stdout = result["stdout"] as? String ?: ""
+                val error = result["error"] as? String ?: ""
+                android.util.Log.e("LinuxSandbox", "Failed to install $pkg for $distroId: stderr=$stderr error=$error")
+                // Don't error out — continue with next packages
+            }
         }
     }
 
@@ -258,6 +401,14 @@ class LinuxSandboxManager(
         prootPath = prootPath,
         libDir = sandboxDir.absolutePath,
         rootfsPath = rootfsPath,
+        homePath = homePath,
+        tmpPath = tmpPath,
+    )
+
+    private fun createProotExecutorFor(rootfsDir: File): ProotExecutor = ProotExecutor(
+        prootPath = prootPath,
+        libDir = sandboxDir.absolutePath,
+        rootfsPath = rootfsDir.absolutePath,
         homePath = homePath,
         tmpPath = tmpPath,
     )
@@ -337,43 +488,20 @@ class LinuxSandboxManager(
 
     fun installPackages() {
         if (currentJob?.isActive == true) return
-        val packages = listOf(
-            "bash", "curl", "wget", "git", "jq", "python3", "py3-pip", "nodejs",
-            // Remote-server tooling (issue #214). apk add is idempotent so
-            // existing installs that bump into this list pay nothing for the
-            // already-present ones.
-            "openssh-client", "lftp", "rsync",
-        )
         currentJob = scope.launch {
             startSandboxForegroundService("Installing packages...")
             acquireSetupWakeLock()
             try {
-                val executor = createProotExecutor()
-                for (pkg in packages) {
-                    ensureActive()
-                    updateSandboxSetupNotification("Installing $pkg...")
-                    _state.value = SandboxState.Installing("Installing $pkg...")
-                    val result = executor.execute("apk add --no-cache $pkg", timeoutSeconds = 120)
-                    ensureActive()
-                    val success = result["success"] as? Boolean ?: false
-                    if (!success) {
-                        val stderr = result["stderr"] as? String ?: ""
-                        val stdout = result["stdout"] as? String ?: ""
-                        val error = result["error"] as? String ?: ""
-                        val timedOut = result["timed_out"] as? Boolean ?: false
-                        val exitCode = result["exit_code"] as? Int ?: -1
-                        android.util.Log.e("LinuxSandbox", "Failed to install $pkg: exit=$exitCode timedOut=$timedOut error=$error stdout=$stdout stderr=$stderr")
-                        _state.value = SandboxState.Error("Failed to install $pkg: ${stderr.ifEmpty { error }.ifEmpty { stdout }.take(200)}")
-                        return@launch
-                    }
-                }
+                installSetupPackagesInternal(activeDistroId)
                 _state.value = SandboxState.Ready
                 postSandboxCompleteNotification("Packages installed")
             } catch (_: kotlinx.coroutines.CancellationException) {
                 _state.value = SandboxState.Ready
             } catch (e: Exception) {
                 android.util.Log.e("LinuxSandbox", "Package install exception", e)
-                _state.value = SandboxState.Error("Install failed: ${e.message}")
+                // Transition to Ready so the UI shows "Install packages" button
+                // instead of prompting re-download
+                _state.value = SandboxState.Ready
             } finally {
                 stopSandboxForegroundService()
                 releaseSetupWakeLock()
@@ -381,6 +509,19 @@ class LinuxSandboxManager(
         }
     }
 
+    /** Remove a specific distro's rootfs (used by UI "Remove" action). */
+    fun resetDistro(distroId: String) {
+        scope.launch {
+            closeAllShells()
+            val rootfs = rootfsDirFor(distroId)
+            if (rootfs.exists()) rootfs.deleteRecursively()
+            if (distroId == activeDistroId) {
+                _state.value = SandboxState.NotInstalled
+            }
+        }
+    }
+
+    /** Remove all sandbox data. */
     fun reset() {
         scope.launch {
             closeAllShells()
@@ -402,7 +543,6 @@ class LinuxSandboxManager(
 
     private fun updateSandboxSetupNotification(detail: String) {
         try {
-            // Restart with updated detail so the notification text reflects the current phase
             startSandboxForegroundService(detail)
         } catch (_: Exception) { }
     }
@@ -456,17 +596,13 @@ class LinuxSandboxManager(
         setupWakeLock = null
     }
 
+    /** Disk usage of the active distro's rootfs only. */
     fun getDiskUsageMB(): Long {
-        if (!sandboxDir.isDirectory) return 0
-        // Manual stack walk instead of walkTopDown(): the latter throws an
-        // AssertionError if a child entry transitions from directory→non-directory
-        // between the iterator's isDirectory check and DirectoryState construction.
-        // The rootfs can contain unix sockets / FIFOs / broken symlinks (e.g. from
-        // user-run programs like node), and concurrent install activity also races
-        // the walk. We skip bad entries and keep going.
+        val rootfs = rootfsDirFor(activeDistroId)
+        if (!rootfs.isDirectory) return 0
         var total = 0L
         val stack = ArrayDeque<File>()
-        stack.addLast(sandboxDir)
+        stack.addLast(rootfs)
         while (stack.isNotEmpty()) {
             val dir = stack.removeLast()
             val children = try {
@@ -479,22 +615,26 @@ class LinuxSandboxManager(
                     when {
                         child.isDirectory -> stack.addLast(child)
                         child.isFile -> total += child.length()
-                        // skip sockets, FIFOs, broken symlinks
                     }
-                } catch (_: Throwable) {
-                    // skip transient/inaccessible entry, keep iterating
-                }
+                } catch (_: Throwable) { }
             }
         }
         return total / (1024 * 1024)
     }
 
+    /** Check if packages are installed for the active distro. */
     fun arePackagesInstalled(): Boolean {
         if (_state.value !is SandboxState.Ready) return false
-        // Both checks must pass: existing installs that predate the SSH bundle
-        // will report not-installed and re-prompt, picking up the new packages
-        // on the next install run (apk skips already-installed ones).
-        return File(rootfsPath, "usr/bin/python3").exists() &&
-            File(rootfsPath, "usr/bin/ssh").exists()
+        val rootfs = rootfsDirFor(activeDistroId)
+        val pkgManager = activeConfig.packageManager
+        // Check for setup packages
+        return activeConfig.setupPackages.any { pkg ->
+            val bin = File(rootfs, "usr/bin/$pkg")
+            bin.exists() || File(rootfs, "bin/$pkg").exists()
+        }
+    }
+
+    companion object {
+        private fun shellQuote(s: String): String = "'" + s.replace("'", "'\\''") + "'"
     }
 }

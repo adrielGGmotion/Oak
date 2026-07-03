@@ -3,6 +3,7 @@ package com.oak.app.ui.settings
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.oak.app.DistroState
 import com.oak.app.Platform
 import com.oak.app.SandboxController
 import com.oak.app.SandboxStatus
@@ -25,6 +26,8 @@ data class SandboxUiState(
     val isSandboxEnabled: Boolean = true,
     val isWorking: Boolean = false,
     val hasError: Boolean = false,
+    val activeDistroId: String = "alpine",
+    val distroStates: List<DistroState> = emptyList(),
 )
 
 class SandboxViewModel(
@@ -32,18 +35,13 @@ class SandboxViewModel(
     private val sandboxController: SandboxController,
 ) : ViewModel() {
 
-    // Seed synchronously from the controller's current status so the first
-    // composition doesn't briefly render the install UI when the sandbox is
-    // already ready. The controller mirrors LinuxSandboxManager's synchronous
-    // installation check, so reading status.value here returns the real state.
     private val _state = MutableStateFlow(
-        applyStatus(
-            sandboxController.status.value,
-            SandboxUiState(
-                showSandbox = currentPlatform is Platform.Mobile.Android,
-                isSandboxEnabled = dataRepository.isSandboxEnabled(),
-            ),
-        ),
+        SandboxUiState(
+            showSandbox = currentPlatform is Platform.Mobile.Android,
+            isSandboxEnabled = dataRepository.isSandboxEnabled(),
+            activeDistroId = sandboxController.getActiveDistroId(),
+            distroStates = sandboxController.getAllDistroStates(),
+        ).let { applyStatus(sandboxController.status.value, it) },
     )
 
     val state = _state.asStateFlow()
@@ -51,7 +49,12 @@ class SandboxViewModel(
     init {
         viewModelScope.launch {
             sandboxController.status.collect { sandboxStatus ->
-                _state.update { applyStatus(sandboxStatus, it) }
+                _state.update {
+                    applyStatus(sandboxStatus, it).copy(
+                        activeDistroId = sandboxController.getActiveDistroId(),
+                        distroStates = sandboxController.getAllDistroStates(),
+                    )
+                }
             }
         }
     }
@@ -86,5 +89,19 @@ class SandboxViewModel(
 
     fun onInstallPackages() {
         sandboxController.installPackages()
+    }
+
+    fun onSelectDistro(distroId: String) {
+        val ds = _state.value.distroStates.firstOrNull { it.distroId == distroId }
+        if (ds == null || ds.isActive) return
+        if (ds.isDownloaded) {
+            sandboxController.setActiveDistro(distroId)
+        } else {
+            sandboxController.downloadDistro(distroId)
+        }
+    }
+
+    fun onRemoveDistro(distroId: String) {
+        sandboxController.removeDistro(distroId)
     }
 }

@@ -606,6 +606,12 @@ class AppSettings(private val settings: Settings) {
         settings.putBoolean(KEY_SANDBOX_ENABLED, enabled)
     }
 
+    fun getActiveDistro(): String = settings.getString(KEY_ACTIVE_DISTRO, "alpine")
+
+    fun setActiveDistro(distroId: String) {
+        settings.putString(KEY_ACTIVE_DISTRO, distroId)
+    }
+
     // Storage access
     fun isStorageAccessEnabled(): Boolean = settings.getBoolean(KEY_STORAGE_ACCESS_ENABLED, false)
 
@@ -1274,6 +1280,7 @@ class AppSettings(private val settings: Settings) {
         const val KEY_MODEL_CONTEXT_PREFIX = "model_context_"
 
         const val KEY_SANDBOX_ENABLED = "sandbox_enabled"
+        const val KEY_ACTIVE_DISTRO = "sandbox_active_distro"
         const val KEY_STORAGE_ACCESS_ENABLED = "storage_access_enabled"
         const val KEY_STREAMING_ENABLED = "streaming_enabled"
         const val KEY_UNLIMITED_TOOL_CALLS = "unlimited_tool_calls"

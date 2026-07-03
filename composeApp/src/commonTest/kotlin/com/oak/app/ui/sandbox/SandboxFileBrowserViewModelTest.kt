@@ -2,6 +2,7 @@ package com.oak.app.ui.sandbox
 
 import app.cash.turbine.test
 import com.oak.app.CommandHandle
+import com.oak.app.DistroState
 import com.oak.app.NoOpCommandHandle
 import com.oak.app.SandboxController
 import com.oak.app.SandboxFileEntry
@@ -51,6 +52,20 @@ class SandboxFileBrowserViewModelTest {
         override fun cancel() {}
         override fun reset() {}
         override fun installPackages() {}
+
+        override fun getActiveDistroId(): String = "alpine"
+        override fun setActiveDistro(distroId: String) {}
+        override fun getAllDistroStates(): List<DistroState> = emptyList()
+        override fun downloadDistro(distroId: String) {}
+        override fun removeDistro(distroId: String) {}
+
+        override fun getPackageInstallCmd(): String = "apk add --no-cache"
+        override fun getPackageUninstallCmd(): String = "apk del"
+        override fun getPackageSearchCmd(): String = "apk search -v"
+        override fun getPackageListInstalledCmd(): String = "apk info -v | sort"
+        override fun getPackageUpdateCmd(): String = "apk update"
+        override fun getPackageUpgradeCmd(): String = "apk upgrade"
+
         override suspend fun executeCommand(command: String, sessionId: String): String = ""
         override suspend fun executeCommandStreaming(
             command: String,

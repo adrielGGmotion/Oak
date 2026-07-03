@@ -13,6 +13,20 @@ class NoOpSandboxController : SandboxController {
     override fun cancel() {}
     override fun reset() {}
     override fun installPackages() {}
+
+    override fun getActiveDistroId(): String = "alpine"
+    override fun setActiveDistro(distroId: String) {}
+    override fun getAllDistroStates(): List<DistroState> = emptyList()
+    override fun downloadDistro(distroId: String) {}
+    override fun removeDistro(distroId: String) {}
+
+    override fun getPackageInstallCmd(): String = "apk add --no-cache"
+    override fun getPackageUninstallCmd(): String = "apk del"
+    override fun getPackageSearchCmd(): String = "apk search -v"
+    override fun getPackageListInstalledCmd(): String = "apk info -v | sort"
+    override fun getPackageUpdateCmd(): String = "apk update"
+    override fun getPackageUpgradeCmd(): String = "apk upgrade"
+
     override suspend fun executeCommand(command: String, sessionId: String): String = ""
     override suspend fun executeCommandStreaming(
         command: String,

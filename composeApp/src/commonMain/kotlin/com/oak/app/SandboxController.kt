@@ -53,6 +53,13 @@ object SandboxSessions {
     fun isPersistable(sessionId: String): Boolean = sessionId != TERMINAL && sessionId != SYSTEM && sessionId != DEFAULT
 }
 
+/** Tracks a distro's download and activation state for the UI. */
+data class DistroState(
+    val distroId: String,
+    val isActive: Boolean = false,
+    val isDownloaded: Boolean = false,
+)
+
 interface SandboxController {
     val status: StateFlow<SandboxStatus>
 
@@ -62,6 +69,22 @@ interface SandboxController {
     fun cancel()
     fun reset()
     fun installPackages()
+
+    /** Multi-distro support. */
+    fun getActiveDistroId(): String
+    fun setActiveDistro(distroId: String)
+    fun getAllDistroStates(): List<DistroState>
+    fun downloadDistro(distroId: String)
+    fun removeDistro(distroId: String)
+
+    /** Package manager commands for the active distro. */
+    fun getPackageInstallCmd(): String
+    fun getPackageUninstallCmd(): String
+    fun getPackageSearchCmd(): String
+    fun getPackageListInstalledCmd(): String
+    fun getPackageUpdateCmd(): String
+    fun getPackageUpgradeCmd(): String
+
     suspend fun executeCommand(
         command: String,
         sessionId: String = SandboxSessions.DEFAULT,

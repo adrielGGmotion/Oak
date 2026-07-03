@@ -7,25 +7,17 @@ import io.ktor.http.contentLength
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.CancellationException
+import org.tukaani.xz.XZInputStream
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.util.zip.GZIPInputStream
 
-private const val ALPINE_VERSION = "3.21.3"
-private const val ALPINE_BRANCH = "v3.21"
 private const val BUFFER_SIZE = 8192
-
-private val ALPINE_MIRRORS = listOf(
-    "https://dl-cdn.alpinelinux.org/alpine",
-    "https://mirrors.edge.kernel.org/alpine",
-    "https://ftp.halifax.rwth-aachen.de/alpine",
-    "https://alpine.ethz.ch/alpine",
-    "https://mirror.csclub.uwaterloo.ca/alpine",
-    "https://mirrors.tuna.tsinghua.edu.cn/alpine",
-)
 private const val TAR_BLOCK_SIZE = 512
 private const val TAR_NAME_OFFSET = 0
 private const val TAR_MODE_OFFSET = 100
@@ -36,18 +28,13 @@ private const val TAR_PREFIX_OFFSET = 345
 
 class RootfsDownloader(private val httpClient: HttpClient) {
 
-    val mirrors: List<String> = ALPINE_MIRRORS
-
-    fun getDownloadUrls(arch: String): List<String> = ALPINE_MIRRORS.map { base ->
-        "$base/$ALPINE_BRANCH/releases/$arch/alpine-minirootfs-$ALPINE_VERSION-$arch.tar.gz"
-    }
-
     suspend fun download(
+        config: DistroConfig,
         arch: String,
         targetFile: File,
         onProgress: (Float) -> Unit,
     ) {
-        val urls = getDownloadUrls(arch)
+        val urls = DistroConfigs.resolveUrls(config, arch)
         var lastError: Exception? = null
         for ((index, url) in urls.withIndex()) {
             try {
@@ -61,7 +48,8 @@ class RootfsDownloader(private val httpClient: HttpClient) {
                 if (index < urls.lastIndex) onProgress(0f)
             }
         }
-        throw IOException("All Alpine mirrors failed", lastError)
+        val distroName = config.distro.id
+        throw IOException("All mirrors failed for $distroName: $lastError", lastError)
     }
 
     private suspend fun downloadFrom(
@@ -92,10 +80,67 @@ class RootfsDownloader(private val httpClient: HttpClient) {
         }
     }
 
-    fun extractTarGz(tarGzFile: File, targetDir: File) {
+    /**
+     * Extract a rootfs archive into [targetDir]. Supports both tar.gz and tar.xz.
+     * Automatically detects and strips a common top-level wrapper directory
+     * (e.g., "debian-trixie-aarch64/") that some distro tarballs use.
+     */
+    fun extract(archiveFile: File, targetDir: File, compression: Compression) {
         targetDir.mkdirs()
-        GZIPInputStream(BufferedInputStream(FileInputStream(tarGzFile))).use { gzipStream ->
-            extractTar(gzipStream, targetDir)
+        val decompressed: java.io.InputStream = when (compression) {
+            Compression.GZIP -> GZIPInputStream(BufferedInputStream(FileInputStream(archiveFile)))
+            Compression.XZ -> XZInputStream(BufferedInputStream(FileInputStream(archiveFile)))
+        }
+        decompressed.use { stream ->
+            extractTar(stream, targetDir)
+        }
+        // Post-extraction: detect and flatten wrapper directory if /bin/sh is missing
+        flattenWrapperDirectory(targetDir)
+    }
+
+    /**
+     * After extraction, if /bin/sh is not at the root of [targetDir], look for
+     * a single top-level subdirectory (the "wrapper") and move its contents up.
+     * This handles termux/proot-distro tarballs that wrap everything in a
+     * distro-specific directory like "debian-trixie-aarch64/".
+     */
+    private fun flattenWrapperDirectory(targetDir: File) {
+        val shFile = File(targetDir, "bin/sh")
+        if (shFile.exists() || shFile.isSymbolicLink()) return
+
+        // Find the single top-level subdirectory to use as our source
+        val entries = targetDir.listFiles()?.filter { it.name != "." && it.name != ".." } ?: return
+        // Allow . and lost+found alongside a single subdirectory
+        val subdirs = entries.filter { it.isDirectory && it.name != "lost+found" }
+        val files = entries.filter { it.isFile }
+
+        if (subdirs.size == 1 && files.isEmpty()) {
+            val wrapper = subdirs.first()
+            android.util.Log.i("RootfsDownloader", "Detected wrapper directory '${wrapper.name}', flattening...")
+            moveContentsUp(wrapper, targetDir)
+            // Retry the check after flattening
+            if (!File(targetDir, "bin/sh").exists()) {
+                android.util.Log.w("RootfsDownloader", "Flattened but /bin/sh still missing")
+            }
+        } else if (subdirs.isEmpty() && files.isNotEmpty()) {
+            android.util.Log.w("RootfsDownloader", "No wrapper dir, but /bin/sh missing")
+        } else {
+            android.util.Log.w("RootfsDownloader", "Ambiguous rootfs layout: ${subdirs.size} dirs, ${files.size} files")
+        }
+    }
+
+    private fun moveContentsUp(source: File, target: File) {
+        source.listFiles()?.forEach { child ->
+            val dest = File(target, child.name)
+            // Avoid overwriting target by deleting dest first
+            if (dest.exists()) {
+                dest.deleteRecursively()
+            }
+            if (!child.renameTo(dest)) {
+                // renameTo can fail across devices; fall back to copy+delete
+                child.copyRecursively(dest, overwrite = true)
+                child.deleteRecursively()
+            }
         }
     }
 
@@ -123,7 +168,10 @@ class RootfsDownloader(private val httpClient: HttpClient) {
 
             val outFile = File(targetDir, fullName)
 
-            if (!outFile.canonicalPath.startsWith(targetDir.canonicalPath)) {
+            // Path traversal protection using canonical paths
+            val targetPath = targetDir.canonicalFile.toPath()
+            val outPath = outFile.canonicalFile.toPath()
+            if (!outPath.startsWith(targetPath)) {
                 skipBytes(inputStream, alignToBlock(size))
                 continue
             }
@@ -153,6 +201,12 @@ class RootfsDownloader(private val httpClient: HttpClient) {
 
                 '0', '\u0000' -> {
                     outFile.parentFile?.mkdirs()
+                    // Skip if path already exists as a directory (some tarballs
+                    // mislabel __pycache__ dirs as regular files)
+                    if (outFile.exists() && outFile.isDirectory) {
+                        skipBytes(inputStream, alignToBlock(size))
+                        continue
+                    }
                     FileOutputStream(outFile).use { output ->
                         var remaining = size
                         while (remaining > 0) {
@@ -230,11 +284,20 @@ class RootfsDownloader(private val httpClient: HttpClient) {
         )
     }
 
-    fun writeRepositories(rootfsDir: File, mirrorBase: String) {
-        val apkDir = File(rootfsDir, "etc/apk")
-        apkDir.mkdirs()
-        File(apkDir, "repositories").writeText(
-            "$mirrorBase/$ALPINE_BRANCH/main\n$mirrorBase/$ALPINE_BRANCH/community\n",
-        )
+    /** Verify that a rootfs is properly extracted by checking for key files. */
+    fun verifyRootfs(rootfsDir: File, config: DistroConfig): Boolean {
+        if (!rootfsDir.isDirectory) return false
+        val shFile = File(rootfsDir, "bin/sh")
+        if (!shFile.exists() && !shFile.isSymbolicLink()) return false
+        return config.verificationPaths.all { path ->
+            val f = File(rootfsDir, path)
+            f.exists() || f.isSymbolicLink()
+        }
+    }
+
+    /** Calculate total size of a rootfs directory in bytes. */
+    fun diskUsageBytes(rootfsDir: File): Long {
+        if (!rootfsDir.isDirectory) return 0
+        return rootfsDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
     }
 }
