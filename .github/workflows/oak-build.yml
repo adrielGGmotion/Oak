@@ -48,11 +48,7 @@ jobs:
       - name: Build Debug APK
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
-        run: |
-          rm -rf composeApp/.gradle
-          rm -rf ~/.gradle/daemon
-          rm -rf ~/.kotlin
-          bash ./gradlew clean :androidApp:assembleDebug --stacktrace --no-daemon
+        run: bash ./gradlew :androidApp:assembleDebug --stacktrace --rerun-tasks --no-configuration-cache --no-daemon
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
