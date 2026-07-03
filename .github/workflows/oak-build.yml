@@ -46,6 +46,7 @@ jobs:
         with:
           setup-android: 'true'
       - name: Build Debug APK
+        # TODO: remove -Pkotlin.incremental=false once Compose Resources source-gen flakiness is fixed
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
         run: bash ./gradlew :androidApp:assembleDebug --stacktrace -Pkotlin.incremental=false

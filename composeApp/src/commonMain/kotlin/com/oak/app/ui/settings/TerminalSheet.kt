@@ -69,6 +69,7 @@ import oak.composeapp.generated.resources.terminal_help_text
 import oak.composeapp.generated.resources.terminal_input_placeholder
 import oak.composeapp.generated.resources.terminal_run_content_description
 import oak.composeapp.generated.resources.terminal_stop_content_description
+import oak.composeapp.generated.resources.terminal_os_label
 import oak.composeapp.generated.resources.terminal_title
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
@@ -228,7 +229,7 @@ fun TerminalContent(
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = "Linux",
+                    text = stringResource(Res.string.terminal_os_label),
                     style = monoStyle(12.sp, colors.text.copy(alpha = 0.5f)),
                 )
             }
