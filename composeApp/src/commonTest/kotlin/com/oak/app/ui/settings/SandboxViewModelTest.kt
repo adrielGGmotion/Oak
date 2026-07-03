@@ -2,8 +2,8 @@ package com.oak.app.ui.settings
 
 import app.cash.turbine.test
 import com.oak.app.CommandHandle
-import com.oak.app.NoOpCommandHandle
 import com.oak.app.DistroInfo
+import com.oak.app.NoOpCommandHandle
 import com.oak.app.PackageManagerCommands
 import com.oak.app.SandboxController
 import com.oak.app.SandboxFileEntry
