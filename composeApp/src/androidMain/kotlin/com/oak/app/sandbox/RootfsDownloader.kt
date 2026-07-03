@@ -106,7 +106,7 @@ class RootfsDownloader(private val httpClient: HttpClient) {
      */
     private fun flattenWrapperDirectory(targetDir: File) {
         val shFile = File(targetDir, "bin/sh")
-        if (shFile.exists() || shFile.isSymbolicLink()) return
+        if (shFile.exists() || Files.isSymbolicLink(shFile.toPath())) return
 
         // Find the single top-level subdirectory to use as our source
         val entries = targetDir.listFiles()?.filter { it.name != "." && it.name != ".." } ?: return

@@ -228,7 +228,7 @@ fun TerminalContent(
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = "Linux",
+                    text = stringResource(Res.string.terminal_os_label),
                     style = monoStyle(12.sp, colors.text.copy(alpha = 0.5f)),
                 )
             }

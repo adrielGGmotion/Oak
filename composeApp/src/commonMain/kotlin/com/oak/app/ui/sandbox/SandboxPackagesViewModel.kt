@@ -231,10 +231,11 @@ class SandboxPackagesViewModel(
             return tail.take(ERROR_SUMMARY_MAX_CHARS)
         }
 
-        fun hasPackageErrors(): Boolean = stdout.lineSequence().any { it.startsWith("ERROR:") } ||
-            stdout.lineSequence().any { it.startsWith("E:") } ||
-            stderr.lineSequence().any { it.startsWith("ERROR:") } ||
-            stderr.lineSequence().any { it.startsWith("E:") }
+        fun hasPackageErrors(): Boolean {
+            val prefixes = listOf("ERROR:", "error:", "E:")
+            return prefixes.any { p -> stdout.lineSequence().any { it.startsWith(p) } } ||
+                prefixes.any { p -> stderr.lineSequence().any { it.startsWith(p) } }
+        }
     }
 
     private suspend fun runAndCapture(cmd: String): CommandResult {

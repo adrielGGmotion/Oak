@@ -35,12 +35,15 @@ class SandboxViewModel(
     private val sandboxController: SandboxController,
 ) : ViewModel() {
 
+    private var cachedDistroStates: List<DistroState> = sandboxController.getAllDistroStates()
+    private var cachedActiveDistroId: String = sandboxController.getActiveDistroId()
+
     private val _state = MutableStateFlow(
         SandboxUiState(
             showSandbox = currentPlatform is Platform.Mobile.Android,
             isSandboxEnabled = dataRepository.isSandboxEnabled(),
-            activeDistroId = sandboxController.getActiveDistroId(),
-            distroStates = sandboxController.getAllDistroStates(),
+            activeDistroId = cachedActiveDistroId,
+            distroStates = cachedDistroStates,
         ).let { applyStatus(sandboxController.status.value, it) },
     )
 
@@ -49,10 +52,15 @@ class SandboxViewModel(
     init {
         viewModelScope.launch {
             sandboxController.status.collect { sandboxStatus ->
+                val currentId = sandboxController.getActiveDistroId()
+                if (currentId != cachedActiveDistroId) {
+                    cachedActiveDistroId = currentId
+                    cachedDistroStates = sandboxController.getAllDistroStates()
+                }
                 _state.update {
                     applyStatus(sandboxStatus, it).copy(
-                        activeDistroId = sandboxController.getActiveDistroId(),
-                        distroStates = sandboxController.getAllDistroStates(),
+                        activeDistroId = cachedActiveDistroId,
+                        distroStates = cachedDistroStates,
                     )
                 }
             }

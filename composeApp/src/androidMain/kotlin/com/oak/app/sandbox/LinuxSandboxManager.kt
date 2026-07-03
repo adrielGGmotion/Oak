@@ -173,8 +173,10 @@ class LinuxSandboxManager(
         if (!proot.exists() || !proot.canExecute()) return
         val cfg = activeConfig
         val rootfs = rootfsDirFor(activeDistroId)
-        if (downloader.verifyRootfs(rootfs, cfg)) {
-            _state.value = SandboxState.Ready
+        _state.value = if (downloader.verifyRootfs(rootfs, cfg)) {
+            SandboxState.Ready
+        } else {
+            SandboxState.NotInstalled
         }
     }
 
@@ -210,6 +212,7 @@ class LinuxSandboxManager(
                 downloadDistroInternal(distroId)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 checkActiveDistro()
+                throw e
             } catch (e: Exception) {
                 _state.value = SandboxState.Error(e.message ?: "Download failed for $distroId")
             }
@@ -631,8 +634,8 @@ class LinuxSandboxManager(
         if (_state.value !is SandboxState.Ready) return false
         val rootfs = rootfsDirFor(activeDistroId)
         val pkgManager = activeConfig.packageManager
-        // Check for setup packages
-        return activeConfig.setupPackages.any { pkg ->
+        // Check for setup packages — all must be present
+        return activeConfig.setupPackages.all { pkg ->
             val bin = File(rootfs, "usr/bin/$pkg")
             bin.exists() || File(rootfs, "bin/$pkg").exists()
         }

@@ -600,7 +600,7 @@ private fun SandboxSettingsCard(
                 }
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Select distribution",
+                    contentDescription = stringResource(Res.string.distro_select_distribution),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -614,9 +614,9 @@ private fun SandboxSettingsCard(
             sandboxState.distroStates.forEach { ds ->
                 val label = distroDisplayName(ds.distroId)
                 val statusLabel = when {
-                    ds.isActive -> "Active"
-                    ds.isDownloaded -> "Downloaded"
-                    else -> "Not downloaded"
+                    ds.isActive -> stringResource(Res.string.distro_status_active)
+                    ds.isDownloaded -> stringResource(Res.string.distro_status_downloaded)
+                    else -> stringResource(Res.string.distro_status_not_downloaded)
                 }
                 DropdownMenuItem(
                     text = {
@@ -636,7 +636,7 @@ private fun SandboxSettingsCard(
                             if (ds.isActive) {
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = "Active",
+                                    contentDescription = stringResource(Res.string.distro_status_active),
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.padding(start = 8.dp),
                                 )
@@ -650,7 +650,7 @@ private fun SandboxSettingsCard(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
-                                        contentDescription = "Remove",
+                                        contentDescription = stringResource(Res.string.distro_remove),
                                         tint = MaterialTheme.colorScheme.error,
                                     )
                                 }
@@ -732,11 +732,12 @@ private fun SandboxSettingsCard(
     }
 }
 
+@Composable
 private fun distroDisplayName(distroId: String): String = when (distroId) {
-    "alpine" -> "Alpine Linux"
-    "debian" -> "Debian"
-    "ubuntu" -> "Ubuntu"
-    "arch" -> "Arch Linux"
+    "alpine" -> stringResource(Res.string.distro_alpine)
+    "debian" -> stringResource(Res.string.distro_debian)
+    "ubuntu" -> stringResource(Res.string.distro_ubuntu)
+    "arch" -> stringResource(Res.string.distro_arch)
     else -> distroId.replaceFirstChar { it.uppercase() }
 }
 
