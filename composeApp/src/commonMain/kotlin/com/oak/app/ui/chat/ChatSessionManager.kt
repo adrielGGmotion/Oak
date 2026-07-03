@@ -4,6 +4,7 @@ import com.oak.app.data.Conversation
 import com.oak.app.data.DataRepository
 import com.oak.app.getBackgroundDispatcher
 import com.oak.app.network.UiError
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,9 @@ class ChatSessionManager(
 ) {
     // Scope on Main for thread-safe session map access; generation block
     // switches to backgroundDispatcher internally via withContext.
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main + CoroutineName("ChatSessionManager"))
+    private val scope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Main + CoroutineName("ChatSessionManager") + crashHandler,
+    )
 
     private val sessions = mutableMapOf<String, ChatSession>()
     private val generationCounter = mutableMapOf<String, Int>()
@@ -109,4 +112,37 @@ class ChatSessionManager(
     private fun refreshGeneratingIds() {
         _generatingSessionIds.value = sessions.filter { it.value.isGenerating }.keys
     }
+
+    companion object {
+        /**
+         * Catches a known Android OkHttp `AsyncTimeout` bug where
+         * `IllegalStateException("Unbalanced enter/exit")` is thrown from inside a Ktor
+         * cleanup handler when a streaming `callbackFlow` is cancelled. This is a framework
+         * bug, not a genuine app crash, so we log and swallow it.
+         */
+        private val crashHandler = CoroutineExceptionHandler { _, throwable ->
+            if (throwable.isAndroidOkHttpCrash()) {
+                println("ChatSessionManager: suppressed Android OkHttp AsyncTimeout crash: $throwable")
+            } else {
+                throw RuntimeException("Unhandled coroutine exception in ChatSessionManager", throwable)
+            }
+        }
+    }
+}
+
+/**
+ * Checks whether the throwable chain originates from Android OkHttp's `AsyncTimeout`
+ * throwing `IllegalStateException("Unbalanced enter/exit")`. This is a known Android
+ * framework bug triggered when Ktor's `attachToUserJob` cleanup handler closes the
+ * response stream during coroutine cancellation.
+ */
+private fun Throwable.isAndroidOkHttpCrash(): Boolean {
+    var cause: Throwable? = this
+    while (cause != null) {
+        if (cause is IllegalStateException && cause.message == "Unbalanced enter/exit") {
+            return true
+        }
+        cause = cause.cause
+    }
+    return false
 }

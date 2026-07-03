@@ -9,6 +9,7 @@ import com.oak.app.sendHeartbeatNotification
 import com.oak.app.sms.SmsPoller
 import com.oak.app.ui.markdown.parseMarkdown
 import com.oak.app.ui.markdown.toSpeakableText
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -55,13 +56,33 @@ class TaskScheduler(
     }
 
     /**
+     * Catches a known Android OkHttp `AsyncTimeout` bug where
+     * `IllegalStateException("Unbalanced enter/exit")` is thrown from inside a Ktor
+     * cleanup handler when a streaming `callbackFlow` is cancelled. This is a framework
+     * bug, not a genuine app crash, so we log and swallow it.
+     */
+    private val crashHandler = CoroutineExceptionHandler { _, throwable ->
+        if (throwable.isAndroidOkHttpCrash()) {
+            println("TaskScheduler: suppressed Android OkHttp AsyncTimeout crash: $throwable")
+        } else {
+            throw RuntimeException("Unhandled coroutine exception in TaskScheduler", throwable)
+        }
+    }
+
+    /**
      * Process-lifetime scope. Decoupled from any caller's scope so scheduled tasks and
      * heartbeats keep firing when a short-lived caller (e.g. `ChatViewModel.viewModelScope`)
      * is cancelled — as long as the OS keeps the process alive (which on Android means
      * `DaemonService` holding a foreground notification).
+     *
+     * The [CoroutineExceptionHandler] catches a known Android OkHttp `AsyncTimeout` bug
+     * that throws `IllegalStateException("Unbalanced enter/exit")` inside a Ktor cleanup
+     * handler when a streaming response channel is cancelled. The exception is a
+     * `kotlinx.coroutines.CompletionHandlerException` wrapping the Android framework
+     * crash rather than a genuine app bug, so we log and swallow it.
      */
     private val schedulerScope = CoroutineScope(
-        SupervisorJob() + backgroundDispatcher + CoroutineName("TaskScheduler"),
+        SupervisorJob() + backgroundDispatcher + CoroutineName("TaskScheduler") + crashHandler,
     )
 
     private var activeJob: Job? = null
@@ -384,4 +405,21 @@ class TaskScheduler(
             )
         }
     }
+}
+
+/**
+ * Checks whether the throwable chain originates from Android OkHttp's `AsyncTimeout`
+ * throwing `IllegalStateException("Unbalanced enter/exit")`. This is a known Android
+ * framework bug triggered when Ktor's `attachToUserJob` cleanup handler closes the
+ * response stream during coroutine cancellation.
+ */
+private fun Throwable.isAndroidOkHttpCrash(): Boolean {
+    var cause: Throwable? = this
+    while (cause != null) {
+        if (cause is IllegalStateException && cause.message == "Unbalanced enter/exit") {
+            return true
+        }
+        cause = cause.cause
+    }
+    return false
 }
