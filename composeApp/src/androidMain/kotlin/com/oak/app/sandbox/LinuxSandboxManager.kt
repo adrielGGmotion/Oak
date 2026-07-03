@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -377,12 +378,12 @@ class LinuxSandboxManager(
         val allPackages = config.setupPackages + config.basicPackages
         val unique = allPackages.distinct()
         for (pkg in unique) {
-            ensureActive()
+            currentCoroutineContext().ensureActive()
             updateSandboxSetupNotification("Installing $pkg...")
             _state.value = SandboxState.Installing("Installing $pkg...")
             val cmd = "${pm.install} ${shellQuote(pkg)}"
             val result = executor.execute(cmd, timeoutSeconds = 300)
-            ensureActive()
+            currentCoroutineContext().ensureActive()
             val success = result["success"] as? Boolean ?: false
             if (!success) {
                 val stderr = result["stderr"] as? String ?: ""

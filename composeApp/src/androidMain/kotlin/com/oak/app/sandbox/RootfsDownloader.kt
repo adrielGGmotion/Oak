@@ -288,10 +288,10 @@ class RootfsDownloader(private val httpClient: HttpClient) {
     fun verifyRootfs(rootfsDir: File, config: DistroConfig): Boolean {
         if (!rootfsDir.isDirectory) return false
         val shFile = File(rootfsDir, "bin/sh")
-        if (!shFile.exists() && !shFile.isSymbolicLink()) return false
+        if (!shFile.exists() && !Files.isSymbolicLink(shFile.toPath())) return false
         return config.verificationPaths.all { path ->
             val f = File(rootfsDir, path)
-            f.exists() || f.isSymbolicLink()
+            f.exists() || Files.isSymbolicLink(f.toPath())
         }
     }
 
