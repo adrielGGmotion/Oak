@@ -1114,7 +1114,6 @@ class RemoteDataRepository(
                         requests.geminiChat(
                             credentials = credentials,
                             messages = geminiMessages,
-                            tools = tools,
                             systemInstruction = systemPrompt,
                         ).getOrThrow()
                     }
@@ -1163,7 +1162,6 @@ class RemoteDataRepository(
                         requests.geminiChat(
                             credentials = credentials,
                             messages = bailoutMessages,
-                            tools = tools,
                             systemInstruction = systemPrompt,
                         ).getOrThrow()
                     }
@@ -1220,7 +1218,6 @@ class RemoteDataRepository(
                     requests.geminiChat(
                         credentials = credentials,
                         messages = geminiMessages,
-                        tools = tools,
                         systemInstruction = systemPrompt,
                     ).getOrThrow()
                 }
@@ -1379,7 +1376,6 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            tools = tools,
                             systemInstruction = systemPrompt,
                         ).getOrThrow()
                     }
@@ -1426,7 +1422,6 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            tools = tools,
                             systemInstruction = systemPrompt,
                         ).getOrThrow()
                     }
@@ -1484,7 +1479,6 @@ class RemoteDataRepository(
                     requests.anthropicChat(
                         credentials = credentials,
                         messages = currentMessages,
-                        tools = tools,
                         systemInstruction = systemPrompt,
                     ).getOrThrow()
                 }
@@ -1533,37 +1527,37 @@ class RemoteDataRepository(
     /**
      * Makes a final API call that discards any tool calls and returns only text.
      *
-     * First attempts with [tools] still visible so the model doesn't hallucinate
-     * about missing tools. If the model returns only tool calls (no text), falls
-     * back to a call without tools and a synthesise instruction so the user always
-     * gets a text response.
+     * Crucially, [tools] is NOT passed to the API. When tools are visible some
+     * models respond with only tool calls and no text content, producing an empty
+     * response. The conversation history already contains the tool calls and their
+     * results, so the model can see what was done.
+     *
+     * We inject a user message that explicitly acknowledges tools were available
+     * and used — this prevents models from hallucinating "I don't have the
+     * execute_shell_command tool" when they see no tool definitions in the request.
      */
     private suspend fun makeFinalCallWithoutTools(
         service: Service,
         credentials: ServiceCredentials,
         messages: List<com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatRequestDto.Message>,
-        tools: List<Tool> = emptyList(),
+        @Suppress("UNUSED_PARAMETER") tools: List<Tool> = emptyList(),
     ): String {
-        // Try with tools first — model sees tool definitions and can respond naturally.
-        val firstResponse = retryApiCall {
-            requests.openAICompatibleChat(service, credentials, messages, tools).getOrThrow()
-        }
-        val firstText = firstResponse.choices.firstOrNull()?.message?.effectiveContent
-        if (firstText != null) return firstText.stripToolMarkup()
-
-        // Model returned only tool calls — retry without tools so it must respond in text.
-        val fallbackMessages = messages.toMutableList().apply {
+        val finalMessages = messages.toMutableList().apply {
             add(
                 com.oak.app.network.dtos.openaicompatible.OpenAICompatibleChatRequestDto.Message(
                     role = "user",
-                    content = JsonPrimitive("Please synthesize your best answer based on the information you have gathered so far."),
+                    content = JsonPrimitive(
+                        "You have finished using the available tools. Based on the information " +
+                            "gathered and the tool results in the conversation above, please provide " +
+                            "your final response to the user now.",
+                    ),
                 ),
             )
         }
-        val fallbackResponse = retryApiCall {
-            requests.openAICompatibleChat(service, credentials, fallbackMessages).getOrThrow()
+        val response = retryApiCall {
+            requests.openAICompatibleChat(service, credentials, finalMessages).getOrThrow()
         }
-        return fallbackResponse.choices.firstOrNull()?.message?.effectiveContent
+        return response.choices.firstOrNull()?.message?.effectiveContent
             ?.stripToolMarkup() ?: ""
     }
 
