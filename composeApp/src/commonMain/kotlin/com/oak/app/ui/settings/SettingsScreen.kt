@@ -250,7 +250,6 @@ import oak.composeapp.generated.resources.settings_streaming_enabled
 import oak.composeapp.generated.resources.settings_tab_agent
 import oak.composeapp.generated.resources.settings_tab_general
 import oak.composeapp.generated.resources.settings_tab_integrations
-import oak.composeapp.generated.resources.settings_tab_sandbox
 import oak.composeapp.generated.resources.settings_tab_services
 import oak.composeapp.generated.resources.settings_tab_tools
 import oak.composeapp.generated.resources.settings_task_details_consecutive_failures
@@ -600,7 +599,7 @@ private fun SandboxSettingsCard(
                 }
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = stringResource(Res.string.distro_select_distribution),
+                    contentDescription = DistroLabels.SELECT_DISTRIBUTION,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -614,9 +613,9 @@ private fun SandboxSettingsCard(
             sandboxState.distroStates.forEach { ds ->
                 val label = distroDisplayName(ds.distroId)
                 val statusLabel = when {
-                    ds.isActive -> stringResource(Res.string.distro_status_active)
-                    ds.isDownloaded -> stringResource(Res.string.distro_status_downloaded)
-                    else -> stringResource(Res.string.distro_status_not_downloaded)
+                    ds.isActive -> DistroLabels.STATUS_ACTIVE
+                    ds.isDownloaded -> DistroLabels.STATUS_DOWNLOADED
+                    else -> DistroLabels.STATUS_NOT_DOWNLOADED
                 }
                 DropdownMenuItem(
                     text = {
@@ -636,7 +635,7 @@ private fun SandboxSettingsCard(
                             if (ds.isActive) {
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = stringResource(Res.string.distro_status_active),
+                                    contentDescription = DistroLabels.STATUS_ACTIVE,
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.padding(start = 8.dp),
                                 )
@@ -650,7 +649,7 @@ private fun SandboxSettingsCard(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
-                                        contentDescription = stringResource(Res.string.distro_remove),
+                                        contentDescription = DistroLabels.REMOVE,
                                         tint = MaterialTheme.colorScheme.error,
                                     )
                                 }
@@ -732,12 +731,11 @@ private fun SandboxSettingsCard(
     }
 }
 
-@Composable
 private fun distroDisplayName(distroId: String): String = when (distroId) {
-    "alpine" -> stringResource(Res.string.distro_alpine)
-    "debian" -> stringResource(Res.string.distro_debian)
-    "ubuntu" -> stringResource(Res.string.distro_ubuntu)
-    "arch" -> stringResource(Res.string.distro_arch)
+    "alpine" -> DistroLabels.ALPINE
+    "debian" -> DistroLabels.DEBIAN
+    "ubuntu" -> DistroLabels.UBUNTU
+    "arch" -> DistroLabels.ARCH
     else -> distroId.replaceFirstChar { it.uppercase() }
 }
 
@@ -814,7 +812,7 @@ private fun SettingsTabSelector(
                             SettingsTab.Agent -> stringResource(Res.string.settings_tab_agent)
                             SettingsTab.Services -> stringResource(Res.string.settings_tab_services)
                             SettingsTab.Tools -> stringResource(Res.string.settings_tab_tools)
-                            SettingsTab.Sandbox -> stringResource(Res.string.settings_tab_sandbox)
+                            SettingsTab.Sandbox -> DistroLabels.SANDBOX_TAB
                             SettingsTab.Integrations -> stringResource(Res.string.settings_tab_integrations)
                         },
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),

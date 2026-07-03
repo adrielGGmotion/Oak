@@ -143,7 +143,7 @@ object DistroConfigs {
                 "bash", "curl", "wget", "git", "jq", "python3", "py3-pip", "nodejs",
                 "openssh-client", "lftp", "rsync",
             ),
-            verificationPaths = listOf("bin/sh", "bin/bash", "etc/os-release"),
+            verificationPaths = listOf("bin/sh", "etc/os-release"),
             archArm = "armhf",
             archX86 = "x86",
         )

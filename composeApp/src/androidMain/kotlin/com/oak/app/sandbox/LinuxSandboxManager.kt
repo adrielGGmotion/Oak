@@ -16,7 +16,7 @@ import com.oak.app.data.ConversationStorage
 import com.oak.app.getExternalOakRoot
 import com.oak.app.isExternalStorageAccessible
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
+import io.ktor.client.engine.cio.CIO
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -140,7 +140,7 @@ class LinuxSandboxManager(
     val prootPath: String get() = File(context.applicationInfo.nativeLibraryDir, "libproot.so").absolutePath
     val nativeLibDir: String get() = context.applicationInfo.nativeLibraryDir
 
-    private val downloader = RootfsDownloader(HttpClient(Android))
+    private val downloader = RootfsDownloader(HttpClient(CIO))
 
     init {
         migrateLegacyRootfs()
@@ -501,6 +501,10 @@ class LinuxSandboxManager(
             acquireSetupWakeLock()
             try {
                 installSetupPackagesInternal(activeDistroId)
+                // Force re-emission: StateFlow skips Ready → Ready since it's
+                // a data object, but the UI needs to recompute packagesInstalled
+                // from arePackagesInstalled() which now returns true.
+                _state.value = SandboxState.Installing("Packages installed")
                 _state.value = SandboxState.Ready
                 postSandboxCompleteNotification("Packages installed")
             } catch (_: kotlinx.coroutines.CancellationException) {

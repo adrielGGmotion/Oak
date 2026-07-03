@@ -57,6 +57,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.process)
             implementation(libs.spght.encryptedprefs)
             implementation(libs.ktor.client.android)
+            implementation(libs.ktor.client.cio)
             implementation(libs.koin.android)
             implementation(libs.material)
             implementation(libs.bouncycastle.provider)
