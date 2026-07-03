@@ -177,8 +177,7 @@ sealed class SandboxEnvironment(
         val ALL: List<SandboxEnvironment> = listOf(Alpine, Debian, Ubuntu, ArchLinux)
         val DEFAULT: SandboxEnvironment = Alpine
 
-        fun fromId(id: String): SandboxEnvironment =
-            ALL.firstOrNull { it.id == id } ?: DEFAULT
+        fun fromId(id: String): SandboxEnvironment = ALL.firstOrNull { it.id == id } ?: DEFAULT
 
         /** Path under app internal storage for this distro's sandbox files. */
         fun storageDirName(id: String): String = "sandboxes/$id"

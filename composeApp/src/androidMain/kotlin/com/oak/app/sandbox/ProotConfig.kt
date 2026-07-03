@@ -6,6 +6,7 @@ object ProotConfig {
         is SandboxEnvironment.ArchLinux -> mapOf(
             "PACMAN" to "/usr/bin/pacman",
         )
+
         else -> emptyMap()
     }
 }

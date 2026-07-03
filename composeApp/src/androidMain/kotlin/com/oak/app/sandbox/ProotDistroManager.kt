@@ -85,9 +85,8 @@ class ProotDistroManager(
     }
 
     /** Validate and return a known distro environment for the given id. */
-    private fun requireEnvironment(id: String): SandboxEnvironment =
-        SandboxEnvironment.ALL.firstOrNull { it.id == id }
-            ?: throw IllegalArgumentException("Unknown distro: $id")
+    private fun requireEnvironment(id: String): SandboxEnvironment = SandboxEnvironment.ALL.firstOrNull { it.id == id }
+        ?: throw IllegalArgumentException("Unknown distro: $id")
 
     /** Directory where a distro's rootfs lives. */
     fun rootfsDir(id: String): File {
@@ -115,18 +114,17 @@ class ProotDistroManager(
     val isActiveReady: Boolean get() = isDownloaded(activeDistroId)
 
     /** Build the state snapshot for all distros. */
-    fun getAllDistroStates(activeId: String = activeDistroId): List<DistroState> =
-        SandboxEnvironment.ALL.map { env ->
-            DistroState(
-                id = env.id,
-                displayName = env.displayName,
-                downloadState = when {
-                    isDownloaded(env.id) -> DistroDownloadState.Ready
-                    else -> DistroDownloadState.NotDownloaded
-                },
-                isActive = env.id == activeId,
-            )
-        }
+    fun getAllDistroStates(activeId: String = activeDistroId): List<DistroState> = SandboxEnvironment.ALL.map { env ->
+        DistroState(
+            id = env.id,
+            displayName = env.displayName,
+            downloadState = when {
+                isDownloaded(env.id) -> DistroDownloadState.Ready
+                else -> DistroDownloadState.NotDownloaded
+            },
+            isActive = env.id == activeId,
+        )
+    }
 
     /** Switch the active distro to [id]. Returns the [SandboxEnvironment]. */
     fun setActiveDistro(id: String): SandboxEnvironment {
