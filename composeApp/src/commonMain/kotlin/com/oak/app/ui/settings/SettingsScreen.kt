@@ -783,6 +783,7 @@ private fun DistroSelectionItem(
                         .padding(4.dp)
                         .size(18.dp),
                 )
+
                 else -> Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = stringResource(Res.string.settings_distro_status_not_downloaded),
