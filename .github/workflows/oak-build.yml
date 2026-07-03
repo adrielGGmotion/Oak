@@ -48,15 +48,7 @@ jobs:
       - name: Build Debug APK
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
-        run: |
-          bash ./gradlew :composeApp:generateResourceAccessorsForCommonMain --no-configuration-cache --no-daemon 2>&1
-          echo "=== Generated accessor files ==="
-          find composeApp/build/generated/compose/resourceGenerator -name "*.kt" 2>/dev/null | head -10
-          echo "=== Checking for new strings ==="
-          grep -l "settings_tab_sandbox" composeApp/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/oak/composeapp/generated/resources/*.kt 2>/dev/null || echo "NOT FOUND in accessors"
-          grep -l "settings_tab_sandbox" composeApp/build/generated/compose/resourceGenerator/kotlin/commonResClass/oak/composeapp/generated/resources/Res.kt 2>/dev/null || echo "NOT FOUND in Res.kt"
-          echo "=== Compiling ==="
-          bash ./gradlew :androidApp:assembleDebug --stacktrace --rerun-tasks --no-configuration-cache --no-daemon 2>&1
+        run: bash ./gradlew :androidApp:assembleDebug --stacktrace --rerun-tasks --no-configuration-cache --no-daemon
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:

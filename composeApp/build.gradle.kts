@@ -38,6 +38,7 @@ kotlin {
         val desktopMain by getting
         val commonMain by getting {
             kotlin.srcDir(layout.buildDirectory.dir("generated/src/commonMain/kotlin"))
+            kotlin.srcDir(layout.buildDirectory.dir("generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors"))
         }
         val commonTest by getting {
             dependencies {
@@ -50,6 +51,7 @@ kotlin {
 
         val androidMain by getting {
             kotlin.srcDir("src/jvmShared/kotlin")
+            kotlin.srcDir(layout.buildDirectory.dir("generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors"))
         }
         desktopMain.kotlin.srcDir("src/jvmShared/kotlin")
         androidMain.dependencies {
