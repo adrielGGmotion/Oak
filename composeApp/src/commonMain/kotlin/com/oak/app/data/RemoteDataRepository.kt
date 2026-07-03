@@ -238,12 +238,10 @@ class RemoteDataRepository(
     }
 
     /** Max iterations before forcing a text-only response. 500 = effectively unlimited. */
-    private fun maxToolIterations(): Int =
-        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_TOOL_ITERATIONS else MAX_TOOL_ITERATIONS
+    private fun maxToolIterations(): Int = if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_TOOL_ITERATIONS else MAX_TOOL_ITERATIONS
 
     /** Max repeated tool-call sequences before bailing out. 100 = effectively unlimited. */
-    private fun maxRepeatedToolCalls(): Int =
-        if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_REPEATED_TOOL_CALLS else MAX_REPEATED_TOOL_CALLS
+    private fun maxRepeatedToolCalls(): Int = if (isUnlimitedToolCallsEnabled()) MAX_UNLIMITED_REPEATED_TOOL_CALLS else MAX_REPEATED_TOOL_CALLS
 
     override fun isStreamingEnabled(): Boolean = appSettings.isStreamingEnabled()
 

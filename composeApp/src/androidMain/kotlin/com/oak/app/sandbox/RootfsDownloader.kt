@@ -35,7 +35,9 @@ private fun detectCompression(file: File): Compression {
     // Xz: fd 37 7a 58 5a 00
     if (magic[0] == 0xfd.toByte() && magic[1] == 0x37.toByte() && magic[2] == 0x7a.toByte() &&
         magic[3] == 0x58.toByte() && magic[4] == 0x5a.toByte() && magic[5] == 0x00.toByte()
-    ) return Compression.Xz
+    ) {
+        return Compression.Xz
+    }
     return Compression.Gzip // safe fallback
 }
 

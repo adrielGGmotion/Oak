@@ -31,8 +31,10 @@ sealed class SandboxEnvironment(
         id = "alpine",
         displayName = "Alpine Linux",
         packageManager = AlpinePackageManager(),
-        defaultPackages = listOf("bash", "curl", "wget", "git", "jq", "python3", "py3-pip", "nodejs",
-            "openssh-client", "lftp", "rsync"),
+        defaultPackages = listOf(
+            "bash", "curl", "wget", "git", "jq", "python3", "py3-pip", "nodejs",
+            "openssh-client", "lftp", "rsync",
+        ),
         compression = Compression.Gzip,
     ) {
         private const val VERSION = "3.21.3"
@@ -68,8 +70,10 @@ sealed class SandboxEnvironment(
         id = "debian",
         displayName = "Debian",
         packageManager = AptPackageManager(),
-        defaultPackages = listOf("bash", "curl", "wget", "git", "jq", "python3", "python3-pip",
-            "nodejs", "openssh-client", "lftp", "rsync"),
+        defaultPackages = listOf(
+            "bash", "curl", "wget", "git", "jq", "python3", "python3-pip",
+            "nodejs", "openssh-client", "lftp", "rsync",
+        ),
         compression = Compression.Xz,
         extraProotArgs = listOf("--link2symlink"),
     ) {
@@ -98,8 +102,10 @@ sealed class SandboxEnvironment(
         id = "ubuntu",
         displayName = "Ubuntu",
         packageManager = UbuntuPackageManager(),
-        defaultPackages = listOf("bash", "curl", "wget", "git", "jq", "python3", "python3-pip",
-            "nodejs", "openssh-client", "lftp", "rsync"),
+        defaultPackages = listOf(
+            "bash", "curl", "wget", "git", "jq", "python3", "python3-pip",
+            "nodejs", "openssh-client", "lftp", "rsync",
+        ),
         compression = Compression.Xz,
         extraProotArgs = listOf("--link2symlink"),
     ) {
@@ -142,8 +148,10 @@ sealed class SandboxEnvironment(
         id = "arch",
         displayName = "Arch Linux",
         packageManager = PacmanPackageManager(),
-        defaultPackages = listOf("bash", "curl", "wget", "git", "jq", "python", "python-pip",
-            "nodejs", "openssh", "lftp", "rsync"),
+        defaultPackages = listOf(
+            "bash", "curl", "wget", "git", "jq", "python", "python-pip",
+            "nodejs", "openssh", "lftp", "rsync",
+        ),
         compression = Compression.Xz,
         extraProotArgs = listOf("--link2symlink"),
     ) {
