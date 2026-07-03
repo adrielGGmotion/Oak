@@ -37,8 +37,7 @@ kotlin {
     sourceSets {
         val desktopMain by getting
         val commonMain by getting {
-            kotlin.srcDir("${layout.buildDirectory.get()}/generated/src/commonMain/kotlin")
-            kotlin.srcDir("${layout.buildDirectory.get()}/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors")
+            kotlin.srcDir(layout.buildDirectory.dir("generated/src/commonMain/kotlin"))
         }
         val commonTest by getting {
             dependencies {
