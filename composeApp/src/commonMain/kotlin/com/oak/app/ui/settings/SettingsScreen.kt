@@ -656,6 +656,9 @@ private fun SandboxSettingsCard(
                             }
                         }
                     },
+                    leadingIcon = {
+                        DistroLogoIcon(distroId = ds.distroId)
+                    },
                     onClick = {
                         if (!ds.isActive) {
                             distroMenuExpanded = false
@@ -737,6 +740,31 @@ private fun distroDisplayName(distroId: String): String = when (distroId) {
     "ubuntu" -> DistroLabels.UBUNTU
     "arch" -> DistroLabels.ARCH
     else -> distroId.replaceFirstChar { it.uppercase() }
+}
+
+@Composable
+private fun DistroLogoIcon(distroId: String) {
+    val (letter, containerColor) = when (distroId) {
+        "alpine" -> "A" to Color(0xFF5C9E5C)
+        "debian" -> "D" to Color(0xFFD70A53)
+        "ubuntu" -> "U" to Color(0xFFE95420)
+        "arch" -> "A" to Color(0xFF1793D1)
+        else -> "?" to MaterialTheme.colorScheme.primary
+    }
+    Box(
+        modifier = Modifier
+            .size(28.dp)
+            .clip(CircleShape)
+            .background(containerColor),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = letter,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+        )
+    }
 }
 
 @Composable

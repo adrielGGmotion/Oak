@@ -52,11 +52,8 @@ class SandboxViewModel(
     init {
         viewModelScope.launch {
             sandboxController.status.collect { sandboxStatus ->
-                val currentId = sandboxController.getActiveDistroId()
-                if (currentId != cachedActiveDistroId) {
-                    cachedActiveDistroId = currentId
-                    cachedDistroStates = sandboxController.getAllDistroStates()
-                }
+                cachedActiveDistroId = sandboxController.getActiveDistroId()
+                cachedDistroStates = sandboxController.getAllDistroStates()
                 _state.update {
                     applyStatus(sandboxStatus, it).copy(
                         activeDistroId = cachedActiveDistroId,
@@ -102,11 +99,9 @@ class SandboxViewModel(
     fun onSelectDistro(distroId: String) {
         val ds = _state.value.distroStates.firstOrNull { it.distroId == distroId }
         if (ds == null || ds.isActive) return
-        if (ds.isDownloaded) {
-            sandboxController.setActiveDistro(distroId)
-        } else {
-            sandboxController.downloadDistro(distroId)
-        }
+        // Always just set as active — the UI shows an Install button when the
+        // distro is not downloaded, letting the user manually trigger the setup.
+        sandboxController.setActiveDistro(distroId)
     }
 
     fun onRemoveDistro(distroId: String) {

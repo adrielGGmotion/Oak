@@ -199,9 +199,11 @@ class LinuxSandboxManager(
     /** Switch active distro. The UI checks isDistroDownloaded before calling this. */
     fun setActiveDistro(distroId: String) {
         if (distroId == activeDistroId) return
-        _state.value = SandboxState.Switching
         closeAllShells()
+        // Update activeDistroId before emitting Switching so the UI immediately
+        // reflects the target distro rather than showing the old one.
         activeDistroId = distroId
+        _state.value = SandboxState.Switching
         checkActiveDistro()
     }
 
@@ -635,15 +637,17 @@ class LinuxSandboxManager(
         return total / (1024 * 1024)
     }
 
-    /** Check if packages are installed for the active distro. */
+    /** Check if basic packages are installed for the active distro. */
     fun arePackagesInstalled(): Boolean {
         if (_state.value !is SandboxState.Ready) return false
         val rootfs = rootfsDirFor(activeDistroId)
-        val pkgManager = activeConfig.packageManager
-        // Check for setup packages — all must be present
-        return activeConfig.setupPackages.all { pkg ->
-            val bin = File(rootfs, "usr/bin/$pkg")
-            bin.exists() || File(rootfs, "bin/$pkg").exists()
+        // Check for basic packages (excluding duplicates already in setupPackages).
+        // setupPackages are installed during the initial distro download, so checking
+        // those would falsely indicate "basic packages installed" before the user has
+        // explicitly triggered the basic-package install.
+        val basicOnly = activeConfig.basicPackages - activeConfig.setupPackages.toSet()
+        return basicOnly.all { pkg ->
+            File(rootfs, "usr/bin/$pkg").exists() || File(rootfs, "bin/$pkg").exists()
         }
     }
 
