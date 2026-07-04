@@ -92,6 +92,12 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
@@ -639,20 +645,6 @@ private fun SandboxSettingsCard(
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.padding(start = 8.dp),
                                 )
-                            } else if (ds.isDownloaded) {
-                                IconButton(
-                                    onClick = {
-                                        distroMenuExpanded = false
-                                        onRemoveDistro(ds.distroId)
-                                    },
-                                    modifier = Modifier.size(32.dp),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = DistroLabels.REMOVE,
-                                        tint = MaterialTheme.colorScheme.error,
-                                    )
-                                }
                             }
                         }
                     },
@@ -744,26 +736,75 @@ private fun distroDisplayName(distroId: String): String = when (distroId) {
 
 @Composable
 private fun DistroLogoIcon(distroId: String) {
-    val (letter, containerColor) = when (distroId) {
-        "alpine" -> "A" to Color(0xFF5C9E5C)
-        "debian" -> "D" to Color(0xFFD70A53)
-        "ubuntu" -> "U" to Color(0xFFE95420)
-        "arch" -> "A" to Color(0xFF1793D1)
-        else -> "?" to MaterialTheme.colorScheme.primary
+    val icon = when (distroId) {
+        "alpine" -> AlpineLogo
+        "debian" -> DebianLogo
+        "ubuntu" -> UbuntuLogo
+        "arch" -> ArchLogo
+        else -> null
     }
-    Box(
-        modifier = Modifier
-            .size(28.dp)
-            .clip(CircleShape)
-            .background(containerColor),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = letter,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
+    if (icon != null) {
+        Icon(
+            painter = icon,
+            contentDescription = distroDisplayName(distroId),
+            modifier = Modifier.size(28.dp),
+            tint = Color.Unspecified,
         )
+    }
+}
+
+private val AlpineLogo = object : Painter() {
+    override val intrinsicSize = Size(28f, 28f)
+    override fun DrawScope.onDraw() {
+        drawCircle(Color(0xFF5C9E5C))
+        val mountain = Path().apply {
+            moveTo(14f, 4f); lineTo(4f, 24f); lineTo(24f, 24f); close()
+        }
+        drawPath(mountain, Color.White)
+        val peak = Path().apply {
+            moveTo(14f, 8f); lineTo(8f, 20f); lineTo(20f, 20f); close()
+        }
+        drawPath(peak, Color(0xFF5C9E5C))
+    }
+}
+
+private val DebianLogo = object : Painter() {
+    override val intrinsicSize = Size(28f, 28f)
+    override fun DrawScope.onDraw() {
+        drawCircle(Color(0xFFD70A53))
+        val swirl = Path().apply {
+            addOval(Rect(6f, 6f, 22f, 22f))
+        }
+        drawPath(swirl, Color.White)
+        drawCircle(Color(0xFFD70A53), radius = 7f, center = Offset(17f, 11f))
+    }
+}
+
+private val UbuntuLogo = object : Painter() {
+    override val intrinsicSize = Size(28f, 28f)
+    override fun DrawScope.onDraw() {
+        drawCircle(Color(0xFFE95420))
+        drawCircle(Color.White, radius = 9f)
+        drawCircle(Color(0xFFE95420), radius = 5f)
+        drawCircle(Color.White, radius = 2.5f, center = Offset(7f, 14f))
+        drawCircle(Color.White, radius = 2.5f, center = Offset(21f, 14f))
+        drawCircle(Color.White, radius = 2.5f, center = Offset(14f, 22f))
+    }
+}
+
+private val ArchLogo = object : Painter() {
+    override val intrinsicSize = Size(28f, 28f)
+    override fun DrawScope.onDraw() {
+        drawCircle(Color(0xFF1793D1))
+        val arch = Path().apply {
+            moveTo(14f, 4f); lineTo(6f, 18f); lineTo(14f, 14f); lineTo(22f, 18f); close()
+        }
+        drawPath(arch, Color.White)
+        val base = Path().apply {
+            moveTo(10f, 18f); lineTo(14f, 14f); lineTo(18f, 18f)
+            lineTo(16f, 24f); lineTo(12f, 24f); close()
+        }
+        drawPath(base, Color.White)
     }
 }
 
