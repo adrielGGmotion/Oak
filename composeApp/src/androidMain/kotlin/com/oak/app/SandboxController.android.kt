@@ -145,6 +145,11 @@ class AndroidSandboxController : SandboxController {
             )
         }
 
+        is SandboxState.Switching -> SandboxStatus(
+            working = true,
+            statusText = "Switching distro...",
+        )
+
         is SandboxState.Ready -> {
             if (previousState !is SandboxState.Ready) {
                 cachedDiskUsageMB = sandboxManager.getDiskUsageMB()

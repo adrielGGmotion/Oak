@@ -199,6 +199,7 @@ class LinuxSandboxManager(
     /** Switch active distro. The UI checks isDistroDownloaded before calling this. */
     fun setActiveDistro(distroId: String) {
         if (distroId == activeDistroId) return
+        _state.value = SandboxState.Switching
         closeAllShells()
         activeDistroId = distroId
         checkActiveDistro()
