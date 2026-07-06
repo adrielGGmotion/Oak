@@ -34,6 +34,19 @@ Oak/
 
 **Seed color**: `#5B8C5B` (dark pastel green). Uses `greenColorScheme(darkTheme)` / `dynamicColorScheme` from materialKolor. Dark/light automatic via `isSystemInDarkTheme`.
 
+## Auto-setup (OpenHands)
+
+The `.openhands/setup.sh` script runs automatically when an OpenHands session
+starts. It installs:
+- **JDK 21** (Temurin) — required to build
+- **Android SDK** (platform 36 + build-tools) — only when missing
+- **Gradle cache pre-warm** — downloads desktop dependencies so builds are fast
+
+Manual equivalent:
+```bash
+sudo bash .openhands/setup.sh
+```
+
 ## Build commands
 
 ```bash
