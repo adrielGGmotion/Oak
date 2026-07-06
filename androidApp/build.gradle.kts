@@ -33,6 +33,9 @@ android {
 
     flavorDimensions += "mode"
     productFlavors {
+        create("production") {
+            dimension = "mode"
+        }
         create("nightly") {
             dimension = "mode"
             applicationIdSuffix = ".nightly"
@@ -93,15 +96,11 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
         create("performance") {
+            initWith(getByName("release"))
             applicationIdSuffix = ".perf"
-            isMinifyEnabled = true
             isShrinkResources = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "../composeApp/proguard-rules.pro",
-                "proguard-android.pro",
-            )
             signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
         }
         getByName("release") {
             isMinifyEnabled = true
