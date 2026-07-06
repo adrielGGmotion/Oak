@@ -31,6 +31,18 @@ android {
         versionName = libs.versions.appVersion.get()
     }
 
+    flavorDimensions += "mode"
+    productFlavors {
+        create("nightly") {
+            dimension = "mode"
+            applicationIdSuffix = ".nightly"
+        }
+        create("staging") {
+            dimension = "mode"
+            applicationIdSuffix = ".testing"
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -78,6 +90,17 @@ android {
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".debug"
+            signingConfig = signingConfigs.getByName("debug")
+        }
+        create("performance") {
+            applicationIdSuffix = ".perf"
+            isMinifyEnabled = true
+            isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "../composeApp/proguard-rules.pro",
+                "proguard-android.pro",
+            )
             signingConfig = signingConfigs.getByName("debug")
         }
         getByName("release") {
