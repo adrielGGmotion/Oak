@@ -17,7 +17,7 @@
 
 ## Checklist
 
-- [ ] Code builds and runs (`./gradlew :androidApp:assembleDebug`)
+- [ ] Code builds and runs (`./gradlew :androidApp:assembleStagingDebug`)
 - [ ] Changes are focused on a single concern
 - [ ] PR description explains what and why
 
