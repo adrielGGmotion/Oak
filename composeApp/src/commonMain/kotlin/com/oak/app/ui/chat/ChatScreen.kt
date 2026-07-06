@@ -603,21 +603,31 @@ private fun ChatModeScreen(
                             val listState = rememberLazyListState()
                             val componentScope = rememberCoroutineScope()
 
+                            // Track whether the user has manually scrolled away from the bottom.
+                            // Once true, auto-scroll stops until the user scrolls back or taps the FAB.
+                            // Uses canScrollForward — the official Compose API for "is user at the end?".
+                            val userScrolledAway by remember {
+                                derivedStateOf { listState.canScrollForward }
+                            }
+
+                            // During streaming, auto-scroll to show new tokens — but only if the user
+                            // hasn't scrolled away. Uses instant scrollToItem (not animateScrollToItem)
+                            // so it never fights touch gestures.
                             LaunchedEffect(uiState.streamingContent) {
-                                if (uiState.streamingContent != null && uiState.history.isNotEmpty()) {
-                                    val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-                                    val atBottom = lastVisible != null && lastVisible.index >= listState.layoutInfo.totalItemsCount - 2
-                                    if (atBottom) {
-                                        listState.animateScrollToItem(uiState.history.size)
-                                    }
+                                if (uiState.streamingContent != null && uiState.history.isNotEmpty() && !userScrolledAway) {
+                                    listState.scrollToItem(uiState.history.size)
                                 }
                             }
 
+                            // When a new history item appears (streaming completed, user sent a message, etc.),
+                            // scroll to show it — but only if the user hasn't scrolled away.
                             LaunchedEffect(uiState.history.size) {
                                 // Capture history at effect start to prevent race conditions
                                 val history = uiState.history
                                 if (history.isNotEmpty()) {
-                                    listState.scrollToItem(history.lastIndex)
+                                    if (!userScrolledAway) {
+                                        listState.scrollToItem(history.lastIndex)
+                                    }
                                     val lastMessage = history.last()
                                     if (uiState.isSpeechOutputEnabled && lastMessage.role == History.Role.ASSISTANT) {
                                         componentScope.launch(getBackgroundDispatcher()) {
