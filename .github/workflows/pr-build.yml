@@ -24,11 +24,11 @@ jobs:
         with:
           setup-android: 'true'
 
-      - name: Build Debug APK
-        run: bash ./gradlew :androidApp:assembleDebug --stacktrace
+      - name: Build Staging Performance APK
+        run: bash ./gradlew :androidApp:assembleStagingPerformance --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: oak-debug
-          path: androidApp/build/outputs/apk/debug/*.apk
+          name: oak-staging-performance
+          path: androidApp/build/outputs/apk/staging/performance/*.apk

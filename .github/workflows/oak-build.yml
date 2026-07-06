@@ -45,15 +45,15 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           setup-android: 'true'
-      - name: Build Debug APK
+      - name: Build Staging Debug APK
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
-        run: bash ./gradlew :androidApp:assembleDebug --stacktrace
+        run: bash ./gradlew :androidApp:assembleStagingDebug --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: oak-debug
-          path: androidApp/build/outputs/apk/debug/*.apk
+          name: oak-staging-debug
+          path: androidApp/build/outputs/apk/staging/debug/*.apk
 
   android-release:
     name: Build Release APK
@@ -69,18 +69,18 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           setup-android: 'true'
-      - name: Build Release APK
+      - name: Build Staging Release APK
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        run: bash ./gradlew :androidApp:assembleRelease --stacktrace
+        run: bash ./gradlew :androidApp:assembleStagingRelease --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: oak-release
-          path: androidApp/build/outputs/apk/release/*.apk
+          name: oak-staging-release
+          path: androidApp/build/outputs/apk/staging/release/*.apk
 
   desktop-linux:
     name: Build Linux Desktop Packages
