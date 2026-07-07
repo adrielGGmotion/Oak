@@ -13,6 +13,9 @@ android {
             .get()
             .toInt()
     ndkVersion = "29.0.14206865"
+    // Compose Multiplatform 1.11+ libraries target API 37, but the SDK
+    // platform is not yet available in CI. Disable the advisory check.
+    checkAarMetadata = false
 
     defaultConfig {
         applicationId = "com.oak.app"
