@@ -30,9 +30,6 @@ kotlin {
         androidResources {
             enable = true
         }
-        aarMetadata {
-            minCompileSdk = 37
-        }
     }
 
 

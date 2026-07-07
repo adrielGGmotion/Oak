@@ -53,5 +53,10 @@ runs:
         yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
         # Install required SDK platforms and build-tools.
         yes | "$SDKMANAGER" "platforms;android-36" || true
+        yes | "$SDKMANAGER" "build-tools;37.0.0" || true
         yes | "$SDKMANAGER" "build-tools;36.0.0" || true
         yes | "$SDKMANAGER" "build-tools;29.0.3" || true
+        # Compose Multiplatform AARs target API 37, which isn't available
+        # as a downloadable platform. Create a symlink to API 36 so AGP
+        # can resolve the platform. No API 37-specific features are used.
+        ln -sf "$ANDROID_SDK/platforms/android-36" "$ANDROID_SDK/platforms/android-37"

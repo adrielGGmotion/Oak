@@ -13,12 +13,6 @@ android {
             .get()
             .toInt()
     ndkVersion = "29.0.14206865"
-    // Compose Multiplatform 1.11+ AARs declare minCompileSdk 37.
-    // Accept it even though we compile against 36 (API 37 isn't
-    // available in CI).
-    aarMetadata {
-        minCompileSdk = 37
-    }
 
     defaultConfig {
         applicationId = "com.oak.app"
