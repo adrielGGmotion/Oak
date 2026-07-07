@@ -116,7 +116,7 @@ jobs:
           languages: java-kotlin
 
       - name: Build with Gradle
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew :androidApp:assembleStagingDebug --no-daemon --stacktrace
 
       - name: Perform Analysis
         uses: github/codeql-action/analyze@v3

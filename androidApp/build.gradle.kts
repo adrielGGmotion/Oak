@@ -31,6 +31,21 @@ android {
         versionName = libs.versions.appVersion.get()
     }
 
+    flavorDimensions += "mode"
+    productFlavors {
+        create("production") {
+            dimension = "mode"
+        }
+        create("nightly") {
+            dimension = "mode"
+            applicationIdSuffix = ".nightly"
+        }
+        create("staging") {
+            dimension = "mode"
+            applicationIdSuffix = ".testing"
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -94,6 +109,13 @@ android {
                 } else {
                     signingConfigs.getByName("debug")
                 }
+        }
+        create("performance") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".perf"
+            isShrinkResources = false
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
         }
     }
 

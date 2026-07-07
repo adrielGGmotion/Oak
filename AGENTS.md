@@ -50,8 +50,18 @@ sudo bash .openhands/setup.sh
 ## Build commands
 
 ```bash
-# Android debug APK
-./gradlew :androidApp:assembleDebug
+# Android debug APK (uses staging flavor by default in CI)
+./gradlew :androidApp:assembleStagingDebug
+
+# All Android variants—nightly
+./gradlew :androidApp:assembleNightlyDebug
+./gradlew :androidApp:assembleNightlyPerformance  # minified, no resource shrink, debug signing
+./gradlew :androidApp:assembleNightlyRelease
+
+# All Android variants—staging
+./gradlew :androidApp:assembleStagingDebug
+./gradlew :androidApp:assembleStagingPerformance   # minified, no resource shrink, debug signing
+./gradlew :androidApp:assembleStagingRelease
 
 # Desktop run
 ./gradlew :composeApp:run

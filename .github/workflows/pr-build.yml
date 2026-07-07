@@ -7,11 +7,69 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
 
 jobs:
+  check-approval:
+    name: Check PR Approval
+    runs-on: ubuntu-latest
+    outputs:
+      approved: ${{ steps.gh-check.outputs.approved }}
+    steps:
+      - name: Check for approving reviews
+        id: gh-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APPROVED=$(gh api "/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+            --jq '[.[] | select(.state == "APPROVED")] | length')
+          if [ "$APPROVED" -gt 0 ]; then
+            echo "approved=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "approved=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
-    name: Build Debug APK
+    name: Build ${{ matrix.flavor }} Performance
+    needs: check-approval
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [production, staging]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: ./.github/actions/setup
+        with:
+          setup-android: 'true'
+
+      - name: Build ${{ matrix.flavor }} Performance APK
+        run: bash ./gradlew :androidApp:assemble${{ matrix.flavor }}Performance --stacktrace
+
+      - name: Upload ${{ matrix.flavor }} Performance APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: oak-${{ matrix.flavor }}-performance
+          path: androidApp/build/outputs/apk/${{ matrix.flavor }}/performance/*.apk
+
+      - name: Report build summary
+        if: always()
+        run: |
+          echo "## ${{ matrix.flavor }} Performance" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Task**: \`assemble${{ matrix.flavor }}Performance\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact**: \`oak-${{ matrix.flavor }}-performance\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  build-nightly:
+    name: Build nightly Performance
+    needs: check-approval
+    if: needs.check-approval.outputs.approved == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -24,11 +82,20 @@ jobs:
         with:
           setup-android: 'true'
 
-      - name: Build Debug APK
-        run: bash ./gradlew :androidApp:assembleDebug --stacktrace
+      - name: Build nightly Performance APK
+        run: bash ./gradlew :androidApp:assembleNightlyPerformance --stacktrace
 
-      - name: Upload APK
+      - name: Upload nightly Performance APK
         uses: actions/upload-artifact@v7
         with:
-          name: oak-debug
-          path: androidApp/build/outputs/apk/debug/*.apk
+          name: oak-nightly-performance
+          path: androidApp/build/outputs/apk/nightly/performance/*.apk
+
+      - name: Report build summary
+        if: always()
+        run: |
+          echo "## nightly Performance" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Task**: \`assembleNightlyPerformance\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact**: \`oak-nightly-performance\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY

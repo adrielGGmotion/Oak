@@ -7,13 +7,14 @@ on:
   workflow_dispatch:
     inputs:
       build-type:
-        description: 'Android build type (debug, release, or both)'
+        description: 'Android build type (debug, release, performance, or both)'
         required: true
         default: 'debug'
         type: choice
         options:
           - debug
           - release
+          - performance
           - both
       platform:
         description: 'Target platform'
@@ -30,7 +31,7 @@ permissions:
 
 jobs:
   android-debug:
-    name: Build Debug APK
+    name: Build Debug APKs
     if: >
       github.event_name == 'push' || (
         github.event_name == 'workflow_dispatch' &&
@@ -38,6 +39,10 @@ jobs:
         (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all')
       )
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [production, nightly, staging]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -45,23 +50,36 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           setup-android: 'true'
-      - name: Build Debug APK
+      - name: Build ${{ matrix.flavor }} Debug APK
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
-        run: bash ./gradlew :androidApp:assembleDebug --stacktrace
-      - name: Upload APK
+        run: bash ./gradlew :androidApp:assemble${{ matrix.flavor }}Debug --stacktrace
+      - name: Upload ${{ matrix.flavor }} Debug APK
         uses: actions/upload-artifact@v7
         with:
-          name: oak-debug
-          path: androidApp/build/outputs/apk/debug/*.apk
+          name: oak-${{ matrix.flavor }}-debug
+          path: androidApp/build/outputs/apk/${{ matrix.flavor }}/debug/*.apk
+
+      - name: Report build summary
+        if: always()
+        run: |
+          echo "## ${{ matrix.flavor }} Debug" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Task**: \`assemble${{ matrix.flavor }}Debug\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact**: \`oak-${{ matrix.flavor }}-debug\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
   android-release:
-    name: Build Release APK
+    name: Build Release APKs
     if: >
       github.event_name == 'workflow_dispatch' &&
       (github.event.inputs.build-type == 'release' || github.event.inputs.build-type == 'both') &&
       (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all')
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [production, nightly, staging]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -69,18 +87,64 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           setup-android: 'true'
-      - name: Build Release APK
+      - name: Build ${{ matrix.flavor }} Release APK
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        run: bash ./gradlew :androidApp:assembleRelease --stacktrace
-      - name: Upload APK
+        run: bash ./gradlew :androidApp:assemble${{ matrix.flavor }}Release --stacktrace
+      - name: Upload ${{ matrix.flavor }} Release APK
         uses: actions/upload-artifact@v7
         with:
-          name: oak-release
-          path: androidApp/build/outputs/apk/release/*.apk
+          name: oak-${{ matrix.flavor }}-release
+          path: androidApp/build/outputs/apk/${{ matrix.flavor }}/release/*.apk
+
+      - name: Report build summary
+        if: always()
+        run: |
+          echo "## ${{ matrix.flavor }} Release" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Task**: \`assemble${{ matrix.flavor }}Release\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact**: \`oak-${{ matrix.flavor }}-release\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  android-performance:
+    name: Build Performance APKs
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.build-type == 'performance' || github.event.inputs.build-type == 'both') &&
+      (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [production, nightly, staging]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          setup-android: 'true'
+      - name: Build ${{ matrix.flavor }} Performance APK
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: bash ./gradlew :androidApp:assemble${{ matrix.flavor }}Performance --stacktrace
+      - name: Upload ${{ matrix.flavor }} Performance APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: oak-${{ matrix.flavor }}-performance
+          path: androidApp/build/outputs/apk/${{ matrix.flavor }}/performance/*.apk
+
+      - name: Report build summary
+        if: always()
+        run: |
+          echo "## ${{ matrix.flavor }} Performance" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Task**: \`assemble${{ matrix.flavor }}Performance\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact**: \`oak-${{ matrix.flavor }}-performance\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
   desktop-linux:
     name: Build Linux Desktop Packages
