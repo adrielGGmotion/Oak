@@ -11,8 +11,39 @@ permissions:
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build ${{ matrix.flavor }} ${{ matrix.build-type }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: production
+            build-type: Debug
+            build-dir: debug
+          - flavor: production
+            build-type: Release
+            build-dir: release
+          - flavor: production
+            build-type: Performance
+            build-dir: performance
+          - flavor: nightly
+            build-type: Debug
+            build-dir: debug
+          - flavor: nightly
+            build-type: Release
+            build-dir: release
+          - flavor: nightly
+            build-type: Performance
+            build-dir: performance
+          - flavor: staging
+            build-type: Debug
+            build-dir: debug
+          - flavor: staging
+            build-type: Release
+            build-dir: release
+          - flavor: staging
+            build-type: Performance
+            build-dir: performance
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -24,11 +55,20 @@ jobs:
         with:
           setup-android: 'true'
 
-      - name: Build Staging Performance APK
-        run: bash ./gradlew :androidApp:assembleStagingPerformance --stacktrace
+      - name: Build ${{ matrix.flavor }} ${{ matrix.build-type }} APK
+        run: bash ./gradlew :androidApp:assemble${{ matrix.flavor }}${{ matrix.build-type }} --stacktrace
 
-      - name: Upload APK
+      - name: Upload ${{ matrix.flavor }} ${{ matrix.build-type }} APK
         uses: actions/upload-artifact@v7
         with:
-          name: oak-staging-performance
-          path: androidApp/build/outputs/apk/staging/performance/*.apk
+          name: oak-${{ matrix.flavor }}-${{ matrix.build-dir }}
+          path: androidApp/build/outputs/apk/${{ matrix.flavor }}/${{ matrix.build-dir }}/*.apk
+
+      - name: Report build summary
+        if: always()
+        run: |
+          echo "## ${{ matrix.flavor }} ${{ matrix.build-type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Task**: \`assemble${{ matrix.flavor }}${{ matrix.build-type }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact**: \`oak-${{ matrix.flavor }}-${{ matrix.build-dir }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
