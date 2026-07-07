@@ -13,12 +13,6 @@ android {
             .get()
             .toInt()
     ndkVersion = "29.0.14206865"
-    // Compose Multiplatform 1.11+ libraries target API 37, but the SDK
-    // platform is not yet available in CI. Disable the advisory check
-    // that would otherwise fail the build.
-    tasks.matching { it.name.contains("AarMetadata") }.configureEach {
-        enabled = false
-    }
 
     defaultConfig {
         applicationId = "com.oak.app"
@@ -133,6 +127,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
+}
+
+// Compose Multiplatform 1.11+ AARs target API 37, not yet available in CI.
+tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+    enabled = false
 }
 
 dependencies {
