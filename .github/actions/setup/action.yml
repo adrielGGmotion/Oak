@@ -35,12 +35,21 @@ runs:
 
     - name: Setup Android SDK
       if: ${{ inputs.setup-android == 'true' }}
-      uses: android-actions/setup-android@v3
-
-    - name: Install Android SDK Platform and Build Tools
-      if: ${{ inputs.setup-android == 'true' }}
       shell: bash
       run: |
-        sdkmanager "platforms;android-37.0"
-        sdkmanager "build-tools;37.0.0"
-        sdkmanager "build-tools;29.0.3"
+        ANDROID_SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+        SDKMANAGER="$ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager"
+        if [ ! -f "$SDKMANAGER" ]; then
+          SDKMANAGER="$ANDROID_SDK/cmdline-tools/bin/sdkmanager"
+        fi
+        if [ ! -f "$SDKMANAGER" ]; then
+          echo "sdkmanager not found at $ANDROID_SDK" >&2
+          ls "$ANDROID_SDK/cmdline-tools/" 2>/dev/null || echo "No cmdline-tools found" >&2
+          exit 1
+        fi
+        # Accept all licenses non-interactively
+        yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+        # Install required SDK platforms and build-tools
+        yes | "$SDKMANAGER" "platforms;android-37.0"
+        yes | "$SDKMANAGER" "build-tools;37.0.0"
+        yes | "$SDKMANAGER" "build-tools;29.0.3"

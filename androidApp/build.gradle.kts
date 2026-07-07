@@ -95,13 +95,6 @@ android {
             applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.getByName("debug")
         }
-        create("performance") {
-            initWith(getByName("release"))
-            applicationIdSuffix = ".perf"
-            isShrinkResources = false
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += "release"
-        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -116,6 +109,13 @@ android {
                 } else {
                     signingConfigs.getByName("debug")
                 }
+        }
+        create("performance") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".perf"
+            isShrinkResources = false
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
         }
     }
 
