@@ -50,6 +50,6 @@ runs:
         # Accept all licenses non-interactively
         yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
         # Install required SDK platforms and build-tools
-        yes | "$SDKMANAGER" "platforms;android-37.0"
+        yes | "$SDKMANAGER" "platforms;android-37"
         yes | "$SDKMANAGER" "build-tools;37.0.0"
         yes | "$SDKMANAGER" "build-tools;29.0.3"
