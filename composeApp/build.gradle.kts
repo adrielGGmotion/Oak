@@ -30,6 +30,9 @@ kotlin {
         androidResources {
             enable = true
         }
+        aarMetadata {
+            minCompileSdk = 37
+        }
     }
 
 
@@ -175,11 +178,6 @@ afterEvaluate {
             logger.lifecycle("Restored original signed BouncyCastle jar: ${processedJar.name}")
         }
     }
-}
-
-// Compose Multiplatform 1.11+ AARs target API 37, not yet available in CI.
-tasks.matching { it.name.contains("AarMetadata") }.configureEach {
-    enabled = false
 }
 
 class VersionGeneratorPlugin : Plugin<Project> {

@@ -47,11 +47,11 @@ runs:
           ls "$ANDROID_SDK/cmdline-tools/" 2>/dev/null || echo "No cmdline-tools found" >&2
           exit 1
         fi
-        # Accept all licenses non-interactively
-        yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-        # Install required SDK platforms and build-tools.
+        # Accept all licenses non-interactively.
         # sdkmanager may close stdin before yes finishes, causing SIGPIPE.
         # Use || true to avoid spurious failures with pipefail.
+        yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+        # Install required SDK platforms and build-tools.
         yes | "$SDKMANAGER" "platforms;android-36" || true
         yes | "$SDKMANAGER" "build-tools;36.0.0" || true
         yes | "$SDKMANAGER" "build-tools;29.0.3" || true
