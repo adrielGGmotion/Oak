@@ -513,9 +513,10 @@ class RemoteDataRepository(
         }
 
         // Read user-configured sampler params (0/-1 sentinel means use default)
-        val topK = appSettings.getSamplerTopK(model.id).takeIf { it > 0 } ?: 40
-        val topP = appSettings.getSamplerTopP(model.id).takeIf { it >= 0f } ?: 0.95f
-        val temperature = appSettings.getSamplerTemperature(model.id).takeIf { it >= 0f } ?: 0.8f
+        val defaultParams = SamplerParams()
+        val topK = appSettings.getSamplerTopK(model.id).takeIf { it > 0 } ?: defaultParams.topK
+        val topP = appSettings.getSamplerTopP(model.id).takeIf { it >= 0f } ?: defaultParams.topP
+        val temperature = appSettings.getSamplerTemperature(model.id).takeIf { it >= 0f } ?: defaultParams.temperature
         val samplerParams = SamplerParams(topK = topK, topP = topP, temperature = temperature)
 
         // Pass tools to engine.chat() — litertlm handles tool calling natively

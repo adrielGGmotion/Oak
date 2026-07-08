@@ -162,6 +162,9 @@ import oak.composeapp.generated.resources.litert_performance_good
 import oak.composeapp.generated.resources.litert_performance_ok
 import oak.composeapp.generated.resources.litert_performance_poor
 import oak.composeapp.generated.resources.litert_recommended
+import oak.composeapp.generated.resources.litert_sampler_top_k
+import oak.composeapp.generated.resources.litert_sampler_top_p
+import oak.composeapp.generated.resources.litert_sampler_temperature
 import oak.composeapp.generated.resources.litert_tool_support
 import oak.composeapp.generated.resources.settings_add_service
 import oak.composeapp.generated.resources.settings_ai_font_family
@@ -1527,7 +1530,7 @@ private fun LiteRTSettings(
                         mutableStateOf(currentTopK.toFloat())
                     }
                     Text(
-                        text = "Top-K: ${topKSlider.roundToInt()}",
+                        text = stringResource(Res.string.litert_sampler_top_k, topKSlider.roundToInt()),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1545,7 +1548,7 @@ private fun LiteRTSettings(
                         mutableStateOf(currentTopP)
                     }
                     Text(
-                        text = "Top-P: %.2f".format(topPSlider),
+                        text = stringResource(Res.string.litert_sampler_top_p, topPSlider),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1563,7 +1566,7 @@ private fun LiteRTSettings(
                         mutableStateOf(currentTemp)
                     }
                     Text(
-                        text = "Temperature: %.2f".format(tempSlider),
+                        text = stringResource(Res.string.litert_sampler_temperature, tempSlider),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

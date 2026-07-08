@@ -699,17 +699,17 @@ class SettingsViewModel(
 
     private fun buildSamplerTopKMap() = dataRepository.getLocalAvailableModels().associate { model ->
         val stored = dataRepository.getSamplerTopK(model.id)
-        model.id to if (stored > 0) stored else 40
+        model.id to if (stored > 0) stored else com.oak.app.inference.SamplerParams().topK
     }.toImmutableMap()
 
     private fun buildSamplerTopPMap() = dataRepository.getLocalAvailableModels().associate { model ->
         val stored = dataRepository.getSamplerTopP(model.id)
-        model.id to if (stored >= 0f) stored else 0.95f
+        model.id to if (stored >= 0f) stored else com.oak.app.inference.SamplerParams().topP
     }.toImmutableMap()
 
     private fun buildSamplerTemperatureMap() = dataRepository.getLocalAvailableModels().associate { model ->
         val stored = dataRepository.getSamplerTemperature(model.id)
-        model.id to if (stored >= 0f) stored else 0.8f
+        model.id to if (stored >= 0f) stored else com.oak.app.inference.SamplerParams().temperature
     }.toImmutableMap()
 
     private fun onChangeBackendPreference(pref: String) {

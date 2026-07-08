@@ -304,11 +304,13 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
             // - System prompt changed
             // - Tool set changed
             // - Sampler params changed (rebuild with new SamplerConfig)
+            // - User messages decreased (regeneration, deletion, or compaction)
             // Don't rebuild when messages grow — litertlm handles multi-turn internally
             val needsReset = conversation == null ||
                 sanitizedSP != lastSystemPrompt ||
                 toolProviders.size != lastToolCount ||
-                samplerParams != lastSamplerParams
+                samplerParams != lastSamplerParams ||
+                messages.count { it.role == "user" } <= sentUserMessageCount
 
             if (needsReset) {
                 buildConversation(currentEngine, messages, sanitizedSP, toolProviders, samplerParams)
@@ -390,6 +392,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
             )
 
             runCatching { conversation?.close() }
+            conversation = null
             conversation = engine.createConversation(config)
         } finally {
             ExperimentalFlags.enableConversationConstrainedDecoding = false
@@ -416,6 +419,8 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
         conv: com.google.ai.edge.litertlm.Conversation,
         content: String,
     ): String = suspendCancellableCoroutine { continuation ->
+        // Reset any stale streaming state from a previous run
+        _streamingContent.value = null
         val responseBuilder = StringBuilder()
         val latch = CountDownLatch(1)
         var tokenCount = 0
@@ -436,10 +441,12 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
             }
 
             override fun onDone() {
-                // Always flush the complete response before finishing
+                // Always flush the complete response before finishing.
+                // Don't set _streamingContent to null here — the collector in the
+                // repository's finally block handles clearing the streaming state,
+                // and setting null here would cause the UI to miss the final token.
                 _streamingContent.value = responseBuilder.toString()
                 latch.countDown()
-                _streamingContent.value = null
                 if (continuation.isActive) {
                     continuation.resume(responseBuilder.toString())
                 }
@@ -470,16 +477,36 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
 
     private fun sanitizeForLiteRt(s: String?): String? {
         if (s == null) return null
-        // Single-pass: scan for first surrogate, build filtered result only if needed
+        // Single-pass: scan for first lone surrogate, build filtered result only if needed.
+        // Preserve valid surrogate pairs (e.g. emoji) — only strip lone surrogates.
         val len = s.length
         var i = 0
         while (i < len) {
-            if (s[i].isSurrogate()) {
+            val c = s[i]
+            if (c.isSurrogate()) {
+                if (c.isHighSurrogate() && i + 1 < len && s[i + 1].isLowSurrogate()) {
+                    // Valid surrogate pair — skip both
+                    i += 2
+                    continue
+                }
+                // Lone surrogate — start building filtered result
                 val sb = StringBuilder(len - 1)
                 if (i > 0) sb.append(s, 0, i)
-                while (++i < len) {
-                    val c = s[i]
-                    if (!c.isSurrogate()) sb.append(c)
+                i++
+                while (i < len) {
+                    val c2 = s[i]
+                    if (c2.isHighSurrogate() && i + 1 < len && s[i + 1].isLowSurrogate()) {
+                        // Valid surrogate pair — keep both
+                        sb.append(c2)
+                        sb.append(s[i + 1])
+                        i += 2
+                    } else if (!c2.isSurrogate()) {
+                        sb.append(c2)
+                        i++
+                    } else {
+                        // Lone surrogate — skip
+                        i++
+                    }
                 }
                 return sb.toString()
             }
