@@ -670,6 +670,12 @@ class FakeDataRepository : DataRepository {
     override fun getTotalDeviceMemoryBytes(): Long = Long.MAX_VALUE
     override fun getModelContextTokens(modelId: String): Int = 0
     override fun setModelContextTokens(modelId: String, contextTokens: Int) {}
+    override fun getSamplerTopK(modelId: String): Int = 40
+    override fun setSamplerTopK(modelId: String, topK: Int) {}
+    override fun getSamplerTopP(modelId: String): Float = 0.95f
+    override fun setSamplerTopP(modelId: String, topP: Float) {}
+    override fun getSamplerTemperature(modelId: String): Float = 0.8f
+    override fun setSamplerTemperature(modelId: String, temperature: Float) {}
     override suspend fun releaseLocalEngine() {}
     override fun getLocalDownloadingModelId(): StateFlow<String?>? = null
     override fun getLocalDownloadProgress(): StateFlow<Float?>? = null

@@ -129,6 +129,9 @@ class SettingsViewModel(
         localDownloadingModelId = dataRepository.getLocalDownloadingModelId()?.value,
         localDownloadProgress = dataRepository.getLocalDownloadProgress()?.value,
         modelContextTokens = buildModelContextTokensMap(),
+        samplerTopK = buildSamplerTopKMap(),
+        samplerTopP = buildSamplerTopPMap(),
+        samplerTemperature = buildSamplerTemperatureMap(),
     )
 
     // Bound once so downstream Compose skipping works — a new SettingsActions
@@ -192,6 +195,9 @@ class SettingsViewModel(
         onDeleteLocalModel = ::onDeleteLocalModel,
         onChangeModelContextTokens = ::onChangeModelContextTokens,
         onChangeBackendPreference = ::onChangeBackendPreference,
+        onChangeSamplerTopK = ::onChangeSamplerTopK,
+        onChangeSamplerTopP = ::onChangeSamplerTopP,
+        onChangeSamplerTemperature = ::onChangeSamplerTemperature,
         onExportSettings = ::onExportSettings,
         onPrepareExport = ::onPrepareExport,
         onImportSettings = ::onImportSettings,
@@ -691,9 +697,51 @@ class SettingsViewModel(
         model.id to if (stored > 0) stored else model.defaultContextTokens
     }.toImmutableMap()
 
+    private fun buildSamplerTopKMap() = dataRepository.getLocalAvailableModels().associate { model ->
+        val stored = dataRepository.getSamplerTopK(model.id)
+        model.id to if (stored > 0) stored else 40
+    }.toImmutableMap()
+
+    private fun buildSamplerTopPMap() = dataRepository.getLocalAvailableModels().associate { model ->
+        val stored = dataRepository.getSamplerTopP(model.id)
+        model.id to if (stored >= 0f) stored else 0.95f
+    }.toImmutableMap()
+
+    private fun buildSamplerTemperatureMap() = dataRepository.getLocalAvailableModels().associate { model ->
+        val stored = dataRepository.getSamplerTemperature(model.id)
+        model.id to if (stored >= 0f) stored else 0.8f
+    }.toImmutableMap()
+
     private fun onChangeBackendPreference(pref: String) {
         dataRepository.setBackendPreference(pref)
         _state.update { it.copy(backendPreference = pref) }
+    }
+
+    private fun onChangeSamplerTopK(modelId: String, topK: Int) {
+        if (_state.value.samplerTopK[modelId] == topK) return
+        dataRepository.setSamplerTopK(modelId, topK)
+        _state.update {
+            it.copy(samplerTopK = it.samplerTopK.toMutableMap().apply { put(modelId, topK) }.toImmutableMap())
+        }
+    }
+
+    private fun onChangeSamplerTopP(modelId: String, topP: Float) {
+        if (_state.value.samplerTopP[modelId] == topP) return
+        dataRepository.setSamplerTopP(modelId, topP)
+        _state.update {
+            it.copy(samplerTopP = it.samplerTopP.toMutableMap().apply { put(modelId, topP) }.toImmutableMap())
+        }
+    }
+
+    private fun onChangeSamplerTemperature(modelId: String, temperature: Float) {
+        if (_state.value.samplerTemperature[modelId] == temperature) return
+        dataRepository.setSamplerTemperature(modelId, temperature)
+        _state.update {
+            it.copy(
+                samplerTemperature = it.samplerTemperature.toMutableMap()
+                    .apply { put(modelId, temperature) }.toImmutableMap(),
+            )
+        }
     }
 
     private fun onDeleteLocalModel(modelId: String) {

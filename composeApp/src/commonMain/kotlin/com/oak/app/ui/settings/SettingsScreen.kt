@@ -813,6 +813,12 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
                     onChangeModelContextTokens = actions.onChangeModelContextTokens,
                     onChangeBackendPreference = actions.onChangeBackendPreference,
                     modelContextTokens = uiState.modelContextTokens,
+                    samplerTopK = uiState.samplerTopK,
+                    samplerTopP = uiState.samplerTopP,
+                    samplerTemperature = uiState.samplerTemperature,
+                    onChangeSamplerTopK = actions.onChangeSamplerTopK,
+                    onChangeSamplerTopP = actions.onChangeSamplerTopP,
+                    onChangeSamplerTemperature = actions.onChangeSamplerTemperature,
                 )
             }
         }
@@ -973,6 +979,12 @@ private fun ConfiguredServiceCardContent(
     backendPreference: String = "auto",
     onChangeBackendPreference: (String) -> Unit = {},
     modelContextTokens: Map<String, Int> = emptyMap(),
+    samplerTopK: Map<String, Int> = emptyMap(),
+    samplerTopP: Map<String, Float> = emptyMap(),
+    samplerTemperature: Map<String, Float> = emptyMap(),
+    onChangeSamplerTopK: (String, Int) -> Unit = { _, _ -> },
+    onChangeSamplerTopP: (String, Float) -> Unit = { _, _ -> },
+    onChangeSamplerTemperature: (String, Float) -> Unit = { _, _ -> },
 ) {
     Column(
         modifier = Modifier
@@ -1063,6 +1075,12 @@ private fun ConfiguredServiceCardContent(
                         onChangeModelContextTokens = onChangeModelContextTokens,
                         onChangeBackendPreference = onChangeBackendPreference,
                         modelContextTokens = modelContextTokens,
+                        samplerTopK = samplerTopK,
+                        samplerTopP = samplerTopP,
+                        samplerTemperature = samplerTemperature,
+                        onChangeSamplerTopK = onChangeSamplerTopK,
+                        onChangeSamplerTopP = onChangeSamplerTopP,
+                        onChangeSamplerTemperature = onChangeSamplerTemperature,
                     )
                 } else if (entry.service is Service.OpenAICompatible) {
                     OpenAICompatibleSettings(
@@ -1274,6 +1292,12 @@ private fun LiteRTSettings(
     onChangeModelContextTokens: (String, Int) -> Unit,
     onChangeBackendPreference: (String) -> Unit = {},
     modelContextTokens: Map<String, Int>,
+    samplerTopK: Map<String, Int> = emptyMap(),
+    samplerTopP: Map<String, Float> = emptyMap(),
+    samplerTemperature: Map<String, Float> = emptyMap(),
+    onChangeSamplerTopK: (String, Int) -> Unit = { _, _ -> },
+    onChangeSamplerTopP: (String, Float) -> Unit = { _, _ -> },
+    onChangeSamplerTemperature: (String, Float) -> Unit = { _, _ -> },
 ) {
     val downloadedIds = remember(downloadedModels) { downloadedModels.map { it.id }.toSet() }
 
@@ -1491,6 +1515,66 @@ private fun LiteRTSettings(
                         text = "⚠ High memory usage — may cause slowdowns or crashes",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                if (isDownloaded) {
+                    Spacer(Modifier.height(8.dp))
+                    val currentTopK = samplerTopK[model.id] ?: 40
+                    val currentTopP = samplerTopP[model.id] ?: 0.95f
+                    val currentTemp = samplerTemperature[model.id] ?: 0.8f
+
+                    var topKSlider by remember(currentTopK) {
+                        mutableStateOf(currentTopK.toFloat())
+                    }
+                    Text(
+                        text = "Top-K: ${topKSlider.roundToInt()}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OakSlider(
+                        value = topKSlider,
+                        onValueChange = { topKSlider = it },
+                        onValueChangeFinished = {
+                            onChangeSamplerTopK(model.id, topKSlider.roundToInt())
+                        },
+                        valueRange = 1f..100f,
+                        steps = 98,
+                    )
+
+                    var topPSlider by remember(currentTopP) {
+                        mutableStateOf(currentTopP)
+                    }
+                    Text(
+                        text = "Top-P: %.2f".format(topPSlider),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OakSlider(
+                        value = topPSlider,
+                        onValueChange = { topPSlider = it },
+                        onValueChangeFinished = {
+                            onChangeSamplerTopP(model.id, topPSlider)
+                        },
+                        valueRange = 0f..1f,
+                        steps = 99,
+                    )
+
+                    var tempSlider by remember(currentTemp) {
+                        mutableStateOf(currentTemp)
+                    }
+                    Text(
+                        text = "Temperature: %.2f".format(tempSlider),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OakSlider(
+                        value = tempSlider,
+                        onValueChange = { tempSlider = it },
+                        onValueChangeFinished = {
+                            onChangeSamplerTemperature(model.id, tempSlider)
+                        },
+                        valueRange = 0f..2f,
+                        steps = 199,
                     )
                 }
                 if (isDownloading && downloadProgress != null) {

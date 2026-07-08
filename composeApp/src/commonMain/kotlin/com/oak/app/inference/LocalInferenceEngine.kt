@@ -82,6 +82,23 @@ enum class DownloadError {
     DOWNLOAD_INCOMPLETE,
 }
 
+/** User-configurable sampling parameters for local inference. */
+data class SamplerParams(
+    val topK: Int = 40,
+    val topP: Float = 0.95f,
+    val temperature: Float = 0.8f,
+)
+
+/** Metrics for the most recent generation, surfaced in the UI. */
+data class GenerationMetrics(
+    val outputCharCount: Int,
+    val tokensPerSecond: Float,
+    val durationMs: Long,
+) {
+    /** Rough token count estimate (chars / 4). */
+    val estimatedTokenCount: Int get() = outputCharCount / 4
+}
+
 interface LocalInferenceEngine {
     val engineState: StateFlow<EngineState>
     val downloadingModelId: StateFlow<String?>
@@ -102,6 +119,9 @@ interface LocalInferenceEngine {
     /** Live streaming reasoning tokens during an in-progress chat() call. */
     val streamingReasoning: StateFlow<String?>
 
+    /** Metrics for the most recently completed generation, or null if none. */
+    val lastGenerationMetrics: StateFlow<GenerationMetrics?>
+
     suspend fun initialize(model: DownloadedModel, contextTokens: Int = 0, backendPreference: String = "auto")
     suspend fun release()
 
@@ -116,6 +136,7 @@ interface LocalInferenceEngine {
         messages: List<InferenceMessage>,
         systemPrompt: String?,
         tools: List<LocalTool> = emptyList(),
+        samplerParams: SamplerParams = SamplerParams(),
     ): String
 
     fun getDownloadedModels(): List<DownloadedModel>

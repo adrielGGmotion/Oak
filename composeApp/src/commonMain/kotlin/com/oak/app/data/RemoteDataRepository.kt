@@ -17,6 +17,7 @@ import com.oak.app.inference.LocalInferenceEngine
 import com.oak.app.inference.LocalModel
 import com.oak.app.inference.LocalTool
 import com.oak.app.inference.NoModelDownloadedException
+import com.oak.app.inference.SamplerParams
 import com.oak.app.inference.getTotalMemoryBytes
 import com.oak.app.mcp.McpServerConfig
 import com.oak.app.mcp.McpServerManager
@@ -511,6 +512,12 @@ class RemoteDataRepository(
             }
         }
 
+        // Read user-configured sampler params (0/-1 sentinel means use default)
+        val topK = appSettings.getSamplerTopK(model.id).takeIf { it > 0 } ?: 40
+        val topP = appSettings.getSamplerTopP(model.id).takeIf { it >= 0f } ?: 0.95f
+        val temperature = appSettings.getSamplerTemperature(model.id).takeIf { it >= 0f } ?: 0.8f
+        val samplerParams = SamplerParams(topK = topK, topP = topP, temperature = temperature)
+
         // Pass tools to engine.chat() — litertlm handles tool calling natively
         // Collect streaming tokens from the engine and propagate to UI StateFlows
         return coroutineScope {
@@ -525,6 +532,7 @@ class RemoteDataRepository(
                         messages = inferenceMessages,
                         systemPrompt = systemPrompt,
                         tools = localTools,
+                        samplerParams = samplerParams,
                     ),
                 )
             } finally {
@@ -2614,6 +2622,13 @@ class RemoteDataRepository(
     override fun setModelContextTokens(modelId: String, contextTokens: Int) {
         appSettings.setModelContextTokens(modelId, contextTokens)
     }
+
+    override fun getSamplerTopK(modelId: String): Int = appSettings.getSamplerTopK(modelId)
+    override fun setSamplerTopK(modelId: String, topK: Int) { appSettings.setSamplerTopK(modelId, topK) }
+    override fun getSamplerTopP(modelId: String): Float = appSettings.getSamplerTopP(modelId)
+    override fun setSamplerTopP(modelId: String, topP: Float) { appSettings.setSamplerTopP(modelId, topP) }
+    override fun getSamplerTemperature(modelId: String): Float = appSettings.getSamplerTemperature(modelId)
+    override fun setSamplerTemperature(modelId: String, temperature: Float) { appSettings.setSamplerTemperature(modelId, temperature) }
 
     override suspend fun releaseLocalEngine() {
         localInferenceEngine?.release()

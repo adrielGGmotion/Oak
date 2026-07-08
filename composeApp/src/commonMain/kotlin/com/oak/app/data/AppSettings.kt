@@ -660,6 +660,27 @@ class AppSettings(private val settings: Settings) {
         settings.putString(KEY_BACKEND_PREFERENCE, pref)
     }
 
+    fun getSamplerTopK(modelId: String): Int =
+        settings.getInt("$KEY_SAMPLER_TOP_K_PREFIX$modelId", 0)
+
+    fun setSamplerTopK(modelId: String, topK: Int) {
+        settings.putInt("$KEY_SAMPLER_TOP_K_PREFIX$modelId", topK)
+    }
+
+    fun getSamplerTopP(modelId: String): Float =
+        settings.getFloat("$KEY_SAMPLER_TOP_P_PREFIX$modelId", -1f)
+
+    fun setSamplerTopP(modelId: String, topP: Float) {
+        settings.putFloat("$KEY_SAMPLER_TOP_P_PREFIX$modelId", topP)
+    }
+
+    fun getSamplerTemperature(modelId: String): Float =
+        settings.getFloat("$KEY_SAMPLER_TEMPERATURE_PREFIX$modelId", -1f)
+
+    fun setSamplerTemperature(modelId: String, temperature: Float) {
+        settings.putFloat("$KEY_SAMPLER_TEMPERATURE_PREFIX$modelId", temperature)
+    }
+
     // UI Scale
     private val _uiScaleFlow = MutableStateFlow(settings.getFloat(KEY_UI_SCALE, defaultUiScale))
     val uiScaleFlow: StateFlow<Float> = _uiScaleFlow
@@ -1272,6 +1293,9 @@ class AppSettings(private val settings: Settings) {
 
         const val KEY_BACKEND_PREFERENCE = "litert_backend"
         const val KEY_MODEL_CONTEXT_PREFIX = "model_context_"
+        const val KEY_SAMPLER_TOP_K_PREFIX = "sampler_topk_"
+        const val KEY_SAMPLER_TOP_P_PREFIX = "sampler_topp_"
+        const val KEY_SAMPLER_TEMPERATURE_PREFIX = "sampler_temperature_"
 
         const val KEY_SANDBOX_ENABLED = "sandbox_enabled"
         const val KEY_STORAGE_ACCESS_ENABLED = "storage_access_enabled"

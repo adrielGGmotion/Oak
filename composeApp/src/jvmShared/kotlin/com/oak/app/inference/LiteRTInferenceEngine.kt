@@ -17,7 +17,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,10 +28,8 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.time.Duration.Companion.milliseconds
 
 val MODEL_CATALOG = listOf(
     LocalModel(
@@ -143,6 +140,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
     // Conversation tracking — avoids closing + recreating on every turn.
     private var lastSystemPrompt: String? = null
     private var lastToolCount: Int = 0
+    private var lastSamplerParams: SamplerParams? = null
     private var sentUserMessageCount: Int = 0
 
     private val _engineState = MutableStateFlow(EngineState.UNINITIALIZED)
@@ -166,6 +164,9 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
     private val _streamingReasoning = MutableStateFlow<String?>(null)
     override val streamingReasoning: StateFlow<String?> = _streamingReasoning
 
+    private val _lastGenerationMetrics = MutableStateFlow<GenerationMetrics?>(null)
+    override val lastGenerationMetrics: StateFlow<GenerationMetrics?> = _lastGenerationMetrics
+
     override suspend fun initialize(model: DownloadedModel, contextTokens: Int, backendPreference: String) {
         withContext(Dispatchers.IO) {
             idleReleaseJob?.cancel()
@@ -177,14 +178,8 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                     throw IllegalStateException("Model file missing or too small: ${model.filePath}")
                 }
 
-                val hadExistingEngine = engine != null
                 release()
                 _engineState.value = EngineState.INITIALIZING
-
-                if (hadExistingEngine) {
-                    System.gc()
-                    delay(GPU_DRAIN_DELAY_MS.milliseconds)
-                }
 
                 val availMem = getAvailableMemoryBytes()
                 if (availMem < MIN_MEMORY_HEADROOM_BYTES) {
@@ -252,6 +247,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
                 sentUserMessageCount = 0
                 lastSystemPrompt = null
                 lastToolCount = 0
+                lastSamplerParams = null
                 _engineState.value = EngineState.READY
             } catch (e: Exception) {
                 _activeBackend.value = null
@@ -289,8 +285,8 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
         messages: List<InferenceMessage>,
         systemPrompt: String?,
         tools: List<LocalTool>,
+        samplerParams: SamplerParams,
     ): String = withContext(Dispatchers.IO) {
-        idleReleaseJob?.cancel()
         try {
             val currentEngine = engine ?: throw IllegalStateException("Engine not initialized")
 
@@ -307,13 +303,15 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
             // - No conversation exists
             // - System prompt changed
             // - Tool set changed
+            // - Sampler params changed (rebuild with new SamplerConfig)
             // Don't rebuild when messages grow — litertlm handles multi-turn internally
             val needsReset = conversation == null ||
                 sanitizedSP != lastSystemPrompt ||
-                toolProviders.size != lastToolCount
+                toolProviders.size != lastToolCount ||
+                samplerParams != lastSamplerParams
 
             if (needsReset) {
-                buildConversation(currentEngine, messages, sanitizedSP, toolProviders)
+                buildConversation(currentEngine, messages, sanitizedSP, toolProviders, samplerParams)
             }
 
             val conv = conversation ?: throw IllegalStateException("Conversation not initialized")
@@ -323,7 +321,6 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
             val newUserMessages = messages.drop(sentUserMessageCount).filter { it.role == "user" }
 
             if (newUserMessages.isEmpty()) {
-                // No new user message — nothing to send
                 return@withContext ""
             }
 
@@ -331,16 +328,27 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
             val lastUserMsg = newUserMessages.last()
             val content = sanitizeForLiteRt(lastUserMsg.content) ?: ""
 
-            // Use sendMessageAsync with MessageCallback for streaming
+            val startTime = System.currentTimeMillis()
             val response = sendMessageWithStreaming(conv, content)
+            val durationMs = System.currentTimeMillis() - startTime
 
             sentUserMessageCount = messages.count { it.role == "user" }
+
+            // Track generation metrics for performance visibility
+            val charCount = response.length
+            val tokensPerSec = if (durationMs > 0) {
+                (charCount.toFloat() / durationMs * 1000f / 4f).coerceAtLeast(0f)
+            } else 0f
+            _lastGenerationMetrics.value = GenerationMetrics(
+                outputCharCount = charCount,
+                tokensPerSecond = tokensPerSec,
+                durationMs = durationMs,
+            )
+
             response
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             throw e
-        } finally {
-            scheduleIdleRelease()
         }
     }
 
@@ -350,6 +358,7 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
         messages: List<InferenceMessage>,
         systemPrompt: String?,
         toolProviders: List<com.google.ai.edge.litertlm.ToolProvider>,
+        samplerParams: SamplerParams,
     ) {
         val lastUserIndex = messages.indexOfLast { it.role == "user" }
         val initialMessages = if (lastUserIndex > 0) {
@@ -364,21 +373,27 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
             emptyList()
         }
 
-        // Enable constrained decoding for reliable tool calling
+        // Enable constrained decoding for reliable tool calling.
+        // Must be reset in finally to avoid leaking the flag on exception.
         ExperimentalFlags.enableConversationConstrainedDecoding = true
+        try {
+            val config = ConversationConfig(
+                systemInstruction = systemPrompt?.let { Contents.of(it) },
+                initialMessages = initialMessages,
+                tools = toolProviders,
+                samplerConfig = SamplerConfig(
+                    topK = samplerParams.topK,
+                    topP = samplerParams.topP.toDouble(),
+                    temperature = samplerParams.temperature.toDouble(),
+                ),
+                automaticToolCalling = true,
+            )
 
-        val config = ConversationConfig(
-            systemInstruction = systemPrompt?.let { Contents.of(it) },
-            initialMessages = initialMessages,
-            tools = toolProviders,
-            samplerConfig = SamplerConfig(topK = 40, topP = 0.95, temperature = 0.8),
-            automaticToolCalling = true,
-        )
-
-        ExperimentalFlags.enableConversationConstrainedDecoding = false
-
-        runCatching { conversation?.close() }
-        conversation = engine.createConversation(config)
+            runCatching { conversation?.close() }
+            conversation = engine.createConversation(config)
+        } finally {
+            ExperimentalFlags.enableConversationConstrainedDecoding = false
+        }
         // Only count user messages that were included as initialMessages (before the
         // last user message) — the last user message still needs to be sent via
         // sendMessageAsync in chat().
@@ -389,37 +404,48 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
         }
         lastSystemPrompt = systemPrompt
         lastToolCount = toolProviders.size
+        lastSamplerParams = samplerParams
     }
 
     /**
      * Sends a message using sendMessageAsync with MessageCallback for streaming.
-     * This allows cancellation mid-generation and progressive token delivery.
+     * Batches StateFlow emissions to reduce per-token string-copy overhead
+     * and GC pressure from the full response being copied on every token.
      */
     private suspend fun sendMessageWithStreaming(
         conv: com.google.ai.edge.litertlm.Conversation,
         content: String,
     ): String = suspendCancellableCoroutine { continuation ->
         val responseBuilder = StringBuilder()
-        val errorRef = AtomicReference<Throwable?>(null)
         val latch = CountDownLatch(1)
+        var tokenCount = 0
+        var lastFlushTime = 0L
+        val flushIntervalMs = 50L
+        val flushEveryN = 4
 
         val callback = object : MessageCallback {
             override fun onMessage(message: Message) {
                 responseBuilder.append(message.toString())
-                _streamingContent.value = responseBuilder.toString()
+                tokenCount++
+                val now = System.currentTimeMillis()
+                // Only flush to StateFlow periodically to avoid O(n²) string copies
+                if (tokenCount % flushEveryN == 0 || now - lastFlushTime >= flushIntervalMs) {
+                    _streamingContent.value = responseBuilder.toString()
+                    lastFlushTime = now
+                }
             }
 
             override fun onDone() {
+                // Always flush the complete response before finishing
+                _streamingContent.value = responseBuilder.toString()
                 latch.countDown()
                 _streamingContent.value = null
                 if (continuation.isActive) {
-                    val response = responseBuilder.toString()
-                    continuation.resume(response)
+                    continuation.resume(responseBuilder.toString())
                 }
             }
 
             override fun onError(throwable: Throwable) {
-                errorRef.set(throwable)
                 latch.countDown()
                 _streamingContent.value = null
                 if (continuation.isActive) {
@@ -444,24 +470,28 @@ class LiteRTInferenceEngine : LocalInferenceEngine {
 
     private fun sanitizeForLiteRt(s: String?): String? {
         if (s == null) return null
-        if (s.none { it.isSurrogate() }) return s
-        return s.filter { !it.isSurrogate() }
-    }
-
-    private fun scheduleIdleRelease() {
-        idleReleaseJob?.cancel()
-        idleReleaseJob = scope.launch {
-            delay(IDLE_RELEASE_MS.milliseconds)
-            release()
+        // Single-pass: scan for first surrogate, build filtered result only if needed
+        val len = s.length
+        var i = 0
+        while (i < len) {
+            if (s[i].isSurrogate()) {
+                val sb = StringBuilder(len - 1)
+                if (i > 0) sb.append(s, 0, i)
+                while (++i < len) {
+                    val c = s[i]
+                    if (!c.isSurrogate()) sb.append(c)
+                }
+                return sb.toString()
+            }
+            i++
         }
+        return s
     }
 
     companion object {
-        private const val IDLE_RELEASE_MS = 5L * 60 * 1000
         private const val INFERENCE_TIMEOUT_MS = 120_000L
         private const val MIN_MEMORY_HEADROOM_BYTES = 512L * 1024 * 1024
         private const val DOWNLOAD_SPACE_BUFFER_BYTES = 500L * 1024 * 1024
-        private const val GPU_DRAIN_DELAY_MS = 750L
     }
 
     override fun getDownloadedModels(): List<DownloadedModel> {

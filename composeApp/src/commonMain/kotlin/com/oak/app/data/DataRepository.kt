@@ -233,6 +233,13 @@ interface DataRepository {
     fun getTotalDeviceMemoryBytes(): Long
     fun getModelContextTokens(modelId: String): Int
     fun setModelContextTokens(modelId: String, contextTokens: Int)
+
+    fun getSamplerTopK(modelId: String): Int
+    fun setSamplerTopK(modelId: String, topK: Int)
+    fun getSamplerTopP(modelId: String): Float
+    fun setSamplerTopP(modelId: String, topP: Float)
+    fun getSamplerTemperature(modelId: String): Float
+    fun setSamplerTemperature(modelId: String, temperature: Float)
     suspend fun releaseLocalEngine()
     fun getLocalDownloadingModelId(): StateFlow<String?>?
     fun getLocalDownloadProgress(): StateFlow<Float?>?
