@@ -1,0 +1,755 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
+package com.oak.app.ui.settings
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.DragIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
+import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.oak.app.BackIcon
+import com.oak.app.TerminalLine
+import com.oak.app.Version
+import com.oak.app.data.EmailAccount
+import com.oak.app.data.HeartbeatLogEntry
+import com.oak.app.data.ImportSection
+import com.oak.app.data.MemoryEntry
+import com.oak.app.data.ScheduledTask
+import com.oak.app.data.Service
+import com.oak.app.data.SharedJson
+import com.oak.app.data.TaskTrigger
+import com.oak.app.data.ThemeMode
+import com.oak.app.data.detectImportSections
+import com.oak.app.formatFileSize
+import com.oak.app.inference.DevicePerformance
+import com.oak.app.inference.DownloadError
+import com.oak.app.inference.LocalModel
+import com.oak.app.inference.calculateDevicePerformance
+import com.oak.app.inference.estimateGpuMemoryMb
+import com.oak.app.mcp.PopularMcpServer
+import com.oak.app.network.tools.ToolInfo
+import com.oak.app.saveFileToDevice
+import com.oak.app.tools.SetupStoragePermissionHandler
+import com.oak.app.ui.OakClearableTextField
+import com.oak.app.ui.OakOutlinedTextField
+import com.oak.app.ui.components.OakSlider
+import com.oak.app.ui.components.SettingsListItem
+import com.oak.app.ui.components.VerticalScrollbarForScroll
+import com.oak.app.ui.handCursor
+import com.oak.app.ui.oakAdaptiveCardBorder
+import com.oak.app.ui.oakAdaptiveCardColors
+import com.oak.app.ui.oakAdaptiveCardSurface
+import com.oak.app.ui.sandbox.SandboxProgressRow
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.readBytes
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.offsetAt
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.jsonObject
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.default_soul
+import oak.composeapp.generated.resources.device_storage_description_disabled
+import oak.composeapp.generated.resources.device_storage_description_enabled_denied
+import oak.composeapp.generated.resources.device_storage_description_enabled_granted
+import oak.composeapp.generated.resources.device_storage_title
+import oak.composeapp.generated.resources.github_mark
+import oak.composeapp.generated.resources.litert_cancel
+import oak.composeapp.generated.resources.litert_context_size
+import oak.composeapp.generated.resources.litert_download
+import oak.composeapp.generated.resources.litert_error_download_incomplete
+import oak.composeapp.generated.resources.litert_error_network
+import oak.composeapp.generated.resources.litert_error_not_enough_disk_space
+import oak.composeapp.generated.resources.litert_free_space
+import oak.composeapp.generated.resources.litert_on_device_description
+import oak.composeapp.generated.resources.litert_performance_good
+import oak.composeapp.generated.resources.litert_performance_ok
+import oak.composeapp.generated.resources.litert_performance_poor
+import oak.composeapp.generated.resources.litert_recommended
+import oak.composeapp.generated.resources.litert_tool_support
+import oak.composeapp.generated.resources.settings_add_service
+import oak.composeapp.generated.resources.settings_ai_font_family
+import oak.composeapp.generated.resources.settings_ai_font_family_description
+import oak.composeapp.generated.resources.settings_ai_mistakes_warning
+import oak.composeapp.generated.resources.settings_api_key_label
+import oak.composeapp.generated.resources.settings_api_key_optional_label
+import oak.composeapp.generated.resources.settings_base_url_label
+import oak.composeapp.generated.resources.settings_daemon_mode
+import oak.composeapp.generated.resources.settings_daemon_mode_description
+import oak.composeapp.generated.resources.settings_documentation
+import oak.composeapp.generated.resources.settings_dynamic_ui
+import oak.composeapp.generated.resources.settings_dynamic_ui_description
+import oak.composeapp.generated.resources.settings_export
+import oak.composeapp.generated.resources.settings_export_import_description
+import oak.composeapp.generated.resources.settings_export_import_title
+import oak.composeapp.generated.resources.settings_export_preview_title
+import oak.composeapp.generated.resources.settings_free_ai_access
+import oak.composeapp.generated.resources.settings_free_ai_access_url
+import oak.composeapp.generated.resources.settings_heartbeat_recent
+import oak.composeapp.generated.resources.settings_import
+import oak.composeapp.generated.resources.settings_import_error
+import oak.composeapp.generated.resources.settings_import_partial
+import oak.composeapp.generated.resources.settings_import_preview_title
+import oak.composeapp.generated.resources.settings_import_replace_all
+import oak.composeapp.generated.resources.settings_import_replace_all_description
+import oak.composeapp.generated.resources.settings_import_section_conversations
+import oak.composeapp.generated.resources.settings_import_section_email
+import oak.composeapp.generated.resources.settings_import_section_heartbeat
+import oak.composeapp.generated.resources.settings_import_section_mcp
+import oak.composeapp.generated.resources.settings_import_section_memory
+import oak.composeapp.generated.resources.settings_import_section_scheduling
+import oak.composeapp.generated.resources.settings_import_section_services
+import oak.composeapp.generated.resources.settings_import_section_soul
+import oak.composeapp.generated.resources.settings_import_section_ssh
+import oak.composeapp.generated.resources.settings_import_section_tools
+import oak.composeapp.generated.resources.settings_import_success
+import oak.composeapp.generated.resources.settings_mcp_cancel
+import oak.composeapp.generated.resources.settings_memories
+import oak.composeapp.generated.resources.settings_memories_all_title
+import oak.composeapp.generated.resources.settings_memories_delete
+import oak.composeapp.generated.resources.settings_memories_description
+import oak.composeapp.generated.resources.settings_memories_edit_cancel
+import oak.composeapp.generated.resources.settings_memories_edit_save
+import oak.composeapp.generated.resources.settings_memories_edit_title
+import oak.composeapp.generated.resources.settings_memories_show_all
+import oak.composeapp.generated.resources.settings_open_github_issue
+import oak.composeapp.generated.resources.settings_openai_compatible_or_other_service
+import oak.composeapp.generated.resources.settings_openai_compatible_providers
+import oak.composeapp.generated.resources.settings_openai_compatible_setup_ollama
+import oak.composeapp.generated.resources.settings_remove_service
+import oak.composeapp.generated.resources.settings_reorder_content_description
+import oak.composeapp.generated.resources.settings_request_integration_description
+import oak.composeapp.generated.resources.settings_request_integration_title
+import oak.composeapp.generated.resources.settings_sandbox_cancel
+import oak.composeapp.generated.resources.settings_sandbox_description
+import oak.composeapp.generated.resources.settings_sandbox_disk_usage
+import oak.composeapp.generated.resources.settings_sandbox_install
+import oak.composeapp.generated.resources.settings_sandbox_install_packages
+import oak.composeapp.generated.resources.settings_sandbox_subtab_files
+import oak.composeapp.generated.resources.settings_sandbox_subtab_packages
+import oak.composeapp.generated.resources.settings_sandbox_subtab_terminal
+import oak.composeapp.generated.resources.settings_sandbox_uninstall
+import oak.composeapp.generated.resources.settings_sandbox_uninstall_confirm
+import oak.composeapp.generated.resources.settings_scheduled_tasks
+import oak.composeapp.generated.resources.settings_scheduled_tasks_cancel
+import oak.composeapp.generated.resources.settings_scheduled_tasks_description
+import oak.composeapp.generated.resources.settings_sign_in_copy_api_key_from
+import oak.composeapp.generated.resources.settings_sms
+import oak.composeapp.generated.resources.settings_soul
+import oak.composeapp.generated.resources.settings_soul_description
+import oak.composeapp.generated.resources.settings_soul_reset
+import oak.composeapp.generated.resources.settings_soul_reset_cancel
+import oak.composeapp.generated.resources.settings_soul_reset_confirm
+import oak.composeapp.generated.resources.settings_soul_save
+import oak.composeapp.generated.resources.settings_status_checking
+import oak.composeapp.generated.resources.settings_status_connected
+import oak.composeapp.generated.resources.settings_status_error
+import oak.composeapp.generated.resources.settings_status_error_connection_failed
+import oak.composeapp.generated.resources.settings_status_error_invalid_key
+import oak.composeapp.generated.resources.settings_status_error_quota_exhausted
+import oak.composeapp.generated.resources.settings_status_error_rate_limited
+import oak.composeapp.generated.resources.settings_streaming_description
+import oak.composeapp.generated.resources.settings_streaming_enabled
+import oak.composeapp.generated.resources.settings_tab_agent
+import oak.composeapp.generated.resources.settings_tab_general
+import oak.composeapp.generated.resources.settings_tab_integrations
+import oak.composeapp.generated.resources.settings_tab_sandbox
+import oak.composeapp.generated.resources.settings_tab_services
+import oak.composeapp.generated.resources.settings_tab_tools
+import oak.composeapp.generated.resources.settings_task_details_consecutive_failures
+import oak.composeapp.generated.resources.settings_task_details_created
+import oak.composeapp.generated.resources.settings_task_details_last_result
+import oak.composeapp.generated.resources.settings_task_details_next_run
+import oak.composeapp.generated.resources.settings_task_details_no_heartbeat_runs
+import oak.composeapp.generated.resources.settings_task_details_no_runs
+import oak.composeapp.generated.resources.settings_task_details_on_every_heartbeat
+import oak.composeapp.generated.resources.settings_task_details_schedule
+import oak.composeapp.generated.resources.settings_task_details_scheduled_for
+import oak.composeapp.generated.resources.settings_task_details_status
+import oak.composeapp.generated.resources.settings_task_details_trigger
+import oak.composeapp.generated.resources.settings_theme
+import oak.composeapp.generated.resources.settings_theme_dark
+import oak.composeapp.generated.resources.settings_theme_description
+import oak.composeapp.generated.resources.settings_theme_light
+import oak.composeapp.generated.resources.settings_theme_oled
+import oak.composeapp.generated.resources.settings_theme_system
+import oak.composeapp.generated.resources.settings_tools_description
+import oak.composeapp.generated.resources.settings_tools_none_available
+import oak.composeapp.generated.resources.settings_ui_scale
+import oak.composeapp.generated.resources.settings_unlimited_tool_calls
+import oak.composeapp.generated.resources.settings_unlimited_tool_calls_description
+import oak.composeapp.generated.resources.settings_version
+import oak.composeapp.generated.resources.snackbar_email_removed
+import oak.composeapp.generated.resources.snackbar_mcp_server_removed
+import oak.composeapp.generated.resources.snackbar_memory_deleted
+import oak.composeapp.generated.resources.snackbar_service_removed
+import oak.composeapp.generated.resources.snackbar_ssh_server_removed
+import oak.composeapp.generated.resources.snackbar_task_cancelled
+import oak.composeapp.generated.resources.snackbar_undo
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import sh.calvin.reorderable.ReorderableColumn
+import kotlin.math.roundToInt
+import kotlin.time.Instant
+
+@Composable
+internal fun ServiceSettings(
+    apiKey: String,
+    onChangeApiKey: (String) -> Unit,
+    apiKeyUrl: String,
+    apiKeyUrlDisplay: String,
+    selectedModel: SettingsModel?,
+    models: ImmutableList<SettingsModel>,
+    onSelectModel: (String) -> Unit,
+    connectionStatus: ConnectionStatus,
+    testTag: String? = null,
+) {
+    OakClearableTextField(
+        modifier = Modifier.let { if (testTag != null) it.testTag(testTag) else it },
+        value = apiKey,
+        onValueChange = onChangeApiKey,
+        label = {
+            Text(
+                stringResource(Res.string.settings_api_key_label),
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        },
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    ConnectionStatusIndicator(connectionStatus)
+
+    Spacer(Modifier.height(8.dp))
+
+    val linkColor = MaterialTheme.colorScheme.primary
+
+    val copyApiKeyPromptString = stringResource(Res.string.settings_sign_in_copy_api_key_from)
+    val annotatedString = remember(apiKeyUrl, apiKeyUrlDisplay) {
+        buildAnnotatedString {
+            append(copyApiKeyPromptString)
+            append(" ")
+            withLink(LinkAnnotation.Url(url = apiKeyUrl)) {
+                withStyle(style = SpanStyle(color = linkColor)) {
+                    append(apiKeyUrlDisplay)
+                }
+            }
+        }
+    }
+    Text(
+        annotatedString,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.onBackground,
+    )
+
+    Spacer(Modifier.height(16.dp))
+
+    if (connectionStatus == ConnectionStatus.Connected || models.isNotEmpty()) {
+        ModelSelection(selectedModel, models, onSelectModel)
+    }
+}
+
+@Composable
+internal fun OpenAICompatibleSettings(
+    baseUrl: String,
+    onChangeBaseUrl: (String) -> Unit,
+    apiKey: String,
+    onChangeApiKey: (String) -> Unit,
+    selectedModel: SettingsModel?,
+    models: ImmutableList<SettingsModel>,
+    onSelectModel: (String) -> Unit,
+    connectionStatus: ConnectionStatus,
+) {
+    OakClearableTextField(
+        value = baseUrl,
+        onValueChange = onChangeBaseUrl,
+        label = {
+            Text(
+                stringResource(Res.string.settings_base_url_label),
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        },
+        singleLine = true,
+    )
+    if (baseUrl.isNotBlank()) {
+        Text(
+            text = "${baseUrl.trimEnd('/')}${Service.OpenAICompatible.chatUrl}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp),
+        )
+    }
+
+    Spacer(Modifier.height(8.dp))
+
+    OakClearableTextField(
+        value = apiKey,
+        onValueChange = onChangeApiKey,
+        label = {
+            Text(
+                stringResource(Res.string.settings_api_key_optional_label),
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        },
+        singleLine = true,
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    ConnectionStatusIndicator(connectionStatus)
+
+    Spacer(Modifier.height(8.dp))
+
+    val linkColor = MaterialTheme.colorScheme.primary
+    val setupOllamaText = stringResource(Res.string.settings_openai_compatible_setup_ollama)
+    val orOtherServiceText = stringResource(Res.string.settings_openai_compatible_or_other_service)
+    val providersText = stringResource(Res.string.settings_openai_compatible_providers)
+    val annotatedString = remember(setupOllamaText, orOtherServiceText, providersText, linkColor) {
+        buildAnnotatedString {
+            append(setupOllamaText)
+            append(" ")
+            withLink(LinkAnnotation.Url(url = "https://github.com/ollama/ollama")) {
+                withStyle(style = SpanStyle(color = linkColor)) {
+                    append("github.com/ollama/ollama")
+                }
+            }
+            append(" ")
+            append(orOtherServiceText)
+            append(" ")
+            withLink(LinkAnnotation.Url(url = "https://docs.litellm.ai/docs/providers")) {
+                withStyle(style = SpanStyle(color = linkColor)) {
+                    append(providersText)
+                }
+            }
+        }
+    }
+    Text(
+        annotatedString,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.onBackground,
+    )
+
+    Spacer(Modifier.height(16.dp))
+
+    if (connectionStatus == ConnectionStatus.Connected) {
+        ModelSelection(selectedModel, models, onSelectModel)
+    }
+}
+
+@Composable
+internal fun LiteRTSettings(
+    selectedModel: SettingsModel?,
+    downloadedModels: ImmutableList<SettingsModel>,
+    availableModels: ImmutableList<LocalModel>,
+    totalDeviceMemoryBytes: Long,
+    freeSpaceBytes: Long,
+    activeBackend: String? = null,
+    backendPreference: String = "auto",
+    downloadingModelId: String?,
+    downloadProgress: Float?,
+    downloadError: DownloadError?,
+    onSelectModel: (String) -> Unit,
+    onDownloadModel: (LocalModel) -> Unit,
+    onCancelDownload: () -> Unit,
+    onDeleteModel: (String) -> Unit,
+    onChangeModelContextTokens: (String, Int) -> Unit,
+    onChangeBackendPreference: (String) -> Unit = {},
+    modelContextTokens: Map<String, Int>,
+) {
+    val downloadedIds = remember(downloadedModels) { downloadedModels.map { it.id }.toSet() }
+
+    Text(
+        text = stringResource(Res.string.litert_on_device_description),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
+    Spacer(Modifier.height(4.dp))
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when (activeBackend) {
+                                "gpu" -> StatusColorConnected
+                                "cpu" -> StatusColorError
+                                else -> StatusColorUnknown
+                            },
+                        ),
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "Backend: ${activeBackend?.uppercase() ?: "?"}",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = if (activeBackend == "gpu") {
+                        StatusColorConnected
+                    } else if (activeBackend == "cpu") {
+                        StatusColorError
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = if (activeBackend != null) "(active)" else "(unknown — send a message first)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "Compute preference:",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(0.dp),
+            ) {
+                listOf("auto" to "Auto", "gpu" to "GPU", "cpu" to "CPU").forEach { (value, label) ->
+                    val isSelected = backendPreference == value
+                    Surface(
+                        onClick = { onChangeBackendPreference(value) },
+                        modifier = Modifier.weight(1f).handCursor(),
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = null,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = if (backendPreference != "auto") "Changes apply on next message" else "Auto: tries GPU, falls back to CPU",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+
+    Spacer(Modifier.height(12.dp))
+
+    Text(
+        text = stringResource(Res.string.litert_tool_support),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
+    Spacer(Modifier.height(12.dp))
+
+    availableModels.forEach { model ->
+        val isDownloaded = model.id in downloadedIds
+        val isSelected = selectedModel?.id == model.id
+        val isDownloading = downloadingModelId == model.id
+
+        // Cap max context tokens by device memory to prevent OOM
+        // Use up to 70% of device memory for model + KV cache
+        val maxMemoryBytes = (totalDeviceMemoryBytes * 0.7).toLong()
+        var maxContextByMemory = model.defaultContextTokens
+        for (testTokens in model.defaultContextTokens..model.maxContextTokens step 1024) {
+            val estMem = estimateGpuMemoryMb(model, testTokens).toLong() * 1024 * 1024
+            if (estMem > maxMemoryBytes) break
+            maxContextByMemory = testTokens
+        }
+        val effectiveMaxContext = maxOf(model.defaultContextTokens, maxContextByMemory)
+
+        val steps = (effectiveMaxContext - model.defaultContextTokens) / 1024
+        val storedContextTokens = modelContextTokens[model.id] ?: model.defaultContextTokens
+        // Clamp stored value to effective max
+        val clampedStoredContext = storedContextTokens.coerceAtMost(effectiveMaxContext)
+        var contextSliderValue by remember(clampedStoredContext) {
+            mutableStateOf(((clampedStoredContext - model.defaultContextTokens) / 1024).toFloat())
+        }
+        val contextTokens = model.defaultContextTokens + (contextSliderValue.roundToInt() * 1024)
+        val estimatedMemoryMb = estimateGpuMemoryMb(model, contextTokens)
+        val performance = calculateDevicePerformance(totalDeviceMemoryBytes, estimatedMemoryMb)
+
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            shape = RoundedCornerShape(8.dp),
+            tonalElevation = if (isSelected) 3.dp else 1.dp,
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (isDownloaded) {
+                        RadioButton(
+                            selected = isSelected,
+                            onClick = { onSelectModel(model.id) },
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (model.isRecommended) {
+                                "${model.displayName} (${stringResource(Res.string.litert_recommended)})"
+                            } else {
+                                model.displayName
+                            },
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onBackground,
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = formatFileSize(model.sizeBytes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            DevicePerformanceLabel(performance)
+                        }
+                    }
+                    if (isDownloaded) {
+                        IconButton(
+                            onClick = { onDeleteModel(model.id) },
+                            modifier = Modifier.handCursor(),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else if (!isDownloading) {
+                        TextButton(
+                            onClick = { onDownloadModel(model) },
+                            modifier = Modifier.handCursor(),
+                            enabled = downloadingModelId == null,
+                        ) {
+                            Text(stringResource(Res.string.litert_download))
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(Res.string.litert_context_size, "${contextTokens / 1024}K"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OakSlider(
+                    value = contextSliderValue,
+                    onValueChange = { contextSliderValue = it },
+                    onValueChangeFinished = {
+                        onChangeModelContextTokens(model.id, contextTokens)
+                    },
+                    valueRange = 0f..steps.toFloat(),
+                    steps = (steps - 1).coerceAtLeast(0),
+                )
+                if (performance == DevicePerformance.POOR) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "⚠ High memory usage — may cause slowdowns or crashes",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                if (isDownloading && downloadProgress != null) {
+                    Spacer(Modifier.height(8.dp))
+                    LinearProgressIndicator(
+                        progress = { downloadProgress },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "${(downloadProgress * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        TextButton(
+                            onClick = onCancelDownload,
+                            modifier = Modifier.handCursor(),
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.litert_cancel),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (downloadError != null) {
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(
+                when (downloadError) {
+                    DownloadError.NOT_ENOUGH_DISK_SPACE -> Res.string.litert_error_not_enough_disk_space
+                    DownloadError.NETWORK_ERROR -> Res.string.litert_error_network
+                    DownloadError.DOWNLOAD_INCOMPLETE -> Res.string.litert_error_download_incomplete
+                },
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
+
+    Spacer(Modifier.height(8.dp))
+
+    Text(
+        text = stringResource(Res.string.litert_free_space, formatFileSize(freeSpaceBytes)),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+internal fun DevicePerformanceLabel(performance: DevicePerformance) {
+    when (performance) {
+        DevicePerformance.GOOD -> Text(
+            text = stringResource(Res.string.litert_performance_good),
+            style = MaterialTheme.typography.labelSmall,
+            color = StatusColorConnected,
+        )
+
+        DevicePerformance.OK -> Text(
+            text = stringResource(Res.string.litert_performance_ok),
+            style = MaterialTheme.typography.labelSmall,
+            color = StatusColorChecking,
+        )
+
+        DevicePerformance.POOR -> Text(
+            text = stringResource(Res.string.litert_performance_poor),
+            style = MaterialTheme.typography.labelSmall,
+            color = StatusColorError,
+        )
+    }
+}
+

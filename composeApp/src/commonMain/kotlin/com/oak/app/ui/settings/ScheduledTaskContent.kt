@@ -292,359 +292,243 @@ import sh.calvin.reorderable.ReorderableColumn
 import kotlin.math.roundToInt
 import kotlin.time.Instant
 
-internal val StatusColorConnected = Color(0xFF4CAF50)
-internal val StatusColorChecking = Color(0xFFFF9800)
-internal val StatusColorError = Color(0xFFF44336)
-internal val StatusColorUnknown = Color(0xFF9E9E9E)
-
 @Composable
-fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel(),
-    sandboxViewModel: SandboxViewModel = koinViewModel(),
-    onNavigateBack: () -> Unit,
-    navigationTabBar: (@Composable () -> Unit)? = null,
+internal fun ScheduledTaskList(
+    tasks: ImmutableList<ScheduledTask>,
+    heartbeatLog: ImmutableList<HeartbeatLogEntry>,
+    onCancelTask: (String) -> Unit,
+    isSchedulingEnabled: Boolean,
+    onToggleScheduling: (Boolean) -> Unit,
 ) {
-    val uiState by viewModel.state.collectAsStateWithLifecycle()
-    val sandboxState by sandboxViewModel.state.collectAsStateWithLifecycle()
+    var selectedTaskId by remember { mutableStateOf<String?>(null) }
 
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                viewModel.onScreenVisible()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    SetupStoragePermissionHandler(viewModel.storagePermissionController)
-
-    SettingsScreenContent(
-        uiState = uiState,
-        actions = viewModel.actions,
-        sandboxState = sandboxState,
-        onToggleSandbox = sandboxViewModel::onToggleSandbox,
-        onSetupSandbox = sandboxViewModel::onSetupSandbox,
-        onCancelSandbox = sandboxViewModel::onCancelSandbox,
-        onResetSandbox = sandboxViewModel::onResetSandbox,
-        onInstallPackages = sandboxViewModel::onInstallPackages,
-        onNavigateBack = onNavigateBack,
-        navigationTabBar = navigationTabBar,
-    )
-}
-
-@Composable
-fun SettingsScreenContent(
-    uiState: SettingsUiState,
-    actions: SettingsActions = SettingsActions.NoOp,
-    sandboxState: SandboxUiState = SandboxUiState(),
-    onToggleSandbox: (Boolean) -> Unit = {},
-    onSetupSandbox: () -> Unit = {},
-    onCancelSandbox: () -> Unit = {},
-    onResetSandbox: () -> Unit = {},
-    onInstallPackages: () -> Unit = {},
-    onNavigateBack: () -> Unit = {},
-    navigationTabBar: (@Composable () -> Unit)? = null,
-    terminalPreviewLines: ImmutableList<TerminalLine> = persistentListOf(),
-) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val undoLabel = stringResource(Res.string.snackbar_undo)
-    val memoryDeletedMsg = stringResource(Res.string.snackbar_memory_deleted)
-    val taskCancelledMsg = stringResource(Res.string.snackbar_task_cancelled)
-    val emailRemovedMsg = stringResource(Res.string.snackbar_email_removed)
-    val serviceRemovedMsg = stringResource(Res.string.snackbar_service_removed)
-    val mcpServerRemovedMsg = stringResource(Res.string.snackbar_mcp_server_removed)
-    val sshServerRemovedMsg = stringResource(Res.string.snackbar_ssh_server_removed)
-
-    LaunchedEffect(uiState.pendingDeletion) {
-        val deletion = uiState.pendingDeletion ?: return@LaunchedEffect
-        snackbarHostState.currentSnackbarData?.dismiss()
-        val message = when (deletion) {
-            is PendingDeletion.Memory -> memoryDeletedMsg
-            is PendingDeletion.Task -> taskCancelledMsg
-            is PendingDeletion.EmailAccount -> emailRemovedMsg
-            is PendingDeletion.Service -> serviceRemovedMsg
-            is PendingDeletion.McpServer -> mcpServerRemovedMsg
-            is PendingDeletion.SshServer -> sshServerRemovedMsg
-        }
-        val result = snackbarHostState.showSnackbar(
-            message = message,
-            actionLabel = undoLabel,
-            duration = SnackbarDuration.Short,
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ToggleableHeadline(
+            title = stringResource(Res.string.settings_scheduled_tasks),
+            description = stringResource(Res.string.settings_scheduled_tasks_description),
+            checked = isSchedulingEnabled,
+            onCheckedChange = onToggleScheduling,
         )
-        if (result == SnackbarResult.ActionPerformed) {
-            actions.onUndoDelete()
-        }
-    }
+        Spacer(Modifier.height(12.dp))
 
-    val pendingDeletion = uiState.pendingDeletion
-    val filteredMemories = remember(uiState.memories, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Memory) uiState.memories.filter { it.key != pendingDeletion.key }.toImmutableList() else uiState.memories
-    }
-    val filteredTasks = remember(uiState.scheduledTasks, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Task) uiState.scheduledTasks.filter { it.id != pendingDeletion.id }.toImmutableList() else uiState.scheduledTasks
-    }
-    val filteredEmailAccounts = remember(uiState.emailAccounts, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.EmailAccount) uiState.emailAccounts.filter { it.id != pendingDeletion.id }.toImmutableList() else uiState.emailAccounts
-    }
-    val filteredServices = remember(uiState.configuredServices, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Service) uiState.configuredServices.filter { it.instanceId != pendingDeletion.instanceId }.toImmutableList() else uiState.configuredServices
-    }
-    val filteredMcpServers = remember(uiState.mcpServers, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.McpServer) uiState.mcpServers.filter { it.id != pendingDeletion.serverId }.toImmutableList() else uiState.mcpServers
-    }
+        val onEveryHeartbeat = stringResource(Res.string.settings_task_details_on_every_heartbeat)
+        if (isSchedulingEnabled && tasks.isNotEmpty()) {
+            tasks.forEach { task ->
+                val subtitle = when (task.trigger) {
+                    TaskTrigger.HEARTBEAT -> "${task.status} - $onEveryHeartbeat"
 
-    val filteredUiState = remember(uiState, filteredMemories, filteredTasks, filteredEmailAccounts, filteredServices, filteredMcpServers) {
-        uiState.copy(
-            memories = filteredMemories,
-            scheduledTasks = filteredTasks,
-            emailAccounts = filteredEmailAccounts,
-            configuredServices = filteredServices,
-            mcpServers = filteredMcpServers,
-        )
-    }
+                    TaskTrigger.CRON -> "${task.status} - ${task.cron?.let { describeCron(it) } ?: "cron"}"
 
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).navigationBarsPadding().statusBarsPadding().imePadding()) {
-        Column(Modifier.fillMaxSize(), horizontalAlignment = CenterHorizontally) {
-            if (navigationTabBar != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 64.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = CenterVertically,
-                ) {
-                    navigationTabBar()
-                }
-            } else {
-                TopBar(onNavigateBack = onNavigateBack)
-            }
-
-            val visibleTabs = remember(sandboxState.showSandbox) {
-                SettingsTab.entries.filter { it != SettingsTab.Sandbox || sandboxState.showSandbox }.toImmutableList()
-            }
-
-            SettingsTabSelector(
-                tabs = visibleTabs,
-                currentTab = filteredUiState.currentTab,
-                onSelectTab = actions.onSelectTab,
-            )
-
-            val settingsScrollState = rememberScrollState()
-            Box(Modifier.weight(1f).fillMaxWidth()) {
-                Column(
-                    Modifier.fillMaxWidth().verticalScroll(settingsScrollState),
-                    horizontalAlignment = CenterHorizontally,
-                ) {
-                    Spacer(Modifier.height(16.dp))
-
-                    val maxContentWidth = when (filteredUiState.currentTab) {
-                        SettingsTab.Services -> 500.dp
-                        else -> 900.dp
+                    TaskTrigger.TIME -> {
+                        val instant = Instant.fromEpochMilliseconds(task.scheduledAtEpochMs)
+                        val zone = TimeZone.currentSystemDefault()
+                        val scheduledTime = instant.toLocalDateTime(zone)
+                        val offset = zone.offsetAt(instant)
+                        "${task.status} - $scheduledTime $offset"
                     }
-                    Column(
-                        Modifier.widthIn(max = maxContentWidth).fillMaxWidth().padding(horizontal = 16.dp),
-                        horizontalAlignment = CenterHorizontally,
-                    ) {
-                        when (filteredUiState.currentTab) {
-                            SettingsTab.General -> {
-                                GeneralContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Agent -> {
-                                AgentContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Services -> {
-                                ServicesContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Integrations -> {
-                                SettingsContent(state = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Tools -> {
-                                ToolsContent(
-                                    tools = filteredUiState.tools,
-                                    onToggleTool = actions.onToggleTool,
-                                    mcpServers = filteredUiState.mcpServers,
-                                    onAddMcpServer = actions.onAddMcpServer,
-                                    onRemoveMcpServer = actions.onRemoveMcpServer,
-                                    onToggleMcpServer = actions.onToggleMcpServer,
-                                    onRefreshMcpServer = actions.onRefreshMcpServer,
-                                    showAddMcpServerDialog = filteredUiState.showAddMcpServerDialog,
-                                    onShowAddMcpServerDialog = actions.onShowAddMcpServerDialog,
-                                    onAddPopularMcpServer = actions.onAddPopularMcpServer,
-                                )
-                            }
-
-                            SettingsTab.Sandbox -> {
-                                SandboxSettingsCard(
-                                    sandboxState = sandboxState,
-                                    onToggleSandbox = onToggleSandbox,
-                                    onSetupSandbox = onSetupSandbox,
-                                    onCancelSandbox = onCancelSandbox,
-                                    onResetSandbox = onResetSandbox,
-                                    onInstallPackages = onInstallPackages,
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                DeviceStorageCard(
-                                    isEnabled = uiState.isStorageAccessEnabled,
-                                    permissionGranted = uiState.storagePermissionGranted,
-                                    onToggle = actions.onToggleStorageAccess,
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.height(16.dp))
-                    }
-
-                    Spacer(Modifier.weight(1f))
-
-                    BottomInfo()
                 }
-                VerticalScrollbarForScroll(
-                    scrollState = settingsScrollState,
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                SettingsListItem(
+                    title = task.description,
+                    subtitle = subtitle,
+                    onClick = { selectedTaskId = task.id },
+                    onDelete = { onCancelTask(task.id) },
+                    deleteContentDescription = stringResource(Res.string.settings_scheduled_tasks_cancel),
                 )
-            }
-        }
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
-        ) { data ->
-            Snackbar(snackbarData = data)
-        }
-    }
-}
-
-@Composable
-private fun TopBar(onNavigateBack: () -> Unit) {
-    Row {
-        IconButton(
-            modifier = Modifier.handCursor(),
-            onClick = onNavigateBack,
-        ) {
-            Icon(
-                imageVector = BackIcon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Spacer(Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun SettingsTabSelector(
-    tabs: ImmutableList<SettingsTab>,
-    currentTab: SettingsTab,
-    onSelectTab: (SettingsTab) -> Unit,
-) {
-    Surface(
-        modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(vertical = 8.dp),
-        color = Color.Transparent,
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(4.dp)
-                .horizontalScroll(rememberScrollState()),
-        ) {
-            tabs.forEach { tab ->
-                val isSelected = currentTab == tab
-                Surface(
-                    modifier = Modifier
-                        .handCursor()
-                        .clip(RoundedCornerShape(50))
-                        .clickable { onSelectTab(tab) },
-                    shape = RoundedCornerShape(50),
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                    } else {
-                        Color.Transparent
-                    },
-                ) {
-                    Text(
-                        text = when (tab) {
-                            SettingsTab.General -> stringResource(Res.string.settings_tab_general)
-                            SettingsTab.Agent -> stringResource(Res.string.settings_tab_agent)
-                            SettingsTab.Services -> stringResource(Res.string.settings_tab_services)
-                            SettingsTab.Tools -> stringResource(Res.string.settings_tab_tools)
-                            SettingsTab.Sandbox -> stringResource(Res.string.settings_tab_sandbox)
-                            SettingsTab.Integrations -> stringResource(Res.string.settings_tab_integrations)
-                        },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                    )
-                }
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
-}
 
-@Composable
-private fun BottomInfo() {
-    Text(
-        text = stringResource(Res.string.settings_ai_mistakes_warning),
-        style = MaterialTheme.typography.bodySmall,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
-
-    Spacer(Modifier.height(8.dp))
-
-    val uriHandler = LocalUriHandler.current
-
-    Row(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(Res.string.settings_version, Version.appVersion),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-
-        Spacer(Modifier.width(8.dp))
-
-        Icon(
-            modifier = Modifier
-                .clip(CircleShape)
-                .size(24.dp)
-                .clickable(onClick = {
-                    uriHandler.openUri("https://github.com/adrielGGmotion/Oak")
-                })
-                .handCursor(),
-            painter = painterResource(Res.drawable.github_mark),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onBackground,
+    val selectedTask = selectedTaskId?.let { id -> tasks.firstOrNull { it.id == id } }
+    if (selectedTask != null) {
+        TaskDetailsSheet(
+            task = selectedTask,
+            heartbeatLog = heartbeatLog,
+            onDismiss = { selectedTaskId = null },
         )
     }
-
-    Spacer(Modifier.height(8.dp))
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SettingsCard(
-    modifier: Modifier = Modifier,
-    innerPadding: Boolean = true,
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit,
+internal fun TaskDetailsSheet(
+    task: ScheduledTask,
+    heartbeatLog: ImmutableList<HeartbeatLogEntry>,
+    onDismiss: () -> Unit,
 ) {
-    Card(
-        modifier = modifier,
-        colors = oakAdaptiveCardColors(),
-        border = oakAdaptiveCardBorder(),
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick).handCursor() else Modifier)
-                .then(if (innerPadding) Modifier.padding(16.dp) else Modifier),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            content()
+            Text(
+                text = task.description,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Spacer(Modifier.height(12.dp))
+
+            TaskDetailRow(
+                label = stringResource(Res.string.settings_task_details_trigger),
+                value = task.trigger.name,
+            )
+            TaskDetailRow(
+                label = stringResource(Res.string.settings_task_details_status),
+                value = task.status.name,
+            )
+            when (task.trigger) {
+                TaskTrigger.TIME -> TaskDetailRow(
+                    label = stringResource(Res.string.settings_task_details_scheduled_for),
+                    value = formatTaskInstant(task.scheduledAtEpochMs),
+                )
+
+                TaskTrigger.CRON -> {
+                    TaskDetailRow(
+                        label = stringResource(Res.string.settings_task_details_schedule),
+                        value = task.cron?.let { describeCron(it) } ?: "cron",
+                    )
+                    TaskDetailRow(
+                        label = stringResource(Res.string.settings_task_details_next_run),
+                        value = formatTaskInstant(task.scheduledAtEpochMs),
+                    )
+                }
+
+                TaskTrigger.HEARTBEAT -> TaskDetailRow(
+                    label = stringResource(Res.string.settings_task_details_schedule),
+                    value = stringResource(Res.string.settings_task_details_on_every_heartbeat),
+                )
+            }
+            TaskDetailRow(
+                label = stringResource(Res.string.settings_task_details_created),
+                value = formatTaskInstant(task.createdAtEpochMs),
+            )
+            if (task.consecutiveFailures > 0) {
+                TaskDetailRow(
+                    label = stringResource(Res.string.settings_task_details_consecutive_failures),
+                    value = task.consecutiveFailures.toString(),
+                )
+            }
+            // The scheduler stores its retry/backoff phrasing in `lastResult` ("Failed at ...:
+            // ... (retry after 120s backoff)"). Surface it so the user can see what the
+            // scheduler is going to do next, not just what already happened.
+            task.lastResult?.takeIf { it.isNotBlank() }?.let { result ->
+                TaskDetailRow(
+                    label = stringResource(Res.string.settings_task_details_last_result),
+                    value = result,
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = stringResource(Res.string.settings_heartbeat_recent),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Spacer(Modifier.height(4.dp))
+
+            if (task.trigger == TaskTrigger.HEARTBEAT) {
+                // Heartbeat additions don't carry their own log — they fire as part of every
+                // heartbeat run, so the heartbeat-wide log is the right surface.
+                if (heartbeatLog.isEmpty()) {
+                    EmptyLogText(stringResource(Res.string.settings_task_details_no_heartbeat_runs))
+                } else {
+                    heartbeatLog.forEach { entry ->
+                        ExecutionLogRow(
+                            success = entry.success,
+                            timestampEpochMs = entry.timestampEpochMs,
+                            message = entry.error,
+                        )
+                    }
+                }
+            } else {
+                if (task.recentExecutions.isEmpty()) {
+                    EmptyLogText(stringResource(Res.string.settings_task_details_no_runs))
+                } else {
+                    task.recentExecutions.forEach { entry ->
+                        ExecutionLogRow(
+                            success = entry.success,
+                            timestampEpochMs = entry.timestampEpochMs,
+                            message = entry.message,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
         }
     }
+}
+
+@Composable
+internal fun TaskDetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(140.dp),
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+    }
+}
+
+@Composable
+internal fun ExecutionLogRow(success: Boolean, timestampEpochMs: Long, message: String?) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            text = if (success) "OK" else "FAIL",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            modifier = Modifier.width(36.dp),
+        )
+        Column {
+            Text(
+                text = formatTaskInstant(timestampEpochMs),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (!message.isNullOrBlank()) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (success) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun EmptyLogText(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+internal fun formatTaskInstant(epochMs: Long): String {
+    if (epochMs <= 0L) return "—"
+    val instant = Instant.fromEpochMilliseconds(epochMs)
+    val zone = TimeZone.currentSystemDefault()
+    val local = instant.toLocalDateTime(zone)
+    val month = local.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
+    val minute = local.minute.toString().padStart(2, '0')
+    return "${local.day} $month ${local.year} ${local.hour}:$minute"
 }
 

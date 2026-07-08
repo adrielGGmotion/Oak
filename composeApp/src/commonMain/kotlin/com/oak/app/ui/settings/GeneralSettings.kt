@@ -292,290 +292,174 @@ import sh.calvin.reorderable.ReorderableColumn
 import kotlin.math.roundToInt
 import kotlin.time.Instant
 
-internal val StatusColorConnected = Color(0xFF4CAF50)
-internal val StatusColorChecking = Color(0xFFFF9800)
-internal val StatusColorError = Color(0xFFF44336)
-internal val StatusColorUnknown = Color(0xFF9E9E9E)
-
 @Composable
-fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel(),
-    sandboxViewModel: SandboxViewModel = koinViewModel(),
-    onNavigateBack: () -> Unit,
-    navigationTabBar: (@Composable () -> Unit)? = null,
+internal fun DaemonModeToggle(
+    isDaemonEnabled: Boolean,
+    onToggleDaemon: (Boolean) -> Unit,
 ) {
-    val uiState by viewModel.state.collectAsStateWithLifecycle()
-    val sandboxState by sandboxViewModel.state.collectAsStateWithLifecycle()
-
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                viewModel.onScreenVisible()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    SetupStoragePermissionHandler(viewModel.storagePermissionController)
-
-    SettingsScreenContent(
-        uiState = uiState,
-        actions = viewModel.actions,
-        sandboxState = sandboxState,
-        onToggleSandbox = sandboxViewModel::onToggleSandbox,
-        onSetupSandbox = sandboxViewModel::onSetupSandbox,
-        onCancelSandbox = sandboxViewModel::onCancelSandbox,
-        onResetSandbox = sandboxViewModel::onResetSandbox,
-        onInstallPackages = sandboxViewModel::onInstallPackages,
-        onNavigateBack = onNavigateBack,
-        navigationTabBar = navigationTabBar,
-    )
-}
-
-@Composable
-fun SettingsScreenContent(
-    uiState: SettingsUiState,
-    actions: SettingsActions = SettingsActions.NoOp,
-    sandboxState: SandboxUiState = SandboxUiState(),
-    onToggleSandbox: (Boolean) -> Unit = {},
-    onSetupSandbox: () -> Unit = {},
-    onCancelSandbox: () -> Unit = {},
-    onResetSandbox: () -> Unit = {},
-    onInstallPackages: () -> Unit = {},
-    onNavigateBack: () -> Unit = {},
-    navigationTabBar: (@Composable () -> Unit)? = null,
-    terminalPreviewLines: ImmutableList<TerminalLine> = persistentListOf(),
-) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val undoLabel = stringResource(Res.string.snackbar_undo)
-    val memoryDeletedMsg = stringResource(Res.string.snackbar_memory_deleted)
-    val taskCancelledMsg = stringResource(Res.string.snackbar_task_cancelled)
-    val emailRemovedMsg = stringResource(Res.string.snackbar_email_removed)
-    val serviceRemovedMsg = stringResource(Res.string.snackbar_service_removed)
-    val mcpServerRemovedMsg = stringResource(Res.string.snackbar_mcp_server_removed)
-    val sshServerRemovedMsg = stringResource(Res.string.snackbar_ssh_server_removed)
-
-    LaunchedEffect(uiState.pendingDeletion) {
-        val deletion = uiState.pendingDeletion ?: return@LaunchedEffect
-        snackbarHostState.currentSnackbarData?.dismiss()
-        val message = when (deletion) {
-            is PendingDeletion.Memory -> memoryDeletedMsg
-            is PendingDeletion.Task -> taskCancelledMsg
-            is PendingDeletion.EmailAccount -> emailRemovedMsg
-            is PendingDeletion.Service -> serviceRemovedMsg
-            is PendingDeletion.McpServer -> mcpServerRemovedMsg
-            is PendingDeletion.SshServer -> sshServerRemovedMsg
-        }
-        val result = snackbarHostState.showSnackbar(
-            message = message,
-            actionLabel = undoLabel,
-            duration = SnackbarDuration.Short,
-        )
-        if (result == SnackbarResult.ActionPerformed) {
-            actions.onUndoDelete()
-        }
-    }
-
-    val pendingDeletion = uiState.pendingDeletion
-    val filteredMemories = remember(uiState.memories, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Memory) uiState.memories.filter { it.key != pendingDeletion.key }.toImmutableList() else uiState.memories
-    }
-    val filteredTasks = remember(uiState.scheduledTasks, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Task) uiState.scheduledTasks.filter { it.id != pendingDeletion.id }.toImmutableList() else uiState.scheduledTasks
-    }
-    val filteredEmailAccounts = remember(uiState.emailAccounts, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.EmailAccount) uiState.emailAccounts.filter { it.id != pendingDeletion.id }.toImmutableList() else uiState.emailAccounts
-    }
-    val filteredServices = remember(uiState.configuredServices, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Service) uiState.configuredServices.filter { it.instanceId != pendingDeletion.instanceId }.toImmutableList() else uiState.configuredServices
-    }
-    val filteredMcpServers = remember(uiState.mcpServers, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.McpServer) uiState.mcpServers.filter { it.id != pendingDeletion.serverId }.toImmutableList() else uiState.mcpServers
-    }
-
-    val filteredUiState = remember(uiState, filteredMemories, filteredTasks, filteredEmailAccounts, filteredServices, filteredMcpServers) {
-        uiState.copy(
-            memories = filteredMemories,
-            scheduledTasks = filteredTasks,
-            emailAccounts = filteredEmailAccounts,
-            configuredServices = filteredServices,
-            mcpServers = filteredMcpServers,
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ToggleableHeadline(
+            title = stringResource(Res.string.settings_daemon_mode),
+            description = stringResource(Res.string.settings_daemon_mode_description),
+            checked = isDaemonEnabled,
+            onCheckedChange = onToggleDaemon,
         )
     }
-
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).navigationBarsPadding().statusBarsPadding().imePadding()) {
-        Column(Modifier.fillMaxSize(), horizontalAlignment = CenterHorizontally) {
-            if (navigationTabBar != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 64.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = CenterVertically,
-                ) {
-                    navigationTabBar()
-                }
-            } else {
-                TopBar(onNavigateBack = onNavigateBack)
-            }
-
-            val visibleTabs = remember(sandboxState.showSandbox) {
-                SettingsTab.entries.filter { it != SettingsTab.Sandbox || sandboxState.showSandbox }.toImmutableList()
-            }
-
-            SettingsTabSelector(
-                tabs = visibleTabs,
-                currentTab = filteredUiState.currentTab,
-                onSelectTab = actions.onSelectTab,
-            )
-
-            val settingsScrollState = rememberScrollState()
-            Box(Modifier.weight(1f).fillMaxWidth()) {
-                Column(
-                    Modifier.fillMaxWidth().verticalScroll(settingsScrollState),
-                    horizontalAlignment = CenterHorizontally,
-                ) {
-                    Spacer(Modifier.height(16.dp))
-
-                    val maxContentWidth = when (filteredUiState.currentTab) {
-                        SettingsTab.Services -> 500.dp
-                        else -> 900.dp
-                    }
-                    Column(
-                        Modifier.widthIn(max = maxContentWidth).fillMaxWidth().padding(horizontal = 16.dp),
-                        horizontalAlignment = CenterHorizontally,
-                    ) {
-                        when (filteredUiState.currentTab) {
-                            SettingsTab.General -> {
-                                GeneralContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Agent -> {
-                                AgentContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Services -> {
-                                ServicesContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Integrations -> {
-                                SettingsContent(state = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Tools -> {
-                                ToolsContent(
-                                    tools = filteredUiState.tools,
-                                    onToggleTool = actions.onToggleTool,
-                                    mcpServers = filteredUiState.mcpServers,
-                                    onAddMcpServer = actions.onAddMcpServer,
-                                    onRemoveMcpServer = actions.onRemoveMcpServer,
-                                    onToggleMcpServer = actions.onToggleMcpServer,
-                                    onRefreshMcpServer = actions.onRefreshMcpServer,
-                                    showAddMcpServerDialog = filteredUiState.showAddMcpServerDialog,
-                                    onShowAddMcpServerDialog = actions.onShowAddMcpServerDialog,
-                                    onAddPopularMcpServer = actions.onAddPopularMcpServer,
-                                )
-                            }
-
-                            SettingsTab.Sandbox -> {
-                                SandboxSettingsCard(
-                                    sandboxState = sandboxState,
-                                    onToggleSandbox = onToggleSandbox,
-                                    onSetupSandbox = onSetupSandbox,
-                                    onCancelSandbox = onCancelSandbox,
-                                    onResetSandbox = onResetSandbox,
-                                    onInstallPackages = onInstallPackages,
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                DeviceStorageCard(
-                                    isEnabled = uiState.isStorageAccessEnabled,
-                                    permissionGranted = uiState.storagePermissionGranted,
-                                    onToggle = actions.onToggleStorageAccess,
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.height(16.dp))
-                    }
-
-                    Spacer(Modifier.weight(1f))
-
-                    BottomInfo()
-                }
-                VerticalScrollbarForScroll(
-                    scrollState = settingsScrollState,
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                )
-            }
-        }
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
-        ) { data ->
-            Snackbar(snackbarData = data)
-        }
-    }
 }
 
 @Composable
-private fun TopBar(onNavigateBack: () -> Unit) {
-    Row {
-        IconButton(
-            modifier = Modifier.handCursor(),
-            onClick = onNavigateBack,
-        ) {
-            Icon(
-                imageVector = BackIcon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Spacer(Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun SettingsTabSelector(
-    tabs: ImmutableList<SettingsTab>,
-    currentTab: SettingsTab,
-    onSelectTab: (SettingsTab) -> Unit,
+internal fun DynamicUiToggle(
+    isDynamicUiEnabled: Boolean,
+    onToggleDynamicUi: (Boolean) -> Unit,
 ) {
-    Surface(
-        modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(vertical = 8.dp),
-        color = Color.Transparent,
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ToggleableHeadline(
+            title = stringResource(Res.string.settings_dynamic_ui),
+            description = stringResource(Res.string.settings_dynamic_ui_description),
+            checked = isDynamicUiEnabled,
+            onCheckedChange = onToggleDynamicUi,
+        )
+    }
+}
+
+@Composable
+internal fun UnlimitedToolCallsToggle(
+    isUnlimitedToolCallsEnabled: Boolean,
+    onToggleUnlimitedToolCalls: (Boolean) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ToggleableHeadline(
+            title = stringResource(Res.string.settings_unlimited_tool_calls),
+            description = stringResource(Res.string.settings_unlimited_tool_calls_description),
+            checked = isUnlimitedToolCallsEnabled,
+            onCheckedChange = onToggleUnlimitedToolCalls,
+        )
+    }
+}
+
+@Composable
+internal fun DynamicColorsToggle(
+    useDynamicColors: Boolean,
+    onToggleDynamicColors: (Boolean) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
-                .padding(4.dp)
-                .horizontalScroll(rememberScrollState()),
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onToggleDynamicColors(!useDynamicColors) }
+                .handCursor()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            tabs.forEach { tab ->
-                val isSelected = currentTab == tab
-                Surface(
-                    modifier = Modifier
-                        .handCursor()
-                        .clip(RoundedCornerShape(50))
-                        .clickable { onSelectTab(tab) },
-                    shape = RoundedCornerShape(50),
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                    } else {
-                        Color.Transparent
-                    },
-                ) {
-                    Text(
-                        text = when (tab) {
-                            SettingsTab.General -> stringResource(Res.string.settings_tab_general)
-                            SettingsTab.Agent -> stringResource(Res.string.settings_tab_agent)
-                            SettingsTab.Services -> stringResource(Res.string.settings_tab_services)
-                            SettingsTab.Tools -> stringResource(Res.string.settings_tab_tools)
-                            SettingsTab.Sandbox -> stringResource(Res.string.settings_tab_sandbox)
-                            SettingsTab.Integrations -> stringResource(Res.string.settings_tab_integrations)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Dynamic Colors (Android 12+)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.size(2.dp))
+                Text(
+                    text = "Adapt to your system wallpaper colors",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Switch(
+                checked = useDynamicColors,
+                onCheckedChange = onToggleDynamicColors,
+                modifier = Modifier.handCursor(),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun ThemeModePicker(
+    themeMode: ThemeMode,
+    onChangeThemeMode: (ThemeMode) -> Unit,
+) {
+    val options = listOf(
+        ThemeMode.System to stringResource(Res.string.settings_theme_system),
+        ThemeMode.Light to stringResource(Res.string.settings_theme_light),
+        ThemeMode.Dark to stringResource(Res.string.settings_theme_dark),
+        ThemeMode.OledBlack to stringResource(Res.string.settings_theme_oled),
+    )
+    val selectedLabel = options.first { it.first == themeMode }.second
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(Res.string.settings_theme),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Text(
+            text = stringResource(Res.string.settings_theme_description),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
+        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OakOutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = selectedLabel,
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        modifier = Modifier.handCursor(),
+                        imageVector = Icons.Filled.ArrowDropDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                    )
+                },
+            )
+            // Transparent overlay to capture clicks reliably on all platforms
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .handCursor()
+                    .clickable { expanded = true },
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                options.forEach { (mode, label) ->
+                    val isSelected = mode == themeMode
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isSelected) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                            )
                         },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
+                        onClick = {
+                            expanded = false
+                            onChangeThemeMode(mode)
+                        },
+                        modifier = Modifier
+                            .handCursor()
+                            .then(
+                                if (isSelected) {
+                                    Modifier
+                                        .padding(horizontal = 4.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primaryContainer,
+                                            shape = RoundedCornerShape(12.dp),
+                                        )
+                                } else {
+                                    Modifier
+                                },
+                            ),
                     )
                 }
             }
@@ -584,67 +468,76 @@ private fun SettingsTabSelector(
 }
 
 @Composable
-private fun BottomInfo() {
-    Text(
-        text = stringResource(Res.string.settings_ai_mistakes_warning),
-        style = MaterialTheme.typography.bodySmall,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
+internal fun UiScaleSection(
+    uiScale: Float,
+    onChangeUiScale: (Float) -> Unit,
+) {
+    var sliderValue by remember(uiScale) { mutableStateOf(uiScale) }
+    val steps = 14 // 16 snap points from 50% to 200% in 10% increments (14 intermediate)
 
-    Spacer(Modifier.height(8.dp))
-
-    val uriHandler = LocalUriHandler.current
-
-    Row(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(Res.string.settings_version, Version.appVersion),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-
-        Spacer(Modifier.width(8.dp))
-
-        Icon(
-            modifier = Modifier
-                .clip(CircleShape)
-                .size(24.dp)
-                .clickable(onClick = {
-                    uriHandler.openUri("https://github.com/adrielGGmotion/Oak")
-                })
-                .handCursor(),
-            painter = painterResource(Res.drawable.github_mark),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onBackground,
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.settings_ui_scale),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = "${(sliderValue * 100).roundToInt()}%",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        OakSlider(
+            value = sliderValue,
+            onValueChange = { sliderValue = it },
+            onValueChangeFinished = { onChangeUiScale(sliderValue) },
+            valueRange = 0.5f..2.0f,
+            steps = steps,
         )
     }
-
-    Spacer(Modifier.height(8.dp))
 }
 
 @Composable
-internal fun SettingsCard(
-    modifier: Modifier = Modifier,
-    innerPadding: Boolean = true,
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit,
+internal fun ToggleableHeadline(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
-    Card(
-        modifier = modifier,
-        colors = oakAdaptiveCardColors(),
-        border = oakAdaptiveCardBorder(),
+    val switchInteractionSource = remember { MutableInteractionSource() }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = switchInteractionSource,
+                indication = null,
+            ) { onCheckedChange(!checked) }
+            .handCursor(),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick).handCursor() else Modifier)
-                .then(if (innerPadding) Modifier.padding(16.dp) else Modifier),
-        ) {
-            content()
-        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f),
+        )
+        actions()
+        Switch(
+            checked = checked,
+            onCheckedChange = null,
+            interactionSource = switchInteractionSource,
+        )
     }
+    Spacer(Modifier.size(4.dp))
+    Text(
+        text = description,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
-

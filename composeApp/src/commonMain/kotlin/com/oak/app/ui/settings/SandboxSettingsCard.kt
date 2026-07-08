@@ -292,358 +292,149 @@ import sh.calvin.reorderable.ReorderableColumn
 import kotlin.math.roundToInt
 import kotlin.time.Instant
 
-internal val StatusColorConnected = Color(0xFF4CAF50)
-internal val StatusColorChecking = Color(0xFFFF9800)
-internal val StatusColorError = Color(0xFFF44336)
-internal val StatusColorUnknown = Color(0xFF9E9E9E)
-
 @Composable
-fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel(),
-    sandboxViewModel: SandboxViewModel = koinViewModel(),
-    onNavigateBack: () -> Unit,
-    navigationTabBar: (@Composable () -> Unit)? = null,
+internal fun SandboxSettingsCard(
+    sandboxState: SandboxUiState,
+    onToggleSandbox: (Boolean) -> Unit,
+    onSetupSandbox: () -> Unit,
+    onCancelSandbox: () -> Unit,
+    onResetSandbox: () -> Unit,
+    onInstallPackages: () -> Unit,
 ) {
-    val uiState by viewModel.state.collectAsStateWithLifecycle()
-    val sandboxState by sandboxViewModel.state.collectAsStateWithLifecycle()
-
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                viewModel.onScreenVisible()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    SetupStoragePermissionHandler(viewModel.storagePermissionController)
-
-    SettingsScreenContent(
-        uiState = uiState,
-        actions = viewModel.actions,
-        sandboxState = sandboxState,
-        onToggleSandbox = sandboxViewModel::onToggleSandbox,
-        onSetupSandbox = sandboxViewModel::onSetupSandbox,
-        onCancelSandbox = sandboxViewModel::onCancelSandbox,
-        onResetSandbox = sandboxViewModel::onResetSandbox,
-        onInstallPackages = sandboxViewModel::onInstallPackages,
-        onNavigateBack = onNavigateBack,
-        navigationTabBar = navigationTabBar,
-    )
-}
-
-@Composable
-fun SettingsScreenContent(
-    uiState: SettingsUiState,
-    actions: SettingsActions = SettingsActions.NoOp,
-    sandboxState: SandboxUiState = SandboxUiState(),
-    onToggleSandbox: (Boolean) -> Unit = {},
-    onSetupSandbox: () -> Unit = {},
-    onCancelSandbox: () -> Unit = {},
-    onResetSandbox: () -> Unit = {},
-    onInstallPackages: () -> Unit = {},
-    onNavigateBack: () -> Unit = {},
-    navigationTabBar: (@Composable () -> Unit)? = null,
-    terminalPreviewLines: ImmutableList<TerminalLine> = persistentListOf(),
-) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val undoLabel = stringResource(Res.string.snackbar_undo)
-    val memoryDeletedMsg = stringResource(Res.string.snackbar_memory_deleted)
-    val taskCancelledMsg = stringResource(Res.string.snackbar_task_cancelled)
-    val emailRemovedMsg = stringResource(Res.string.snackbar_email_removed)
-    val serviceRemovedMsg = stringResource(Res.string.snackbar_service_removed)
-    val mcpServerRemovedMsg = stringResource(Res.string.snackbar_mcp_server_removed)
-    val sshServerRemovedMsg = stringResource(Res.string.snackbar_ssh_server_removed)
-
-    LaunchedEffect(uiState.pendingDeletion) {
-        val deletion = uiState.pendingDeletion ?: return@LaunchedEffect
-        snackbarHostState.currentSnackbarData?.dismiss()
-        val message = when (deletion) {
-            is PendingDeletion.Memory -> memoryDeletedMsg
-            is PendingDeletion.Task -> taskCancelledMsg
-            is PendingDeletion.EmailAccount -> emailRemovedMsg
-            is PendingDeletion.Service -> serviceRemovedMsg
-            is PendingDeletion.McpServer -> mcpServerRemovedMsg
-            is PendingDeletion.SshServer -> sshServerRemovedMsg
-        }
-        val result = snackbarHostState.showSnackbar(
-            message = message,
-            actionLabel = undoLabel,
-            duration = SnackbarDuration.Short,
-        )
-        if (result == SnackbarResult.ActionPerformed) {
-            actions.onUndoDelete()
-        }
-    }
-
-    val pendingDeletion = uiState.pendingDeletion
-    val filteredMemories = remember(uiState.memories, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Memory) uiState.memories.filter { it.key != pendingDeletion.key }.toImmutableList() else uiState.memories
-    }
-    val filteredTasks = remember(uiState.scheduledTasks, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Task) uiState.scheduledTasks.filter { it.id != pendingDeletion.id }.toImmutableList() else uiState.scheduledTasks
-    }
-    val filteredEmailAccounts = remember(uiState.emailAccounts, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.EmailAccount) uiState.emailAccounts.filter { it.id != pendingDeletion.id }.toImmutableList() else uiState.emailAccounts
-    }
-    val filteredServices = remember(uiState.configuredServices, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Service) uiState.configuredServices.filter { it.instanceId != pendingDeletion.instanceId }.toImmutableList() else uiState.configuredServices
-    }
-    val filteredMcpServers = remember(uiState.mcpServers, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.McpServer) uiState.mcpServers.filter { it.id != pendingDeletion.serverId }.toImmutableList() else uiState.mcpServers
-    }
-
-    val filteredUiState = remember(uiState, filteredMemories, filteredTasks, filteredEmailAccounts, filteredServices, filteredMcpServers) {
-        uiState.copy(
-            memories = filteredMemories,
-            scheduledTasks = filteredTasks,
-            emailAccounts = filteredEmailAccounts,
-            configuredServices = filteredServices,
-            mcpServers = filteredMcpServers,
-        )
-    }
-
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).navigationBarsPadding().statusBarsPadding().imePadding()) {
-        Column(Modifier.fillMaxSize(), horizontalAlignment = CenterHorizontally) {
-            if (navigationTabBar != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 64.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = CenterVertically,
-                ) {
-                    navigationTabBar()
-                }
-            } else {
-                TopBar(onNavigateBack = onNavigateBack)
-            }
-
-            val visibleTabs = remember(sandboxState.showSandbox) {
-                SettingsTab.entries.filter { it != SettingsTab.Sandbox || sandboxState.showSandbox }.toImmutableList()
-            }
-
-            SettingsTabSelector(
-                tabs = visibleTabs,
-                currentTab = filteredUiState.currentTab,
-                onSelectTab = actions.onSelectTab,
-            )
-
-            val settingsScrollState = rememberScrollState()
-            Box(Modifier.weight(1f).fillMaxWidth()) {
-                Column(
-                    Modifier.fillMaxWidth().verticalScroll(settingsScrollState),
-                    horizontalAlignment = CenterHorizontally,
-                ) {
-                    Spacer(Modifier.height(16.dp))
-
-                    val maxContentWidth = when (filteredUiState.currentTab) {
-                        SettingsTab.Services -> 500.dp
-                        else -> 900.dp
-                    }
-                    Column(
-                        Modifier.widthIn(max = maxContentWidth).fillMaxWidth().padding(horizontal = 16.dp),
-                        horizontalAlignment = CenterHorizontally,
-                    ) {
-                        when (filteredUiState.currentTab) {
-                            SettingsTab.General -> {
-                                GeneralContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Agent -> {
-                                AgentContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Services -> {
-                                ServicesContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Integrations -> {
-                                SettingsContent(state = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Tools -> {
-                                ToolsContent(
-                                    tools = filteredUiState.tools,
-                                    onToggleTool = actions.onToggleTool,
-                                    mcpServers = filteredUiState.mcpServers,
-                                    onAddMcpServer = actions.onAddMcpServer,
-                                    onRemoveMcpServer = actions.onRemoveMcpServer,
-                                    onToggleMcpServer = actions.onToggleMcpServer,
-                                    onRefreshMcpServer = actions.onRefreshMcpServer,
-                                    showAddMcpServerDialog = filteredUiState.showAddMcpServerDialog,
-                                    onShowAddMcpServerDialog = actions.onShowAddMcpServerDialog,
-                                    onAddPopularMcpServer = actions.onAddPopularMcpServer,
-                                )
-                            }
-
-                            SettingsTab.Sandbox -> {
-                                SandboxSettingsCard(
-                                    sandboxState = sandboxState,
-                                    onToggleSandbox = onToggleSandbox,
-                                    onSetupSandbox = onSetupSandbox,
-                                    onCancelSandbox = onCancelSandbox,
-                                    onResetSandbox = onResetSandbox,
-                                    onInstallPackages = onInstallPackages,
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                DeviceStorageCard(
-                                    isEnabled = uiState.isStorageAccessEnabled,
-                                    permissionGranted = uiState.storagePermissionGranted,
-                                    onToggle = actions.onToggleStorageAccess,
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.height(16.dp))
-                    }
-
-                    Spacer(Modifier.weight(1f))
-
-                    BottomInfo()
-                }
-                VerticalScrollbarForScroll(
-                    scrollState = settingsScrollState,
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                )
-            }
-        }
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
-        ) { data ->
-            Snackbar(snackbarData = data)
-        }
-    }
-}
-
-@Composable
-private fun TopBar(onNavigateBack: () -> Unit) {
-    Row {
-        IconButton(
-            modifier = Modifier.handCursor(),
-            onClick = onNavigateBack,
-        ) {
-            Icon(
-                imageVector = BackIcon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Spacer(Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun SettingsTabSelector(
-    tabs: ImmutableList<SettingsTab>,
-    currentTab: SettingsTab,
-    onSelectTab: (SettingsTab) -> Unit,
-) {
-    Surface(
-        modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(vertical = 8.dp),
-        color = Color.Transparent,
-    ) {
+    var showResetDialog by remember { mutableStateOf(false) }
+    SettingsCard {
         Row(
-            modifier = Modifier
-                .padding(4.dp)
-                .horizontalScroll(rememberScrollState()),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = CenterVertically,
         ) {
-            tabs.forEach { tab ->
-                val isSelected = currentTab == tab
-                Surface(
-                    modifier = Modifier
-                        .handCursor()
-                        .clip(RoundedCornerShape(50))
-                        .clickable { onSelectTab(tab) },
-                    shape = RoundedCornerShape(50),
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                    } else {
-                        Color.Transparent
-                    },
-                ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Alpine Linux",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                if (sandboxState.sandboxReady) {
+                    if (sandboxState.sandboxDiskUsageMB > 0) {
+                        Text(
+                            text = stringResource(Res.string.settings_sandbox_disk_usage, sandboxState.sandboxDiskUsageMB),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                } else {
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        text = when (tab) {
-                            SettingsTab.General -> stringResource(Res.string.settings_tab_general)
-                            SettingsTab.Agent -> stringResource(Res.string.settings_tab_agent)
-                            SettingsTab.Services -> stringResource(Res.string.settings_tab_services)
-                            SettingsTab.Tools -> stringResource(Res.string.settings_tab_tools)
-                            SettingsTab.Sandbox -> stringResource(Res.string.settings_tab_sandbox)
-                            SettingsTab.Integrations -> stringResource(Res.string.settings_tab_integrations)
-                        },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
+                        text = stringResource(Res.string.settings_sandbox_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
+            if (sandboxState.sandboxReady) {
+                Switch(
+                    checked = sandboxState.isSandboxEnabled,
+                    onCheckedChange = onToggleSandbox,
+                )
+            }
+        }
+
+        if (sandboxState.sandboxProgress != null) {
+            SandboxProgressRow(sandboxState.sandboxProgress, sandboxState.sandboxStatusText, onCancelSandbox)
+        } else if (sandboxState.isWorking) {
+            SandboxProgressRow(null, sandboxState.sandboxStatusText, onCancelSandbox)
+        } else if (sandboxState.hasError) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = sandboxState.sandboxStatusText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+
+        if (!sandboxState.isWorking) {
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (!sandboxState.sandboxReady) {
+                    Button(onClick = onSetupSandbox, modifier = Modifier.handCursor()) {
+                        Text(stringResource(Res.string.settings_sandbox_install))
+                    }
+                } else {
+                    if (!sandboxState.sandboxPackagesInstalled) {
+                        OutlinedButton(onClick = onInstallPackages, modifier = Modifier.handCursor()) {
+                            Text(stringResource(Res.string.settings_sandbox_install_packages))
+                        }
+                    }
+                    OutlinedButton(onClick = { showResetDialog = true }, modifier = Modifier.handCursor()) {
+                        Text(stringResource(Res.string.settings_sandbox_uninstall))
+                    }
+                }
+            }
         }
     }
-}
 
-@Composable
-private fun BottomInfo() {
-    Text(
-        text = stringResource(Res.string.settings_ai_mistakes_warning),
-        style = MaterialTheme.typography.bodySmall,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
-
-    Spacer(Modifier.height(8.dp))
-
-    val uriHandler = LocalUriHandler.current
-
-    Row(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(Res.string.settings_version, Version.appVersion),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-
-        Spacer(Modifier.width(8.dp))
-
-        Icon(
-            modifier = Modifier
-                .clip(CircleShape)
-                .size(24.dp)
-                .clickable(onClick = {
-                    uriHandler.openUri("https://github.com/adrielGGmotion/Oak")
-                })
-                .handCursor(),
-            painter = painterResource(Res.drawable.github_mark),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onBackground,
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text(stringResource(Res.string.settings_sandbox_uninstall)) },
+            text = { Text(stringResource(Res.string.settings_sandbox_uninstall_confirm)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showResetDialog = false
+                        onResetSandbox()
+                    },
+                    modifier = Modifier.handCursor(),
+                ) {
+                    Text(stringResource(Res.string.settings_sandbox_uninstall))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showResetDialog = false },
+                    modifier = Modifier.handCursor(),
+                ) {
+                    Text(stringResource(Res.string.settings_sandbox_cancel))
+                }
+            },
         )
     }
-
-    Spacer(Modifier.height(8.dp))
 }
 
 @Composable
-internal fun SettingsCard(
-    modifier: Modifier = Modifier,
-    innerPadding: Boolean = true,
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit,
+internal fun DeviceStorageCard(
+    isEnabled: Boolean,
+    permissionGranted: Boolean,
+    onToggle: (Boolean) -> Unit,
 ) {
-    Card(
-        modifier = modifier,
-        colors = oakAdaptiveCardColors(),
-        border = oakAdaptiveCardBorder(),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick).handCursor() else Modifier)
-                .then(if (innerPadding) Modifier.padding(16.dp) else Modifier),
+    SettingsCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = CenterVertically,
         ) {
-            content()
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(Res.string.device_storage_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = if (isEnabled && permissionGranted) {
+                        stringResource(Res.string.device_storage_description_enabled_granted)
+                    } else if (isEnabled && !permissionGranted) {
+                        stringResource(Res.string.device_storage_description_enabled_denied)
+                    } else {
+                        stringResource(Res.string.device_storage_description_disabled)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = isEnabled,
+                onCheckedChange = onToggle,
+            )
         }
     }
 }

@@ -292,359 +292,320 @@ import sh.calvin.reorderable.ReorderableColumn
 import kotlin.math.roundToInt
 import kotlin.time.Instant
 
-internal val StatusColorConnected = Color(0xFF4CAF50)
-internal val StatusColorChecking = Color(0xFFFF9800)
-internal val StatusColorError = Color(0xFFF44336)
-internal val StatusColorUnknown = Color(0xFF9E9E9E)
 
 @Composable
-fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel(),
-    sandboxViewModel: SandboxViewModel = koinViewModel(),
-    onNavigateBack: () -> Unit,
-    navigationTabBar: (@Composable () -> Unit)? = null,
+internal fun ExportImportSection(
+    onExportSettings: (Set<ImportSection>) -> String,
+    onPrepareExport: () -> Map<ImportSection, String?>,
+    onImportSettings: (ByteArray, Set<ImportSection>, Boolean) -> ImportResult,
 ) {
-    val uiState by viewModel.state.collectAsStateWithLifecycle()
-    val sandboxState by sandboxViewModel.state.collectAsStateWithLifecycle()
+    val isPreview = LocalInspectionMode.current
+    val scope = rememberCoroutineScope()
+    var importResult by remember { mutableStateOf<ImportResult?>(null) }
+    var importPreview by remember { mutableStateOf<Pair<String, Map<ImportSection, String?>>?>(null) }
+    var exportPreview by remember { mutableStateOf<Map<ImportSection, String?>?>(null) }
 
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                viewModel.onScreenVisible()
+    val filePickerLauncher = if (!isPreview) {
+        rememberFilePickerLauncher(
+            type = FileKitType.File(extensions = listOf("json")),
+        ) { file ->
+            if (file != null) {
+                scope.launch {
+                    val bytes = file.readBytes()
+                    try {
+                        val jsonString = bytes.decodeToString()
+                        val jsonObject = SharedJson.parseToJsonElement(jsonString).jsonObject
+                        val detectedSections = detectImportSections(jsonObject)
+                        importPreview = jsonString to detectedSections
+                    } catch (_: Exception) {
+                        importResult = ImportResult.Failure
+                    }
+                }
             }
         }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    } else {
+        null
     }
 
-    SetupStoragePermissionHandler(viewModel.storagePermissionController)
+    importPreview?.let { (jsonString, sectionDetails) ->
+        ImportPreviewDialog(
+            sectionDetails = sectionDetails,
+            onConfirm = { selectedSections, replace ->
+                importResult = onImportSettings(jsonString.encodeToByteArray(), selectedSections, replace)
+                importPreview = null
+            },
+            onDismiss = { importPreview = null },
+        )
+    }
 
-    SettingsScreenContent(
-        uiState = uiState,
-        actions = viewModel.actions,
-        sandboxState = sandboxState,
-        onToggleSandbox = sandboxViewModel::onToggleSandbox,
-        onSetupSandbox = sandboxViewModel::onSetupSandbox,
-        onCancelSandbox = sandboxViewModel::onCancelSandbox,
-        onResetSandbox = sandboxViewModel::onResetSandbox,
-        onInstallPackages = sandboxViewModel::onInstallPackages,
-        onNavigateBack = onNavigateBack,
-        navigationTabBar = navigationTabBar,
+    exportPreview?.let { sectionDetails ->
+        ExportPreviewDialog(
+            sectionDetails = sectionDetails,
+            onConfirm = { selectedSections ->
+                val json = onExportSettings(selectedSections)
+                exportPreview = null
+                scope.launch {
+                    saveFileToDevice(
+                        bytes = json.encodeToByteArray(),
+                        baseName = "oak-settings",
+                        extension = "json",
+                    )
+                }
+            },
+            onDismiss = { exportPreview = null },
+        )
+    }
+
+    Text(
+        text = stringResource(Res.string.settings_export_import_title),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
     )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        text = stringResource(Res.string.settings_export_import_description),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(12.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(
+            onClick = {
+                importResult = null
+                exportPreview = onPrepareExport()
+            },
+            modifier = Modifier.handCursor(),
+        ) {
+            Text(stringResource(Res.string.settings_export))
+        }
+        OutlinedButton(
+            onClick = {
+                importResult = null
+                filePickerLauncher?.launch()
+            },
+            modifier = Modifier.handCursor(),
+        ) {
+            Text(stringResource(Res.string.settings_import))
+        }
+    }
+    if (importResult != null) {
+        Spacer(Modifier.height(8.dp))
+        val (text, color) = when (val result = importResult!!) {
+            is ImportResult.Success -> stringResource(Res.string.settings_import_success) to MaterialTheme.colorScheme.primary
+            is ImportResult.PartialSuccess -> stringResource(Res.string.settings_import_partial, result.errorCount) to MaterialTheme.colorScheme.primary
+            is ImportResult.Failure -> stringResource(Res.string.settings_import_error) to MaterialTheme.colorScheme.error
+        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = color,
+        )
+    }
 }
 
 @Composable
-fun SettingsScreenContent(
-    uiState: SettingsUiState,
-    actions: SettingsActions = SettingsActions.NoOp,
-    sandboxState: SandboxUiState = SandboxUiState(),
-    onToggleSandbox: (Boolean) -> Unit = {},
-    onSetupSandbox: () -> Unit = {},
-    onCancelSandbox: () -> Unit = {},
-    onResetSandbox: () -> Unit = {},
-    onInstallPackages: () -> Unit = {},
-    onNavigateBack: () -> Unit = {},
-    navigationTabBar: (@Composable () -> Unit)? = null,
-    terminalPreviewLines: ImmutableList<TerminalLine> = persistentListOf(),
+internal fun ImportPreviewDialog(
+    sectionDetails: Map<ImportSection, String?>,
+    onConfirm: (Set<ImportSection>, Boolean) -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val undoLabel = stringResource(Res.string.snackbar_undo)
-    val memoryDeletedMsg = stringResource(Res.string.snackbar_memory_deleted)
-    val taskCancelledMsg = stringResource(Res.string.snackbar_task_cancelled)
-    val emailRemovedMsg = stringResource(Res.string.snackbar_email_removed)
-    val serviceRemovedMsg = stringResource(Res.string.snackbar_service_removed)
-    val mcpServerRemovedMsg = stringResource(Res.string.snackbar_mcp_server_removed)
-    val sshServerRemovedMsg = stringResource(Res.string.snackbar_ssh_server_removed)
+    var replace by remember { mutableStateOf(true) }
+    var selectedSections by remember { mutableStateOf(sectionDetails.keys) }
+    val sortedEntries = remember(sectionDetails) { sectionDetails.entries.sortedBy { it.key } }
 
-    LaunchedEffect(uiState.pendingDeletion) {
-        val deletion = uiState.pendingDeletion ?: return@LaunchedEffect
-        snackbarHostState.currentSnackbarData?.dismiss()
-        val message = when (deletion) {
-            is PendingDeletion.Memory -> memoryDeletedMsg
-            is PendingDeletion.Task -> taskCancelledMsg
-            is PendingDeletion.EmailAccount -> emailRemovedMsg
-            is PendingDeletion.Service -> serviceRemovedMsg
-            is PendingDeletion.McpServer -> mcpServerRemovedMsg
-            is PendingDeletion.SshServer -> sshServerRemovedMsg
-        }
-        val result = snackbarHostState.showSnackbar(
-            message = message,
-            actionLabel = undoLabel,
-            duration = SnackbarDuration.Short,
-        )
-        if (result == SnackbarResult.ActionPerformed) {
-            actions.onUndoDelete()
-        }
-    }
-
-    val pendingDeletion = uiState.pendingDeletion
-    val filteredMemories = remember(uiState.memories, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Memory) uiState.memories.filter { it.key != pendingDeletion.key }.toImmutableList() else uiState.memories
-    }
-    val filteredTasks = remember(uiState.scheduledTasks, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Task) uiState.scheduledTasks.filter { it.id != pendingDeletion.id }.toImmutableList() else uiState.scheduledTasks
-    }
-    val filteredEmailAccounts = remember(uiState.emailAccounts, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.EmailAccount) uiState.emailAccounts.filter { it.id != pendingDeletion.id }.toImmutableList() else uiState.emailAccounts
-    }
-    val filteredServices = remember(uiState.configuredServices, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.Service) uiState.configuredServices.filter { it.instanceId != pendingDeletion.instanceId }.toImmutableList() else uiState.configuredServices
-    }
-    val filteredMcpServers = remember(uiState.mcpServers, pendingDeletion) {
-        if (pendingDeletion is PendingDeletion.McpServer) uiState.mcpServers.filter { it.id != pendingDeletion.serverId }.toImmutableList() else uiState.mcpServers
-    }
-
-    val filteredUiState = remember(uiState, filteredMemories, filteredTasks, filteredEmailAccounts, filteredServices, filteredMcpServers) {
-        uiState.copy(
-            memories = filteredMemories,
-            scheduledTasks = filteredTasks,
-            emailAccounts = filteredEmailAccounts,
-            configuredServices = filteredServices,
-            mcpServers = filteredMcpServers,
-        )
-    }
-
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).navigationBarsPadding().statusBarsPadding().imePadding()) {
-        Column(Modifier.fillMaxSize(), horizontalAlignment = CenterHorizontally) {
-            if (navigationTabBar != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 64.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = CenterVertically,
-                ) {
-                    navigationTabBar()
-                }
-            } else {
-                TopBar(onNavigateBack = onNavigateBack)
-            }
-
-            val visibleTabs = remember(sandboxState.showSandbox) {
-                SettingsTab.entries.filter { it != SettingsTab.Sandbox || sandboxState.showSandbox }.toImmutableList()
-            }
-
-            SettingsTabSelector(
-                tabs = visibleTabs,
-                currentTab = filteredUiState.currentTab,
-                onSelectTab = actions.onSelectTab,
-            )
-
-            val settingsScrollState = rememberScrollState()
-            Box(Modifier.weight(1f).fillMaxWidth()) {
-                Column(
-                    Modifier.fillMaxWidth().verticalScroll(settingsScrollState),
-                    horizontalAlignment = CenterHorizontally,
-                ) {
-                    Spacer(Modifier.height(16.dp))
-
-                    val maxContentWidth = when (filteredUiState.currentTab) {
-                        SettingsTab.Services -> 500.dp
-                        else -> 900.dp
-                    }
-                    Column(
-                        Modifier.widthIn(max = maxContentWidth).fillMaxWidth().padding(horizontal = 16.dp),
-                        horizontalAlignment = CenterHorizontally,
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(Res.string.settings_import_preview_title))
+        },
+        text = {
+            val importScrollState = rememberScrollState()
+            Box {
+                Column(modifier = Modifier.verticalScroll(importScrollState)) {
+                    Row(
+                        verticalAlignment = CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { replace = !replace }
+                            .handCursor(),
                     ) {
-                        when (filteredUiState.currentTab) {
-                            SettingsTab.General -> {
-                                GeneralContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Agent -> {
-                                AgentContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Services -> {
-                                ServicesContent(uiState = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Integrations -> {
-                                SettingsContent(state = filteredUiState, actions = actions)
-                            }
-
-                            SettingsTab.Tools -> {
-                                ToolsContent(
-                                    tools = filteredUiState.tools,
-                                    onToggleTool = actions.onToggleTool,
-                                    mcpServers = filteredUiState.mcpServers,
-                                    onAddMcpServer = actions.onAddMcpServer,
-                                    onRemoveMcpServer = actions.onRemoveMcpServer,
-                                    onToggleMcpServer = actions.onToggleMcpServer,
-                                    onRefreshMcpServer = actions.onRefreshMcpServer,
-                                    showAddMcpServerDialog = filteredUiState.showAddMcpServerDialog,
-                                    onShowAddMcpServerDialog = actions.onShowAddMcpServerDialog,
-                                    onAddPopularMcpServer = actions.onAddPopularMcpServer,
-                                )
-                            }
-
-                            SettingsTab.Sandbox -> {
-                                SandboxSettingsCard(
-                                    sandboxState = sandboxState,
-                                    onToggleSandbox = onToggleSandbox,
-                                    onSetupSandbox = onSetupSandbox,
-                                    onCancelSandbox = onCancelSandbox,
-                                    onResetSandbox = onResetSandbox,
-                                    onInstallPackages = onInstallPackages,
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                DeviceStorageCard(
-                                    isEnabled = uiState.isStorageAccessEnabled,
-                                    permissionGranted = uiState.storagePermissionGranted,
-                                    onToggle = actions.onToggleStorageAccess,
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(Res.string.settings_import_replace_all),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            if (replace) {
+                                Text(
+                                    text = stringResource(Res.string.settings_import_replace_all_description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
-
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Switch(
+                            checked = replace,
+                            onCheckedChange = { replace = it },
+                            modifier = Modifier.handCursor(),
+                        )
                     }
-
-                    Spacer(Modifier.weight(1f))
-
-                    BottomInfo()
+                    Spacer(Modifier.height(12.dp))
+                    for ((section, count) in sortedEntries) {
+                        Row(
+                            verticalAlignment = CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedSections = if (section in selectedSections) {
+                                        selectedSections - section
+                                    } else {
+                                        selectedSections + section
+                                    }
+                                }
+                                .handCursor()
+                                .padding(vertical = 4.dp),
+                        ) {
+                            Checkbox(
+                                checked = section in selectedSections,
+                                onCheckedChange = { checked ->
+                                    selectedSections = if (checked) selectedSections + section else selectedSections - section
+                                },
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = sectionDisplayName(section),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            if (count != null) {
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "($count)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
                 }
                 VerticalScrollbarForScroll(
-                    scrollState = settingsScrollState,
+                    scrollState = importScrollState,
                     modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
                 )
             }
-        }
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
-        ) { data ->
-            Snackbar(snackbarData = data)
-        }
-    }
-}
-
-@Composable
-private fun TopBar(onNavigateBack: () -> Unit) {
-    Row {
-        IconButton(
-            modifier = Modifier.handCursor(),
-            onClick = onNavigateBack,
-        ) {
-            Icon(
-                imageVector = BackIcon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Spacer(Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun SettingsTabSelector(
-    tabs: ImmutableList<SettingsTab>,
-    currentTab: SettingsTab,
-    onSelectTab: (SettingsTab) -> Unit,
-) {
-    Surface(
-        modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(vertical = 8.dp),
-        color = Color.Transparent,
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(4.dp)
-                .horizontalScroll(rememberScrollState()),
-        ) {
-            tabs.forEach { tab ->
-                val isSelected = currentTab == tab
-                Surface(
-                    modifier = Modifier
-                        .handCursor()
-                        .clip(RoundedCornerShape(50))
-                        .clickable { onSelectTab(tab) },
-                    shape = RoundedCornerShape(50),
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                    } else {
-                        Color.Transparent
-                    },
-                ) {
-                    Text(
-                        text = when (tab) {
-                            SettingsTab.General -> stringResource(Res.string.settings_tab_general)
-                            SettingsTab.Agent -> stringResource(Res.string.settings_tab_agent)
-                            SettingsTab.Services -> stringResource(Res.string.settings_tab_services)
-                            SettingsTab.Tools -> stringResource(Res.string.settings_tab_tools)
-                            SettingsTab.Sandbox -> stringResource(Res.string.settings_tab_sandbox)
-                            SettingsTab.Integrations -> stringResource(Res.string.settings_tab_integrations)
-                        },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                    )
-                }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(selectedSections, replace) },
+                enabled = selectedSections.isNotEmpty(),
+                modifier = Modifier.handCursor(),
+            ) {
+                Text(stringResource(Res.string.settings_import))
             }
-        }
-    }
-}
-
-@Composable
-private fun BottomInfo() {
-    Text(
-        text = stringResource(Res.string.settings_ai_mistakes_warning),
-        style = MaterialTheme.typography.bodySmall,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onBackground,
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.handCursor(),
+            ) {
+                Text(stringResource(Res.string.settings_mcp_cancel))
+            }
+        },
     )
-
-    Spacer(Modifier.height(8.dp))
-
-    val uriHandler = LocalUriHandler.current
-
-    Row(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(Res.string.settings_version, Version.appVersion),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-
-        Spacer(Modifier.width(8.dp))
-
-        Icon(
-            modifier = Modifier
-                .clip(CircleShape)
-                .size(24.dp)
-                .clickable(onClick = {
-                    uriHandler.openUri("https://github.com/adrielGGmotion/Oak")
-                })
-                .handCursor(),
-            painter = painterResource(Res.drawable.github_mark),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onBackground,
-        )
-    }
-
-    Spacer(Modifier.height(8.dp))
 }
 
 @Composable
-internal fun SettingsCard(
-    modifier: Modifier = Modifier,
-    innerPadding: Boolean = true,
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit,
+internal fun ExportPreviewDialog(
+    sectionDetails: Map<ImportSection, String?>,
+    onConfirm: (Set<ImportSection>) -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    Card(
-        modifier = modifier,
-        colors = oakAdaptiveCardColors(),
-        border = oakAdaptiveCardBorder(),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick).handCursor() else Modifier)
-                .then(if (innerPadding) Modifier.padding(16.dp) else Modifier),
-        ) {
-            content()
-        }
-    }
+    var selectedSections by remember { mutableStateOf(sectionDetails.keys) }
+    val sortedEntries = remember(sectionDetails) { sectionDetails.entries.sortedBy { it.key } }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(Res.string.settings_export_preview_title))
+        },
+        text = {
+            val exportScrollState = rememberScrollState()
+            Box {
+                Column(modifier = Modifier.verticalScroll(exportScrollState)) {
+                    for ((section, count) in sortedEntries) {
+                        Row(
+                            verticalAlignment = CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedSections = if (section in selectedSections) {
+                                        selectedSections - section
+                                    } else {
+                                        selectedSections + section
+                                    }
+                                }
+                                .handCursor()
+                                .padding(vertical = 4.dp),
+                        ) {
+                            Checkbox(
+                                checked = section in selectedSections,
+                                onCheckedChange = { checked ->
+                                    selectedSections = if (checked) selectedSections + section else selectedSections - section
+                                },
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = sectionDisplayName(section),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            if (count != null) {
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "($count)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+                VerticalScrollbarForScroll(
+                    scrollState = exportScrollState,
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(selectedSections) },
+                enabled = selectedSections.isNotEmpty(),
+                modifier = Modifier.handCursor(),
+            ) {
+                Text(stringResource(Res.string.settings_export))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.handCursor(),
+            ) {
+                Text(stringResource(Res.string.settings_mcp_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+internal fun sectionDisplayName(section: ImportSection): String = when (section) {
+    ImportSection.SERVICES -> stringResource(Res.string.settings_import_section_services)
+    ImportSection.SOUL -> stringResource(Res.string.settings_import_section_soul)
+    ImportSection.MEMORY -> stringResource(Res.string.settings_import_section_memory)
+    ImportSection.SCHEDULING -> stringResource(Res.string.settings_import_section_scheduling)
+    ImportSection.HEARTBEAT -> stringResource(Res.string.settings_import_section_heartbeat)
+    ImportSection.EMAIL -> stringResource(Res.string.settings_import_section_email)
+    ImportSection.SMS -> stringResource(Res.string.settings_sms)
+    ImportSection.TOOLS -> stringResource(Res.string.settings_import_section_tools)
+    ImportSection.MCP -> stringResource(Res.string.settings_import_section_mcp)
+    ImportSection.SSH -> stringResource(Res.string.settings_import_section_ssh)
+    ImportSection.CONVERSATIONS -> stringResource(Res.string.settings_import_section_conversations)
 }
 

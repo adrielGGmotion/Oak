@@ -1,0 +1,730 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
+package com.oak.app.ui.settings
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.DragIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
+import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.oak.app.BackIcon
+import com.oak.app.TerminalLine
+import com.oak.app.Version
+import com.oak.app.data.EmailAccount
+import com.oak.app.data.HeartbeatLogEntry
+import com.oak.app.data.ImportSection
+import com.oak.app.data.MemoryEntry
+import com.oak.app.data.ScheduledTask
+import com.oak.app.data.Service
+import com.oak.app.data.SharedJson
+import com.oak.app.data.TaskTrigger
+import com.oak.app.data.ThemeMode
+import com.oak.app.data.detectImportSections
+import com.oak.app.formatFileSize
+import com.oak.app.inference.DevicePerformance
+import com.oak.app.inference.DownloadError
+import com.oak.app.inference.LocalModel
+import com.oak.app.inference.calculateDevicePerformance
+import com.oak.app.inference.estimateGpuMemoryMb
+import com.oak.app.mcp.PopularMcpServer
+import com.oak.app.network.tools.ToolInfo
+import com.oak.app.saveFileToDevice
+import com.oak.app.tools.SetupStoragePermissionHandler
+import com.oak.app.ui.OakClearableTextField
+import com.oak.app.ui.OakOutlinedTextField
+import com.oak.app.ui.components.OakSlider
+import com.oak.app.ui.components.SettingsListItem
+import com.oak.app.ui.components.VerticalScrollbarForScroll
+import com.oak.app.ui.handCursor
+import com.oak.app.ui.oakAdaptiveCardBorder
+import com.oak.app.ui.oakAdaptiveCardColors
+import com.oak.app.ui.oakAdaptiveCardSurface
+import com.oak.app.ui.sandbox.SandboxProgressRow
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.readBytes
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.offsetAt
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.jsonObject
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.default_soul
+import oak.composeapp.generated.resources.device_storage_description_disabled
+import oak.composeapp.generated.resources.device_storage_description_enabled_denied
+import oak.composeapp.generated.resources.device_storage_description_enabled_granted
+import oak.composeapp.generated.resources.device_storage_title
+import oak.composeapp.generated.resources.github_mark
+import oak.composeapp.generated.resources.litert_cancel
+import oak.composeapp.generated.resources.litert_context_size
+import oak.composeapp.generated.resources.litert_download
+import oak.composeapp.generated.resources.litert_error_download_incomplete
+import oak.composeapp.generated.resources.litert_error_network
+import oak.composeapp.generated.resources.litert_error_not_enough_disk_space
+import oak.composeapp.generated.resources.litert_free_space
+import oak.composeapp.generated.resources.litert_on_device_description
+import oak.composeapp.generated.resources.litert_performance_good
+import oak.composeapp.generated.resources.litert_performance_ok
+import oak.composeapp.generated.resources.litert_performance_poor
+import oak.composeapp.generated.resources.litert_recommended
+import oak.composeapp.generated.resources.litert_tool_support
+import oak.composeapp.generated.resources.settings_add_service
+import oak.composeapp.generated.resources.settings_ai_font_family
+import oak.composeapp.generated.resources.settings_ai_font_family_description
+import oak.composeapp.generated.resources.settings_ai_mistakes_warning
+import oak.composeapp.generated.resources.settings_api_key_label
+import oak.composeapp.generated.resources.settings_api_key_optional_label
+import oak.composeapp.generated.resources.settings_base_url_label
+import oak.composeapp.generated.resources.settings_daemon_mode
+import oak.composeapp.generated.resources.settings_daemon_mode_description
+import oak.composeapp.generated.resources.settings_documentation
+import oak.composeapp.generated.resources.settings_dynamic_ui
+import oak.composeapp.generated.resources.settings_dynamic_ui_description
+import oak.composeapp.generated.resources.settings_export
+import oak.composeapp.generated.resources.settings_export_import_description
+import oak.composeapp.generated.resources.settings_export_import_title
+import oak.composeapp.generated.resources.settings_export_preview_title
+import oak.composeapp.generated.resources.settings_free_ai_access
+import oak.composeapp.generated.resources.settings_free_ai_access_url
+import oak.composeapp.generated.resources.settings_heartbeat_recent
+import oak.composeapp.generated.resources.settings_import
+import oak.composeapp.generated.resources.settings_import_error
+import oak.composeapp.generated.resources.settings_import_partial
+import oak.composeapp.generated.resources.settings_import_preview_title
+import oak.composeapp.generated.resources.settings_import_replace_all
+import oak.composeapp.generated.resources.settings_import_replace_all_description
+import oak.composeapp.generated.resources.settings_import_section_conversations
+import oak.composeapp.generated.resources.settings_import_section_email
+import oak.composeapp.generated.resources.settings_import_section_heartbeat
+import oak.composeapp.generated.resources.settings_import_section_mcp
+import oak.composeapp.generated.resources.settings_import_section_memory
+import oak.composeapp.generated.resources.settings_import_section_scheduling
+import oak.composeapp.generated.resources.settings_import_section_services
+import oak.composeapp.generated.resources.settings_import_section_soul
+import oak.composeapp.generated.resources.settings_import_section_ssh
+import oak.composeapp.generated.resources.settings_import_section_tools
+import oak.composeapp.generated.resources.settings_import_success
+import oak.composeapp.generated.resources.settings_mcp_cancel
+import oak.composeapp.generated.resources.settings_memories
+import oak.composeapp.generated.resources.settings_memories_all_title
+import oak.composeapp.generated.resources.settings_memories_delete
+import oak.composeapp.generated.resources.settings_memories_description
+import oak.composeapp.generated.resources.settings_memories_edit_cancel
+import oak.composeapp.generated.resources.settings_memories_edit_save
+import oak.composeapp.generated.resources.settings_memories_edit_title
+import oak.composeapp.generated.resources.settings_memories_show_all
+import oak.composeapp.generated.resources.settings_open_github_issue
+import oak.composeapp.generated.resources.settings_openai_compatible_or_other_service
+import oak.composeapp.generated.resources.settings_openai_compatible_providers
+import oak.composeapp.generated.resources.settings_openai_compatible_setup_ollama
+import oak.composeapp.generated.resources.settings_remove_service
+import oak.composeapp.generated.resources.settings_reorder_content_description
+import oak.composeapp.generated.resources.settings_request_integration_description
+import oak.composeapp.generated.resources.settings_request_integration_title
+import oak.composeapp.generated.resources.settings_sandbox_cancel
+import oak.composeapp.generated.resources.settings_sandbox_description
+import oak.composeapp.generated.resources.settings_sandbox_disk_usage
+import oak.composeapp.generated.resources.settings_sandbox_install
+import oak.composeapp.generated.resources.settings_sandbox_install_packages
+import oak.composeapp.generated.resources.settings_sandbox_subtab_files
+import oak.composeapp.generated.resources.settings_sandbox_subtab_packages
+import oak.composeapp.generated.resources.settings_sandbox_subtab_terminal
+import oak.composeapp.generated.resources.settings_sandbox_uninstall
+import oak.composeapp.generated.resources.settings_sandbox_uninstall_confirm
+import oak.composeapp.generated.resources.settings_scheduled_tasks
+import oak.composeapp.generated.resources.settings_scheduled_tasks_cancel
+import oak.composeapp.generated.resources.settings_scheduled_tasks_description
+import oak.composeapp.generated.resources.settings_sign_in_copy_api_key_from
+import oak.composeapp.generated.resources.settings_sms
+import oak.composeapp.generated.resources.settings_soul
+import oak.composeapp.generated.resources.settings_soul_description
+import oak.composeapp.generated.resources.settings_soul_reset
+import oak.composeapp.generated.resources.settings_soul_reset_cancel
+import oak.composeapp.generated.resources.settings_soul_reset_confirm
+import oak.composeapp.generated.resources.settings_soul_save
+import oak.composeapp.generated.resources.settings_status_checking
+import oak.composeapp.generated.resources.settings_status_connected
+import oak.composeapp.generated.resources.settings_status_error
+import oak.composeapp.generated.resources.settings_status_error_connection_failed
+import oak.composeapp.generated.resources.settings_status_error_invalid_key
+import oak.composeapp.generated.resources.settings_status_error_quota_exhausted
+import oak.composeapp.generated.resources.settings_status_error_rate_limited
+import oak.composeapp.generated.resources.settings_streaming_description
+import oak.composeapp.generated.resources.settings_streaming_enabled
+import oak.composeapp.generated.resources.settings_tab_agent
+import oak.composeapp.generated.resources.settings_tab_general
+import oak.composeapp.generated.resources.settings_tab_integrations
+import oak.composeapp.generated.resources.settings_tab_sandbox
+import oak.composeapp.generated.resources.settings_tab_services
+import oak.composeapp.generated.resources.settings_tab_tools
+import oak.composeapp.generated.resources.settings_task_details_consecutive_failures
+import oak.composeapp.generated.resources.settings_task_details_created
+import oak.composeapp.generated.resources.settings_task_details_last_result
+import oak.composeapp.generated.resources.settings_task_details_next_run
+import oak.composeapp.generated.resources.settings_task_details_no_heartbeat_runs
+import oak.composeapp.generated.resources.settings_task_details_no_runs
+import oak.composeapp.generated.resources.settings_task_details_on_every_heartbeat
+import oak.composeapp.generated.resources.settings_task_details_schedule
+import oak.composeapp.generated.resources.settings_task_details_scheduled_for
+import oak.composeapp.generated.resources.settings_task_details_status
+import oak.composeapp.generated.resources.settings_task_details_trigger
+import oak.composeapp.generated.resources.settings_theme
+import oak.composeapp.generated.resources.settings_theme_dark
+import oak.composeapp.generated.resources.settings_theme_description
+import oak.composeapp.generated.resources.settings_theme_light
+import oak.composeapp.generated.resources.settings_theme_oled
+import oak.composeapp.generated.resources.settings_theme_system
+import oak.composeapp.generated.resources.settings_tools_description
+import oak.composeapp.generated.resources.settings_tools_none_available
+import oak.composeapp.generated.resources.settings_ui_scale
+import oak.composeapp.generated.resources.settings_unlimited_tool_calls
+import oak.composeapp.generated.resources.settings_unlimited_tool_calls_description
+import oak.composeapp.generated.resources.settings_version
+import oak.composeapp.generated.resources.snackbar_email_removed
+import oak.composeapp.generated.resources.snackbar_mcp_server_removed
+import oak.composeapp.generated.resources.snackbar_memory_deleted
+import oak.composeapp.generated.resources.snackbar_service_removed
+import oak.composeapp.generated.resources.snackbar_ssh_server_removed
+import oak.composeapp.generated.resources.snackbar_task_cancelled
+import oak.composeapp.generated.resources.snackbar_undo
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import sh.calvin.reorderable.ReorderableColumn
+import kotlin.math.roundToInt
+import kotlin.time.Instant
+
+@Composable
+internal fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) {
+    var showAddServiceSheet by remember { mutableStateOf(false) }
+
+    // Configured services list
+    val entries = uiState.configuredServices
+    ReorderableColumn(
+        list = entries,
+        onSettle = { fromIndex, toIndex ->
+            val ids = entries.map { it.instanceId }.toMutableList()
+            ids.add(toIndex, ids.removeAt(fromIndex))
+            actions.onReorderServices(ids)
+        },
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) { _, entry, isDragging ->
+        key(entry.instanceId) {
+            ReorderableItem {
+                ConfiguredServiceCardContent(
+                    entry = entry,
+                    isExpanded = uiState.expandedServiceId == entry.instanceId,
+                    onExpand = { actions.onExpandService(if (uiState.expandedServiceId == entry.instanceId) null else entry.instanceId) },
+                    onChangeApiKey = { apiKey -> actions.onChangeApiKey(entry.instanceId, apiKey) },
+                    onChangeBaseUrl = { baseUrl -> actions.onChangeBaseUrl(entry.instanceId, baseUrl) },
+                    onSelectModel = { modelId -> actions.onSelectModel(entry.instanceId, modelId) },
+                    onRemove = { actions.onRemoveService(entry.instanceId) },
+                    isDragging = isDragging,
+                    dragHandleModifier = if (entries.size >= 2) Modifier.draggableHandle() else null,
+                    localActiveBackend = uiState.localActiveBackend,
+                    backendPreference = uiState.backendPreference,
+                    localAvailableModels = uiState.localAvailableModels,
+                    totalDeviceMemoryBytes = uiState.totalDeviceMemoryBytes,
+                    localFreeSpaceBytes = uiState.localFreeSpaceBytes,
+                    localDownloadingModelId = uiState.localDownloadingModelId,
+                    localDownloadProgress = uiState.localDownloadProgress,
+                    localDownloadError = uiState.localDownloadError,
+                    onDownloadLocalModel = actions.onDownloadLocalModel,
+                    onCancelLocalModelDownload = actions.onCancelLocalModelDownload,
+                    onDeleteLocalModel = actions.onDeleteLocalModel,
+                    onChangeModelContextTokens = actions.onChangeModelContextTokens,
+                    onChangeBackendPreference = actions.onChangeBackendPreference,
+                    modelContextTokens = uiState.modelContextTokens,
+                )
+            }
+        }
+    }
+
+    if (uiState.availableServicesToAdd.isNotEmpty()) {
+        Spacer(Modifier.height(12.dp))
+        OutlinedButton(onClick = { showAddServiceSheet = true }, modifier = Modifier.handCursor()) {
+            Text(stringResource(Res.string.settings_add_service))
+        }
+    }
+
+    // Free AI Access Guide
+    Spacer(Modifier.height(12.dp))
+    val uriHandler = LocalUriHandler.current
+    val freeAiAccessUrl = stringResource(Res.string.settings_free_ai_access_url)
+    OutlinedButton(
+        onClick = { uriHandler.openUri(freeAiAccessUrl) },
+        modifier = Modifier.handCursor(),
+    ) {
+        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(Res.string.settings_free_ai_access))
+    }
+
+    // Streaming toggle
+    Spacer(Modifier.height(16.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = oakAdaptiveCardColors(),
+        border = oakAdaptiveCardBorder(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { actions.onToggleStreaming(!uiState.isStreamingEnabled) }
+                .handCursor()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(Res.string.settings_streaming_enabled),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(Res.string.settings_streaming_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = uiState.isStreamingEnabled,
+                onCheckedChange = actions.onToggleStreaming,
+            )
+        }
+    }
+
+    // Add service bottom sheet
+    if (showAddServiceSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showAddServiceSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            val addServiceScrollState = rememberScrollState()
+            Box {
+                Column(modifier = Modifier.verticalScroll(addServiceScrollState).padding(16.dp)) {
+                    val services = uiState.availableServicesToAdd
+                    services.forEachIndexed { index, service ->
+                        val isFirst = index == 0
+                        val isLast = index == services.lastIndex
+                        val itemShape = RoundedCornerShape(
+                            topStart = if (isFirst) 12.dp else 0.dp,
+                            topEnd = if (isFirst) 12.dp else 0.dp,
+                            bottomStart = if (isLast) 12.dp else 0.dp,
+                            bottomEnd = if (isLast) 12.dp else 0.dp,
+                        )
+                        val isSpecial = service.isOnDevice || service is Service.OpenAICompatible
+                        Surface(
+                            onClick = {
+                                actions.onAddService(service)
+                                showAddServiceSheet = false
+                            },
+                            modifier = Modifier.fillMaxWidth().handCursor(),
+                            shape = itemShape,
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .then(
+                                            if (isSpecial) {
+                                                Modifier.background(
+                                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                                    shape = RoundedCornerShape(8.dp),
+                                                )
+                                            } else {
+                                                Modifier
+                                            },
+                                        ),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = vectorResource(service.icon),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = MaterialTheme.colorScheme.onBackground,
+                                    )
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Text(
+                                    text = service.displayName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                )
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
+                VerticalScrollbarForScroll(
+                    scrollState = addServiceScrollState,
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun ConfiguredServiceCardContent(
+    entry: ConfiguredServiceEntry,
+    isExpanded: Boolean,
+    onExpand: () -> Unit,
+    onChangeApiKey: (String) -> Unit,
+    onChangeBaseUrl: (String) -> Unit,
+    onSelectModel: (String) -> Unit,
+    onRemove: () -> Unit,
+    isDragging: Boolean = false,
+    dragHandleModifier: Modifier? = null,
+    localActiveBackend: String? = null,
+    localAvailableModels: ImmutableList<LocalModel> = persistentListOf(),
+    totalDeviceMemoryBytes: Long = Long.MAX_VALUE,
+    localFreeSpaceBytes: Long = 0L,
+    localDownloadingModelId: String? = null,
+    localDownloadProgress: Float? = null,
+    localDownloadError: DownloadError? = null,
+    onDownloadLocalModel: (LocalModel) -> Unit = {},
+    onCancelLocalModelDownload: () -> Unit = {},
+    onDeleteLocalModel: (String) -> Unit = {},
+    onChangeModelContextTokens: (String, Int) -> Unit = { _, _ -> },
+    backendPreference: String = "auto",
+    onChangeBackendPreference: (String) -> Unit = {},
+    modelContextTokens: Map<String, Int> = emptyMap(),
+) {
+    Column(
+        modifier = Modifier
+            .oakAdaptiveCardSurface()
+            .fillMaxWidth()
+            .clickable { onExpand() }
+            .handCursor(),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Drag handle
+                if (dragHandleModifier != null) {
+                    Icon(
+                        imageVector = Icons.Rounded.DragIndicator,
+                        contentDescription = stringResource(Res.string.settings_reorder_content_description),
+                        modifier = dragHandleModifier.handCursor(),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+
+                // Connection status dot
+                val dotColor = when (entry.connectionStatus) {
+                    ConnectionStatus.Connected -> StatusColorConnected
+                    ConnectionStatus.Checking -> StatusColorChecking
+                    ConnectionStatus.Unknown -> StatusColorUnknown
+                    else -> StatusColorError
+                }
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(dotColor),
+                )
+
+                Spacer(Modifier.width(12.dp))
+
+                // Service name and model
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = entry.service.displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    if (entry.selectedModel != null) {
+                        Text(
+                            text = entry.selectedModel.id,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                // Expand/collapse chevron
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        // Expanded content
+        if (isExpanded) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
+                if (entry.service.isOnDevice) {
+                    LiteRTSettings(
+                        selectedModel = entry.selectedModel,
+                        downloadedModels = entry.models,
+                        availableModels = localAvailableModels,
+                        totalDeviceMemoryBytes = totalDeviceMemoryBytes,
+                        freeSpaceBytes = localFreeSpaceBytes,
+                        activeBackend = localActiveBackend,
+                        backendPreference = backendPreference,
+                        downloadingModelId = localDownloadingModelId,
+                        downloadProgress = localDownloadProgress,
+                        downloadError = localDownloadError,
+                        onSelectModel = onSelectModel,
+                        onDownloadModel = onDownloadLocalModel,
+                        onCancelDownload = onCancelLocalModelDownload,
+                        onDeleteModel = onDeleteLocalModel,
+                        onChangeModelContextTokens = onChangeModelContextTokens,
+                        onChangeBackendPreference = onChangeBackendPreference,
+                        modelContextTokens = modelContextTokens,
+                    )
+                } else if (entry.service is Service.OpenAICompatible) {
+                    OpenAICompatibleSettings(
+                        baseUrl = entry.baseUrl,
+                        onChangeBaseUrl = onChangeBaseUrl,
+                        apiKey = entry.apiKey,
+                        onChangeApiKey = onChangeApiKey,
+                        selectedModel = entry.selectedModel,
+                        models = entry.models,
+                        onSelectModel = onSelectModel,
+                        connectionStatus = entry.connectionStatus,
+                    )
+                } else {
+                    ServiceSettings(
+                        apiKey = entry.apiKey,
+                        onChangeApiKey = onChangeApiKey,
+                        apiKeyUrl = entry.service.apiKeyUrl ?: "",
+                        apiKeyUrlDisplay = entry.service.apiKeyUrlDisplay ?: "",
+                        selectedModel = entry.selectedModel,
+                        models = entry.models,
+                        onSelectModel = onSelectModel,
+                        connectionStatus = entry.connectionStatus,
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                // Remove action
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(
+                        onClick = onRemove,
+                        modifier = Modifier.handCursor(),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.settings_remove_service),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun ConnectionStatusIndicator(status: ConnectionStatus) {
+    when (status) {
+        ConnectionStatus.Unknown -> return
+
+        ConnectionStatus.Checking -> {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(Res.string.settings_status_checking),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        ConnectionStatus.Connected -> {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(Res.string.settings_status_connected),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+
+        ConnectionStatus.ErrorQuotaExhausted -> {
+            val warningColor = Color(0xFFFF9800)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = warningColor,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(Res.string.settings_status_error_quota_exhausted),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = warningColor,
+                )
+            }
+        }
+
+        ConnectionStatus.ErrorInvalidKey,
+        ConnectionStatus.ErrorRateLimited,
+        ConnectionStatus.ErrorConnectionFailed,
+        ConnectionStatus.Error,
+        -> {
+            val errorMessage = when (status) {
+                ConnectionStatus.ErrorInvalidKey -> stringResource(Res.string.settings_status_error_invalid_key)
+                ConnectionStatus.ErrorRateLimited -> stringResource(Res.string.settings_status_error_rate_limited)
+                ConnectionStatus.ErrorConnectionFailed -> stringResource(Res.string.settings_status_error_connection_failed)
+                else -> stringResource(Res.string.settings_status_error)
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.error,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+}
+
