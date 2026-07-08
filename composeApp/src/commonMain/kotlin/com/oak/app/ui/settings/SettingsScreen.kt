@@ -1548,7 +1548,7 @@ private fun LiteRTSettings(
                         mutableStateOf(currentTopP)
                     }
                     Text(
-                        text = stringResource(Res.string.litert_sampler_top_p, topPSlider),
+                        text = stringResource(Res.string.litert_sampler_top_p, "%.2f".format(topPSlider)),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1566,7 +1566,7 @@ private fun LiteRTSettings(
                         mutableStateOf(currentTemp)
                     }
                     Text(
-                        text = stringResource(Res.string.litert_sampler_temperature, tempSlider),
+                        text = stringResource(Res.string.litert_sampler_temperature, "%.2f".format(tempSlider)),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
