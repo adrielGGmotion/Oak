@@ -12,7 +12,7 @@ android {
         libs.versions.android.compileSdk
             .get()
             .toInt()
-    ndkVersion = "29.0.14206865"
+    ndkVersion = libs.versions.android.ndkVersion.get()
 
     defaultConfig {
         applicationId = "com.oak.app"
