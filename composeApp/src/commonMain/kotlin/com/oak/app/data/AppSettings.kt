@@ -941,7 +941,23 @@ class AppSettings(private val settings: Settings) {
         if (ImportSection.SKILLS in sections) {
             val skillsJson = getSkillsJson()
             if (skillsJson.isNotBlank() && skillsJson != "[]") {
-                map["skills"] = Json.parseToJsonElement(skillsJson)
+                val allSkills = try {
+                    SharedJson.decodeFromString<List<Skill>>(skillsJson)
+                } catch (_: Exception) {
+                    null
+                }
+                if (allSkills != null) {
+                    val exportable = allSkills.filter { skill ->
+                        if (!skill.isBuiltIn) return@filter true
+                        val original = Skill.BUILT_IN_SKILLS.find { it.id == skill.id } ?: return@filter true
+                        skill != original
+                    }
+                    if (exportable.isNotEmpty()) {
+                        map["skills"] = Json.parseToJsonElement(SharedJson.encodeToString(exportable))
+                    }
+                } else {
+                    map["skills"] = Json.parseToJsonElement(skillsJson)
+                }
             }
         }
 

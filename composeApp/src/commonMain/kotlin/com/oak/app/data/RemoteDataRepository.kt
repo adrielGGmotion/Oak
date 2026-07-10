@@ -2628,7 +2628,9 @@ class RemoteDataRepository(
     override fun importSettingsFromJson(json: String, sections: Set<ImportSection>, replace: Boolean): Int {
         val jsonObject = SharedJson.parseToJsonElement(json).jsonObject
         val toolIds = getPlatformToolDefinitions().map { it.id }
-        return appSettings.importFromJson(jsonObject, toolIds, sections, replace)
+        val errors = appSettings.importFromJson(jsonObject, toolIds, sections, replace)
+        invalidateSkillCache()
+        return errors
     }
 
     override suspend fun askWithTools(prompt: String, instanceId: String?): String {
