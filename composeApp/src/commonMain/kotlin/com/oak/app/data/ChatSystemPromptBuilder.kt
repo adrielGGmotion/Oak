@@ -8,8 +8,6 @@
 
 package com.oak.app.data
 
-import kotlin.time.Instant
-
 /**
  * Identifies which flavour of chat system prompt to build. Public because it's part of
  * [DataRepository.getActiveSystemPrompt]'s signature — callers pick the variant based on
@@ -69,36 +67,6 @@ internal data class EmailAccountSummary(
 private const val LOCAL_MEMORY_BUDGET_CHARS = Int.MAX_VALUE
 
 /**
- * Advanced memory guidance — references `memory_learn` (not in `LOCAL_TOOL_ALLOWLIST`)
- * and `memory_reinforce`. Only composed into the `CHAT_REMOTE` variant; the on-device
- * variant omits it entirely because small Gemma models can't reliably call
- * `memory_learn` (4 params + enum).
- */
-internal const val DEFAULT_STRUCTURED_LEARNING_SECTION =
-    "## Structured Learning\n" +
-        "Use memory_learn to record categorized learnings:\n" +
-        "- Record user corrections and preferences as PREFERENCE entries\n" +
-        "- Record things that worked well as LEARNING entries\n" +
-        "- Record error resolutions as ERROR entries\n" +
-        "Use memory_reinforce when a stored learning produced a good outcome."
-
-/**
- * Teaches the model how the two automation mechanisms differ. Only composed into the
- * `CHAT_REMOTE` variant — scheduling tools aren't in the local allowlist, and the
- * heartbeat-is-user-controlled rule doesn't matter on-device. Placed before the
- * Scheduled Tasks data dump so the guidance precedes any rendered tasks.
- */
-internal const val DEFAULT_AUTOMATION_SECTION =
-    "## Automation\n" +
-        "Every form of \"run something without the user typing it\" goes through `schedule_task`. " +
-        "The tool has three mutually exclusive triggers:\n" +
-        "- `execute_at` — one-off at a specific datetime (reminders, \"check back at 3pm\").\n" +
-        "- `cron` — recurring on a schedule (\"every morning at 8\", \"every 15 minutes\").\n" +
-        "- `on_heartbeat: true` — appended to every heartbeat self-check. Use this when the user asks for *standing* heartbeat behaviour (e.g. \"greet me on every heartbeat\", \"always summarize new emails\", \"flag overdue tasks each check\"). These are `HEARTBEAT` trigger tasks and show up in `list_tasks` alongside time/cron tasks.\n" +
-        "Each scheduled or heartbeat run starts fresh, so embed any context the prompt needs. Use `list_tasks` / `cancel_task` to inspect or remove.\n" +
-        "Heartbeat itself (on/off toggle, interval, active hours) is user-controlled in Settings → Agent → Heartbeat — you cannot enable, disable, or reschedule it. If the user asks for recurring updates and heartbeat seems off, either schedule a cron task or tell them to enable Heartbeat in settings — never claim to have \"enabled\" or \"turned on\" heartbeat."
-
-/**
  * Tells remote models that tools are handled through the API's structured
  * mechanism, so they don't fall back to inline `<tool_call>` or `<invoke>` blocks.
  * Only composed into the `CHAT_REMOTE` variant — on-device models get separate
@@ -133,18 +101,13 @@ internal fun buildChatSystemPrompt(
     emailAccounts: List<EmailAccountSummary>,
     runtime: ChatPromptRuntimeContext,
     uiMode: ChatPromptUiMode,
+    activeSkills: List<Skill> = emptyList(),
 ): String = buildString {
     append(soul)
 
     if (!memoryInstructions.isNullOrEmpty()) {
         if (isNotEmpty()) append("\n\n")
         append(memoryInstructions)
-    }
-
-    // Structured Learning is remote-only — references memory_learn, not in the local allowlist.
-    if (variant == SystemPromptVariant.CHAT_REMOTE) {
-        if (isNotEmpty()) append("\n\n")
-        append(DEFAULT_STRUCTURED_LEARNING_SECTION)
     }
 
     // Memory category sections are emitted for BOTH variants. memory_store / memory_forget /
@@ -162,19 +125,15 @@ internal fun buildChatSystemPrompt(
     remaining = appendMemoryCategorySection("Learnings", learningMemories, withHitCount = true, remaining)
     appendMemoryCategorySection("Known Issues & Resolutions", errorMemories, withHitCount = false, remaining)
 
-    // Automation guidance + Email Accounts + Scheduled Tasks stay remote-only — the
-    // matching tools aren't in the local allowlist. The Automation section always renders
-    // so the AI knows what to reach for; the data dumps only render when non-empty.
+    // Data-driven sections: scheduled tasks and heartbeat additions render the actual task
+    // lists. Guidance for automation/email/structured-learning is now handled by skills.
     if (variant == SystemPromptVariant.CHAT_REMOTE) {
-        if (isNotEmpty()) append("\n\n")
-        append(DEFAULT_AUTOMATION_SECTION)
-        if (emailAccounts.isNotEmpty()) {
-            appendEmailAccountsSection(emailAccounts)
-        }
         if (pendingTasks.isNotEmpty()) {
+            if (isNotEmpty()) append("\n\n")
             appendScheduledTasksSection(pendingTasks)
         }
         if (heartbeatAdditions.isNotEmpty()) {
+            if (isNotEmpty()) append("\n\n")
             appendHeartbeatAdditionsSection(heartbeatAdditions)
         }
     }
@@ -189,6 +148,27 @@ internal fun buildChatSystemPrompt(
     }
 
     appendContextSection(runtime)
+
+    // Inject active skill content after Context, before oak-ui sections.
+    // Skills can reference time/model info from Context.
+    if (variant == SystemPromptVariant.CHAT_REMOTE) {
+        val enabledSkills = activeSkills.filter { it.isEnabled && it.content.isNotBlank() }
+        if (enabledSkills.isNotEmpty()) {
+            if (isNotEmpty()) append("\n\n")
+            append("## Active Skills\n")
+            append("The following skill modules are active. You MUST follow their instructions when applicable to the user's request. ")
+            append("These take priority over default behaviour — if a skill describes how to handle a task, use that approach instead of improvising.\n\n")
+            append("What each skill provides:\n")
+            for (skill in enabledSkills) {
+                append("- **${skill.name}**: ${skill.description}\n")
+            }
+            append("\n")
+            for (skill in enabledSkills) {
+                append("\n\n")
+                append(skill.content)
+            }
+        }
+    }
 
     if (variant == SystemPromptVariant.CHAT_REMOTE) {
         when (uiMode) {
@@ -239,31 +219,6 @@ private fun StringBuilder.appendMemoryCategorySection(
     }
     append(section)
     return (remainingBudget - section.length).coerceAtLeast(0)
-}
-
-private fun StringBuilder.appendEmailAccountsSection(accounts: List<EmailAccountSummary>) {
-    append("\n\n## Email Accounts\n")
-    append("The user has these email accounts connected. Use them via the existing email tools — ")
-    append("do NOT suggest adding, re-authenticating, or connecting a new account unless the user explicitly asks.\n")
-    append("**Sending policy**: before calling `compose_email` or `reply_email`, present the full draft (to, subject, body) in chat and get explicit confirmation (\"send it\" / \"looks good\" / \"yes\"). Never call the send tools on the same turn you draft — the user must have a chance to correct tone, recipients, or content first. If the user later says \"change X and send\", re-present the updated draft and confirm again.\n")
-    for (account in accounts) {
-        append("- **")
-        append(account.email)
-        append("**: ")
-        if (account.lastError != null) {
-            append("sync failing — ")
-            append(account.lastError)
-        } else {
-            append(account.unreadCount)
-            append(" unread")
-            if (account.lastSyncEpochMs > 0) {
-                append(" (last sync: ")
-                append(Instant.fromEpochMilliseconds(account.lastSyncEpochMs))
-                append(')')
-            }
-        }
-        append('\n')
-    }
 }
 
 private fun StringBuilder.appendHeartbeatAdditionsSection(additions: List<ScheduledTask>) {
@@ -325,83 +280,27 @@ private fun StringBuilder.appendContextSection(runtime: ChatPromptRuntimeContext
 
 private fun StringBuilder.appendDynamicUiSection() {
     append("\n## Dynamic UI\n")
-    append("You can enhance your chat responses with interactive UI elements using oak-ui blocks. ")
-    append("Proactively use them whenever you need input from the user — don't just ask in plain text if a form, selector, or buttons would be more natural. ")
-    append("For example, if the user asks you to help plan a trip, present destination options as buttons; if you need preferences, show a form; if presenting choices, use interactive cards. ")
-    append("Use oak-ui whenever collecting data, offering choices, presenting structured information, or guiding multi-step workflows. ")
-    append("You can mix oak-ui blocks with regular markdown text naturally — use markdown for explanations and oak-ui for interactive elements.\n\n")
-    append(KAI_UI_COMPONENT_CATALOG)
-    append("Layout tips:\n")
-    append("- Put buttons INSIDE cards, directly below related content — never group all buttons separately at the bottom\n")
-    append("- Use rows for groups of buttons or chips — rows wrap automatically, so any number of items is fine\n")
-    append("- Keep button labels short (1-3 words)\n\n")
-    append("Example:\n```oak-ui\n{\"type\":\"column\",\"children\":[{\"type\":\"text\",\"value\":\"Your name?\",\"style\":\"title\"},{\"type\":\"text_input\",\"id\":\"name\",\"placeholder\":\"Enter name\"},{\"type\":\"button\",\"label\":\"Submit\",\"action\":{\"type\":\"callback\",\"event\":\"submit\",\"collectFrom\":[\"name\"]}}]}\n```\n")
+    append("Dynamic UI mode is active. Use oak-ui blocks to enhance your responses with interactive elements.\n")
+    append("The component catalog, layout tips, and examples are provided by the oak-ui skill above.\n")
 }
 
 private fun StringBuilder.appendInteractiveUiSection() {
     append("\n## Interactive UI Mode (ACTIVE)\n")
     append("You are in full-screen interactive UI mode. The user ONLY sees rendered oak-ui components — they cannot see markdown, plain text, or anything outside a oak-ui fence.\n")
     append("Your ENTIRE response must be a single ```oak-ui code fence. No text before it, no text after it, no markdown. If you write anything outside the fence, the user will NOT see it.\n\n")
-    append(KAI_UI_COMPONENT_CATALOG)
     append("Rules:\n")
     append("- Each response is a COMPLETE screen layout. Include all content and actions in one oak-ui block.\n")
     append("- Always include clear primary action buttons so the user can proceed.\n")
     append("- Every screen MUST have at least one interactive element with a callback action (button, countdown with expiry action, etc.). A screen without any callback is a dead end the user cannot proceed from.\n")
     append("- Use headline text for screen titles. Structure screens with cards for grouping related content.\n")
     append("- Use descriptive callback events (e.g., \"select_destination\", \"submit_form\") so you understand what the user selected.\n")
-    append("- Do NOT include back buttons, navigation bars, or any navigation controls. The app provides a back button and close button in the toolbar. The user can also type instructions in a text field below your UI.\n")
-    append("Layout:\n")
-    append("- Put buttons INSIDE cards, directly below related content — never group all buttons separately at the bottom\n")
-    append("- Use rows for groups of buttons or chips — rows wrap automatically, so any number of items is fine\n")
-    append("- Keep button labels short (1-3 words)\n")
-    append("- Use columns for vertical flow. Use the full component set: tabs, accordion, alerts, progress, chips, icons, etc.\n\n")
+    append("- Do NOT include back buttons, navigation bars, or any navigation controls. The app provides a back button and close button in the toolbar. The user can also type instructions in a text field below your UI.\n\n")
     append("Limitations — respect these strictly:\n")
     append("- The UI is static once rendered. NEVER show loading, fetching, or verifying states. You cannot fetch data or run operations asynchronously. Present all content immediately.\n")
     append("- Never use indeterminate progress (progress without a value) or text like \"Loading...\", \"Fetching...\", \"Verifying...\" as if something will happen later — nothing will.\n")
     append("- Each screen is independent. Only conversation history carries state between screens — there is no client-side state persistence, no session storage, no variables that survive across responses.\n")
     append("- Do not attempt to build multi-screen stateful applications (e.g., shopping carts that accumulate items, dashboards that refresh). Each response is a fresh, self-contained screen.\n")
-    append("- Only use the exact components and properties defined above. Do not invent attributes, component types, or behaviors that are not listed. If a component doesn't support a feature, do not pretend it does.\n")
+    append("- Only use the exact components and properties defined in the oak-ui skill above. Do not invent attributes, component types, or behaviors that are not listed. If a component doesn't support a feature, do not pretend it does.\n")
     append("- Start with simple, clean layouts. A well-structured screen with a few cards and clear actions is better than a complex layout that pushes the component set beyond its capabilities.\n")
-    append("- When unsure whether something will work, use a simpler approach. A working simple screen is always better than a broken ambitious one.\n\n")
-    append("Example:\n```oak-ui\n{\"type\":\"column\",\"children\":[{\"type\":\"text\",\"value\":\"Welcome\",\"style\":\"headline\"},{\"type\":\"card\",\"children\":[{\"type\":\"text\",\"value\":\"What would you like to do?\",\"style\":\"title\"},{\"type\":\"button\",\"label\":\"Get Started\",\"action\":{\"type\":\"callback\",\"event\":\"get_started\"}}]}]}\n```\n")
-}
-
-/**
- * Pre-computed oak-ui component catalog text — shared between [appendDynamicUiSection]
- * and [appendInteractiveUiSection]. Pre-building the ~3KB of static text once (instead
- * of re-running ~30 `append` calls per message) is the main reason this is a top-level
- * val rather than a helper function.
- */
-private val KAI_UI_COMPONENT_CATALOG: String = buildString {
-    append("Format: wrap a JSON object in ```oak-ui fences.\n\n")
-    append("Components: column, row, card, box, text, button, text_input, checkbox, switch, select, radio_group, slider, chip_group, table, list, divider, image, icon, code, progress, countdown, alert, tabs, accordion, quote, badge, stat, avatar.\n")
-    append("- text: {\"type\":\"text\",\"value\":\"...\",\"style\":\"headline|title|body|caption\",\"bold\":true,\"color\":\"primary|secondary|error\"} — do NOT use markdown formatting (**, *, #, etc.) in text values; use the bold/italic/style properties instead\n")
-    append("- button: {\"type\":\"button\",\"label\":\"...\",\"action\":{...},\"variant\":\"filled|outlined|text|tonal\"}\n")
-    append("- text_input: {\"type\":\"text_input\",\"id\":\"...\",\"label\":\"...\",\"placeholder\":\"...\",\"value\":\"...\"}\n")
-    append("- checkbox: {\"type\":\"checkbox\",\"id\":\"...\",\"label\":\"...\",\"checked\":false}\n")
-    append("- switch: {\"type\":\"switch\",\"id\":\"...\",\"label\":\"...\",\"checked\":false}\n")
-    append("- select: {\"type\":\"select\",\"id\":\"...\",\"label\":\"...\",\"options\":[\"A\",\"B\"],\"selected\":\"A\"}\n")
-    append("- radio_group: {\"type\":\"radio_group\",\"id\":\"...\",\"label\":\"...\",\"options\":[\"A\",\"B\"],\"selected\":\"A\"}\n")
-    append("- slider: {\"type\":\"slider\",\"id\":\"...\",\"label\":\"...\",\"value\":50,\"min\":0,\"max\":100,\"step\":10}\n")
-    append("- chip_group: {\"type\":\"chip_group\",\"id\":\"...\",\"chips\":[{\"label\":\"Tag\",\"value\":\"tag\"}],\"selection\":\"single|multi|none\"} — selection mode: \"single\" (default, one at a time), \"multi\" (any number), or \"none\" (display-only tags, no interaction, id not needed). For \"single\" and \"multi\" a button must collectFrom the chip_group id to send the selection.\n")
-    append("- list: {\"type\":\"list\",\"items\":[...],\"ordered\":false} — bullet (or numbered) list; the app renders bullets/numbers automatically, so do NOT include bullet characters (•, -, *) or numbering in item text\n")
-    append("- table: {\"type\":\"table\",\"headers\":[\"Col1\",\"Col2\"],\"rows\":[[\"a\",\"b\"]]} — columns share equal width; keep to 3-4 columns max on mobile, use short cell values\n")
-    append("- icon: {\"type\":\"icon\",\"name\":\"home|settings|search|add|delete|edit|check|check_circle|close|arrow_back|arrow_forward|star|favorite|share|info|warning|person|group|mail|phone|calendar|location|refresh|menu|more|send|notifications|trending_up|trending_down|trending_flat|thumb_up|thumb_down|visibility|lock|shopping_cart|play|pause|stop|download|upload|cloud|attachment|link|code|terminal|build|bug|lightbulb|science|school|work|account_circle|language|translate|dark_mode|light_mode|bolt|rocket|money|credit_card|receipt|inventory|category|dashboard|analytics|chart|pie_chart|show_chart|timer|alarm|task|bookmark|flag|tag|pin|copy|paste|cut|undo|redo|filter|sort|swap|sync|wifi|bluetooth|battery|speed|shield|verified|health|fitness|food|coffee|airplane|hotel|car|earth|map|compass|pet|leaf|water|weather|party|trophy|medal|premium\",\"size\":24,\"color\":\"primary|secondary|error\"} — you can also use any emoji as the name (e.g. \"name\":\"⚔️\" or \"name\":\"🗺️\"); prefer emojis when they better convey the meaning than the generic Material icons\n")
-    append("- code: {\"type\":\"code\",\"code\":\"...\",\"language\":\"kotlin\"} — a copy-to-clipboard icon is rendered automatically; do NOT add your own copy button next to it.\n")
-    append("- progress: {\"type\":\"progress\",\"value\":0.5,\"label\":\"50%\"} (always provide a value 0.0-1.0 to show a determinate bar; do NOT omit value to fake a loading state)\n")
-    append("- countdown: {\"type\":\"countdown\",\"seconds\":300,\"label\":\"Time left\",\"action\":{\"type\":\"callback\",\"event\":\"timer_done\"}} (seconds is relative duration from render; action is optional, fires on expiry)\n")
-    append("- alert: {\"type\":\"alert\",\"message\":\"...\",\"title\":\"...\",\"severity\":\"info|success|warning|error\"}\n")
-    append("- tabs: {\"type\":\"tabs\",\"tabs\":[{\"label\":\"Tab 1\",\"children\":[...]},{\"label\":\"Tab 2\",\"children\":[...]}],\"selectedIndex\":0}\n")
-    append("- accordion: {\"type\":\"accordion\",\"title\":\"...\",\"children\":[...],\"expanded\":false}\n")
-    append("- box: {\"type\":\"box\",\"children\":[...],\"contentAlignment\":\"center|top_start|top_center|top_end|center_start|center_end|bottom_start|bottom_center|bottom_end\"}\n")
-    append("- quote: {\"type\":\"quote\",\"text\":\"...\",\"source\":\"Author Name\"} — blockquote with accent border\n")
-    append("- badge: {\"type\":\"badge\",\"value\":\"3\",\"color\":\"primary|secondary|error\"} — small colored pill for counts or status\n")
-    append("- stat: {\"type\":\"stat\",\"value\":\"\$1,234\",\"label\":\"Revenue\",\"description\":\"12% increase\"} — large metric display\n")
-    append("- avatar: {\"type\":\"avatar\",\"name\":\"John Doe\",\"imageUrl\":\"https://...\",\"size\":40} — circular image or initials (24-80dp)\n\n")
-    append("Actions (on buttons, countdown expiry):\n")
-    append("- callback: {\"type\":\"callback\",\"event\":\"event_name\",\"data\":{\"key\":\"val\"},\"collectFrom\":[\"input_id1\",\"input_id2\"]} — collects input values and sends them back as a user message (e.g. \"Pressed: event_name\" or \"Responded with: key: value\"). You then reply with text or more UI. Use callbacks for: collecting choices, submitting forms, navigating between steps, confirming actions. Do NOT create callback buttons that imply operations you cannot perform — callbacks only send a message, they do not trigger system actions like printing, file export, or downloads.\n")
-    append("- toggle: {\"type\":\"toggle\",\"targetId\":\"element_id\"} — shows/hides an element locally\n")
-    append("- open_url: {\"type\":\"open_url\",\"url\":\"https://...\"}\n")
-    append("- copy_to_clipboard: {\"type\":\"button\",\"action\":{\"type\":\"copy_to_clipboard\",\"text\":\"...\"}} — renders as a clipboard icon button; omit the button label. Offer next to copyable content like snippets, commands, or tokens.\n\n")
-    append("- Form inputs (text_input, checkbox, switch, select, radio_group, slider, chip_group) only store state locally. Their values are ONLY sent when a button's collectFrom includes their id. Always pair form inputs with a submit button that collects from them.\n\n")
+    append("- When unsure whether something will work, use a simpler approach. A working simple screen is always better than a broken ambitious one.\n")
 }

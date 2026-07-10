@@ -686,10 +686,18 @@ private fun RenderSelect(
 private fun RenderImage(node: ImageNode) {
     val height = (node.height ?: DEFAULT_IMAGE_HEIGHT).dp
     val aspectRatio = (node.aspectRatio ?: DEFAULT_IMAGE_ASPECT_RATIO)
+    val path = node.path
+    val resolvedUrl = remember { mutableStateOf(node.url) }
+    if (path != null && node.url.isEmpty()) {
+        LaunchedEffect(path) {
+            resolvedUrl.value = com.oak.app.resolveSandboxImagePath(path) ?: path
+        }
+    }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val width = minOf(maxWidth, height * aspectRatio)
         val modifier = Modifier.height(width / aspectRatio).width(width).clip(RoundedCornerShape(6.dp))
-        val previewBitmap = LocalPreviewImages.current[node.url]
+        val imageUrl = resolvedUrl.value
+        val previewBitmap = LocalPreviewImages.current[imageUrl]
         if (previewBitmap != null) {
             Image(
                 bitmap = previewBitmap,
@@ -699,7 +707,7 @@ private fun RenderImage(node: ImageNode) {
             )
         } else {
             coil3.compose.AsyncImage(
-                model = node.url,
+                model = imageUrl,
                 contentDescription = node.alt,
                 modifier = modifier,
                 contentScale = ContentScale.Crop,

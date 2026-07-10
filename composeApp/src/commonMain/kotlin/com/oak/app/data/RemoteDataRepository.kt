@@ -180,6 +180,9 @@ class RemoteDataRepository(
 
     private var askForConversationId: String? = null
 
+    /** Per-conversation excluded skill IDs — synced with [Conversation.excludedSkillIds]. */
+    private val _currentExcludedSkillIds = MutableStateFlow<Set<String>>(emptySet())
+
     private val _fallbackStatus = MutableStateFlow<FallbackStatus?>(null)
     override val fallbackStatus: StateFlow<FallbackStatus?> = _fallbackStatus
 
@@ -881,11 +884,13 @@ class RemoteDataRepository(
     ) {
         val previousConversationId = _currentConversationId.value
         val previousHistory = chatHistory.value.toList()
+        val previousExcludedSkillIds = _currentExcludedSkillIds.value
 
         if (savedConversations.value.any { it.id == conversationId }) {
             loadConversation(conversationId)
         } else {
             setCurrentConversationId(conversationId)
+            _currentExcludedSkillIds.value = emptySet()
             chatHistory.value = emptyList()
         }
 
@@ -900,6 +905,7 @@ class RemoteDataRepository(
                 loadConversation(previousConversationId)
             } else {
                 _currentConversationId.value = previousConversationId
+                _currentExcludedSkillIds.value = previousExcludedSkillIds
                 chatHistory.value = previousHistory
             }
         }
@@ -1890,6 +1896,7 @@ class RemoteDataRepository(
             updatedAt = now,
             title = title,
             type = existingConversation?.type ?: if (interactiveModeFlag) Conversation.TYPE_INTERACTIVE else Conversation.TYPE_CHAT,
+            excludedSkillIds = _currentExcludedSkillIds.value,
         )
 
         conversationStorage.saveConversation(conversation)
@@ -1931,6 +1938,7 @@ class RemoteDataRepository(
         val conversation = savedConversations.value.find { it.id == id } ?: return
 
         setCurrentConversationId(id)
+        _currentExcludedSkillIds.value = conversation.excludedSkillIds
         chatHistory.value = conversation.messages.map { m ->
             // Prefer the modern `attachments` field. Fall back to the legacy single-file
             // fields for conversations saved before multi-attachment support.
@@ -1988,6 +1996,7 @@ class RemoteDataRepository(
 
     override fun startNewChat() {
         setCurrentConversationId(null)
+        _currentExcludedSkillIds.value = emptySet()
         chatHistory.value = emptyList()
     }
 
@@ -2181,6 +2190,18 @@ class RemoteDataRepository(
             else -> ChatPromptUiMode.NONE
         }
 
+        val excludedIds = _currentExcludedSkillIds.value
+        val activeSkills = getSkills().filter { skill ->
+            skill.isEnabled && skill.id !in excludedIds
+        }.map { skill ->
+            // Build dynamic email skill content based on connected accounts
+            if (skill.id == Skill.EMAIL_SKILL_ID && emailAccounts.isNotEmpty()) {
+                skill.copy(content = buildEmailSkillContent(emailAccounts))
+            } else {
+                skill
+            }
+        }
+
         return buildChatSystemPrompt(
             variant = variant,
             soul = soul,
@@ -2194,13 +2215,153 @@ class RemoteDataRepository(
             emailAccounts = emailAccounts,
             runtime = runtime,
             uiMode = uiMode,
+            activeSkills = activeSkills,
         ).ifEmpty { null }
+    }
+
+    private fun buildEmailSkillContent(accounts: List<EmailAccountSummary>): String = buildString {
+        append("The user has these email accounts connected. Use them via the existing email tools — ")
+        append("do NOT suggest adding, re-authenticating, or connecting a new account unless the user explicitly asks.\n")
+        append("**Sending policy**: before calling `compose_email` or `reply_email`, present the full draft (to, subject, body) in chat and get explicit confirmation (\"send it\" / \"looks good\" / \"yes\"). Never call the send tools on the same turn you draft — the user must have a chance to correct tone, recipients, or content first. If the user later says \"change X and send\", re-present the updated draft and confirm again.\n")
+        for (account in accounts) {
+            append("- **")
+            append(account.email)
+            append("**: ")
+            if (account.lastError != null) {
+                append("sync failing — ")
+                append(account.lastError)
+            } else {
+                append(account.unreadCount)
+                append(" unread")
+                if (account.lastSyncEpochMs > 0) {
+                    append(" (last sync: ")
+                    append(Instant.fromEpochMilliseconds(account.lastSyncEpochMs))
+                    append(')')
+                }
+            }
+            append('\n')
+        }
     }
 
     override fun isDynamicUiEnabled(): Boolean = appSettings.isDynamicUiEnabled()
 
     override fun setDynamicUiEnabled(enabled: Boolean) {
         appSettings.setDynamicUiEnabled(enabled)
+    }
+
+    // Skills
+
+    /** Cached skill list — populated on first read, invalidated by write operations. */
+    private var _cachedSkills: List<Skill>? = null
+
+    override fun getSkills(): List<Skill> {
+        _cachedSkills?.let { return it }
+        val json = appSettings.getSkillsJson()
+        val result = Skill.fromJson(json, SharedJson)
+        if (json.isBlank() || json == "[]") {
+            saveSkills(result)
+        } else {
+            // Check if built-ins were merged in (upgrade scenario)
+            val storedIds = try {
+                SharedJson.decodeFromString<List<Skill>>(json).map { it.id }.toSet()
+            } catch (_: Exception) {
+                emptySet()
+            }
+            if (Skill.BUILT_IN_SKILLS.any { it.id !in storedIds }) {
+                saveSkills(result)
+            }
+        }
+        _cachedSkills = result
+        return result
+    }
+
+    private fun invalidateSkillCache() {
+        _cachedSkills = null
+    }
+
+    override fun setSkillEnabled(skillId: String, enabled: Boolean) {
+        val skills = getSkills().toMutableList()
+        val index = skills.indexOfFirst { it.id == skillId }
+        if (index >= 0) {
+            skills[index] = skills[index].copy(isEnabled = enabled)
+            saveSkills(skills)
+            invalidateSkillCache()
+        }
+        if (!enabled) {
+            val currentExcluded = _currentExcludedSkillIds.value.toMutableSet()
+            if (currentExcluded.remove(skillId)) {
+                _currentExcludedSkillIds.value = currentExcluded
+            }
+            updateAllConversationExcludedIds { excluded ->
+                if (skillId in excluded) excluded - skillId else null
+            }
+        }
+    }
+
+    override fun removeSkill(skillId: String) {
+        val skills = getSkills()
+        val skill = skills.find { it.id == skillId }
+        if (skill?.isBuiltIn == true) return
+        saveSkills(skills.filter { it.id != skillId })
+        invalidateSkillCache()
+        val currentExcluded = _currentExcludedSkillIds.value.toMutableSet()
+        if (currentExcluded.remove(skillId)) {
+            _currentExcludedSkillIds.value = currentExcluded
+        }
+        updateAllConversationExcludedIds { excluded ->
+            if (skillId in excluded) excluded - skillId else null
+        }
+    }
+
+    override fun importSkill(skill: Skill) {
+        val skills = getSkills().toMutableList()
+        val existingIndex = skills.indexOfFirst { it.id == skill.id }
+        if (existingIndex >= 0) {
+            skills[existingIndex] = skill
+        } else {
+            skills.add(skill)
+        }
+        saveSkills(skills)
+        invalidateSkillCache()
+    }
+
+    override fun getExcludedSkillIds(): Set<String> = _currentExcludedSkillIds.value
+
+    override fun excludeSkill(skillId: String) {
+        val excluded = _currentExcludedSkillIds.value.toMutableSet()
+        excluded.add(skillId)
+        _currentExcludedSkillIds.value = excluded
+    }
+
+    override fun includeSkill(skillId: String) {
+        val excluded = _currentExcludedSkillIds.value.toMutableSet()
+        excluded.remove(skillId)
+        _currentExcludedSkillIds.value = excluded
+    }
+
+    override fun getSkillEnabledTools(): Set<String> {
+        val excludedIds = _currentExcludedSkillIds.value
+        return getSkills()
+            .filter { it.isEnabled && it.id !in excludedIds }
+            .flatMap { it.requiredTools }
+            .toSet()
+    }
+
+    /**
+     * Batch-update [Conversation.excludedSkillIds] across all saved conversations.
+     * [transform] receives the current excluded set and returns the updated set,
+     * or null if no change is needed for that conversation.
+     */
+    private fun updateAllConversationExcludedIds(transform: (Set<String>) -> Set<String>?) {
+        for (conversation in savedConversations.value) {
+            val updated = transform(conversation.excludedSkillIds) ?: continue
+            conversationStorage.saveConversation(conversation.copy(excludedSkillIds = updated))
+        }
+    }
+
+    private fun saveSkills(skills: List<Skill>) {
+        val json = SharedJson.encodeToString(skills)
+        appSettings.setSkillsJson(json)
     }
 
     override fun getThemeMode(): ThemeMode = appSettings.getThemeMode()

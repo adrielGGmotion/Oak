@@ -46,8 +46,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+
+private val FRONTMATTER_REGEX = Regex("^---\\n(.*?)\\n---", RegexOption.DOT_MATCHES_ALL)
+private val FRONTMATTER_NAME_REGEX = Regex("name:\\s*(.+)")
+private val FRONTMATTER_DESC_REGEX = Regex("description:\\s*(.+)")
+private val FILE_NAME_SEPARATOR_REGEX = Regex("[-_]")
 
 class SettingsViewModel(
     private val dataRepository: DataRepository,
@@ -60,7 +66,7 @@ class SettingsViewModel(
 
     private var connectionCheckJobs: MutableMap<String, Job> = mutableMapOf()
     private var hasCheckedInitialConnection = false
-    private var pendingDeleteJob: Job? = null
+    private val pendingDeleteJobs: MutableMap<KClass<out PendingDeletion>, Job> = mutableMapOf()
 
     private fun buildFullState(): SettingsUiState = SettingsUiState(
         configuredServices = buildConfiguredServiceEntries().toImmutableList(),
@@ -121,6 +127,7 @@ class SettingsViewModel(
         showUiScale = currentPlatform is Platform.Desktop,
         mcpServers = buildMcpServerEntries().toImmutableList(),
         sshServers = buildSshServerEntries().toImmutableList(),
+        skills = buildSkillEntries().toImmutableList(),
         localActiveBackend = dataRepository.getLocalActiveBackend()?.value,
         backendPreference = dataRepository.getBackendPreference(),
         localAvailableModels = dataRepository.getLocalAvailableModels().toImmutableList(),
@@ -187,6 +194,15 @@ class SettingsViewModel(
         onToggleSshServer = ::onToggleSshServer,
         onConnectSshServer = ::onConnectSshServer,
         onShowAddSshServerDialog = ::onShowAddSshServerDialog,
+        onToggleSkill = ::onToggleSkill,
+        onRemoveSkill = ::onRemoveSkill,
+        onImportSkill = ::onImportSkill,
+        onShowImportSkillDialog = ::onShowImportSkillDialog,
+        onImportSkillFromFile = ::onImportSkillFromFile,
+        onSkillFilePicked = ::onSkillFilePicked,
+        onEditSkill = ::onEditSkill,
+        onShowEditSkillDialog = ::onShowEditSkillDialog,
+        onResetSkill = ::onResetSkill,
         onDownloadLocalModel = ::onDownloadLocalModel,
         onCancelLocalModelDownload = ::onCancelLocalModelDownload,
         onDeleteLocalModel = ::onDeleteLocalModel,
@@ -314,14 +330,14 @@ class SettingsViewModel(
     }
 
     private fun onRemoveService(instanceId: String) {
-        commitPendingDeletion()
+        commitPendingDeletion(PendingDeletion.Service::class)
         _state.update {
             it.copy(
                 expandedServiceId = if (it.expandedServiceId == instanceId) null else it.expandedServiceId,
                 pendingDeletion = PendingDeletion.Service(instanceId),
             )
         }
-        pendingDeleteJob = viewModelScope.launch(backgroundDispatcher) {
+        pendingDeleteJobs[PendingDeletion.Service::class] = viewModelScope.launch(backgroundDispatcher) {
             delay(4.seconds)
             executeDeletion(PendingDeletion.Service(instanceId))
         }
@@ -436,9 +452,9 @@ class SettingsViewModel(
     }
 
     private fun onDeleteMemory(key: String) {
-        commitPendingDeletion()
+        commitPendingDeletion(PendingDeletion.Memory::class)
         _state.update { it.copy(pendingDeletion = PendingDeletion.Memory(key)) }
-        pendingDeleteJob = viewModelScope.launch(backgroundDispatcher) {
+        pendingDeleteJobs[PendingDeletion.Memory::class] = viewModelScope.launch(backgroundDispatcher) {
             delay(4.seconds)
             executeDeletion(PendingDeletion.Memory(key))
         }
@@ -457,9 +473,9 @@ class SettingsViewModel(
     }
 
     private fun onCancelTask(id: String) {
-        commitPendingDeletion()
+        commitPendingDeletion(PendingDeletion.Task::class)
         _state.update { it.copy(pendingDeletion = PendingDeletion.Task(id)) }
-        pendingDeleteJob = viewModelScope.launch(backgroundDispatcher) {
+        pendingDeleteJobs[PendingDeletion.Task::class] = viewModelScope.launch(backgroundDispatcher) {
             delay(4.seconds)
             executeDeletion(PendingDeletion.Task(id))
         }
@@ -521,9 +537,9 @@ class SettingsViewModel(
     }
 
     private fun onRemoveEmailAccount(id: String) {
-        commitPendingDeletion()
+        commitPendingDeletion(PendingDeletion.EmailAccount::class)
         _state.update { it.copy(pendingDeletion = PendingDeletion.EmailAccount(id)) }
-        pendingDeleteJob = viewModelScope.launch(backgroundDispatcher) {
+        pendingDeleteJobs[PendingDeletion.EmailAccount::class] = viewModelScope.launch(backgroundDispatcher) {
             delay(4.seconds)
             executeDeletion(PendingDeletion.EmailAccount(id))
         }
@@ -745,6 +761,175 @@ class SettingsViewModel(
         }
     }
 
+    // Skill management
+
+    private fun buildSkillEntries(): List<SkillUiState> = dataRepository.getSkills().map { skill ->
+        val isModified = if (skill.isBuiltIn) {
+            val original = com.oak.app.data.Skill.BUILT_IN_SKILLS.find { it.id == skill.id }
+            original != null && (
+                skill.name != original.name ||
+                    skill.description != original.description ||
+                    skill.content != original.content ||
+                    skill.requiredTools != original.requiredTools
+                )
+        } else {
+            false
+        }
+        SkillUiState(
+            id = skill.id,
+            name = skill.name,
+            description = skill.description,
+            content = skill.content,
+            isEnabled = skill.isEnabled,
+            isBuiltIn = skill.isBuiltIn,
+            requiredTools = skill.requiredTools,
+            isModified = isModified,
+        )
+    }
+
+    private fun onToggleSkill(skillId: String, enabled: Boolean) {
+        dataRepository.setSkillEnabled(skillId, enabled)
+        _state.update { state ->
+            state.copy(
+                skills = state.skills.map { skill ->
+                    if (skill.id == skillId) skill.copy(isEnabled = enabled) else skill
+                }.toImmutableList(),
+            )
+        }
+    }
+
+    private fun onRemoveSkill(skillId: String) {
+        pendingDeleteJobs[PendingDeletion.Skill::class]?.cancel()
+        _state.update { it.copy(pendingDeletion = PendingDeletion.Skill(skillId)) }
+        pendingDeleteJobs[PendingDeletion.Skill::class] = viewModelScope.launch(backgroundDispatcher) {
+            delay(5.seconds)
+            dataRepository.removeSkill(skillId)
+            _state.update { state ->
+                state.copy(
+                    skills = state.skills.filter { it.id != skillId }.toImmutableList(),
+                    pendingDeletion = null,
+                )
+            }
+            pendingDeleteJobs.remove(PendingDeletion.Skill::class)
+        }
+    }
+
+    private fun onImportSkill(name: String, description: String, content: String, requiredTools: List<String>) {
+        viewModelScope.launch(backgroundDispatcher) {
+            val existingIds = dataRepository.getSkills().map { it.id }.toSet()
+            val id = com.oak.app.tools.generateSkillIdFromName(name, existingIds)
+            val skill = com.oak.app.data.Skill(
+                id = id,
+                name = name,
+                description = description,
+                content = content,
+                requiredTools = requiredTools,
+                isBuiltIn = false,
+                isEnabled = true,
+                source = com.oak.app.data.SkillSource.USER,
+            )
+            dataRepository.importSkill(skill)
+            _state.update { state ->
+                state.copy(
+                    skills = buildSkillEntries().toImmutableList(),
+                    showImportSkillDialog = false,
+                )
+            }
+        }
+    }
+
+    private fun onShowImportSkillDialog(show: Boolean) {
+        _state.update { it.copy(showImportSkillDialog = show, importSkillPrefill = null) }
+    }
+
+    private fun onImportSkillFromFile() {
+        _state.update { it.copy(importSkillPrefill = null) }
+    }
+
+    private fun onSkillFilePicked(content: ByteArray, fileName: String) {
+        val text = content.decodeToString()
+        val parsed = parseSkillFile(text, fileName)
+        _state.update {
+            it.copy(
+                importSkillPrefill = parsed.copy(requestId = System.nanoTime()),
+                showImportSkillDialog = true,
+            )
+        }
+    }
+
+    private fun parseSkillFile(fileContent: String, fileName: String): ImportSkillPrefill {
+        val normalizedContent = fileContent.replace("\r\n", "\n")
+        val frontmatterMatch = FRONTMATTER_REGEX.find(normalizedContent)
+        if (frontmatterMatch != null) {
+            val frontmatter = frontmatterMatch.groupValues[1]
+            val name = FRONTMATTER_NAME_REGEX.find(frontmatter)?.groupValues?.get(1)?.trim()?.removeSurrounding("\"") ?: ""
+            val description = FRONTMATTER_DESC_REGEX.find(frontmatter)?.groupValues?.get(1)?.trim()?.removeSurrounding("\"") ?: ""
+            val body = normalizedContent.substring(frontmatterMatch.range.last + 1).trim()
+            return ImportSkillPrefill(
+                name = name,
+                description = description,
+                content = body,
+            )
+        }
+        val nameFromFileName = fileName
+            .substringBeforeLast(".")
+            .replace(FILE_NAME_SEPARATOR_REGEX, " ")
+            .trim()
+        return ImportSkillPrefill(
+            name = nameFromFileName,
+            content = normalizedContent.trim(),
+        )
+    }
+
+    private fun onEditSkill(id: String, name: String, description: String, content: String, requiredTools: List<String>) {
+        viewModelScope.launch(backgroundDispatcher) {
+            val existingSkill = dataRepository.getSkills().find { it.id == id }
+            val skill = com.oak.app.data.Skill(
+                id = id,
+                name = name,
+                description = description,
+                content = content,
+                requiredTools = requiredTools,
+                isBuiltIn = existingSkill?.isBuiltIn ?: false,
+                isEnabled = existingSkill?.isEnabled ?: true,
+                source = existingSkill?.source ?: com.oak.app.data.SkillSource.USER,
+            )
+            dataRepository.importSkill(skill)
+            _state.update { state ->
+                state.copy(
+                    skills = buildSkillEntries().toImmutableList(),
+                    showEditSkillDialog = false,
+                    editingSkillId = null,
+                )
+            }
+        }
+    }
+
+    private fun onShowEditSkillDialog(skillId: String?) {
+        _state.update {
+            it.copy(
+                showEditSkillDialog = skillId != null,
+                editingSkillId = skillId,
+            )
+        }
+    }
+
+    private fun onResetSkill(skillId: String) {
+        viewModelScope.launch(backgroundDispatcher) {
+            val original = com.oak.app.data.Skill.BUILT_IN_SKILLS.find { it.id == skillId }
+            if (original != null) {
+                dataRepository.importSkill(original)
+                _state.update { state ->
+                    state.copy(
+                        skills = buildSkillEntries().toImmutableList(),
+                        showEditSkillDialog = false,
+                        editingSkillId = null,
+                    )
+                }
+            }
+        }
+    }
+
     // MCP server management
     private fun buildMcpServerEntries(): List<McpServerUiState> = dataRepository.getMcpServers().map { config ->
         McpServerUiState(
@@ -788,9 +973,9 @@ class SettingsViewModel(
     }
 
     private fun onRemoveMcpServer(serverId: String) {
-        commitPendingDeletion()
+        commitPendingDeletion(PendingDeletion.McpServer::class)
         _state.update { it.copy(pendingDeletion = PendingDeletion.McpServer(serverId)) }
-        pendingDeleteJob = viewModelScope.launch(backgroundDispatcher) {
+        pendingDeleteJobs[PendingDeletion.McpServer::class] = viewModelScope.launch(backgroundDispatcher) {
             delay(4.seconds)
             executeDeletion(PendingDeletion.McpServer(serverId))
         }
@@ -903,9 +1088,9 @@ class SettingsViewModel(
     }
 
     private fun onRemoveSshServer(serverId: String) {
-        commitPendingDeletion()
+        commitPendingDeletion(PendingDeletion.SshServer::class)
         _state.update { it.copy(pendingDeletion = PendingDeletion.SshServer(serverId)) }
-        pendingDeleteJob = viewModelScope.launch(backgroundDispatcher) {
+        pendingDeleteJobs[PendingDeletion.SshServer::class] = viewModelScope.launch(backgroundDispatcher) {
             delay(4.seconds)
             executeDeletion(PendingDeletion.SshServer(serverId))
         }
@@ -953,10 +1138,11 @@ class SettingsViewModel(
         }
     }
 
-    private fun commitPendingDeletion() {
-        pendingDeleteJob?.cancel()
-        pendingDeleteJob = null
+    private fun commitPendingDeletion(type: KClass<out PendingDeletion>) {
+        pendingDeleteJobs[type]?.cancel()
+        pendingDeleteJobs.remove(type)
         val deletion = _state.value.pendingDeletion ?: return
+        if (deletion::class != type) return
         _state.update { it.copy(pendingDeletion = null) }
         viewModelScope.launch(backgroundDispatcher) {
             executeDeletion(deletion)
@@ -1017,18 +1203,23 @@ class SettingsViewModel(
                 _state.update { it.copy(pendingDeletion = null) }
                 refreshSshServers()
             }
+
+            is PendingDeletion.Skill -> {
+                dataRepository.removeSkill(deletion.skillId)
+                _state.update { it.copy(skills = buildSkillEntries().toImmutableList(), pendingDeletion = null) }
+            }
         }
     }
 
     private fun onUndoDelete() {
-        pendingDeleteJob?.cancel()
-        pendingDeleteJob = null
+        pendingDeleteJobs.values.forEach { it.cancel() }
+        pendingDeleteJobs.clear()
         _state.update { it.copy(pendingDeletion = null) }
     }
 
     override fun onCleared() {
-        pendingDeleteJob?.cancel()
-        pendingDeleteJob = null
+        pendingDeleteJobs.values.forEach { it.cancel() }
+        pendingDeleteJobs.clear()
         val deletion = _state.value.pendingDeletion ?: run {
             super.onCleared()
             return

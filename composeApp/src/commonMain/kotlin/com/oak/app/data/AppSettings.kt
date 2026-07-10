@@ -28,6 +28,7 @@ enum class ImportSection {
     MCP,
     SSH,
     CONVERSATIONS,
+    SKILLS,
 }
 
 enum class ThemeMode {
@@ -109,6 +110,11 @@ fun detectExportableSections(json: JsonObject): Map<ImportSection, String?> {
         sections[ImportSection.CONVERSATIONS] = "${conversations.size}"
     }
 
+    val skills = json["skills"]?.jsonArray
+    if (skills != null && skills.isNotEmpty()) {
+        sections[ImportSection.SKILLS] = "${skills.size}"
+    }
+
     return sections
 }
 
@@ -165,6 +171,14 @@ fun detectImportSections(json: JsonObject): Map<ImportSection, String?> {
             null
         }
         sections[ImportSection.CONVERSATIONS] = count?.let { "$it" }
+    }
+    if (json["skills"] != null) {
+        val count = try {
+            json["skills"]?.jsonArray?.size
+        } catch (_: Exception) {
+            null
+        }
+        sections[ImportSection.SKILLS] = count?.let { "$it" }
     }
     return sections
 }
@@ -654,6 +668,13 @@ class AppSettings(private val settings: Settings) {
         settings.putString(KEY_MCP_SERVERS, json)
     }
 
+    // Skills
+    fun getSkillsJson(): String = settings.getString(KEY_SKILLS, "[]")
+
+    fun setSkillsJson(json: String) {
+        settings.putString(KEY_SKILLS, json)
+    }
+
     fun getBackendPreference(): String = settings.getString(KEY_BACKEND_PREFERENCE, "auto")
 
     fun setBackendPreference(pref: String) {
@@ -917,6 +938,13 @@ class AppSettings(private val settings: Settings) {
             }
         }
 
+        if (ImportSection.SKILLS in sections) {
+            val skillsJson = getSkillsJson()
+            if (skillsJson.isNotBlank() && skillsJson != "[]") {
+                map["skills"] = Json.parseToJsonElement(skillsJson)
+            }
+        }
+
         return JsonObject(map)
     }
 
@@ -1124,6 +1152,23 @@ class AppSettings(private val settings: Settings) {
             setConversationsJson("")
         }
 
+        // Skills
+        if (ImportSection.SKILLS in sections) {
+            try {
+                val skillsElement = json["skills"]
+                if (skillsElement != null) {
+                    val sanitized = sanitizeSkills(skillsElement)
+                    setSkillsJson(sanitized)
+                } else {
+                    setSkillsJson("[]")
+                }
+            } catch (_: Exception) {
+                errors++
+            }
+        } else if (replace) {
+            setSkillsJson("[]")
+        }
+
         return errors
     }
 
@@ -1210,6 +1255,42 @@ class AppSettings(private val settings: Settings) {
         }
     }
 
+    private fun sanitizeSkills(element: JsonElement): String {
+        val array = try {
+            element.jsonArray
+        } catch (e: Exception) {
+            println("AppSettings: skills element is not a JSON array — ${e.message}")
+            return "[]"
+        }
+        val skills = array.mapNotNull { item ->
+            try {
+                SharedJson.decodeFromString<Skill>(item.toString())
+            } catch (_: Exception) {
+                try {
+                    val obj = item.jsonObject
+                    Skill(
+                        id = obj["id"]?.jsonPrimitive?.content ?: return@mapNotNull null,
+                        name = obj["name"]?.jsonPrimitive?.content ?: "",
+                        description = obj["description"]?.jsonPrimitive?.content ?: "",
+                        content = obj["content"]?.jsonPrimitive?.content ?: "",
+                        requiredTools = obj["required_tools"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList(),
+                        isBuiltIn = obj["is_built_in"]?.jsonPrimitive?.content?.toBoolean() ?: false,
+                        isEnabled = obj["is_enabled"]?.jsonPrimitive?.content?.toBoolean() ?: true,
+                        source = try {
+                            SkillSource.valueOf(obj["source"]?.jsonPrimitive?.content?.uppercase() ?: "USER")
+                        } catch (_: Exception) {
+                            SkillSource.USER
+                        },
+                    )
+                } catch (e: Exception) {
+                    println("AppSettings: failed to parse skill entry — ${e.message}")
+                    null
+                }
+            }
+        }
+        return SharedJson.encodeToString(skills)
+    }
+
     private fun ensureBaseUrlHasVersionPath(url: String): String {
         val trimmed = url.trimEnd('/')
         // If URL already ends with a version path segment like /v1, /v2, /api/v1, etc. — leave it
@@ -1267,6 +1348,7 @@ class AppSettings(private val settings: Settings) {
         const val KEY_UI_SCALE = "ui_scale"
         const val KEY_MCP_SERVERS = "mcp_servers"
         const val KEY_SSH_SERVERS = "ssh_servers"
+        const val KEY_SKILLS = "skills"
         const val KEY_INSTANCE_MIGRATION_COMPLETE = "instance_migration_complete_v1"
         const val KEY_BASE_URL_V1_MIGRATION_COMPLETE = "base_url_v1_migration_complete"
 
@@ -1278,9 +1360,8 @@ class AppSettings(private val settings: Settings) {
         const val KEY_STREAMING_ENABLED = "streaming_enabled"
         const val KEY_UNLIMITED_TOOL_CALLS = "unlimited_tool_calls"
 
-        // Basic memory guidance shared by every chat variant. The advanced `## Structured
-        // Learning` block lives in `ChatSystemPromptBuilder.DEFAULT_STRUCTURED_LEARNING_SECTION`
-        // and is composed in only for the remote variant.
+        // Basic memory guidance shared by every chat variant. Advanced structured
+        // learning content is now provided by the structured_learning skill.
         const val DEFAULT_MEMORY_INSTRUCTIONS =
             "You have persistent memory across conversations. " +
                 "All your stored memories are listed in the system prompt grouped by category.\n\n" +

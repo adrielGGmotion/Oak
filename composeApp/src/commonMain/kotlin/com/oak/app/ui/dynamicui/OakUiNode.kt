@@ -66,6 +66,7 @@ data class TextNode(
 data class ImageNode(
     override val id: String? = null,
     val url: String = "",
+    val path: String? = null,
     val alt: String? = null,
     val height: Int? = null,
     val aspectRatio: Float? = null,

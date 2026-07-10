@@ -399,10 +399,11 @@ private fun parseImageNode(obj: JsonObject): ImageNode = ImageNode(
     id = obj.readId(),
     // Legacy migration: HTML-style `src` → `url`.
     url = obj.readString("url").ifEmpty { obj.readString("src") },
+    path = obj.readNullableString("path"),
     alt = obj.readNullableString("alt"),
     height = obj.readNullableInt("height"),
     aspectRatio = obj.readNullableFloat("aspectRatio")
-        ?: obj.readNullableFloat("aspect_ratio"),
+        ?: obj.readNullableFloat("aspect_ratio")
 )
 
 private fun parseIconNode(obj: JsonObject): IconNode = IconNode(

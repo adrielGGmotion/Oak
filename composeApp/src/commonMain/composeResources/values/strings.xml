@@ -461,4 +461,26 @@
     <string name="sandbox_files_force_open_text">Force open as text</string>
     <string name="settings_unlimited_tool_calls">Unlimited tool calls</string>
     <string name="settings_unlimited_tool_calls_description">Disable tool-call limits at your own risk. Without a cap, the AI may hallucinate about hitting a \"quota\" or \"tool-call limit\" and waste tokens spinning in loops instead of completing the task.</string>
+    <string name="settings_skills_title">Skills</string>
+    <string name="settings_skills_description">Modular instructions that enhance Oak\'s capabilities. Enable or disable skills to control what the AI can do.</string>
+    <string name="settings_skills_built-in">Built-in</string>
+    <string name="settings_skills_required_tools">required tools</string>
+    <string name="settings_skills_import">Create Skill</string>
+    <string name="settings_skills_import_from_file">Import from File</string>
+    <string name="settings_skills_import_description">Create a new skill with a name, description, and markdown content.</string>
+    <string name="snackbar_skill_removed">Skill removed</string>
+    <string name="settings_skills_import_name_label">Skill name</string>
+    <string name="settings_skills_import_description_label">Description</string>
+    <string name="settings_skills_import_content_label">Skill content (markdown)</string>
+    <string name="settings_skills_import_tools_label">Required tools (comma-separated)</string>
+    <string name="settings_skills_remove">Remove</string>
+    <string name="settings_skills_edit">Edit Skill</string>
+    <string name="settings_skills_edit_description">Modify this skill\'s name, description, and content.</string>
+    <string name="settings_skills_save">Save</string>
+    <string name="settings_skills_reset">Reset to default</string>
+    <string name="settings_skills_reset_confirm">Reset this skill to its original content? Your changes will be lost.</string>
+    <string name="settings_skills_reset_cancel">Cancel</string>
+    <string name="settings_skills_discard">Discard</string>
+    <string name="settings_skills_discard_title">Discard changes?</string>
+    <string name="settings_skills_discard_confirm">You have unsaved changes. Are you sure you want to discard them?</string>
 </resources>

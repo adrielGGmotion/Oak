@@ -91,3 +91,10 @@ expect suspend fun saveFileToDevice(bytes: ByteArray, baseName: String, extensio
 expect fun sendHeartbeatNotification(title: String, body: String)
 
 expect fun createSshClient(): SshClient
+
+/**
+ * Resolves a sandbox file path (relative to /root) to a URI that the app can load.
+ * On Android, returns a `content://` URI via FileProvider. On Desktop, returns a `file://` URI.
+ * Returns null if the file doesn't exist or can't be resolved.
+ */
+expect suspend fun resolveSandboxImagePath(path: String): String?
