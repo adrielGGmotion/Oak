@@ -74,6 +74,17 @@
     <string name="tool_open_url_description">Open a URL or link on the device</string>
     <string name="tool_web_search_name">Web Search</string>
     <string name="tool_web_search_description">Search the web for current information</string>
+
+    <string name="tool_load_skill_name">Load Skill</string>
+    <string name="tool_load_skill_description">Load a skill to enhance your capabilities</string>
+    <string name="tool_unload_skill_name">Unload Skill</string>
+    <string name="tool_unload_skill_description">Unload a previously loaded skill</string>
+    <string name="tool_list_skills_name">List Skills</string>
+    <string name="tool_list_skills_description">List all available skills and their status</string>
+    <string name="tool_create_skill_name">Create Skill</string>
+    <string name="tool_create_skill_description">Create a new skill with custom instructions</string>
+    <string name="tool_update_skill_name">Update Skill</string>
+    <string name="tool_update_skill_description">Update an existing skill</string>
     <string name="tool_fetch_url_name">Fetch URL</string>
     <string name="tool_fetch_url_description">Fetch a URL and return the response body to the agent</string>
     <string name="tool_wait_name">Wait</string>
@@ -463,7 +474,7 @@
     <string name="settings_unlimited_tool_calls_description">Disable tool-call limits at your own risk. Without a cap, the AI may hallucinate about hitting a \"quota\" or \"tool-call limit\" and waste tokens spinning in loops instead of completing the task.</string>
     <string name="settings_skills_title">Skills</string>
     <string name="settings_skills_description">Modular instructions that enhance Oak\'s capabilities. Enable or disable skills to control what the AI can do.</string>
-    <string name="settings_skills_built-in">Built-in</string>
+    <string name="settings_skills_built_in">Built-in</string>
     <string name="settings_skills_required_tools">required tools</string>
     <string name="settings_skills_import">Create Skill</string>
     <string name="settings_skills_import_from_file">Import from File</string>
@@ -483,4 +494,6 @@
     <string name="settings_skills_discard">Discard</string>
     <string name="settings_skills_discard_title">Discard changes?</string>
     <string name="settings_skills_discard_confirm">You have unsaved changes. Are you sure you want to discard them?</string>
+    <string name="settings_skills_expand">Expand</string>
+    <string name="settings_skills_collapse">Collapse</string>
 </resources>

@@ -2184,13 +2184,14 @@ class RemoteDataRepository(
         )
 
         val isLimited = !supportsTools(modelId)
+        val excludedIds = _currentExcludedSkillIds.value
+        val oakUiEnabled = getSkills().any { it.id == Skill.OAK_UI_SKILL_ID && it.isEnabled && it.id !in excludedIds }
         val uiMode = when {
-            interactiveModeFlag -> ChatPromptUiMode.INTERACTIVE_UI
-            appSettings.isDynamicUiEnabled() && !isLimited -> ChatPromptUiMode.DYNAMIC_UI
+            interactiveModeFlag && oakUiEnabled -> ChatPromptUiMode.INTERACTIVE_UI
+            appSettings.isDynamicUiEnabled() && !isLimited && oakUiEnabled -> ChatPromptUiMode.DYNAMIC_UI
             else -> ChatPromptUiMode.NONE
         }
 
-        val excludedIds = _currentExcludedSkillIds.value
         val activeSkills = getSkills().filter { skill ->
             skill.isEnabled && skill.id !in excludedIds
         }.map { skill ->
@@ -2253,9 +2254,10 @@ class RemoteDataRepository(
 
     /** Cached skill list — populated on first read, invalidated by write operations. */
     private var _cachedSkills: List<Skill>? = null
+    private val cachedSkillsLock = Any()
 
-    override fun getSkills(): List<Skill> {
-        _cachedSkills?.let { return it }
+    override fun getSkills(): List<Skill> = synchronized(cachedSkillsLock) {
+        _cachedSkills?.let { return@synchronized it }
         val json = appSettings.getSkillsJson()
         val result = Skill.fromJson(json, SharedJson)
         if (json.isBlank() || json == "[]") {
@@ -2272,10 +2274,10 @@ class RemoteDataRepository(
             }
         }
         _cachedSkills = result
-        return result
+        result
     }
 
-    private fun invalidateSkillCache() {
+    private fun invalidateSkillCache() = synchronized(cachedSkillsLock) {
         _cachedSkills = null
     }
 
@@ -2288,10 +2290,7 @@ class RemoteDataRepository(
             invalidateSkillCache()
         }
         if (!enabled) {
-            val currentExcluded = _currentExcludedSkillIds.value.toMutableSet()
-            if (currentExcluded.remove(skillId)) {
-                _currentExcludedSkillIds.value = currentExcluded
-            }
+            _currentExcludedSkillIds.update { it - skillId }
             updateAllConversationExcludedIds { excluded ->
                 if (skillId in excluded) excluded - skillId else null
             }
@@ -2304,10 +2303,7 @@ class RemoteDataRepository(
         if (skill?.isBuiltIn == true) return
         saveSkills(skills.filter { it.id != skillId })
         invalidateSkillCache()
-        val currentExcluded = _currentExcludedSkillIds.value.toMutableSet()
-        if (currentExcluded.remove(skillId)) {
-            _currentExcludedSkillIds.value = currentExcluded
-        }
+        _currentExcludedSkillIds.update { it - skillId }
         updateAllConversationExcludedIds { excluded ->
             if (skillId in excluded) excluded - skillId else null
         }
@@ -2328,15 +2324,11 @@ class RemoteDataRepository(
     override fun getExcludedSkillIds(): Set<String> = _currentExcludedSkillIds.value
 
     override fun excludeSkill(skillId: String) {
-        val excluded = _currentExcludedSkillIds.value.toMutableSet()
-        excluded.add(skillId)
-        _currentExcludedSkillIds.value = excluded
+        _currentExcludedSkillIds.update { it + skillId }
     }
 
     override fun includeSkill(skillId: String) {
-        val excluded = _currentExcludedSkillIds.value.toMutableSet()
-        excluded.remove(skillId)
-        _currentExcludedSkillIds.value = excluded
+        _currentExcludedSkillIds.update { it - skillId }
     }
 
     override fun getSkillEnabledTools(): Set<String> {

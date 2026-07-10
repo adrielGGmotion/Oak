@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.oak.app.data.Skill
 import com.oak.app.ui.OakOutlinedTextField
 import com.oak.app.ui.handCursor
 import com.oak.app.ui.oakAdaptiveCardBorder
@@ -79,6 +80,8 @@ import oak.composeapp.generated.resources.settings_skills_reset
 import oak.composeapp.generated.resources.settings_skills_reset_cancel
 import oak.composeapp.generated.resources.settings_skills_reset_confirm
 import oak.composeapp.generated.resources.settings_skills_save
+import oak.composeapp.generated.resources.settings_skills_collapse
+import oak.composeapp.generated.resources.settings_skills_expand
 import oak.composeapp.generated.resources.settings_skills_title
 import org.jetbrains.compose.resources.stringResource
 
@@ -300,7 +303,7 @@ private fun SkillCard(
                     Spacer(Modifier.width(4.dp))
                     Icon(
                         imageVector = Icons.Filled.ArrowDropDown,
-                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        contentDescription = if (expanded) stringResource(Res.string.settings_skills_collapse) else stringResource(Res.string.settings_skills_expand),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -549,7 +552,7 @@ private fun EditSkillDialog(
                 onValueChange = { content = it },
                 label = { Text(stringResource(Res.string.settings_skills_import_content_label)) },
                 modifier = Modifier.fillMaxWidth().height(150.dp),
-                enabled = !(skill.isBuiltIn && skill.id == "email" && skill.content.isEmpty()),
+                enabled = !(skill.isBuiltIn && skill.id == Skill.EMAIL_SKILL_ID && skill.content.isEmpty()),
             )
             Spacer(Modifier.height(8.dp))
 
@@ -602,7 +605,7 @@ private fun EditSkillDialog(
                             .filter { it.isNotEmpty() }
                         onSave(skill.id, name, description, content, tools)
                     },
-                    enabled = name.isNotBlank() && content.isNotBlank() && hasChanges,
+                    enabled = name.isNotBlank() && (skill.id == Skill.EMAIL_SKILL_ID || content.isNotBlank()) && hasChanges,
                     modifier = Modifier.handCursor(),
                 ) {
                     Text(stringResource(Res.string.settings_skills_save))

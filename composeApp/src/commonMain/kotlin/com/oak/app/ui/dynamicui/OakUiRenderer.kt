@@ -687,7 +687,7 @@ private fun RenderImage(node: ImageNode) {
     val height = (node.height ?: DEFAULT_IMAGE_HEIGHT).dp
     val aspectRatio = (node.aspectRatio ?: DEFAULT_IMAGE_ASPECT_RATIO)
     val path = node.path
-    val resolvedUrl = remember { mutableStateOf(node.url) }
+    val resolvedUrl = remember(node.url, node.path) { mutableStateOf(node.url) }
     if (path != null && node.url.isEmpty()) {
         LaunchedEffect(path) {
             resolvedUrl.value = com.oak.app.resolveSandboxImagePath(path) ?: path

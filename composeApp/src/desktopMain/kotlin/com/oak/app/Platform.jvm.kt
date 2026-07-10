@@ -220,8 +220,15 @@ actual fun getAvailableTools(): List<Tool> {
         // Skill-enabled tools: tools that are enabled because a skill requires them
         val skillEnabledToolIds = dataRepository.getSkillEnabledTools()
         val currentToolNames = map { it.schema.name }.toSet()
+        val sandboxEnabled = appSettings.isSandboxEnabled()
+        val emailEnabled = appSettings.isEmailEnabled()
         for (toolId in skillEnabledToolIds) {
             if (toolId !in currentToolNames) {
+                // Respect user capability settings — skill-required tools should not bypass them
+                when (toolId) {
+                    "execute_shell_command", "manage_process" -> if (!sandboxEnabled) continue
+                    "compose_email", "reply_email", "check_email", "read_email", "search_email", "setup_email" -> if (!emailEnabled) continue
+                }
                 findToolById(toolId, memoryStore, taskStore, emailStore)?.let { add(it) }
             }
         }
@@ -232,6 +239,7 @@ actual fun getAvailableTools(): List<Tool> {
             getExcludedSkillIds = { dataRepository.getExcludedSkillIds() },
             excludeSkill = { dataRepository.excludeSkill(it) },
             includeSkill = { dataRepository.includeSkill(it) },
+            importSkill = { dataRepository.importSkill(it) },
         ))
     }
 }
@@ -347,6 +355,8 @@ actual fun sendHeartbeatNotification(title: String, body: String) {
 actual fun createSshClient(): SshClient = SshClientImpl()
 
 actual suspend fun resolveSandboxImagePath(path: String): String? {
+    // Reject directory traversal attempts
+    if (path.contains("..")) return null
     val file = java.io.File(path)
     if (!file.exists() || !file.isFile) return null
     return file.toURI().toString()

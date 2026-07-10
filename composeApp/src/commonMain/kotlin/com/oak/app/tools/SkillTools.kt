@@ -8,39 +8,62 @@ import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
 import com.oak.app.network.tools.ToolSchema
 import kotlinx.serialization.json.Json
+import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.tool_create_skill_description
+import oak.composeapp.generated.resources.tool_create_skill_name
+import oak.composeapp.generated.resources.tool_list_skills_description
+import oak.composeapp.generated.resources.tool_list_skills_name
+import oak.composeapp.generated.resources.tool_load_skill_description
+import oak.composeapp.generated.resources.tool_load_skill_name
+import oak.composeapp.generated.resources.tool_unload_skill_description
+import oak.composeapp.generated.resources.tool_unload_skill_name
+import oak.composeapp.generated.resources.tool_update_skill_description
+import oak.composeapp.generated.resources.tool_update_skill_name
+import org.slf4j.LoggerFactory
 
 object SkillTools {
 
     private const val MAX_SKILL_CONTENT_LENGTH = 10_000
+    private val logger = LoggerFactory.getLogger("SkillTools")
 
     private val loadSkillToolInfo = ToolInfo(
         id = "load_skill",
         name = "Load Skill",
         description = "Load a skill to enhance your capabilities",
+        nameRes = Res.string.tool_load_skill_name,
+        descriptionRes = Res.string.tool_load_skill_description,
     )
 
     private val unloadSkillToolInfo = ToolInfo(
         id = "unload_skill",
         name = "Unload Skill",
         description = "Unload a previously loaded skill",
+        nameRes = Res.string.tool_unload_skill_name,
+        descriptionRes = Res.string.tool_unload_skill_description,
     )
 
     private val listSkillsToolInfo = ToolInfo(
         id = "list_skills",
         name = "List Skills",
         description = "List all available skills and their status",
+        nameRes = Res.string.tool_list_skills_name,
+        descriptionRes = Res.string.tool_list_skills_description,
     )
 
     private val createSkillToolInfo = ToolInfo(
         id = "create_skill",
         name = "Create Skill",
         description = "Create a new skill with custom instructions",
+        nameRes = Res.string.tool_create_skill_name,
+        descriptionRes = Res.string.tool_create_skill_description,
     )
 
     private val updateSkillToolInfo = ToolInfo(
         id = "update_skill",
         name = "Update Skill",
         description = "Update an existing skill's name, description, content, or required tools",
+        nameRes = Res.string.tool_update_skill_name,
+        descriptionRes = Res.string.tool_update_skill_description,
     )
 
     val skillToolDefinitions: List<ToolInfo> = listOf(
@@ -56,12 +79,13 @@ object SkillTools {
         getExcludedSkillIds: () -> Set<String>,
         excludeSkill: (String) -> Unit,
         includeSkill: (String) -> Unit,
+        importSkill: ((Skill) -> Unit)? = null,
     ): List<Tool> = listOf(
         createLoadSkillTool(appSettings, getExcludedSkillIds, includeSkill),
         createUnloadSkillTool(appSettings, getExcludedSkillIds, excludeSkill),
         createListSkillsTool(appSettings, getExcludedSkillIds),
-        createCreateSkillTool(appSettings, getExcludedSkillIds, includeSkill),
-        createUpdateSkillTool(appSettings, getExcludedSkillIds),
+        createCreateSkillTool(appSettings, getExcludedSkillIds, includeSkill, importSkill),
+        createUpdateSkillTool(appSettings, getExcludedSkillIds, importSkill),
     )
 
     private fun createLoadSkillTool(
@@ -204,6 +228,7 @@ object SkillTools {
         appSettings: AppSettings,
         getExcludedSkillIds: () -> Set<String>,
         includeSkill: (String) -> Unit,
+        importSkill: ((Skill) -> Unit)?,
     ) = object : Tool {
         override val schema = ToolSchema(
             name = "create_skill",
@@ -281,10 +306,12 @@ object SkillTools {
                 source = SkillSource.AI,
             )
 
-            val updatedSkills = existingSkills + skill
-            appSettings.setSkillsJson(
-                Json.encodeToString(updatedSkills),
-            )
+            if (importSkill != null) {
+                importSkill(skill)
+            } else {
+                val updatedSkills = existingSkills + skill
+                appSettings.setSkillsJson(Json.encodeToString(updatedSkills))
+            }
 
             if (autoLoad) {
                 includeSkill(id)
@@ -306,6 +333,7 @@ object SkillTools {
     private fun createUpdateSkillTool(
         appSettings: AppSettings,
         getExcludedSkillIds: () -> Set<String>,
+        importSkill: ((Skill) -> Unit)?,
     ) = object : Tool {
         override val schema = ToolSchema(
             name = "update_skill",
@@ -394,9 +422,11 @@ object SkillTools {
             )
 
             existingSkills[index] = updated
-            appSettings.setSkillsJson(
-                Json.encodeToString(existingSkills),
-            )
+            if (importSkill != null) {
+                importSkill(updated)
+            } else {
+                appSettings.setSkillsJson(Json.encodeToString(existingSkills))
+            }
 
             val excludedIds = getExcludedSkillIds()
             val isLoaded = updated.id !in excludedIds
@@ -433,7 +463,7 @@ object SkillTools {
         return try {
             Json.decodeFromString<List<String>>(str)
         } catch (e: Exception) {
-            println("SkillTools: failed to parse required tools list — ${e.message}")
+            logger.warn("Failed to parse required tools list from model-supplied JSON", e)
             emptyList()
         }
     }

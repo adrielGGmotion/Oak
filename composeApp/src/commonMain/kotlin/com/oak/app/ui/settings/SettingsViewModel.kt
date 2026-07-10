@@ -67,6 +67,7 @@ class SettingsViewModel(
     private var connectionCheckJobs: MutableMap<String, Job> = mutableMapOf()
     private var hasCheckedInitialConnection = false
     private val pendingDeleteJobs: MutableMap<KClass<out PendingDeletion>, Job> = mutableMapOf()
+    private var requestIdCounter = 0L
 
     private fun buildFullState(): SettingsUiState = SettingsUiState(
         configuredServices = buildConfiguredServiceEntries().toImmutableList(),
@@ -782,7 +783,7 @@ class SettingsViewModel(
             content = skill.content,
             isEnabled = skill.isEnabled,
             isBuiltIn = skill.isBuiltIn,
-            requiredTools = skill.requiredTools,
+            requiredTools = skill.requiredTools.toImmutableList(),
             isModified = isModified,
         )
     }
@@ -799,18 +800,11 @@ class SettingsViewModel(
     }
 
     private fun onRemoveSkill(skillId: String) {
-        pendingDeleteJobs[PendingDeletion.Skill::class]?.cancel()
+        commitPendingDeletion(PendingDeletion.Skill::class)
         _state.update { it.copy(pendingDeletion = PendingDeletion.Skill(skillId)) }
         pendingDeleteJobs[PendingDeletion.Skill::class] = viewModelScope.launch(backgroundDispatcher) {
-            delay(5.seconds)
-            dataRepository.removeSkill(skillId)
-            _state.update { state ->
-                state.copy(
-                    skills = state.skills.filter { it.id != skillId }.toImmutableList(),
-                    pendingDeletion = null,
-                )
-            }
-            pendingDeleteJobs.remove(PendingDeletion.Skill::class)
+            delay(4.seconds)
+            executeDeletion(PendingDeletion.Skill(skillId))
         }
     }
 
@@ -851,7 +845,7 @@ class SettingsViewModel(
         val parsed = parseSkillFile(text, fileName)
         _state.update {
             it.copy(
-                importSkillPrefill = parsed.copy(requestId = System.nanoTime()),
+                importSkillPrefill = parsed.copy(requestId = ++requestIdCounter),
                 showImportSkillDialog = true,
             )
         }

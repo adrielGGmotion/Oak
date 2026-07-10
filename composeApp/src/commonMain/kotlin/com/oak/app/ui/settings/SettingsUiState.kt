@@ -160,7 +160,7 @@ data class ImportSkillPrefill(
     val name: String = "",
     val description: String = "",
     val content: String = "",
-    val requiredTools: List<String> = emptyList(),
+    val requiredTools: ImmutableList<String> = persistentListOf(),
     val requestId: Long = 0,
 )
 
@@ -172,7 +172,7 @@ data class SkillUiState(
     val content: String,
     val isEnabled: Boolean,
     val isBuiltIn: Boolean,
-    val requiredTools: List<String>,
+    val requiredTools: ImmutableList<String>,
     val isModified: Boolean = false,
 )
 
