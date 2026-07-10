@@ -890,7 +890,7 @@ class RemoteDataRepository(
             loadConversation(conversationId)
         } else {
             setCurrentConversationId(conversationId)
-            _currentExcludedSkillIds.value = emptySet()
+            _currentExcludedSkillIds.value = getSkills().filter { it.isEnabled }.map { it.id }.toSet()
             chatHistory.value = emptyList()
         }
 
@@ -1996,7 +1996,7 @@ class RemoteDataRepository(
 
     override fun startNewChat() {
         setCurrentConversationId(null)
-        _currentExcludedSkillIds.value = emptySet()
+        _currentExcludedSkillIds.value = getSkills().filter { it.isEnabled }.map { it.id }.toSet()
         chatHistory.value = emptyList()
     }
 
@@ -2289,7 +2289,14 @@ class RemoteDataRepository(
             saveSkills(skills)
             invalidateSkillCache()
         }
-        if (!enabled) {
+        if (enabled) {
+            // Newly enabled skills start excluded (inactive) — the agent must
+            // explicitly load_skill them before they take effect in a conversation.
+            _currentExcludedSkillIds.update { it + skillId }
+            updateAllConversationExcludedIds { excluded ->
+                if (skillId !in excluded) excluded + skillId else null
+            }
+        } else {
             _currentExcludedSkillIds.update { it - skillId }
             updateAllConversationExcludedIds { excluded ->
                 if (skillId in excluded) excluded - skillId else null
