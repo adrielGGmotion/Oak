@@ -105,6 +105,8 @@ private const val MAX_REPEATED_TOOL_CALLS = 3
 private const val MAX_UNLIMITED_REPEATED_TOOL_CALLS = 100
 
 private const val ASK_QUESTIONS_TOOL_NAME = "ask_questions"
+private const val LOAD_SKILL_TOOL_NAME = "load_skill"
+private const val UNLOAD_SKILL_TOOL_NAME = "unload_skill"
 private const val MAX_API_RETRIES = 2
 private const val MAX_HEARTBEAT_MESSAGES = 50
 private const val ESTIMATED_CHARS_PER_TOKEN = 4
@@ -919,11 +921,12 @@ class RemoteDataRepository(
         systemPrompt: String? = null,
         history: MutableStateFlow<List<History>> = chatHistory,
     ): String {
+        var currentSystemPrompt = systemPrompt
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var currentMessages = trimMessagesForContext(
             buildOpenAIMessages(
                 messages.filter { it.role != History.Role.TOOL_EXECUTING },
-                systemPrompt,
+                currentSystemPrompt,
             ),
             contextWindowTokens,
         )
@@ -1053,6 +1056,12 @@ class RemoteDataRepository(
 
                 val toolResults = executeToolCallsInParallel(toolCalls.map { Triple(it.id, it.function.name, it.function.arguments) })
 
+                // Refresh the system prompt when skills are loaded/unloaded mid-turn
+                // so their instructions take effect in the follow-up model call.
+                if (toolResults.any { it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME }) {
+                    currentSystemPrompt = getActiveSystemPrompt()
+                }
+
                 history.update { h ->
                     buildList<History>(h.size + toolResults.size) {
                         for (entry in h) {
@@ -1081,7 +1090,7 @@ class RemoteDataRepository(
                 currentMessages = trimMessagesForContext(
                     buildOpenAIMessages(
                         history.value.filter { it.role != History.Role.TOOL_EXECUTING },
-                        systemPrompt,
+                        currentSystemPrompt,
                     ),
                     contextWindowTokens,
                 )
@@ -1098,6 +1107,7 @@ class RemoteDataRepository(
     }
 
     private suspend fun handleGeminiChatWithTools(credentials: ServiceCredentials, messages: List<History>, tools: List<Tool>, systemPrompt: String? = null, history: MutableStateFlow<List<History>> = chatHistory): String {
+        var currentSystemPrompt = systemPrompt
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
@@ -1114,7 +1124,7 @@ class RemoteDataRepository(
                         requests.geminiChat(
                             credentials = credentials,
                             messages = geminiMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1124,7 +1134,7 @@ class RemoteDataRepository(
                 val geminiMessages = currentMessages.map { it.toGeminiMessageDto() }
 
                 val response = retryApiCall {
-                    requests.geminiChat(credentials = credentials, messages = geminiMessages, tools = tools, systemInstruction = systemPrompt).getOrThrow()
+                    requests.geminiChat(credentials = credentials, messages = geminiMessages, tools = tools, systemInstruction = currentSystemPrompt).getOrThrow()
                 }
                 val parts = response.candidates.firstOrNull()?.content?.parts ?: return ""
 
@@ -1162,7 +1172,7 @@ class RemoteDataRepository(
                         requests.geminiChat(
                             credentials = credentials,
                             messages = bailoutMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1182,6 +1192,12 @@ class RemoteDataRepository(
                 }
 
                 val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
+
+                // Refresh the system prompt when skills are loaded/unloaded mid-turn
+                // so their instructions take effect in the follow-up model call.
+                if (toolResults.any { it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME }) {
+                    currentSystemPrompt = getActiveSystemPrompt()
+                }
 
                 history.update { h ->
                     val updated = buildList<History>(h.size + toolResults.size) {
@@ -1206,7 +1222,7 @@ class RemoteDataRepository(
                             }
                         }
                     }
-                    trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+                    trimHistoryForContext(updated, currentSystemPrompt?.length ?: 0, contextWindowTokens)
                 }
             }
         } catch (e: Exception) {
@@ -1218,7 +1234,7 @@ class RemoteDataRepository(
                     requests.geminiChat(
                         credentials = credentials,
                         messages = geminiMessages,
-                        systemInstruction = systemPrompt,
+                        systemInstruction = currentSystemPrompt,
                     ).getOrThrow()
                 }
                 return bailoutResponse.extractText()
@@ -1359,6 +1375,7 @@ class RemoteDataRepository(
         systemPrompt: String? = null,
         history: MutableStateFlow<List<History>> = chatHistory,
     ): String {
+        var currentSystemPrompt = systemPrompt
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
@@ -1376,7 +1393,7 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1387,7 +1404,7 @@ class RemoteDataRepository(
                         credentials = credentials,
                         messages = currentMessages,
                         tools = tools,
-                        systemInstruction = systemPrompt,
+                        systemInstruction = currentSystemPrompt,
                     ).getOrThrow()
                 }
 
@@ -1422,7 +1439,7 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1442,6 +1459,12 @@ class RemoteDataRepository(
                 }
 
                 val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
+
+                // Refresh the system prompt when skills are loaded/unloaded mid-turn
+                // so their instructions take effect in the follow-up model call.
+                if (toolResults.any { it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME }) {
+                    currentSystemPrompt = getActiveSystemPrompt()
+                }
 
                 history.update { h ->
                     val updated = buildList<History>(h.size + toolResults.size) {
@@ -1466,7 +1489,7 @@ class RemoteDataRepository(
                             }
                         }
                     }
-                    trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+                    trimHistoryForContext(updated, currentSystemPrompt?.length ?: 0, contextWindowTokens)
                 }
             }
         } catch (e: Exception) {
@@ -1479,7 +1502,7 @@ class RemoteDataRepository(
                     requests.anthropicChat(
                         credentials = credentials,
                         messages = currentMessages,
-                        systemInstruction = systemPrompt,
+                        systemInstruction = currentSystemPrompt,
                     ).getOrThrow()
                 }
                 return bailoutResponse.extractText()
@@ -2185,7 +2208,7 @@ class RemoteDataRepository(
 
         val isLimited = !supportsTools(modelId)
         val excludedIds = _currentExcludedSkillIds.value
-        val oakUiEnabled = getSkills().any { it.id == Skill.OAK_UI_SKILL_ID && it.isEnabled && it.id !in excludedIds }
+        val oakUiEnabled = getSkills().any { it.id == Skill.OAK_UI_SKILL_ID && it.isEnabled }
         val uiMode = when {
             interactiveModeFlag && oakUiEnabled -> ChatPromptUiMode.INTERACTIVE_UI
             appSettings.isDynamicUiEnabled() && !isLimited && oakUiEnabled -> ChatPromptUiMode.DYNAMIC_UI
@@ -2352,9 +2375,13 @@ class RemoteDataRepository(
      * or null if no change is needed for that conversation.
      */
     private fun updateAllConversationExcludedIds(transform: (Set<String>) -> Set<String>?) {
+        val changed = mutableListOf<Conversation>()
         for (conversation in savedConversations.value) {
             val updated = transform(conversation.excludedSkillIds) ?: continue
-            conversationStorage.saveConversation(conversation.copy(excludedSkillIds = updated))
+            changed.add(conversation.copy(excludedSkillIds = updated))
+        }
+        if (changed.isNotEmpty()) {
+            conversationStorage.saveConversations(changed)
         }
     }
 
