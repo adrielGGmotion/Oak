@@ -496,4 +496,5 @@
     <string name="settings_skills_discard_confirm">You have unsaved changes. Are you sure you want to discard them?</string>
     <string name="settings_skills_expand">Expand</string>
     <string name="settings_skills_collapse">Collapse</string>
+    <string name="alpine_linux">Alpine Linux</string>
 </resources>

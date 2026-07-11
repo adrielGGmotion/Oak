@@ -65,6 +65,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.alpine_linux
 import oak.composeapp.generated.resources.terminal_help_text
 import oak.composeapp.generated.resources.terminal_input_placeholder
 import oak.composeapp.generated.resources.terminal_run_content_description
@@ -228,7 +229,7 @@ fun TerminalContent(
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = "Alpine Linux",
+                    text = stringResource(Res.string.alpine_linux),
                     style = monoStyle(12.sp, colors.text.copy(alpha = 0.5f)),
                 )
             }

@@ -39,6 +39,7 @@ import com.oak.app.ui.settings.SettingsCard
 import com.oak.app.ui.settings.TerminalContent
 import com.oak.app.ui.settings.TerminalDarkBg
 import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.alpine_linux
 import oak.composeapp.generated.resources.sandbox_session_chip_session
 import oak.composeapp.generated.resources.sandbox_session_chip_temporary
 import oak.composeapp.generated.resources.settings_sandbox_cancel
@@ -113,7 +114,7 @@ internal fun SandboxTabsContent(
         Column(modifier = modifier.fillMaxWidth()) {
             SettingsCard {
                 Text(
-                    text = "Alpine Linux",
+                    text = stringResource(Res.string.alpine_linux),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                 )

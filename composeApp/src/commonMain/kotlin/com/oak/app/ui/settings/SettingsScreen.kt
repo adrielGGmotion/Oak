@@ -145,6 +145,7 @@ import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.jsonObject
 import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.alpine_linux
 import oak.composeapp.generated.resources.default_soul
 import oak.composeapp.generated.resources.device_storage_description_disabled
 import oak.composeapp.generated.resources.device_storage_description_enabled_denied
@@ -557,7 +558,7 @@ private fun SandboxSettingsCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Alpine Linux",
+                    text = stringResource(Res.string.alpine_linux),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
