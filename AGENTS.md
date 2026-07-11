@@ -1,6 +1,6 @@
 # Oak — AGENTS.md
 
-*Last updated: 2026-05-19*
+*Last updated: 2026-07-11*
 
 ## What is Oak
 
@@ -104,3 +104,29 @@ Neither platform has the other's capabilities.
 ## Dynamic UI
 
 AI-generated interactive UI blocks use the `oak-ui` fenced block. Rendered by `OakUiNode` → `OakUiRenderer`.
+
+## Skill visibility in the system prompt
+
+Skills no longer require the LLM to call `list_skills` first — all enabled skills are
+surfaced directly in the system prompt:
+
+- **Loaded (active) skills** — full name + description + content injected as before.
+- **Available (not loaded) skills** — name + description listed in a separate block
+  with a `load_skill` call-to-action. No content (and thus no token cost) until loaded.
+
+This lives in the `## Skills` section of the `CHAT_REMOTE` prompt variant, built by
+`ChatSystemPromptBuilder.kt`. The `inactiveSkills` parameter carries the available-but-not-loaded
+list.
+
+### Mid-turn skill refresh
+
+When the LLM calls `create_skill` or `update_skill` mid-turn, the system prompt and
+tool set are now refreshed immediately (not just on `load_skill`/`unload_skill`). This
+means newly created skills appear in the available list on the very next iteration.
+
+### Key files
+
+| File | What changed |
+|---|---|
+| `data/ChatSystemPromptBuilder.kt` | New `inactiveSkills` param; strengthened `DEFAULT_TOOL_CALL_GUIDANCE` to numbered procedure; restructured `## Skills` section to show active + available |
+| `data/RemoteDataRepository.kt` | New constants `CREATE_SKILL_TOOL_NAME`, `UPDATE_SKILL_TOOL_NAME`; computes `inactiveSkills` in `getActiveSystemPrompt()`; mid-turn refresh in all 3 provider loops |

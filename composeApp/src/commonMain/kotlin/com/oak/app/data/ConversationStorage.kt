@@ -97,6 +97,28 @@ class ConversationStorage(private val appSettings: AppSettings) {
         return listOf(last.withText(last.text.takeLast(limit)))
     }
 
+    /**
+     * Batch-save multiple conversations in a single write.
+     * Preserves shell transcripts for conversations where the incoming transcript is empty
+     * but the stored one has content (same semantics as [saveConversation]).
+     */
+    fun saveConversations(conversations: List<Conversation>) {
+        mutableConversations.update { current ->
+            val map = current.associateBy { it.id }.toMutableMap()
+            for (conversation in conversations) {
+                val existing = map[conversation.id]
+                val merged = if (conversation.shellTranscript.isEmpty() && existing != null && existing.shellTranscript.isNotEmpty()) {
+                    conversation.copy(shellTranscript = existing.shellTranscript)
+                } else {
+                    conversation
+                }
+                map[conversation.id] = merged
+            }
+            map.values.toList()
+        }
+        persist()
+    }
+
     fun deleteConversation(id: String) {
         mutableConversations.update { current ->
             current.filter { it.id != id }

@@ -64,6 +64,7 @@ class ChatSystemPromptBuilderTest {
         heartbeatAdditions: List<ScheduledTask> = emptyList(),
         emailAccounts: List<EmailAccountSummary> = emptyList(),
         uiMode: ChatPromptUiMode = ChatPromptUiMode.NONE,
+        activeSkills: List<Skill> = emptyList(),
     ) = buildChatSystemPrompt(
         variant = variant,
         soul = soul,
@@ -77,16 +78,15 @@ class ChatSystemPromptBuilderTest {
         emailAccounts = emailAccounts,
         runtime = runtime,
         uiMode = uiMode,
+        activeSkills = activeSkills,
     )
 
     // region CHAT_REMOTE — focused tests
 
     @Test
-    fun `CHAT_REMOTE default emits soul + Structured Learning + Automation + context`() {
+    fun `CHAT_REMOTE default emits soul + context`() {
         val out = build(SystemPromptVariant.CHAT_REMOTE)
         assertTrue(out.startsWith("You are Oak."))
-        assertTrue("## Structured Learning" in out)
-        assertTrue("## Automation" in out)
         assertTrue("## Context" in out)
         assertTrue("- Local time: 2026-04-11T02:00:00+02:00 (Europe/Berlin)" in out)
         assertTrue("- UTC: 2026-04-11T00:00:00Z" in out)
@@ -96,16 +96,25 @@ class ChatSystemPromptBuilderTest {
     }
 
     @Test
-    fun `CHAT_REMOTE Automation section names schedule_task as the future-execution mechanism`() {
-        val out = build(SystemPromptVariant.CHAT_REMOTE)
-        assertTrue("## Automation" in out)
+    fun `CHAT_REMOTE includes automation skill content when active`() {
+        val out = build(
+            variant = SystemPromptVariant.CHAT_REMOTE,
+            activeSkills = listOf(Skill.AUTOMATION_SKILL),
+        )
         assertTrue("schedule_task" in out)
-        // The three triggers are named.
         assertTrue("execute_at" in out)
         assertTrue("cron" in out)
         assertTrue("on_heartbeat" in out)
-        // Heartbeat toggle/schedule remain user-only.
         assertTrue("user-controlled" in out)
+    }
+
+    @Test
+    fun `CHAT_REMOTE omits automation skill content when inactive`() {
+        val out = build(
+            variant = SystemPromptVariant.CHAT_REMOTE,
+            activeSkills = listOf(Skill.AUTOMATION_SKILL.copy(isEnabled = false)),
+        )
+        assertFalse("schedule_task" in out)
     }
 
     @Test
@@ -179,42 +188,61 @@ class ChatSystemPromptBuilderTest {
     }
 
     @Test
-    fun `CHAT_REMOTE includes Email Accounts when list non-empty`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            emailAccounts = listOf(
-                EmailAccountSummary(
-                    email = "alice@example.com",
-                    unreadCount = 3,
-                    lastSyncEpochMs = 1_700_000_000_000L,
-                ),
+    fun `CHAT_REMOTE includes email skill content when active with accounts`() {
+        val accounts = listOf(
+            EmailAccountSummary(
+                email = "alice@example.com",
+                unreadCount = 3,
+                lastSyncEpochMs = 1_700_000_000_000L,
             ),
         )
-        assertTrue("## Email Accounts" in out)
+        val emailContent = buildString {
+            append("The user has these email accounts connected. Use them via the existing email tools — ")
+            append("do NOT suggest adding, re-authenticating, or connecting a new account unless the user explicitly asks.\n")
+            for (account in accounts) {
+                append("- **${account.email}**: ${account.unreadCount} unread\n")
+            }
+        }
+        val out = build(
+            variant = SystemPromptVariant.CHAT_REMOTE,
+            emailAccounts = accounts,
+            activeSkills = listOf(Skill.EMAIL_SKILL.copy(content = emailContent)),
+        )
         assertTrue("do NOT suggest adding" in out)
         assertTrue("- **alice@example.com**: 3 unread" in out)
     }
 
     @Test
-    fun `CHAT_REMOTE Email Accounts surfaces sync failures via lastError`() {
+    fun `CHAT_REMOTE email skill surfaces sync failures via lastError`() {
+        val accounts = listOf(
+            EmailAccountSummary(
+                email = "bob@example.com",
+                unreadCount = 0,
+                lastSyncEpochMs = 0L,
+                lastError = "AUTHENTICATIONFAILED",
+            ),
+        )
+        val emailContent = buildString {
+            append("The user has these email accounts connected.\n")
+            for (account in accounts) {
+                append("- **${account.email}**: sync failing — ${account.lastError}\n")
+            }
+        }
         val out = build(
             variant = SystemPromptVariant.CHAT_REMOTE,
-            emailAccounts = listOf(
-                EmailAccountSummary(
-                    email = "bob@example.com",
-                    unreadCount = 0,
-                    lastSyncEpochMs = 0L,
-                    lastError = "AUTHENTICATIONFAILED",
-                ),
-            ),
+            emailAccounts = accounts,
+            activeSkills = listOf(Skill.EMAIL_SKILL.copy(content = emailContent)),
         )
         assertTrue("- **bob@example.com**: sync failing — AUTHENTICATIONFAILED" in out)
     }
 
     @Test
-    fun `CHAT_REMOTE omits Email Accounts when list is empty`() {
-        val out = build(variant = SystemPromptVariant.CHAT_REMOTE)
-        assertFalse("## Email Accounts" in out)
+    fun `CHAT_REMOTE omits email skill content when inactive`() {
+        val out = build(
+            variant = SystemPromptVariant.CHAT_REMOTE,
+            activeSkills = listOf(Skill.EMAIL_SKILL.copy(isEnabled = false)),
+        )
+        assertFalse("do NOT suggest adding" in out)
     }
 
     @Test
@@ -469,6 +497,7 @@ class ChatSystemPromptBuilderTest {
 
     @Test
     fun `golden CHAT_REMOTE with every section enabled`() {
+        val emailContent = "The user has these email accounts connected.\n- **alice@example.com**: 1 unread\n"
         val out = build(
             variant = SystemPromptVariant.CHAT_REMOTE,
             soul = "You are Oak.",
@@ -496,22 +525,27 @@ class ChatSystemPromptBuilderTest {
                 ),
             ),
             uiMode = ChatPromptUiMode.NONE,
+            activeSkills = listOf(
+                Skill.AUTOMATION_SKILL,
+                Skill.EMAIL_SKILL.copy(content = emailContent),
+                Skill.STRUCTURED_LEARNING_SKILL,
+            ),
         )
         // Just assert the section headers are present in order — the full oak-ui sections
         // are verified by separate DYNAMIC_UI / INTERACTIVE_UI tests.
         val headerOrder = listOf(
             "You are Oak.",
             "Basic memory guidance.",
-            "## Structured Learning",
             "## Your Memories",
             "## User Preferences",
             "## Learnings",
             "## Known Issues & Resolutions",
-            "## Automation",
-            "## Email Accounts",
             "## Scheduled Tasks",
             "## Heartbeat Additions",
             "## Context",
+            "schedule_task",
+            "alice@example.com",
+            "memory_learn",
         )
         var lastIdx = -1
         for (header in headerOrder) {
@@ -520,6 +554,102 @@ class ChatSystemPromptBuilderTest {
             assertTrue(idx > lastIdx, "Expected '$header' to come after previous section. Output:\n$out")
             lastIdx = idx
         }
+    }
+
+    // endregion
+
+    // region Skills — focused tests
+
+    @Test
+    fun `CHAT_REMOTE includes skill content when active skills provided`() {
+        val skill = Skill(
+            id = "test_skill",
+            name = "Test Skill",
+            description = "A test skill",
+            content = "## Test Skill Instructions\nBe helpful.",
+            isEnabled = true,
+        )
+        val out = build(
+            variant = SystemPromptVariant.CHAT_REMOTE,
+            activeSkills = listOf(skill),
+        )
+        assertTrue("## Test Skill Instructions" in out)
+        assertTrue("Be helpful." in out)
+    }
+
+    @Test
+    fun `CHAT_REMOTE omits disabled skill content`() {
+        val skill = Skill(
+            id = "test_skill",
+            name = "Test Skill",
+            description = "A test skill",
+            content = "## Test Skill Instructions\nBe helpful.",
+            isEnabled = false,
+        )
+        val out = build(
+            variant = SystemPromptVariant.CHAT_REMOTE,
+            activeSkills = listOf(skill),
+        )
+        assertFalse("## Test Skill Instructions" in out)
+    }
+
+    @Test
+    fun `CHAT_REMOTE skill content appears after Context section`() {
+        val skill = Skill(
+            id = "test_skill",
+            name = "Test Skill",
+            description = "A test skill",
+            content = "## Test Skill Instructions",
+            isEnabled = true,
+        )
+        val out = build(
+            variant = SystemPromptVariant.CHAT_REMOTE,
+            activeSkills = listOf(skill),
+        )
+        val contextIdx = out.indexOf("## Context")
+        val skillIdx = out.indexOf("## Test Skill Instructions")
+        assertTrue(contextIdx >= 0, "Context section should exist")
+        assertTrue(skillIdx > contextIdx, "Skill content should appear after Context")
+    }
+
+    @Test
+    fun `CHAT_LOCAL omits skill content regardless of input`() {
+        val skill = Skill(
+            id = "test_skill",
+            name = "Test Skill",
+            description = "A test skill",
+            content = "## Test Skill Instructions",
+            isEnabled = true,
+        )
+        val out = build(
+            variant = SystemPromptVariant.CHAT_LOCAL,
+            activeSkills = listOf(skill),
+        )
+        assertFalse("## Test Skill Instructions" in out)
+    }
+
+    @Test
+    fun `CHAT_REMOTE multiple skills are all included`() {
+        val skill1 = Skill(
+            id = "skill_1",
+            name = "Skill One",
+            description = "First skill",
+            content = "## Skill One Content",
+            isEnabled = true,
+        )
+        val skill2 = Skill(
+            id = "skill_2",
+            name = "Skill Two",
+            description = "Second skill",
+            content = "## Skill Two Content",
+            isEnabled = true,
+        )
+        val out = build(
+            variant = SystemPromptVariant.CHAT_REMOTE,
+            activeSkills = listOf(skill1, skill2),
+        )
+        assertTrue("## Skill One Content" in out)
+        assertTrue("## Skill Two Content" in out)
     }
 
     // endregion

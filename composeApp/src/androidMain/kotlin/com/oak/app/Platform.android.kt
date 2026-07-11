@@ -38,6 +38,7 @@ import com.oak.app.tools.CalendarResult
 import com.oak.app.tools.CommonTools
 import com.oak.app.tools.EditFileTool
 import com.oak.app.tools.EmailTools
+import com.oak.app.tools.FetchUrlTool
 import com.oak.app.tools.HeartbeatTools
 import com.oak.app.tools.NotificationHelper
 import com.oak.app.tools.NotificationPermissionController
@@ -49,6 +50,7 @@ import com.oak.app.tools.ReadFileTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
 import com.oak.app.tools.SmsTools
+import com.oak.app.tools.SkillTools
 import com.oak.app.tools.SshTools
 import com.oak.app.tools.WebSearchTool
 import com.oak.app.tools.askQuestionsToolInfo
@@ -254,6 +256,9 @@ actual fun getPlatformToolDefinitions(): List<ToolInfo> = buildList {
     } catch (_: Throwable) {
         // SSH tools failed to load
     }
+
+    // Skill management tools
+    addAll(SkillTools.skillToolDefinitions)
 }
 
 actual fun getAvailableTools(): List<Tool> {
@@ -264,6 +269,7 @@ actual fun getAvailableTools(): List<Tool> {
     val calendarPermissionController: CalendarPermissionController by inject(CalendarPermissionController::class.java)
     val calendarRepository = CalendarRepository(context, calendarPermissionController)
     val emailStore: EmailStore by inject(EmailStore::class.java)
+    val dataRepository: com.oak.app.data.DataRepository by inject(com.oak.app.data.DataRepository::class.java)
 
     return buildList {
         if (appSettings.isMemoryEnabled()) {
@@ -514,7 +520,6 @@ actual fun getAvailableTools(): List<Tool> {
         }
 
         if (appSettings.isToolEnabled(CommonTools.compressContextToolInfo.id, defaultEnabled = true)) {
-            val dataRepository: com.oak.app.data.DataRepository by inject(com.oak.app.data.DataRepository::class.java)
             add(
                 compressContextTool { keepRecent, focus ->
                     dataRepository.triggerCompaction(keepRecent, focus)
@@ -538,6 +543,73 @@ actual fun getAvailableTools(): List<Tool> {
                 // SSH tools unavailable
             }
         }
+
+        // Skill-enabled tools: tools that are enabled because a skill requires them
+        val skillEnabledToolIds = dataRepository.getSkillEnabledTools()
+        val currentToolNames = map { it.schema.name }.toSet()
+        val sandboxEnabled = appSettings.isSandboxEnabled()
+        val emailEnabled = appSettings.isEmailEnabled()
+        for (toolId in skillEnabledToolIds) {
+            if (toolId !in currentToolNames) {
+                // Respect user capability settings — skill-required tools should not bypass them
+                when (toolId) {
+                    ShellCommandTool.schema.name, ProcessManagerTool.schema.name -> if (!sandboxEnabled) continue
+                    "compose_email", "reply_email", "check_email", "read_email", "search_email", "setup_email" -> if (!emailEnabled) continue
+                }
+                findToolById(toolId, memoryStore, taskStore, emailStore)?.let { add(it) }
+            }
+        }
+
+        // Skill management tools
+        addAll(SkillTools.getSkillTools(
+            appSettings = appSettings,
+            getExcludedSkillIds = { dataRepository.getExcludedSkillIds() },
+            excludeSkill = { dataRepository.excludeSkill(it) },
+            includeSkill = { dataRepository.includeSkill(it) },
+            importSkill = { dataRepository.importSkill(it) },
+        ))
+    }
+}
+
+// Tool ID → Tool resolver for skill-required tool auto-enablement.
+// Platform-specific: includes Android-only tools (ShellCommandTool, ProcessManagerTool, OpenFileTool).
+private fun findToolById(toolId: String, memoryStore: MemoryStore, taskStore: TaskStore, emailStore: EmailStore): Tool? {
+    return when (toolId) {
+        // Common tools (singletons)
+        CommonTools.localTimeTool.schema.name -> CommonTools.localTimeTool
+        CommonTools.ipLocationTool.schema.name -> CommonTools.ipLocationTool
+        WebSearchTool.schema.name -> WebSearchTool
+        CommonTools.openUrlTool.schema.name -> CommonTools.openUrlTool
+        FetchUrlTool.schema.name -> FetchUrlTool
+        CommonTools.waitTool.schema.name -> CommonTools.waitTool
+        ReadFileTool.schema.name -> ReadFileTool
+        EditFileTool.schema.name -> EditFileTool
+        OpenFileTool.schema.name -> OpenFileTool
+
+        // Memory tools (factory-created)
+        "memory_store" -> CommonTools.memoryStoreTool(memoryStore)
+        "memory_forget" -> CommonTools.memoryForgetTool(memoryStore)
+        "memory_learn" -> CommonTools.memoryLearnTool(memoryStore)
+        "memory_reinforce" -> CommonTools.memoryReinforceTool(memoryStore)
+
+        // Scheduling tools (factory-created)
+        "schedule_task" -> SchedulingTools.scheduleTaskTool(taskStore)
+        "cancel_task" -> SchedulingTools.cancelTaskTool(taskStore)
+        "list_tasks" -> SchedulingTools.listTasksTool(taskStore)
+
+        // Email tools (factory-created)
+        "compose_email" -> EmailTools.composeEmailTool(emailStore)
+        "reply_email" -> EmailTools.replyEmailTool(emailStore)
+        "check_email" -> EmailTools.checkEmailTool(emailStore)
+        "read_email" -> EmailTools.readEmailTool(emailStore)
+        "search_email" -> EmailTools.searchEmailTool(emailStore)
+        "setup_email" -> EmailTools.setupEmailTool(emailStore)
+
+        // Android-specific tools (singletons)
+        ShellCommandTool.schema.name -> ShellCommandTool
+        ProcessManagerTool.schema.name -> ProcessManagerTool
+
+        else -> null
     }
 }
 
@@ -589,4 +661,17 @@ actual fun createSshClient(): SshClient {
 actual suspend fun saveFileToDevice(bytes: ByteArray, baseName: String, extension: String) {
     val file = FileKit.openFileSaver(suggestedName = baseName, defaultExtension = extension)
     file?.write(bytes)
+}
+
+actual suspend fun resolveSandboxImagePath(path: String): String? {
+    val context: Context by inject(Context::class.java)
+    val sandboxManager: com.oak.app.sandbox.LinuxSandboxManager by inject(com.oak.app.sandbox.LinuxSandboxManager::class.java)
+    val file = com.oak.app.sandbox.resolveSandboxFile(sandboxManager.homePath, path) ?: return null
+    if (!file.exists() || !file.isFile) return null
+    return try {
+        val authority = "${context.packageName}.fileprovider"
+        androidx.core.content.FileProvider.getUriForFile(context, authority, file).toString()
+    } catch (_: Exception) {
+        null
+    }
 }

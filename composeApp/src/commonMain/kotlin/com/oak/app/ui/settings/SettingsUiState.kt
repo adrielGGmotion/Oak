@@ -113,6 +113,11 @@ data class SettingsUiState(
     val showAddMcpServerDialog: Boolean = false,
     val sshServers: ImmutableList<SshServerUiState> = persistentListOf(),
     val showAddSshServerDialog: Boolean = false,
+    val skills: ImmutableList<SkillUiState> = persistentListOf(),
+    val showImportSkillDialog: Boolean = false,
+    val importSkillPrefill: ImportSkillPrefill? = null,
+    val showEditSkillDialog: Boolean = false,
+    val editingSkillId: String? = null,
     val localAvailableModels: ImmutableList<LocalModel> = persistentListOf(),
     val totalDeviceMemoryBytes: Long = Long.MAX_VALUE,
     val isStorageAccessEnabled: Boolean = false,
@@ -150,6 +155,27 @@ data class McpServerUiState(
     val tools: ImmutableList<ToolInfo>,
 )
 
+@Immutable
+data class ImportSkillPrefill(
+    val name: String = "",
+    val description: String = "",
+    val content: String = "",
+    val requiredTools: ImmutableList<String> = persistentListOf(),
+    val requestId: Long = 0,
+)
+
+@Immutable
+data class SkillUiState(
+    val id: String,
+    val name: String,
+    val description: String,
+    val content: String,
+    val isEnabled: Boolean,
+    val isBuiltIn: Boolean,
+    val requiredTools: ImmutableList<String>,
+    val isModified: Boolean = false,
+)
+
 enum class McpConnectionStatus {
     Unknown,
     Connecting,
@@ -164,6 +190,7 @@ sealed interface PendingDeletion {
     data class Service(val instanceId: String) : PendingDeletion
     data class McpServer(val serverId: String) : PendingDeletion
     data class SshServer(val serverId: String) : PendingDeletion
+    data class Skill(val skillId: String) : PendingDeletion
 }
 
 sealed interface ImportResult {

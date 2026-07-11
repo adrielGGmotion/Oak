@@ -4,6 +4,7 @@ import com.oak.app.data.Conversation
 import com.oak.app.data.DataRepository
 import com.oak.app.getBackgroundDispatcher
 import com.oak.app.network.UiError
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,9 +20,17 @@ class ChatSessionManager(
     private val dataRepository: DataRepository,
     private val backgroundDispatcher: CoroutineContext = getBackgroundDispatcher(),
 ) {
+    // Catches unhandled exceptions in generation jobs — particularly OkHttp/AsyncTimeout
+    // race conditions during coroutine cancellation ("Unbalanced enter/exit") that propagate
+    // through InvokeOnCancelling completion handlers and bypass try/catch.
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        println("ChatSessionManager: unhandled exception — ${throwable.message}")
+        throwable.printStackTrace()
+    }
+
     // Scope on Main for thread-safe session map access; generation block
     // switches to backgroundDispatcher internally via withContext.
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main + CoroutineName("ChatSessionManager"))
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main + CoroutineName("ChatSessionManager") + exceptionHandler)
 
     private val sessions = mutableMapOf<String, ChatSession>()
     private val generationCounter = mutableMapOf<String, Int>()
@@ -60,7 +69,7 @@ class ChatSessionManager(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                println("ChatSessionManager: unhandled exception in generation job for session $sessionId: ${e.message}")
+                e.printStackTrace()
             } finally {
                 if (generationCounter[sessionId] == genId) {
                     generationCounter.remove(sessionId)

@@ -64,7 +64,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -230,6 +231,7 @@ import oak.composeapp.generated.resources.settings_scheduled_tasks
 import oak.composeapp.generated.resources.settings_scheduled_tasks_cancel
 import oak.composeapp.generated.resources.settings_scheduled_tasks_description
 import oak.composeapp.generated.resources.settings_sign_in_copy_api_key_from
+import oak.composeapp.generated.resources.settings_skills_title
 import oak.composeapp.generated.resources.settings_sms
 import oak.composeapp.generated.resources.settings_soul
 import oak.composeapp.generated.resources.settings_soul_description
@@ -279,6 +281,7 @@ import oak.composeapp.generated.resources.snackbar_email_removed
 import oak.composeapp.generated.resources.snackbar_mcp_server_removed
 import oak.composeapp.generated.resources.snackbar_memory_deleted
 import oak.composeapp.generated.resources.snackbar_service_removed
+import oak.composeapp.generated.resources.snackbar_skill_removed
 import oak.composeapp.generated.resources.snackbar_ssh_server_removed
 import oak.composeapp.generated.resources.snackbar_task_cancelled
 import oak.composeapp.generated.resources.snackbar_undo
@@ -356,6 +359,7 @@ fun SettingsScreenContent(
     val serviceRemovedMsg = stringResource(Res.string.snackbar_service_removed)
     val mcpServerRemovedMsg = stringResource(Res.string.snackbar_mcp_server_removed)
     val sshServerRemovedMsg = stringResource(Res.string.snackbar_ssh_server_removed)
+    val skillRemovedMsg = stringResource(Res.string.snackbar_skill_removed)
 
     LaunchedEffect(uiState.pendingDeletion) {
         val deletion = uiState.pendingDeletion ?: return@LaunchedEffect
@@ -367,6 +371,7 @@ fun SettingsScreenContent(
             is PendingDeletion.Service -> serviceRemovedMsg
             is PendingDeletion.McpServer -> mcpServerRemovedMsg
             is PendingDeletion.SshServer -> sshServerRemovedMsg
+            is PendingDeletion.Skill -> skillRemovedMsg
         }
         val result = snackbarHostState.showSnackbar(
             message = message,
@@ -877,7 +882,7 @@ private fun ServicesContent(uiState: SettingsUiState, actions: SettingsActions) 
     if (showAddServiceSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAddServiceSheet = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
         ) {
             val addServiceScrollState = rememberScrollState()
             Box {
@@ -1898,6 +1903,24 @@ private fun AgentContent(uiState: SettingsUiState, actions: SettingsActions) {
                             onToggleUnlimitedToolCalls = actions.onToggleUnlimitedToolCalls,
                         )
                     }
+                    SettingsCard {
+                        SkillsSection(
+                            skills = uiState.skills,
+                            onToggleSkill = actions.onToggleSkill,
+                            onRemoveSkill = actions.onRemoveSkill,
+                            onImportSkill = actions.onImportSkill,
+                            showImportDialog = uiState.showImportSkillDialog,
+                            onShowImportDialog = actions.onShowImportSkillDialog,
+                            importSkillPrefill = uiState.importSkillPrefill,
+                            onImportSkillFromFile = actions.onImportSkillFromFile,
+                            onSkillFilePicked = actions.onSkillFilePicked,
+                            onEditSkill = actions.onEditSkill,
+                            showEditDialog = uiState.showEditSkillDialog,
+                            editingSkillId = uiState.editingSkillId,
+                            onShowEditSkillDialog = actions.onShowEditSkillDialog,
+                            onResetSkill = actions.onResetSkill,
+                        )
+                    }
                     if (uiState.showEmailToggle) {
                         SettingsCard {
                             EmailSection(
@@ -1996,6 +2019,24 @@ private fun AgentContent(uiState: SettingsUiState, actions: SettingsActions) {
                     UnlimitedToolCallsToggle(
                         isUnlimitedToolCallsEnabled = uiState.isUnlimitedToolCallsEnabled,
                         onToggleUnlimitedToolCalls = actions.onToggleUnlimitedToolCalls,
+                    )
+                }
+                SettingsCard {
+                    SkillsSection(
+                        skills = uiState.skills,
+                        onToggleSkill = actions.onToggleSkill,
+                        onRemoveSkill = actions.onRemoveSkill,
+                        onImportSkill = actions.onImportSkill,
+                        showImportDialog = uiState.showImportSkillDialog,
+                        onShowImportDialog = actions.onShowImportSkillDialog,
+                        importSkillPrefill = uiState.importSkillPrefill,
+                        onImportSkillFromFile = actions.onImportSkillFromFile,
+                        onSkillFilePicked = actions.onSkillFilePicked,
+                        onEditSkill = actions.onEditSkill,
+                        showEditDialog = uiState.showEditSkillDialog,
+                        editingSkillId = uiState.editingSkillId,
+                        onShowEditSkillDialog = actions.onShowEditSkillDialog,
+                        onResetSkill = actions.onResetSkill,
                     )
                 }
                 if (uiState.showEmailToggle) {
@@ -2408,6 +2449,7 @@ private fun sectionDisplayName(section: ImportSection): String = when (section) 
     ImportSection.MCP -> stringResource(Res.string.settings_import_section_mcp)
     ImportSection.SSH -> stringResource(Res.string.settings_import_section_ssh)
     ImportSection.CONVERSATIONS -> stringResource(Res.string.settings_import_section_conversations)
+    ImportSection.SKILLS -> stringResource(Res.string.settings_skills_title)
 }
 
 @Composable
@@ -2714,7 +2756,7 @@ private fun AllMemoriesSheet(
     val deleteContentDescription = stringResource(Res.string.settings_memories_delete)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
     ) {
         Column(
             modifier = Modifier
@@ -2756,7 +2798,7 @@ private fun EditMemorySheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
     ) {
         Column(
             modifier = Modifier
@@ -2874,7 +2916,7 @@ private fun TaskDetailsSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
     ) {
         Column(
             modifier = Modifier

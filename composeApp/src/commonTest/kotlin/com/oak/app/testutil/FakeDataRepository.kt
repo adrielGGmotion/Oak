@@ -419,6 +419,49 @@ class FakeDataRepository : DataRepository {
         dynamicUiEnabled = enabled
     }
 
+    // Skills
+
+    private val skills = mutableListOf<com.oak.app.data.Skill>()
+    private val excludedSkillIds = mutableSetOf<String>()
+
+    override fun getSkills(): List<com.oak.app.data.Skill> = skills.toList()
+
+    override fun setSkillEnabled(skillId: String, enabled: Boolean) {
+        val index = skills.indexOfFirst { it.id == skillId }
+        if (index >= 0) {
+            skills[index] = skills[index].copy(isEnabled = enabled)
+        }
+    }
+
+    override fun removeSkill(skillId: String) {
+        skills.removeAll { it.id == skillId }
+        excludedSkillIds.remove(skillId)
+    }
+
+    override fun importSkill(skill: com.oak.app.data.Skill) {
+        val existingIndex = skills.indexOfFirst { it.id == skill.id }
+        if (existingIndex >= 0) {
+            skills[existingIndex] = skill
+        } else {
+            skills.add(skill)
+        }
+    }
+
+    override fun getExcludedSkillIds(): Set<String> = excludedSkillIds.toSet()
+
+    override fun excludeSkill(skillId: String) {
+        excludedSkillIds.add(skillId)
+    }
+
+    override fun includeSkill(skillId: String) {
+        excludedSkillIds.remove(skillId)
+    }
+
+    override fun getSkillEnabledTools(): Set<String> = skills
+        .filter { it.isEnabled && it.id !in excludedSkillIds }
+        .flatMap { it.requiredTools }
+        .toSet()
+
     private var themeMode: ThemeMode = ThemeMode.System
 
     override fun getThemeMode(): ThemeMode = themeMode

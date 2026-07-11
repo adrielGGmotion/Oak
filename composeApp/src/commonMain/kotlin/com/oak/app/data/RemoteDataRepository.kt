@@ -105,6 +105,10 @@ private const val MAX_REPEATED_TOOL_CALLS = 3
 private const val MAX_UNLIMITED_REPEATED_TOOL_CALLS = 100
 
 private const val ASK_QUESTIONS_TOOL_NAME = "ask_questions"
+private const val LOAD_SKILL_TOOL_NAME = "load_skill"
+private const val UNLOAD_SKILL_TOOL_NAME = "unload_skill"
+private const val CREATE_SKILL_TOOL_NAME = "create_skill"
+private const val UPDATE_SKILL_TOOL_NAME = "update_skill"
 private const val MAX_API_RETRIES = 2
 private const val MAX_HEARTBEAT_MESSAGES = 50
 private const val ESTIMATED_CHARS_PER_TOKEN = 4
@@ -179,6 +183,9 @@ class RemoteDataRepository(
     override val currentConversationId: StateFlow<String?> = _currentConversationId
 
     private var askForConversationId: String? = null
+
+    /** Per-conversation excluded skill IDs — synced with [Conversation.excludedSkillIds]. */
+    private val _currentExcludedSkillIds = MutableStateFlow<Set<String>>(emptySet())
 
     private val _fallbackStatus = MutableStateFlow<FallbackStatus?>(null)
     override val fallbackStatus: StateFlow<FallbackStatus?> = _fallbackStatus
@@ -881,11 +888,13 @@ class RemoteDataRepository(
     ) {
         val previousConversationId = _currentConversationId.value
         val previousHistory = chatHistory.value.toList()
+        val previousExcludedSkillIds = _currentExcludedSkillIds.value
 
         if (savedConversations.value.any { it.id == conversationId }) {
             loadConversation(conversationId)
         } else {
             setCurrentConversationId(conversationId)
+            _currentExcludedSkillIds.value = getSkills().filter { it.isEnabled }.map { it.id }.toSet()
             chatHistory.value = emptyList()
         }
 
@@ -900,6 +909,7 @@ class RemoteDataRepository(
                 loadConversation(previousConversationId)
             } else {
                 _currentConversationId.value = previousConversationId
+                _currentExcludedSkillIds.value = previousExcludedSkillIds
                 chatHistory.value = previousHistory
             }
         }
@@ -913,11 +923,13 @@ class RemoteDataRepository(
         systemPrompt: String? = null,
         history: MutableStateFlow<List<History>> = chatHistory,
     ): String {
+        var currentSystemPrompt = systemPrompt
+        var currentTools = tools
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var currentMessages = trimMessagesForContext(
             buildOpenAIMessages(
                 messages.filter { it.role != History.Role.TOOL_EXECUTING },
-                systemPrompt,
+                currentSystemPrompt,
             ),
             contextWindowTokens,
         )
@@ -944,7 +956,7 @@ class RemoteDataRepository(
                             val reasoningBuilder = StringBuilder()
                             val toolCallAccumulators = mutableMapOf<Int, MutableMap<String, String>>()
 
-                            requests.openAICompatibleChatStream(service, credentials, currentMessages, tools)
+                            requests.openAICompatibleChatStream(service, credentials, currentMessages, currentTools)
                                 .collect { chunk ->
                                     val choice = chunk.choices?.firstOrNull()
                                     val delta = choice?.delta ?: return@collect
@@ -983,7 +995,7 @@ class RemoteDataRepository(
                                 calls,
                             )
                         } else {
-                            val response = requests.openAICompatibleChat(service, credentials, currentMessages, tools).getOrThrow()
+                            val response = requests.openAICompatibleChat(service, credentials, currentMessages, currentTools).getOrThrow()
                             val choice = response.choices.firstOrNull()
                             val message = choice?.message
                             Triple(
@@ -1047,6 +1059,17 @@ class RemoteDataRepository(
 
                 val toolResults = executeToolCallsInParallel(toolCalls.map { Triple(it.id, it.function.name, it.function.arguments) })
 
+                // Refresh the system prompt and tool set when skills are
+                // loaded/unloaded/created/updated mid-turn so their instructions
+                // and required tools take effect in the follow-up model call.
+                if (toolResults.any {
+                    it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
+                    it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
+                }) {
+                    currentSystemPrompt = getActiveSystemPrompt()
+                    currentTools = getAvailableTools()
+                }
+
                 history.update { h ->
                     buildList<History>(h.size + toolResults.size) {
                         for (entry in h) {
@@ -1075,7 +1098,7 @@ class RemoteDataRepository(
                 currentMessages = trimMessagesForContext(
                     buildOpenAIMessages(
                         history.value.filter { it.role != History.Role.TOOL_EXECUTING },
-                        systemPrompt,
+                        currentSystemPrompt,
                     ),
                     contextWindowTokens,
                 )
@@ -1092,6 +1115,8 @@ class RemoteDataRepository(
     }
 
     private suspend fun handleGeminiChatWithTools(credentials: ServiceCredentials, messages: List<History>, tools: List<Tool>, systemPrompt: String? = null, history: MutableStateFlow<List<History>> = chatHistory): String {
+        var currentSystemPrompt = systemPrompt
+        var currentTools = tools
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
@@ -1108,7 +1133,7 @@ class RemoteDataRepository(
                         requests.geminiChat(
                             credentials = credentials,
                             messages = geminiMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1118,7 +1143,7 @@ class RemoteDataRepository(
                 val geminiMessages = currentMessages.map { it.toGeminiMessageDto() }
 
                 val response = retryApiCall {
-                    requests.geminiChat(credentials = credentials, messages = geminiMessages, tools = tools, systemInstruction = systemPrompt).getOrThrow()
+                    requests.geminiChat(credentials = credentials, messages = geminiMessages, tools = currentTools, systemInstruction = currentSystemPrompt).getOrThrow()
                 }
                 val parts = response.candidates.firstOrNull()?.content?.parts ?: return ""
 
@@ -1156,7 +1181,7 @@ class RemoteDataRepository(
                         requests.geminiChat(
                             credentials = credentials,
                             messages = bailoutMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1176,6 +1201,17 @@ class RemoteDataRepository(
                 }
 
                 val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
+
+                // Refresh the system prompt and tool set when skills are
+                // loaded/unloaded/created/updated mid-turn so their instructions
+                // and required tools take effect in the follow-up model call.
+                if (toolResults.any {
+                    it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
+                    it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
+                }) {
+                    currentSystemPrompt = getActiveSystemPrompt()
+                    currentTools = getAvailableTools()
+                }
 
                 history.update { h ->
                     val updated = buildList<History>(h.size + toolResults.size) {
@@ -1200,7 +1236,7 @@ class RemoteDataRepository(
                             }
                         }
                     }
-                    trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+                    trimHistoryForContext(updated, currentSystemPrompt?.length ?: 0, contextWindowTokens)
                 }
             }
         } catch (e: Exception) {
@@ -1212,7 +1248,7 @@ class RemoteDataRepository(
                     requests.geminiChat(
                         credentials = credentials,
                         messages = geminiMessages,
-                        systemInstruction = systemPrompt,
+                        systemInstruction = currentSystemPrompt,
                     ).getOrThrow()
                 }
                 return bailoutResponse.extractText()
@@ -1353,6 +1389,8 @@ class RemoteDataRepository(
         systemPrompt: String? = null,
         history: MutableStateFlow<List<History>> = chatHistory,
     ): String {
+        var currentSystemPrompt = systemPrompt
+        var currentTools = tools
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
@@ -1370,7 +1408,7 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1380,8 +1418,8 @@ class RemoteDataRepository(
                     requests.anthropicChat(
                         credentials = credentials,
                         messages = currentMessages,
-                        tools = tools,
-                        systemInstruction = systemPrompt,
+                        tools = currentTools,
+                        systemInstruction = currentSystemPrompt,
                     ).getOrThrow()
                 }
 
@@ -1416,7 +1454,7 @@ class RemoteDataRepository(
                         requests.anthropicChat(
                             credentials = credentials,
                             messages = currentMessages,
-                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $systemPrompt",
+                            systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
                         ).getOrThrow()
                     }
                     return bailoutResponse.extractText()
@@ -1436,6 +1474,17 @@ class RemoteDataRepository(
                 }
 
                 val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
+
+                // Refresh the system prompt and tool set when skills are
+                // loaded/unloaded/created/updated mid-turn so their instructions
+                // and required tools take effect in the follow-up model call.
+                if (toolResults.any {
+                    it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
+                    it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
+                }) {
+                    currentSystemPrompt = getActiveSystemPrompt()
+                    currentTools = getAvailableTools()
+                }
 
                 history.update { h ->
                     val updated = buildList<History>(h.size + toolResults.size) {
@@ -1460,7 +1509,7 @@ class RemoteDataRepository(
                             }
                         }
                     }
-                    trimHistoryForContext(updated, systemPrompt?.length ?: 0, contextWindowTokens)
+                    trimHistoryForContext(updated, currentSystemPrompt?.length ?: 0, contextWindowTokens)
                 }
             }
         } catch (e: Exception) {
@@ -1473,7 +1522,7 @@ class RemoteDataRepository(
                     requests.anthropicChat(
                         credentials = credentials,
                         messages = currentMessages,
-                        systemInstruction = systemPrompt,
+                        systemInstruction = currentSystemPrompt,
                     ).getOrThrow()
                 }
                 return bailoutResponse.extractText()
@@ -1890,6 +1939,7 @@ class RemoteDataRepository(
             updatedAt = now,
             title = title,
             type = existingConversation?.type ?: if (interactiveModeFlag) Conversation.TYPE_INTERACTIVE else Conversation.TYPE_CHAT,
+            excludedSkillIds = _currentExcludedSkillIds.value,
         )
 
         conversationStorage.saveConversation(conversation)
@@ -1931,6 +1981,7 @@ class RemoteDataRepository(
         val conversation = savedConversations.value.find { it.id == id } ?: return
 
         setCurrentConversationId(id)
+        _currentExcludedSkillIds.value = conversation.excludedSkillIds
         chatHistory.value = conversation.messages.map { m ->
             // Prefer the modern `attachments` field. Fall back to the legacy single-file
             // fields for conversations saved before multi-attachment support.
@@ -1988,6 +2039,7 @@ class RemoteDataRepository(
 
     override fun startNewChat() {
         setCurrentConversationId(null)
+        _currentExcludedSkillIds.value = getSkills().filter { it.isEnabled }.map { it.id }.toSet()
         chatHistory.value = emptyList()
     }
 
@@ -2175,10 +2227,27 @@ class RemoteDataRepository(
         )
 
         val isLimited = !supportsTools(modelId)
+        val excludedIds = _currentExcludedSkillIds.value
+        val oakUiEnabled = getSkills().any { it.id == Skill.OAK_UI_SKILL_ID && it.isEnabled }
         val uiMode = when {
-            interactiveModeFlag -> ChatPromptUiMode.INTERACTIVE_UI
-            appSettings.isDynamicUiEnabled() && !isLimited -> ChatPromptUiMode.DYNAMIC_UI
+            interactiveModeFlag && oakUiEnabled -> ChatPromptUiMode.INTERACTIVE_UI
+            appSettings.isDynamicUiEnabled() && !isLimited && oakUiEnabled -> ChatPromptUiMode.DYNAMIC_UI
             else -> ChatPromptUiMode.NONE
+        }
+
+        val allEnabledSkills = getSkills().filter { it.isEnabled }
+        val activeSkills = allEnabledSkills.filter { skill ->
+            skill.id !in excludedIds
+        }.map { skill ->
+            // Build dynamic email skill content based on connected accounts
+            if (skill.id == Skill.EMAIL_SKILL_ID && emailAccounts.isNotEmpty()) {
+                skill.copy(content = buildEmailSkillContent(emailAccounts))
+            } else {
+                skill
+            }
+        }
+        val inactiveSkills = allEnabledSkills.filter { skill ->
+            skill.id in excludedIds
         }
 
         return buildChatSystemPrompt(
@@ -2194,13 +2263,156 @@ class RemoteDataRepository(
             emailAccounts = emailAccounts,
             runtime = runtime,
             uiMode = uiMode,
+            activeSkills = activeSkills,
+            inactiveSkills = inactiveSkills,
         ).ifEmpty { null }
+    }
+
+    private fun buildEmailSkillContent(accounts: List<EmailAccountSummary>): String = buildString {
+        append("The user has these email accounts connected. Use them via the existing email tools — ")
+        append("do NOT suggest adding, re-authenticating, or connecting a new account unless the user explicitly asks.\n")
+        append("**Sending policy**: before calling `compose_email` or `reply_email`, present the full draft (to, subject, body) in chat and get explicit confirmation (\"send it\" / \"looks good\" / \"yes\"). Never call the send tools on the same turn you draft — the user must have a chance to correct tone, recipients, or content first. If the user later says \"change X and send\", re-present the updated draft and confirm again.\n")
+        for (account in accounts) {
+            append("- **")
+            append(account.email)
+            append("**: ")
+            if (account.lastError != null) {
+                append("sync failing — ")
+                append(account.lastError)
+            } else {
+                append(account.unreadCount)
+                append(" unread")
+                if (account.lastSyncEpochMs > 0) {
+                    append(" (last sync: ")
+                    append(Instant.fromEpochMilliseconds(account.lastSyncEpochMs))
+                    append(')')
+                }
+            }
+            append('\n')
+        }
     }
 
     override fun isDynamicUiEnabled(): Boolean = appSettings.isDynamicUiEnabled()
 
     override fun setDynamicUiEnabled(enabled: Boolean) {
         appSettings.setDynamicUiEnabled(enabled)
+    }
+
+    // Skills
+
+    /** Cached skill list — populated on first read, invalidated by write operations. */
+    private var _cachedSkills: List<Skill>? = null
+    private val cachedSkillsLock = Any()
+
+    override fun getSkills(): List<Skill> = synchronized(cachedSkillsLock) {
+        _cachedSkills?.let { return@synchronized it }
+        val json = appSettings.getSkillsJson()
+        val result = Skill.fromJson(json, SharedJson)
+        if (json.isBlank() || json == "[]") {
+            saveSkills(result)
+        } else {
+            // Check if built-ins were merged in (upgrade scenario)
+            val storedIds = try {
+                SharedJson.decodeFromString<List<Skill>>(json).map { it.id }.toSet()
+            } catch (_: Exception) {
+                emptySet()
+            }
+            if (Skill.BUILT_IN_SKILLS.any { it.id !in storedIds }) {
+                saveSkills(result)
+            }
+        }
+        _cachedSkills = result
+        result
+    }
+
+    private fun invalidateSkillCache() = synchronized(cachedSkillsLock) {
+        _cachedSkills = null
+    }
+
+    override fun setSkillEnabled(skillId: String, enabled: Boolean) {
+        val skills = getSkills().toMutableList()
+        val index = skills.indexOfFirst { it.id == skillId }
+        if (index >= 0) {
+            skills[index] = skills[index].copy(isEnabled = enabled)
+            saveSkills(skills)
+            invalidateSkillCache()
+        }
+        if (enabled) {
+            // Newly enabled skills start excluded (inactive) — the agent must
+            // explicitly load_skill them before they take effect in a conversation.
+            _currentExcludedSkillIds.update { it + skillId }
+            updateAllConversationExcludedIds { excluded ->
+                if (skillId !in excluded) excluded + skillId else null
+            }
+        } else {
+            _currentExcludedSkillIds.update { it - skillId }
+            updateAllConversationExcludedIds { excluded ->
+                if (skillId in excluded) excluded - skillId else null
+            }
+        }
+    }
+
+    override fun removeSkill(skillId: String) {
+        val skills = getSkills()
+        val skill = skills.find { it.id == skillId }
+        if (skill?.isBuiltIn == true) return
+        saveSkills(skills.filter { it.id != skillId })
+        invalidateSkillCache()
+        _currentExcludedSkillIds.update { it - skillId }
+        updateAllConversationExcludedIds { excluded ->
+            if (skillId in excluded) excluded - skillId else null
+        }
+    }
+
+    override fun importSkill(skill: Skill) {
+        val skills = getSkills().toMutableList()
+        val existingIndex = skills.indexOfFirst { it.id == skill.id }
+        if (existingIndex >= 0) {
+            skills[existingIndex] = skill
+        } else {
+            skills.add(skill)
+        }
+        saveSkills(skills)
+        invalidateSkillCache()
+    }
+
+    override fun getExcludedSkillIds(): Set<String> = _currentExcludedSkillIds.value
+
+    override fun excludeSkill(skillId: String) {
+        _currentExcludedSkillIds.update { it + skillId }
+    }
+
+    override fun includeSkill(skillId: String) {
+        _currentExcludedSkillIds.update { it - skillId }
+    }
+
+    override fun getSkillEnabledTools(): Set<String> {
+        val excludedIds = _currentExcludedSkillIds.value
+        return getSkills()
+            .filter { it.isEnabled && it.id !in excludedIds }
+            .flatMap { it.requiredTools }
+            .toSet()
+    }
+
+    /**
+     * Batch-update [Conversation.excludedSkillIds] across all saved conversations.
+     * [transform] receives the current excluded set and returns the updated set,
+     * or null if no change is needed for that conversation.
+     */
+    private fun updateAllConversationExcludedIds(transform: (Set<String>) -> Set<String>?) {
+        val changed = mutableListOf<Conversation>()
+        for (conversation in savedConversations.value) {
+            val updated = transform(conversation.excludedSkillIds) ?: continue
+            changed.add(conversation.copy(excludedSkillIds = updated))
+        }
+        if (changed.isNotEmpty()) {
+            conversationStorage.saveConversations(changed)
+        }
+    }
+
+    private fun saveSkills(skills: List<Skill>) {
+        val json = SharedJson.encodeToString(skills)
+        appSettings.setSkillsJson(json)
     }
 
     override fun getThemeMode(): ThemeMode = appSettings.getThemeMode()
@@ -2441,7 +2653,9 @@ class RemoteDataRepository(
     override fun importSettingsFromJson(json: String, sections: Set<ImportSection>, replace: Boolean): Int {
         val jsonObject = SharedJson.parseToJsonElement(json).jsonObject
         val toolIds = getPlatformToolDefinitions().map { it.id }
-        return appSettings.importFromJson(jsonObject, toolIds, sections, replace)
+        val errors = appSettings.importFromJson(jsonObject, toolIds, sections, replace)
+        invalidateSkillCache()
+        return errors
     }
 
     override suspend fun askWithTools(prompt: String, instanceId: String?): String {
