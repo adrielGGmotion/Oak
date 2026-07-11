@@ -277,6 +277,10 @@ import oak.composeapp.generated.resources.settings_ui_scale
 import oak.composeapp.generated.resources.settings_unlimited_tool_calls
 import oak.composeapp.generated.resources.settings_unlimited_tool_calls_description
 import oak.composeapp.generated.resources.settings_version
+import oak.composeapp.generated.resources.settings_badge_count
+import oak.composeapp.generated.resources.settings_dynamic_colors_description
+import oak.composeapp.generated.resources.settings_dynamic_colors_title
+import oak.composeapp.generated.resources.settings_high_memory_usage
 import oak.composeapp.generated.resources.snackbar_email_removed
 import oak.composeapp.generated.resources.snackbar_mcp_server_removed
 import oak.composeapp.generated.resources.snackbar_memory_deleted
@@ -1493,7 +1497,7 @@ private fun LiteRTSettings(
                 if (performance == DevicePerformance.POOR) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "⚠ High memory usage — may cause slowdowns or crashes",
+                        text = stringResource(Res.string.settings_high_memory_usage),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -2321,7 +2325,7 @@ private fun ImportPreviewDialog(
                             if (count != null) {
                                 Spacer(Modifier.width(4.dp))
                                 Text(
-                                    text = "($count)",
+                                    text = stringResource(Res.string.settings_badge_count, count),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -2402,7 +2406,7 @@ private fun ExportPreviewDialog(
                             if (count != null) {
                                 Spacer(Modifier.width(4.dp))
                                 Text(
-                                    text = "($count)",
+                                    text = stringResource(Res.string.settings_badge_count, count),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -3152,13 +3156,13 @@ private fun DynamicColorsToggle(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Dynamic Colors (Android 12+)",
+                    text = stringResource(Res.string.settings_dynamic_colors_title),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.size(2.dp))
                 Text(
-                    text = "Adapt to your system wallpaper colors",
+                    text = stringResource(Res.string.settings_dynamic_colors_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

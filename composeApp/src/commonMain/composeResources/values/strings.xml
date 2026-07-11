@@ -497,4 +497,8 @@
     <string name="settings_skills_discard_confirm">You have unsaved changes. Are you sure you want to discard them?</string>
     <string name="settings_skills_expand">Expand</string>
     <string name="settings_skills_collapse">Collapse</string>
+    <string name="settings_dynamic_colors_title">Dynamic Colors (Android 12+)</string>
+    <string name="settings_dynamic_colors_description">Adapt to your system wallpaper colors</string>
+    <string name="settings_high_memory_usage">⚠ High memory usage — may cause slowdowns or crashes</string>
+    <string name="settings_badge_count">(%1$s)</string>
 </resources>
