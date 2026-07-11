@@ -40,6 +40,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -499,6 +500,24 @@ private fun EditSkillDialog(
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
 
+    // Use rememberUpdatedState so the confirmValueChange lambda (captured once
+    // by rememberBottomSheetState) always reads the latest hasChanges value.
+    // showDiscardDialog is a var backed by mutableStateOf so the MutableState
+    // reference stays valid even inside the captured lambda.
+    val currentHasChanges by rememberUpdatedState(hasChanges)
+
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        confirmValueChange = { newValue ->
+            if (newValue == SheetValue.Hidden && currentHasChanges) {
+                showDiscardDialog = true
+                false // prevent the sheet from hiding
+            } else {
+                true
+            }
+        },
+    )
+
     val handleDismiss = {
         if (hasChanges) {
             showDiscardDialog = true
@@ -509,7 +528,7 @@ private fun EditSkillDialog(
 
     ModalBottomSheet(
         onDismissRequest = handleDismiss,
-        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
+        sheetState = sheetState,
     ) {
         Column(
             modifier = Modifier
