@@ -80,11 +80,14 @@ internal const val DEFAULT_TOOL_CALL_GUIDANCE =
         "inline tool call markup (such as `<tool_call>`, `<invoke>`, or `<TOOLCALL>` blocks) " +
         "in your text responses. When the user asks you to generate, create, produce, or " +
         "transform something (e.g. make a file, design a layout, write code, format data), " +
-        "first check whether an existing tool or skill can handle it. Use `list_skills` to " +
-        "discover available skills and `load_skill` to activate a relevant one. Do not call " +
-        "`create_skill` unless the user explicitly asks you to create a skill — suggest the idea " +
-        "and get their approval first. If a tool or loaded skill addresses the request, prefer " +
-        "using them over generating ad-hoc solutions. Your text responses should contain only " +
+        "follow this procedure:\n" +
+        "1. Check the `Available (not loaded) Skills` section below — if a matching skill " +
+        "exists, call `load_skill` with its id before proceeding, then follow its instructions.\n" +
+        "2. If the skill is already listed under `Active (loaded) Skills`, follow its instructions.\n" +
+        "3. Only use an ad-hoc approach if no skill covers the request.\n" +
+        "Use `list_skills` to discover disabled skills. Do not call `create_skill` unless " +
+        "the user explicitly asks you to — suggest the idea and get their approval first. " +
+        "Your text responses should contain only " +
         "natural language and, when appropriate, ```oak-ui blocks for interactive UI."
 
 /**
@@ -108,6 +111,7 @@ internal fun buildChatSystemPrompt(
     runtime: ChatPromptRuntimeContext,
     uiMode: ChatPromptUiMode,
     activeSkills: List<Skill> = emptyList(),
+    inactiveSkills: List<Skill> = emptyList(),
 ): String = buildString {
     append(soul)
 
@@ -155,25 +159,38 @@ internal fun buildChatSystemPrompt(
 
     appendContextSection(runtime)
 
-    // Inject active skill content after Context, before oak-ui sections.
+    // Inject skill information after Context, before oak-ui sections.
     // Skills can reference time/model info from Context.
+    // Both loaded (active) and available (not loaded) skills are surfaced so the
+    // model can see what's available without calling list_skills first.
     if (variant == SystemPromptVariant.CHAT_REMOTE) {
-        val enabledSkills = activeSkills.filter { it.isEnabled && it.content.isNotBlank() }
-        if (enabledSkills.isNotEmpty()) {
+        val loadedSkills = activeSkills.filter { it.isEnabled && it.content.isNotBlank() }
+        val availableSkills = inactiveSkills.filter { it.isEnabled }
+        val hasActive = loadedSkills.isNotEmpty()
+        val hasAvailable = availableSkills.isNotEmpty()
+
+        if (hasActive || hasAvailable) {
             if (isNotEmpty()) append("\n\n")
-            append("## Active Skills\n")
-            append("These skill modules are active and provide instructions, context, or capabilities for handling certain tasks. ")
-            append("When the user asks you to generate, create, produce, or transform something, check whether an active skill covers the request first. ")
-            append("Use `list_skills` to browse all available skills and `load_skill` to activate additional ones. ")
-            append("Active skill instructions take priority over default behaviour — if a skill describes how to handle a task, use that approach.\n\n")
-            append("What each skill provides:\n")
-            for (skill in enabledSkills) {
-                append("- **${skill.name}**: ${skill.description}\n")
+            append("## Skills\n")
+            append("When the user asks you to generate, create, produce, or transform something, check these skills before using an ad-hoc approach.\n")
+
+            if (hasActive) {
+                append("\nActive (loaded) Skills — their instructions are in effect:\n")
+                for (skill in loadedSkills) {
+                    append("- **${skill.name}**: ${skill.description}\n")
+                }
+                for (skill in loadedSkills) {
+                    append("\n\n")
+                    append(skill.content)
+                }
             }
-            append("\n")
-            for (skill in enabledSkills) {
-                append("\n\n")
-                append(skill.content)
+
+            if (hasAvailable) {
+                if (hasActive) append("\n")
+                append("\nAvailable (not loaded) Skills — call `load_skill` with the skill id to activate one:\n")
+                for (skill in availableSkills) {
+                    append("- **${skill.name}** (id: `${skill.id}`): ${skill.description}\n")
+                }
             }
         }
     }

@@ -107,6 +107,8 @@ private const val MAX_UNLIMITED_REPEATED_TOOL_CALLS = 100
 private const val ASK_QUESTIONS_TOOL_NAME = "ask_questions"
 private const val LOAD_SKILL_TOOL_NAME = "load_skill"
 private const val UNLOAD_SKILL_TOOL_NAME = "unload_skill"
+private const val CREATE_SKILL_TOOL_NAME = "create_skill"
+private const val UPDATE_SKILL_TOOL_NAME = "update_skill"
 private const val MAX_API_RETRIES = 2
 private const val MAX_HEARTBEAT_MESSAGES = 50
 private const val ESTIMATED_CHARS_PER_TOKEN = 4
@@ -1058,9 +1060,12 @@ class RemoteDataRepository(
                 val toolResults = executeToolCallsInParallel(toolCalls.map { Triple(it.id, it.function.name, it.function.arguments) })
 
                 // Refresh the system prompt and tool set when skills are
-                // loaded/unloaded mid-turn so their instructions and
-                // required tools take effect in the follow-up model call.
-                if (toolResults.any { it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME }) {
+                // loaded/unloaded/created/updated mid-turn so their instructions
+                // and required tools take effect in the follow-up model call.
+                if (toolResults.any {
+                    it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
+                    it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
+                }) {
                     currentSystemPrompt = getActiveSystemPrompt()
                     currentTools = getAvailableTools()
                 }
@@ -1198,9 +1203,12 @@ class RemoteDataRepository(
                 val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
 
                 // Refresh the system prompt and tool set when skills are
-                // loaded/unloaded mid-turn so their instructions and
-                // required tools take effect in the follow-up model call.
-                if (toolResults.any { it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME }) {
+                // loaded/unloaded/created/updated mid-turn so their instructions
+                // and required tools take effect in the follow-up model call.
+                if (toolResults.any {
+                    it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
+                    it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
+                }) {
                     currentSystemPrompt = getActiveSystemPrompt()
                     currentTools = getAvailableTools()
                 }
@@ -1468,9 +1476,12 @@ class RemoteDataRepository(
                 val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
 
                 // Refresh the system prompt and tool set when skills are
-                // loaded/unloaded mid-turn so their instructions and
-                // required tools take effect in the follow-up model call.
-                if (toolResults.any { it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME }) {
+                // loaded/unloaded/created/updated mid-turn so their instructions
+                // and required tools take effect in the follow-up model call.
+                if (toolResults.any {
+                    it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
+                    it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
+                }) {
                     currentSystemPrompt = getActiveSystemPrompt()
                     currentTools = getAvailableTools()
                 }
@@ -2224,8 +2235,9 @@ class RemoteDataRepository(
             else -> ChatPromptUiMode.NONE
         }
 
-        val activeSkills = getSkills().filter { skill ->
-            skill.isEnabled && skill.id !in excludedIds
+        val allEnabledSkills = getSkills().filter { it.isEnabled }
+        val activeSkills = allEnabledSkills.filter { skill ->
+            skill.id !in excludedIds
         }.map { skill ->
             // Build dynamic email skill content based on connected accounts
             if (skill.id == Skill.EMAIL_SKILL_ID && emailAccounts.isNotEmpty()) {
@@ -2233,6 +2245,9 @@ class RemoteDataRepository(
             } else {
                 skill
             }
+        }
+        val inactiveSkills = allEnabledSkills.filter { skill ->
+            skill.id in excludedIds
         }
 
         return buildChatSystemPrompt(
@@ -2249,6 +2264,7 @@ class RemoteDataRepository(
             runtime = runtime,
             uiMode = uiMode,
             activeSkills = activeSkills,
+            inactiveSkills = inactiveSkills,
         ).ifEmpty { null }
     }
 
