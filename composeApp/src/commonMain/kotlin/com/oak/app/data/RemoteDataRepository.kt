@@ -922,6 +922,7 @@ class RemoteDataRepository(
         history: MutableStateFlow<List<History>> = chatHistory,
     ): String {
         var currentSystemPrompt = systemPrompt
+        var currentTools = tools
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var currentMessages = trimMessagesForContext(
             buildOpenAIMessages(
@@ -953,7 +954,7 @@ class RemoteDataRepository(
                             val reasoningBuilder = StringBuilder()
                             val toolCallAccumulators = mutableMapOf<Int, MutableMap<String, String>>()
 
-                            requests.openAICompatibleChatStream(service, credentials, currentMessages, tools)
+                            requests.openAICompatibleChatStream(service, credentials, currentMessages, currentTools)
                                 .collect { chunk ->
                                     val choice = chunk.choices?.firstOrNull()
                                     val delta = choice?.delta ?: return@collect
@@ -992,7 +993,7 @@ class RemoteDataRepository(
                                 calls,
                             )
                         } else {
-                            val response = requests.openAICompatibleChat(service, credentials, currentMessages, tools).getOrThrow()
+                            val response = requests.openAICompatibleChat(service, credentials, currentMessages, currentTools).getOrThrow()
                             val choice = response.choices.firstOrNull()
                             val message = choice?.message
                             Triple(
@@ -1056,10 +1057,12 @@ class RemoteDataRepository(
 
                 val toolResults = executeToolCallsInParallel(toolCalls.map { Triple(it.id, it.function.name, it.function.arguments) })
 
-                // Refresh the system prompt when skills are loaded/unloaded mid-turn
-                // so their instructions take effect in the follow-up model call.
+                // Refresh the system prompt and tool set when skills are
+                // loaded/unloaded mid-turn so their instructions and
+                // required tools take effect in the follow-up model call.
                 if (toolResults.any { it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME }) {
                     currentSystemPrompt = getActiveSystemPrompt()
+                    currentTools = getAvailableTools()
                 }
 
                 history.update { h ->
@@ -1108,6 +1111,7 @@ class RemoteDataRepository(
 
     private suspend fun handleGeminiChatWithTools(credentials: ServiceCredentials, messages: List<History>, tools: List<Tool>, systemPrompt: String? = null, history: MutableStateFlow<List<History>> = chatHistory): String {
         var currentSystemPrompt = systemPrompt
+        var currentTools = tools
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
@@ -1134,7 +1138,7 @@ class RemoteDataRepository(
                 val geminiMessages = currentMessages.map { it.toGeminiMessageDto() }
 
                 val response = retryApiCall {
-                    requests.geminiChat(credentials = credentials, messages = geminiMessages, tools = tools, systemInstruction = currentSystemPrompt).getOrThrow()
+                    requests.geminiChat(credentials = credentials, messages = geminiMessages, tools = currentTools, systemInstruction = currentSystemPrompt).getOrThrow()
                 }
                 val parts = response.candidates.firstOrNull()?.content?.parts ?: return ""
 
@@ -1193,10 +1197,12 @@ class RemoteDataRepository(
 
                 val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
 
-                // Refresh the system prompt when skills are loaded/unloaded mid-turn
-                // so their instructions take effect in the follow-up model call.
+                // Refresh the system prompt and tool set when skills are
+                // loaded/unloaded mid-turn so their instructions and
+                // required tools take effect in the follow-up model call.
                 if (toolResults.any { it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME }) {
                     currentSystemPrompt = getActiveSystemPrompt()
+                    currentTools = getAvailableTools()
                 }
 
                 history.update { h ->
@@ -1376,6 +1382,7 @@ class RemoteDataRepository(
         history: MutableStateFlow<List<History>> = chatHistory,
     ): String {
         var currentSystemPrompt = systemPrompt
+        var currentTools = tools
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
@@ -1403,7 +1410,7 @@ class RemoteDataRepository(
                     requests.anthropicChat(
                         credentials = credentials,
                         messages = currentMessages,
-                        tools = tools,
+                        tools = currentTools,
                         systemInstruction = currentSystemPrompt,
                     ).getOrThrow()
                 }
@@ -1460,10 +1467,12 @@ class RemoteDataRepository(
 
                 val toolResults = executeToolCallsInParallel(toolCallInfos.map { Triple(it.id, it.name, it.arguments) })
 
-                // Refresh the system prompt when skills are loaded/unloaded mid-turn
-                // so their instructions take effect in the follow-up model call.
+                // Refresh the system prompt and tool set when skills are
+                // loaded/unloaded mid-turn so their instructions and
+                // required tools take effect in the follow-up model call.
                 if (toolResults.any { it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME }) {
                     currentSystemPrompt = getActiveSystemPrompt()
+                    currentTools = getAvailableTools()
                 }
 
                 history.update { h ->
