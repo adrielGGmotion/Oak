@@ -68,18 +68,24 @@ private const val LOCAL_MEMORY_BUDGET_CHARS = Int.MAX_VALUE
 
 /**
  * Tells remote models that tools are handled through the API's structured
- * mechanism, so they don't fall back to inline `<tool_call>` or `<invoke>` blocks.
- * Only composed into the `CHAT_REMOTE` variant — on-device models get separate
- * instructions from `buildLocalToolPrompt()`.
+ * mechanism, and instructs them to proactively review available tools and
+ * skills before falling back to ad-hoc solutions. Only composed into the
+ * `CHAT_REMOTE` variant — on-device models get separate instructions from
+ * `buildLocalToolPrompt()`.
  */
 internal const val DEFAULT_TOOL_CALL_GUIDANCE =
     "## Tool Use\n" +
         "All available tools are provided to you through the API's structured `tools` parameter. " +
         "Use the API's native structured tool invocation mechanism to call them — do not output " +
         "inline tool call markup (such as `<tool_call>`, `<invoke>`, or `<TOOLCALL>` blocks) " +
-        "in your text responses. If you need a tool, call it through the API; your text responses " +
-        "should contain only natural language and, when appropriate, ```oak-ui blocks for " +
-        "interactive UI."
+        "in your text responses. When the user asks you to generate, create, produce, or " +
+        "transform something (e.g. make a file, design a layout, write code, format data), " +
+        "first check whether an existing tool or skill can handle it. Use `list_skills` to " +
+        "discover available skills and `load_skill` to activate a relevant one. Do not call " +
+        "`create_skill` unless the user explicitly asks you to create a skill — suggest the idea " +
+        "and get their approval first. If a tool or loaded skill addresses the request, prefer " +
+        "using them over generating ad-hoc solutions. Your text responses should contain only " +
+        "natural language and, when appropriate, ```oak-ui blocks for interactive UI."
 
 /**
  * Composes the full chat system prompt for the given [variant].
@@ -156,8 +162,10 @@ internal fun buildChatSystemPrompt(
         if (enabledSkills.isNotEmpty()) {
             if (isNotEmpty()) append("\n\n")
             append("## Active Skills\n")
-            append("The following skill modules are active. You MUST follow their instructions when applicable to the user's request. ")
-            append("These take priority over default behaviour — if a skill describes how to handle a task, use that approach instead of improvising.\n\n")
+            append("These skill modules are active and provide instructions, context, or capabilities for handling certain tasks. ")
+            append("When the user asks you to generate, create, produce, or transform something, check whether an active skill covers the request first. ")
+            append("Use `list_skills` to browse all available skills and `load_skill` to activate additional ones. ")
+            append("Active skill instructions take priority over default behaviour — if a skill describes how to handle a task, use that approach.\n\n")
             append("What each skill provides:\n")
             for (skill in enabledSkills) {
                 append("- **${skill.name}**: ${skill.description}\n")
