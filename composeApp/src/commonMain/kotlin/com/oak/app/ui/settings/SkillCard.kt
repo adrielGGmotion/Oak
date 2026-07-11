@@ -1,5 +1,6 @@
 package com.oak.app.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -34,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.oak.app.ui.handCursor
@@ -62,8 +64,15 @@ internal fun SkillCard(
     var expanded by remember { mutableStateOf(false) }
 
     Card(
-        onClick = { if (!skill.isBuiltIn) expanded = !expanded },
-        modifier = Modifier.fillMaxWidth().handCursor(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (!skill.isBuiltIn) {
+                    Modifier.clickable { expanded = !expanded }.handCursor()
+                } else {
+                    Modifier
+                },
+            ),
         colors = oakAdaptiveCardColors(),
         border = oakAdaptiveCardBorder(),
     ) {
@@ -151,6 +160,7 @@ internal fun SkillCard(
                     Icon(
                         imageVector = Icons.Filled.ArrowDropDown,
                         contentDescription = if (expanded) stringResource(Res.string.settings_skills_collapse) else stringResource(Res.string.settings_skills_expand),
+                        modifier = Modifier.rotate(if (expanded) 180f else 0f),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
