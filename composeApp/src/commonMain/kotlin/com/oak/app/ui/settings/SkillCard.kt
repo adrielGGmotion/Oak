@@ -46,6 +46,7 @@ import oak.composeapp.generated.resources.settings_skills_edit
 import oak.composeapp.generated.resources.settings_skills_expand
 import oak.composeapp.generated.resources.settings_skills_remove
 import oak.composeapp.generated.resources.settings_skills_required_tools
+import oak.composeapp.generated.resources.settings_skills_required_tools_count
 import oak.composeapp.generated.resources.settings_skills_reset
 import org.jetbrains.compose.resources.stringResource
 
@@ -106,9 +107,7 @@ internal fun SkillCard(
                         }
                         if (skill.requiredTools.isNotEmpty()) {
                             SkillBadge(
-                                text = "${skill.requiredTools.size} ${
-                                    stringResource(Res.string.settings_skills_required_tools)
-                                }",
+                                text = stringResource(Res.string.settings_skills_required_tools_count, skill.requiredTools.size),
                             )
                         }
                     }

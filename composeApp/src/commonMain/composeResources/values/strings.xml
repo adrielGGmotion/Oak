@@ -476,6 +476,7 @@
     <string name="settings_skills_description">Modular instructions that enhance Oak\'s capabilities. Enable or disable skills to control what the AI can do.</string>
     <string name="settings_skills_built_in">Built-in</string>
     <string name="settings_skills_required_tools">required tools</string>
+    <string name="settings_skills_required_tools_count">%1$d required tools</string>
     <string name="settings_skills_import">Create Skill</string>
     <string name="settings_skills_import_from_file">Import from File</string>
     <string name="settings_skills_import_description">Create a new skill with a name, description, and markdown content.</string>
