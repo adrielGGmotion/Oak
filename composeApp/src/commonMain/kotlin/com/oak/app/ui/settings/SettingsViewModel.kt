@@ -28,8 +28,6 @@ import com.oak.app.network.OpenAICompatibleConnectionException
 import com.oak.app.network.OpenAICompatibleInvalidApiKeyException
 import com.oak.app.network.OpenAICompatibleQuotaExhaustedException
 import com.oak.app.network.OpenAICompatibleRateLimitExceededException
-import com.oak.app.ssh.SshAuthType
-import com.oak.app.ssh.SshConnectionStatus
 import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.StoragePermissionController
 import kotlinx.collections.immutable.toImmutableList
@@ -127,7 +125,6 @@ class SettingsViewModel(
         uiScale = dataRepository.getUiScale(),
         showUiScale = currentPlatform is Platform.Desktop,
         mcpServers = buildMcpServerEntries().toImmutableList(),
-        sshServers = buildSshServerEntries().toImmutableList(),
         skills = buildSkillEntries().toImmutableList(),
         localActiveBackend = dataRepository.getLocalActiveBackend()?.value,
         backendPreference = dataRepository.getBackendPreference(),
@@ -190,11 +187,6 @@ class SettingsViewModel(
         onRefreshMcpServer = ::onRefreshMcpServer,
         onShowAddMcpServerDialog = ::onShowAddMcpServerDialog,
         onAddPopularMcpServer = ::onAddPopularMcpServer,
-        onAddSshServer = ::onAddSshServer,
-        onRemoveSshServer = ::onRemoveSshServer,
-        onToggleSshServer = ::onToggleSshServer,
-        onConnectSshServer = ::onConnectSshServer,
-        onShowAddSshServerDialog = ::onShowAddSshServerDialog,
         onToggleSkill = ::onToggleSkill,
         onRemoveSkill = ::onRemoveSkill,
         onImportSkill = ::onImportSkill,
@@ -263,12 +255,6 @@ class SettingsViewModel(
             hasCheckedInitialConnection = true
             checkAllConnections()
             connectEnabledMcpServers()
-            viewModelScope.launch(backgroundDispatcher) {
-                val enabledServers = dataRepository.getSshServers().filter { it.isEnabled }
-                enabledServers
-                    .filterNot { dataRepository.isSshServerConnected(it.id) }
-                    .forEach { server -> connectSshServerWithStatus(server.id) }
-            }
         }
         // Re-read notification listener state every time the screen becomes visible:
         // the user may have toggled access in system settings while we were backgrounded.
@@ -1029,108 +1015,6 @@ class SettingsViewModel(
         }
     }
 
-    // SSH server management
-    private fun buildSshServerEntries(): List<SshServerUiState> = dataRepository.getSshServers().map { config ->
-        SshServerUiState(
-            id = config.id,
-            name = config.name,
-            host = config.host,
-            port = config.port,
-            username = config.username,
-            authType = config.authType,
-            isEnabled = config.isEnabled,
-            connectionStatus = if (dataRepository.isSshServerConnected(config.id)) {
-                SshConnectionStatus.Connected
-            } else {
-                SshConnectionStatus.Disconnected
-            },
-        )
-    }
-
-    private fun refreshSshServers() {
-        _state.update { current ->
-            val existingState = current.sshServers.associateBy { it.id }
-            current.copy(
-                sshServers = buildSshServerEntries().map { entry ->
-                    val existing = existingState[entry.id]
-                    if (existing != null && (existing.connectionStatus == SshConnectionStatus.Connecting || existing.connectionStatus == SshConnectionStatus.Error)) {
-                        entry.copy(connectionStatus = existing.connectionStatus, errorMessage = existing.errorMessage)
-                    } else {
-                        entry
-                    }
-                }.toImmutableList(),
-            )
-        }
-    }
-
-    private fun onAddSshServer(
-        name: String,
-        host: String,
-        port: Int,
-        username: String,
-        password: String,
-        privateKey: String,
-        passphrase: String,
-        authType: SshAuthType,
-    ) {
-        viewModelScope.launch(backgroundDispatcher) {
-            val config = dataRepository.addSshServer(name, host, port, username, authType, password, privateKey, passphrase)
-            refreshSshServers()
-            connectSshServerWithStatus(config.id)
-        }
-        _state.update { it.copy(showAddSshServerDialog = false) }
-    }
-
-    private fun onRemoveSshServer(serverId: String) {
-        commitPendingDeletion(PendingDeletion.SshServer::class)
-        _state.update { it.copy(pendingDeletion = PendingDeletion.SshServer(serverId)) }
-        pendingDeleteJobs[PendingDeletion.SshServer::class] = viewModelScope.launch(backgroundDispatcher) {
-            delay(4.seconds)
-            executeDeletion(PendingDeletion.SshServer(serverId))
-        }
-    }
-
-    private fun onToggleSshServer(serverId: String, enabled: Boolean) {
-        viewModelScope.launch(backgroundDispatcher) {
-            dataRepository.setSshServerEnabled(serverId, enabled)
-            refreshSshServers()
-            if (enabled) {
-                connectSshServerWithStatus(serverId)
-            }
-        }
-    }
-
-    private fun onConnectSshServer(serverId: String) {
-        viewModelScope.launch(backgroundDispatcher) {
-            connectSshServerWithStatus(serverId)
-        }
-    }
-
-    private fun onShowAddSshServerDialog(show: Boolean) {
-        _state.update { it.copy(showAddSshServerDialog = show) }
-    }
-
-    private suspend fun connectSshServerWithStatus(serverId: String) {
-        updateSshConnectionStatus(serverId, SshConnectionStatus.Connecting)
-        val result = dataRepository.connectSshServer(serverId)
-        if (result.isSuccess) {
-            updateSshConnectionStatus(serverId, SshConnectionStatus.Connected)
-            refreshSshServers()
-        } else {
-            val errorMessage = result.exceptionOrNull()?.message ?: "Connection failed"
-            updateSshConnectionStatus(serverId, SshConnectionStatus.Error, errorMessage)
-        }
-    }
-
-    private fun updateSshConnectionStatus(serverId: String, status: SshConnectionStatus, errorMessage: String? = null) {
-        _state.update { state ->
-            state.copy(
-                sshServers = state.sshServers.map { entry ->
-                    if (entry.id == serverId) entry.copy(connectionStatus = status, errorMessage = errorMessage) else entry
-                }.toImmutableList(),
-            )
-        }
-    }
 
     private fun commitPendingDeletion(type: KClass<out PendingDeletion>) {
         pendingDeleteJobs[type]?.cancel()
@@ -1190,12 +1074,6 @@ class SettingsViewModel(
                 dataRepository.removeMcpServer(deletion.serverId)
                 _state.update { it.copy(pendingDeletion = null) }
                 refreshMcpServers()
-            }
-
-            is PendingDeletion.SshServer -> {
-                dataRepository.removeSshServer(deletion.serverId)
-                _state.update { it.copy(pendingDeletion = null) }
-                refreshSshServers()
             }
 
             is PendingDeletion.Skill -> {

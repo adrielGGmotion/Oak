@@ -21,8 +21,6 @@ import com.oak.app.data.TaskStore
 import com.oak.app.mcp.McpServerManager
 import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
-import com.oak.app.ssh.SshClient
-import com.oak.app.ssh.SshClientImpl
 import com.oak.app.tools.CommonTools
 import com.oak.app.tools.EditFileTool
 import com.oak.app.tools.EmailTools
@@ -33,7 +31,6 @@ import com.oak.app.tools.ReadFileTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
 import com.oak.app.tools.SkillTools
-import com.oak.app.tools.SshTools
 import com.oak.app.tools.WebSearchTool
 import com.oak.app.tools.askQuestionsToolInfo
 import com.oak.app.tools.compressContextTool
@@ -164,7 +161,7 @@ actual fun getPlatformToolDefinitions(): List<ToolInfo> = listOf(
     ProcessManagerTool.toolInfo,
     ReadFileTool.toolInfo,
     EditFileTool.toolInfo,
-) + CommonTools.commonToolDefinitions + SshTools.toolDefinitions + SkillTools.skillToolDefinitions
+) + CommonTools.commonToolDefinitions + SkillTools.skillToolDefinitions
 
 actual fun getAvailableTools(): List<Tool> {
     val appSettings: AppSettings by inject(AppSettings::class.java)
@@ -212,10 +209,6 @@ actual fun getAvailableTools(): List<Tool> {
 
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)
         addAll(mcpServerManager.getEnabledMcpTools())
-
-        if (appSettings.isToolEnabled("ssh_connect")) {
-            addAll(SshTools.getTools())
-        }
 
         // Skill-enabled tools: tools that are enabled because a skill requires them
         val skillEnabledToolIds = dataRepository.getSkillEnabledTools()
@@ -351,8 +344,6 @@ actual fun sendHeartbeatNotification(title: String, body: String) {
         // notify-send missing, AWT headless, sandboxed osascript, etc. — fall back silently.
     }
 }
-
-actual fun createSshClient(): SshClient = SshClientImpl()
 
 actual suspend fun resolveSandboxImagePath(path: String): String? {
     // Reject directory traversal attempts

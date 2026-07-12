@@ -30,8 +30,6 @@ import com.oak.app.notifications.declaresNotificationListener
 import com.oak.app.sms.SmsReader
 import com.oak.app.sms.SmsSender
 import com.oak.app.sms.declaresReadSms
-import com.oak.app.ssh.SshClient
-import com.oak.app.ssh.SshClientImpl
 import com.oak.app.tools.CalendarPermissionController
 import com.oak.app.tools.CalendarRepository
 import com.oak.app.tools.CalendarResult
@@ -51,7 +49,6 @@ import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
 import com.oak.app.tools.SmsTools
 import com.oak.app.tools.SkillTools
-import com.oak.app.tools.SshTools
 import com.oak.app.tools.WebSearchTool
 import com.oak.app.tools.askQuestionsToolInfo
 import com.oak.app.tools.compressContextTool
@@ -77,9 +74,7 @@ import oak.composeapp.generated.resources.tool_send_notification_description
 import oak.composeapp.generated.resources.tool_send_notification_name
 import oak.composeapp.generated.resources.tool_set_alarm_description
 import oak.composeapp.generated.resources.tool_set_alarm_name
-import org.apache.sshd.common.util.io.PathUtils
 import org.koin.java.KoinJavaComponent.inject
-import java.nio.file.Paths
 import kotlin.coroutines.CoroutineContext
 
 actual fun httpClient(config: HttpClientConfig<*>.() -> Unit): HttpClient = HttpClient(Android) {
@@ -249,13 +244,6 @@ actual fun getPlatformToolDefinitions(): List<ToolInfo> = buildList {
     // master toggles (isSmsEnabled / isSmsSendEnabled) plus the FOSS-only `isSmsSupported`
     // check in `getAvailableTools()`. Listing per-tool toggles in the Tools tab was dead
     // UI — `getAvailableTools()` never consulted them.
-
-    // SSH tools
-    try {
-        addAll(SshTools.toolDefinitions)
-    } catch (_: Throwable) {
-        // SSH tools failed to load
-    }
 
     // Skill management tools
     addAll(SkillTools.skillToolDefinitions)
@@ -535,15 +523,6 @@ actual fun getAvailableTools(): List<Tool> {
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)
         addAll(mcpServerManager.getEnabledMcpTools())
 
-        // SSH tools (always available, tools handle no-connection state gracefully)
-        if (appSettings.isToolEnabled("ssh_connect")) {
-            try {
-                addAll(SshTools.getTools())
-            } catch (_: Throwable) {
-                // SSH tools unavailable
-            }
-        }
-
         // Skill-enabled tools: tools that are enabled because a skill requires them
         val skillEnabledToolIds = dataRepository.getSkillEnabledTools()
         val currentToolNames = map { it.schema.name }.toSet()
@@ -649,13 +628,6 @@ actual fun decodeToImageBitmap(bytes: ByteArray): ImageBitmap? = try {
 @androidx.compose.runtime.Composable
 actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler(enabled = enabled, onBack = onBack)
-}
-
-actual fun createSshClient(): SshClient {
-    PathUtils.setUserHomeFolderResolver {
-        Paths.get(System.getProperty("java.io.tmpdir") ?: "/data/local/tmp")
-    }
-    return SshClientImpl()
 }
 
 actual suspend fun saveFileToDevice(bytes: ByteArray, baseName: String, extension: String) {

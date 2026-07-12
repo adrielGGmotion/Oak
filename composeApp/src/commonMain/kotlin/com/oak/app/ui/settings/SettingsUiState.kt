@@ -14,15 +14,12 @@ import com.oak.app.data.ThemeMode
 import com.oak.app.inference.DownloadError
 import com.oak.app.inference.LocalModel
 import com.oak.app.network.tools.ToolInfo
-import com.oak.app.ssh.SshAuthType
-import com.oak.app.ssh.SshConnectionStatus
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
-import org.jetbrains.compose.resources.StringResource
 
 @Immutable
 data class ConfiguredServiceEntry(
@@ -111,8 +108,6 @@ data class SettingsUiState(
     val showUiScale: Boolean = false,
     val mcpServers: ImmutableList<McpServerUiState> = persistentListOf(),
     val showAddMcpServerDialog: Boolean = false,
-    val sshServers: ImmutableList<SshServerUiState> = persistentListOf(),
-    val showAddSshServerDialog: Boolean = false,
     val skills: ImmutableList<SkillUiState> = persistentListOf(),
     val showImportSkillDialog: Boolean = false,
     val importSkillPrefill: ImportSkillPrefill? = null,
@@ -130,19 +125,6 @@ data class SettingsUiState(
     val localActiveBackend: String? = null,
     val backendPreference: String = "auto",
     val pendingDeletion: PendingDeletion? = null,
-)
-
-@Immutable
-data class SshServerUiState(
-    val id: String,
-    val name: String,
-    val host: String,
-    val port: Int,
-    val username: String,
-    val authType: SshAuthType,
-    val isEnabled: Boolean,
-    val connectionStatus: SshConnectionStatus,
-    val errorMessage: String? = null,
 )
 
 @Immutable
@@ -189,7 +171,6 @@ sealed interface PendingDeletion {
     data class EmailAccount(val id: String) : PendingDeletion
     data class Service(val instanceId: String) : PendingDeletion
     data class McpServer(val serverId: String) : PendingDeletion
-    data class SshServer(val serverId: String) : PendingDeletion
     data class Skill(val skillId: String) : PendingDeletion
 }
 

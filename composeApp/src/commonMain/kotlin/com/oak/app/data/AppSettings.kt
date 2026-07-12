@@ -26,7 +26,6 @@ enum class ImportSection {
     SMS,
     TOOLS,
     MCP,
-    SSH,
     CONVERSATIONS,
     SKILLS,
 }
@@ -100,11 +99,6 @@ fun detectExportableSections(json: JsonObject): Map<ImportSection, String?> {
         sections[ImportSection.MCP] = "${mcp.size}"
     }
 
-    val ssh = json["ssh_servers"]?.jsonArray
-    if (ssh != null && ssh.isNotEmpty()) {
-        sections[ImportSection.SSH] = "${ssh.size}"
-    }
-
     val conversations = json["conversations"]?.jsonArray
     if (conversations != null && conversations.isNotEmpty()) {
         sections[ImportSection.CONVERSATIONS] = "${conversations.size}"
@@ -158,11 +152,6 @@ fun detectImportSections(json: JsonObject): Map<ImportSection, String?> {
     if (json["mcp_servers"] != null) {
         val count = json["mcp_servers"]?.jsonArray?.size
         sections[ImportSection.MCP] = count?.let { "$it" }
-    }
-    if (json["ssh_servers"] != null) {
-        val elem = json["ssh_servers"]
-        val count = if (elem is kotlinx.serialization.json.JsonArray) elem.size else null
-        sections[ImportSection.SSH] = count?.let { "$it" }
     }
     if (json["conversations"] != null) {
         val count = try {
@@ -654,13 +643,6 @@ class AppSettings(private val settings: Settings) {
         settings.putString(KEY_HEARTBEAT_PROMPT, text)
     }
 
-    // SSH Servers
-    fun getSshServersJson(): String = settings.getString(KEY_SSH_SERVERS, "")
-
-    fun setSshServersJson(json: String) {
-        settings.putString(KEY_SSH_SERVERS, json)
-    }
-
     // MCP Servers
     fun getMcpServersJson(): String = settings.getString(KEY_MCP_SERVERS, "")
 
@@ -918,13 +900,6 @@ class AppSettings(private val settings: Settings) {
             }
         }
 
-        if (ImportSection.SSH in sections) {
-            val sshJson = getSshServersJson()
-            if (sshJson.isNotBlank()) {
-                map["ssh_servers"] = Json.parseToJsonElement(sshJson)
-            }
-        }
-
         if (ImportSection.CONVERSATIONS in sections) {
             val conversationsJson = getConversationsJson()
             if (!conversationsJson.isNullOrBlank()) {
@@ -1137,17 +1112,6 @@ class AppSettings(private val settings: Settings) {
             }
         } else if (replace) {
             setMcpServersJson("")
-        }
-
-        // SSH
-        if (ImportSection.SSH in sections) {
-            try {
-                setSshServersJson(json["ssh_servers"]?.toString() ?: "")
-            } catch (_: Exception) {
-                errors++
-            }
-        } else if (replace) {
-            setSshServersJson("")
         }
 
         // Conversations
@@ -1363,7 +1327,6 @@ class AppSettings(private val settings: Settings) {
         const val KEY_SERVICES_MIGRATION_COMPLETE = "services_migration_complete_v1"
         const val KEY_UI_SCALE = "ui_scale"
         const val KEY_MCP_SERVERS = "mcp_servers"
-        const val KEY_SSH_SERVERS = "ssh_servers"
         const val KEY_SKILLS = "skills"
         const val KEY_INSTANCE_MIGRATION_COMPLETE = "instance_migration_complete_v1"
         const val KEY_BASE_URL_V1_MIGRATION_COMPLETE = "base_url_v1_migration_complete"

@@ -62,8 +62,6 @@ kotlin {
             implementation(libs.material)
             implementation(libs.bouncycastle.provider)
             implementation(libs.litert.lm)
-            implementation(libs.sshd.core)
-            implementation(libs.sshd.sftp)
         }
         commonMain.dependencies {
             implementation(libs.compose.material3)
@@ -116,8 +114,6 @@ kotlin {
             implementation(libs.bouncycastle.provider)
             implementation(libs.slf4j.nop)
             implementation(libs.litert.lm.jvm)
-            implementation(libs.sshd.core)
-            implementation(libs.sshd.sftp)
         }
     }
 }
