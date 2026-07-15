@@ -53,7 +53,7 @@ data class Skill(
             id = EMAIL_SKILL_ID,
             name = "Email",
             description = "Email account management and sending capabilities",
-            content = "",  // Dynamic — depends on connected accounts
+            content = "", // Dynamic — depends on connected accounts
             requiredTools = listOf("compose_email", "reply_email"),
             isBuiltIn = true,
             isEnabled = true,

@@ -403,7 +403,7 @@ private fun parseImageNode(obj: JsonObject): ImageNode = ImageNode(
     alt = obj.readNullableString("alt"),
     height = obj.readNullableInt("height"),
     aspectRatio = obj.readNullableFloat("aspectRatio")
-        ?: obj.readNullableFloat("aspect_ratio")
+        ?: obj.readNullableFloat("aspect_ratio"),
 )
 
 private fun parseIconNode(obj: JsonObject): IconNode = IconNode(

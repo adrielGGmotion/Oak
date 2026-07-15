@@ -95,12 +95,16 @@ interface DataRepository {
     fun setSkillEnabled(skillId: String, enabled: Boolean)
     fun removeSkill(skillId: String)
     fun importSkill(skill: Skill)
+
     /** Skill IDs excluded from the current conversation. Empty means all enabled skills are active. */
     fun getExcludedSkillIds(): Set<String>
+
     /** Exclude a skill from the current conversation. Persists with the conversation. */
     fun excludeSkill(skillId: String)
+
     /** Include a previously excluded skill in the current conversation. */
     fun includeSkill(skillId: String)
+
     /**
      * Compute the set of tool IDs required by the currently active (non-excluded) skills.
      * Used by platform tool-list builders to inject skill-required tools.

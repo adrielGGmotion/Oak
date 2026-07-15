@@ -1015,7 +1015,6 @@ class SettingsViewModel(
         }
     }
 
-
     private fun commitPendingDeletion(type: KClass<out PendingDeletion>) {
         pendingDeleteJobs[type]?.cancel()
         pendingDeleteJobs.remove(type)

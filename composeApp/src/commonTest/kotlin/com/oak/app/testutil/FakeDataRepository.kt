@@ -313,6 +313,8 @@ class FakeDataRepository : DataRepository {
         mcpServers.filter { it.isEnabled }.forEach { mcpConnected.add(it.id) }
     }
 
+    private var soulText = ""
+
     override fun getSoulText(): String = soulText
 
     override fun setSoulText(text: String) {
