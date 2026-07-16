@@ -297,8 +297,7 @@ class Requests {
                 val channel = response.bodyAsChannel()
                 try {
                     while (!channel.isClosedForRead) {
-                        @Suppress("DEPRECATION")
-                        val line = channel.readUTF8Line() ?: break
+                        val line = channel.readLineStrict() ?: break
                         if (!line.startsWith("data: ")) continue
                         val data = line.removePrefix("data: ").trim()
                         if (data == OpenAICompatibleChatChunkDto.DONE_MARKER) break

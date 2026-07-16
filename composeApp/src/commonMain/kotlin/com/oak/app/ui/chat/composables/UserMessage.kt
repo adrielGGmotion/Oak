@@ -62,7 +62,6 @@ internal fun UserMessage(
 ) {
     val showFullScreen = LocalShowFullScreenImage.current
 
-    @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
     Row(Modifier.padding(16.dp)) {
         Spacer(Modifier.weight(1f))

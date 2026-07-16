@@ -187,7 +187,6 @@ internal fun BotMessage(
                 },
             )
         }
-        @Suppress("DEPRECATION")
         val clipboardManager = LocalClipboardManager.current
         SmallIconButton(
             imageVector = Icons.Filled.ContentCopy,

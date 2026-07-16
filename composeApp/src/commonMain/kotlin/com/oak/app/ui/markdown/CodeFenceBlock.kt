@@ -42,7 +42,6 @@ internal fun CodeFenceBlock(
         highlightCode(code, language, highlightColors)
     }
 
-    @Suppress("DEPRECATION")
     val clipboard = LocalClipboardManager.current
 
     Surface(
