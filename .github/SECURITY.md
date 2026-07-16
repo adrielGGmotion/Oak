@@ -3,7 +3,7 @@
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in Oak, please report it privately by
-[opening a security advisory](https://github.com/adrielGGmotion/Kai/security/advisories/new).
+[opening a security advisory](https://github.com/adrielGGmotion/Oak/security/advisories/new).
 
 Please **do not** report security vulnerabilities through public GitHub issues.
 
