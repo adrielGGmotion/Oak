@@ -45,8 +45,6 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 0
       - uses: ./.github/actions/setup
-        with:
-          setup-android: 'true'
       - name: Build DMG
         run: bash ./gradlew packageReleaseDmg --stacktrace
       - name: Upload DMG Artifact
@@ -64,8 +62,6 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 0
       - uses: ./.github/actions/setup
-        with:
-          setup-android: 'true'
       - name: Build MSI
         shell: bash
         run: ./gradlew packageReleaseMsi --stacktrace

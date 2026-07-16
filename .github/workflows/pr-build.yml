@@ -32,6 +32,7 @@ jobs:
   build:
     name: Build ${{ matrix.flavor }} Performance
     needs: check-approval
+    if: needs.check-approval.outputs.approved == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
