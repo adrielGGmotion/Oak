@@ -128,17 +128,12 @@ fun TerminalContent(
     val sessionInputText = sessionViewModel?.inputText?.collectAsStateWithLifecycle()?.value
     val sessionIsRunning = sessionViewModel?.isRunning?.collectAsStateWithLifecycle()?.value
     val sessionActiveHandle = sessionViewModel?.activeHandle?.collectAsStateWithLifecycle()?.value
-    // Reading selectedSessionId here — even though we don't use the value
-    // directly — forces this composable to recompose when the user picks a
-    // different chip. Without it, switching between two idle sessions doesn't
-    // change inputText/isRunning/activeHandle, so Compose wouldn't re-evaluate
-    // the outputLines property getter and we'd keep rendering the previous
-    // session's transcript.
-    val selectedSessionId = sessionViewModel?.selectedSessionId?.collectAsStateWithLifecycle()?.value
+    // Reading selectedSessionId registers the state dependency so Compose
+    // recomposes when the user picks a different chip — without it the
+    // outputLines property getter wouldn't re-evaluate on session switch.
+    sessionViewModel?.selectedSessionId?.collectAsStateWithLifecycle()?.value
 
     val outputLines = if (sessionViewModel != null) {
-        @Suppress("UNUSED_EXPRESSION")
-        selectedSessionId
         sessionViewModel.outputLines
     } else {
         remember { mutableStateListOf<TerminalLine>().apply { addAll(initialLines) } }

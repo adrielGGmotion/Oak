@@ -474,4 +474,26 @@
     <string name="settings_skills_discard_confirm">You have unsaved changes. Are you sure you want to discard them?</string>
     <string name="settings_skills_expand">Expand</string>
     <string name="settings_skills_collapse">Collapse</string>
+    <string name="settings_backend_label">Backend: %1$s</string>
+    <string name="settings_backend_active">(active)</string>
+    <string name="settings_backend_unknown">(unknown — send a message first)</string>
+    <string name="settings_compute_preference">Compute preference:</string>
+    <string name="settings_compute_auto">Auto</string>
+    <string name="settings_compute_gpu">GPU</string>
+    <string name="settings_compute_cpu">CPU</string>
+    <string name="settings_changes_on_next_message">Changes apply on next message</string>
+    <string name="settings_auto_description">Auto: tries GPU, falls back to CPU</string>
+    <string name="sandbox_files_empty_directory">Empty directory</string>
+    <string name="sandbox_files_binary_preview_error">Binary or too large to preview as text.</string>
+    <string name="bot_message_thought">Thought</string>
+    <string name="bot_message_cancel_edit">Cancel edit</string>
+    <string name="bot_message_edit_submission">Edit submission</string>
+    <string name="ask_questions_review_answers">Review answers</string>
+    <string name="ask_questions_next">Next</string>
+    <string name="chat_responded_with">Responded with: %1$s</string>
+    <string name="chat_pressed">Pressed: %1$s</string>
+    <string name="chat_another_chat">another chat</string>
+    <string name="chat_generation_in_progress">Generation already in progress on %1$s</string>
+    <string name="chat_current_conversation">current conversation</string>
+    <string name="chat_please_wait_generation">Please wait — generation in progress on %1$s</string>
 </resources>

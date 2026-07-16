@@ -170,7 +170,16 @@ import oak.composeapp.generated.resources.settings_ai_font_family_description
 import oak.composeapp.generated.resources.settings_ai_mistakes_warning
 import oak.composeapp.generated.resources.settings_api_key_label
 import oak.composeapp.generated.resources.settings_api_key_optional_label
+import oak.composeapp.generated.resources.settings_auto_description
+import oak.composeapp.generated.resources.settings_backend_active
+import oak.composeapp.generated.resources.settings_backend_label
+import oak.composeapp.generated.resources.settings_backend_unknown
 import oak.composeapp.generated.resources.settings_base_url_label
+import oak.composeapp.generated.resources.settings_changes_on_next_message
+import oak.composeapp.generated.resources.settings_compute_auto
+import oak.composeapp.generated.resources.settings_compute_cpu
+import oak.composeapp.generated.resources.settings_compute_gpu
+import oak.composeapp.generated.resources.settings_compute_preference
 import oak.composeapp.generated.resources.settings_daemon_mode
 import oak.composeapp.generated.resources.settings_daemon_mode_description
 import oak.composeapp.generated.resources.settings_documentation
@@ -1307,7 +1316,7 @@ private fun LiteRTSettings(
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    text = "Backend: ${activeBackend?.uppercase() ?: "?"}",
+                    text = stringResource(Res.string.settings_backend_label, activeBackend?.uppercase() ?: "?"),
                     style = MaterialTheme.typography.titleSmall,
                     color = if (activeBackend == "gpu") {
                         StatusColorConnected
@@ -1319,7 +1328,7 @@ private fun LiteRTSettings(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = if (activeBackend != null) "(active)" else "(unknown — send a message first)",
+                    text = if (activeBackend != null) stringResource(Res.string.settings_backend_active) else stringResource(Res.string.settings_backend_unknown),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1328,7 +1337,7 @@ private fun LiteRTSettings(
             HorizontalDivider()
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "Compute preference:",
+                text = stringResource(Res.string.settings_compute_preference),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1337,7 +1346,7 @@ private fun LiteRTSettings(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                listOf("auto" to "Auto", "gpu" to "GPU", "cpu" to "CPU").forEach { (value, label) ->
+                listOf("auto" to stringResource(Res.string.settings_compute_auto), "gpu" to stringResource(Res.string.settings_compute_gpu), "cpu" to stringResource(Res.string.settings_compute_cpu)).forEach { (value, label) ->
                     val isSelected = backendPreference == value
                     Surface(
                         onClick = { onChangeBackendPreference(value) },
@@ -1367,7 +1376,7 @@ private fun LiteRTSettings(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = if (backendPreference != "auto") "Changes apply on next message" else "Auto: tries GPU, falls back to CPU",
+                text = if (backendPreference != "auto") stringResource(Res.string.settings_changes_on_next_message) else stringResource(Res.string.settings_auto_description),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
