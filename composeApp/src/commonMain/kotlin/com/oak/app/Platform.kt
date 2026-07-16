@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
-import com.oak.app.ssh.SshClient
 import com.russhwolf.settings.Settings
 import io.github.vinceglb.filekit.PlatformFile
 import io.ktor.client.HttpClient
@@ -89,8 +88,6 @@ expect suspend fun saveFileToDevice(bytes: ByteArray, baseName: String, extensio
  * without deep-linking back to the conversation. No-op on web.
  */
 expect fun sendHeartbeatNotification(title: String, body: String)
-
-expect fun createSshClient(): SshClient
 
 /**
  * Resolves a sandbox file path (relative to /root) to a URI that the app can load.

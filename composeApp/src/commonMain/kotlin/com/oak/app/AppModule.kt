@@ -22,13 +22,11 @@ import com.oak.app.notifications.NotificationReader
 import com.oak.app.sms.SmsPoller
 import com.oak.app.sms.SmsReader
 import com.oak.app.sms.SmsSender
-import com.oak.app.ssh.SshServerManager
 import com.oak.app.tools.CalendarPermissionController
 import com.oak.app.tools.NotificationListenerController
 import com.oak.app.tools.NotificationPermissionController
 import com.oak.app.tools.SmsPermissionController
 import com.oak.app.tools.SmsSendPermissionController
-import com.oak.app.tools.SshTools
 import com.oak.app.tools.StoragePermissionController
 import com.oak.app.ui.chat.ChatSessionManager
 import com.oak.app.ui.chat.ChatViewModel
@@ -97,9 +95,6 @@ val appModule = module {
     single<McpServerManager> {
         McpServerManager(get())
     }
-    single<SshServerManager> {
-        SshServerManager(get()) { createSshClient() }.also { SshTools.init(it) }
-    }
     single<RemoteDataRepository> {
         RemoteDataRepository(
             requests = get(),
@@ -121,7 +116,6 @@ val appModule = module {
             notificationStore = get(),
             notificationListenerController = get(),
             mcpServerManager = get(),
-            sshServerManager = get(),
             sandboxController = get(),
             localInferenceEngine = createLocalInferenceEngine(),
         )

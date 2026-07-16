@@ -55,6 +55,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -64,7 +65,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -197,7 +197,6 @@ import oak.composeapp.generated.resources.settings_import_section_memory
 import oak.composeapp.generated.resources.settings_import_section_scheduling
 import oak.composeapp.generated.resources.settings_import_section_services
 import oak.composeapp.generated.resources.settings_import_section_soul
-import oak.composeapp.generated.resources.settings_import_section_ssh
 import oak.composeapp.generated.resources.settings_import_section_tools
 import oak.composeapp.generated.resources.settings_import_success
 import oak.composeapp.generated.resources.settings_mcp_cancel
@@ -282,7 +281,6 @@ import oak.composeapp.generated.resources.snackbar_mcp_server_removed
 import oak.composeapp.generated.resources.snackbar_memory_deleted
 import oak.composeapp.generated.resources.snackbar_service_removed
 import oak.composeapp.generated.resources.snackbar_skill_removed
-import oak.composeapp.generated.resources.snackbar_ssh_server_removed
 import oak.composeapp.generated.resources.snackbar_task_cancelled
 import oak.composeapp.generated.resources.snackbar_undo
 import org.jetbrains.compose.resources.StringResource
@@ -358,7 +356,6 @@ fun SettingsScreenContent(
     val emailRemovedMsg = stringResource(Res.string.snackbar_email_removed)
     val serviceRemovedMsg = stringResource(Res.string.snackbar_service_removed)
     val mcpServerRemovedMsg = stringResource(Res.string.snackbar_mcp_server_removed)
-    val sshServerRemovedMsg = stringResource(Res.string.snackbar_ssh_server_removed)
     val skillRemovedMsg = stringResource(Res.string.snackbar_skill_removed)
 
     LaunchedEffect(uiState.pendingDeletion) {
@@ -370,7 +367,6 @@ fun SettingsScreenContent(
             is PendingDeletion.EmailAccount -> emailRemovedMsg
             is PendingDeletion.Service -> serviceRemovedMsg
             is PendingDeletion.McpServer -> mcpServerRemovedMsg
-            is PendingDeletion.SshServer -> sshServerRemovedMsg
             is PendingDeletion.Skill -> skillRemovedMsg
         }
         val result = snackbarHostState.showSnackbar(
@@ -2094,18 +2090,6 @@ private fun AgentContent(uiState: SettingsUiState, actions: SettingsActions) {
 @Composable
 private fun SettingsContent(state: SettingsUiState, actions: SettingsActions) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-        // SSH Servers section
-        SettingsCard {
-            SshServersSection(
-                sshServers = state.sshServers,
-                onAddSshServer = actions.onAddSshServer,
-                onRemoveSshServer = actions.onRemoveSshServer,
-                onToggleSshServer = actions.onToggleSshServer,
-                onConnectSshServer = actions.onConnectSshServer,
-                showAddDialog = state.showAddSshServerDialog,
-                onShowAddDialog = actions.onShowAddSshServerDialog,
-            )
-        }
         Spacer(Modifier.height(16.dp))
 
         // Request integration section
@@ -2447,7 +2431,6 @@ private fun sectionDisplayName(section: ImportSection): String = when (section) 
     ImportSection.SMS -> stringResource(Res.string.settings_sms)
     ImportSection.TOOLS -> stringResource(Res.string.settings_import_section_tools)
     ImportSection.MCP -> stringResource(Res.string.settings_import_section_mcp)
-    ImportSection.SSH -> stringResource(Res.string.settings_import_section_ssh)
     ImportSection.CONVERSATIONS -> stringResource(Res.string.settings_import_section_conversations)
     ImportSection.SKILLS -> stringResource(Res.string.settings_skills_title)
 }

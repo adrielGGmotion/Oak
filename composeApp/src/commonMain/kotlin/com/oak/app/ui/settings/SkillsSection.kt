@@ -22,12 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
+import com.oak.app.ui.handCursor
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes
-import com.oak.app.ui.handCursor
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch
 import oak.composeapp.generated.resources.Res
@@ -151,4 +151,3 @@ internal fun SkillsSection(
         }
     }
 }
-

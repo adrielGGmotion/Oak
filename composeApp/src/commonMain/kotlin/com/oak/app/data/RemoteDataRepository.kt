@@ -42,9 +42,6 @@ import com.oak.app.sms.SmsPoller
 import com.oak.app.sms.SmsReader
 import com.oak.app.sms.SmsSendResult
 import com.oak.app.sms.SmsSender
-import com.oak.app.ssh.SshAuthType
-import com.oak.app.ssh.SshServerConfig
-import com.oak.app.ssh.SshServerManager
 import com.oak.app.tools.CommonTools
 import com.oak.app.tools.NotificationListenerController
 import com.oak.app.tools.SmsPermissionController
@@ -151,7 +148,6 @@ class RemoteDataRepository(
     private val notificationStore: NotificationStore,
     private val notificationListenerController: NotificationListenerController,
     private val mcpServerManager: McpServerManager,
-    private val sshServerManager: SshServerManager,
     private val sandboxController: SandboxController,
     private val localInferenceEngine: LocalInferenceEngine? = null,
 ) : DataRepository {
@@ -185,7 +181,7 @@ class RemoteDataRepository(
     private var askForConversationId: String? = null
 
     /** Per-conversation excluded skill IDs — synced with [Conversation.excludedSkillIds]. */
-    private val _currentExcludedSkillIds = MutableStateFlow<Set<String>>(emptySet())
+    private val currentExcludedSkillIds = MutableStateFlow<Set<String>>(emptySet())
 
     private val _fallbackStatus = MutableStateFlow<FallbackStatus?>(null)
     override val fallbackStatus: StateFlow<FallbackStatus?> = _fallbackStatus
@@ -888,13 +884,13 @@ class RemoteDataRepository(
     ) {
         val previousConversationId = _currentConversationId.value
         val previousHistory = chatHistory.value.toList()
-        val previousExcludedSkillIds = _currentExcludedSkillIds.value
+        val previousExcludedSkillIds = currentExcludedSkillIds.value
 
         if (savedConversations.value.any { it.id == conversationId }) {
             loadConversation(conversationId)
         } else {
             setCurrentConversationId(conversationId)
-            _currentExcludedSkillIds.value = getSkills().filter { it.isEnabled }.map { it.id }.toSet()
+            currentExcludedSkillIds.value = getSkills().filter { it.isEnabled }.map { it.id }.toSet()
             chatHistory.value = emptyList()
         }
 
@@ -909,7 +905,7 @@ class RemoteDataRepository(
                 loadConversation(previousConversationId)
             } else {
                 _currentConversationId.value = previousConversationId
-                _currentExcludedSkillIds.value = previousExcludedSkillIds
+                currentExcludedSkillIds.value = previousExcludedSkillIds
                 chatHistory.value = previousHistory
             }
         }
@@ -1063,9 +1059,10 @@ class RemoteDataRepository(
                 // loaded/unloaded/created/updated mid-turn so their instructions
                 // and required tools take effect in the follow-up model call.
                 if (toolResults.any {
-                    it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
-                    it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
-                }) {
+                        it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
+                            it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
+                    }
+                ) {
                     currentSystemPrompt = getActiveSystemPrompt()
                     currentTools = getAvailableTools()
                 }
@@ -1206,9 +1203,10 @@ class RemoteDataRepository(
                 // loaded/unloaded/created/updated mid-turn so their instructions
                 // and required tools take effect in the follow-up model call.
                 if (toolResults.any {
-                    it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
-                    it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
-                }) {
+                        it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
+                            it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
+                    }
+                ) {
                     currentSystemPrompt = getActiveSystemPrompt()
                     currentTools = getAvailableTools()
                 }
@@ -1479,9 +1477,10 @@ class RemoteDataRepository(
                 // loaded/unloaded/created/updated mid-turn so their instructions
                 // and required tools take effect in the follow-up model call.
                 if (toolResults.any {
-                    it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
-                    it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
-                }) {
+                        it.second == LOAD_SKILL_TOOL_NAME || it.second == UNLOAD_SKILL_TOOL_NAME ||
+                            it.second == CREATE_SKILL_TOOL_NAME || it.second == UPDATE_SKILL_TOOL_NAME
+                    }
+                ) {
                     currentSystemPrompt = getActiveSystemPrompt()
                     currentTools = getAvailableTools()
                 }
@@ -1939,7 +1938,7 @@ class RemoteDataRepository(
             updatedAt = now,
             title = title,
             type = existingConversation?.type ?: if (interactiveModeFlag) Conversation.TYPE_INTERACTIVE else Conversation.TYPE_CHAT,
-            excludedSkillIds = _currentExcludedSkillIds.value,
+            excludedSkillIds = currentExcludedSkillIds.value,
         )
 
         conversationStorage.saveConversation(conversation)
@@ -1981,7 +1980,7 @@ class RemoteDataRepository(
         val conversation = savedConversations.value.find { it.id == id } ?: return
 
         setCurrentConversationId(id)
-        _currentExcludedSkillIds.value = conversation.excludedSkillIds
+        currentExcludedSkillIds.value = conversation.excludedSkillIds
         chatHistory.value = conversation.messages.map { m ->
             // Prefer the modern `attachments` field. Fall back to the legacy single-file
             // fields for conversations saved before multi-attachment support.
@@ -2039,7 +2038,7 @@ class RemoteDataRepository(
 
     override fun startNewChat() {
         setCurrentConversationId(null)
-        _currentExcludedSkillIds.value = getSkills().filter { it.isEnabled }.map { it.id }.toSet()
+        currentExcludedSkillIds.value = getSkills().filter { it.isEnabled }.map { it.id }.toSet()
         chatHistory.value = emptyList()
     }
 
@@ -2119,43 +2118,6 @@ class RemoteDataRepository(
         mcpServerManager.connectEnabledServers()
     }
 
-    // SSH Servers
-    override fun getSshServers(): List<SshServerConfig> = sshServerManager.getServers()
-
-    override suspend fun addSshServer(
-        name: String,
-        host: String,
-        port: Int,
-        username: String,
-        authType: SshAuthType,
-        password: String,
-        privateKey: String,
-        passphrase: String,
-    ): SshServerConfig = sshServerManager.addServer(
-        name = name,
-        host = host,
-        port = port,
-        username = username,
-        authType = authType,
-        password = password,
-        privateKey = privateKey,
-        passphrase = passphrase,
-    )
-
-    override suspend fun removeSshServer(serverId: String) = sshServerManager.removeServer(serverId)
-
-    override suspend fun setSshServerEnabled(serverId: String, enabled: Boolean) = sshServerManager.setServerEnabled(serverId, enabled)
-
-    override suspend fun connectSshServer(serverId: String): Result<Unit> = sshServerManager.connectServer(serverId)
-
-    override fun isSshServerConnected(serverId: String): Boolean = sshServerManager.isConnected(serverId)
-
-    override suspend fun disconnectSshServer(serverId: String) {
-        sshServerManager.disconnectClient(serverId)
-    }
-
-    override suspend fun connectEnabledSshServers() = sshServerManager.connectEnabledServers()
-
     // Soul (system prompt)
     override fun getSoulText(): String = appSettings.getSoulText()
 
@@ -2227,7 +2189,7 @@ class RemoteDataRepository(
         )
 
         val isLimited = !supportsTools(modelId)
-        val excludedIds = _currentExcludedSkillIds.value
+        val excludedIds = currentExcludedSkillIds.value
         val oakUiEnabled = getSkills().any { it.id == Skill.OAK_UI_SKILL_ID && it.isEnabled }
         val uiMode = when {
             interactiveModeFlag && oakUiEnabled -> ChatPromptUiMode.INTERACTIVE_UI
@@ -2301,11 +2263,11 @@ class RemoteDataRepository(
     // Skills
 
     /** Cached skill list — populated on first read, invalidated by write operations. */
-    private var _cachedSkills: List<Skill>? = null
+    private var cachedSkills: List<Skill>? = null
     private val cachedSkillsLock = Any()
 
     override fun getSkills(): List<Skill> = synchronized(cachedSkillsLock) {
-        _cachedSkills?.let { return@synchronized it }
+        cachedSkills?.let { return@synchronized it }
         val json = appSettings.getSkillsJson()
         val result = Skill.fromJson(json, SharedJson)
         if (json.isBlank() || json == "[]") {
@@ -2321,12 +2283,12 @@ class RemoteDataRepository(
                 saveSkills(result)
             }
         }
-        _cachedSkills = result
+        cachedSkills = result
         result
     }
 
     private fun invalidateSkillCache() = synchronized(cachedSkillsLock) {
-        _cachedSkills = null
+        cachedSkills = null
     }
 
     override fun setSkillEnabled(skillId: String, enabled: Boolean) {
@@ -2340,12 +2302,12 @@ class RemoteDataRepository(
         if (enabled) {
             // Newly enabled skills start excluded (inactive) — the agent must
             // explicitly load_skill them before they take effect in a conversation.
-            _currentExcludedSkillIds.update { it + skillId }
+            currentExcludedSkillIds.update { it + skillId }
             updateAllConversationExcludedIds { excluded ->
                 if (skillId !in excluded) excluded + skillId else null
             }
         } else {
-            _currentExcludedSkillIds.update { it - skillId }
+            currentExcludedSkillIds.update { it - skillId }
             updateAllConversationExcludedIds { excluded ->
                 if (skillId in excluded) excluded - skillId else null
             }
@@ -2358,7 +2320,7 @@ class RemoteDataRepository(
         if (skill?.isBuiltIn == true) return
         saveSkills(skills.filter { it.id != skillId })
         invalidateSkillCache()
-        _currentExcludedSkillIds.update { it - skillId }
+        currentExcludedSkillIds.update { it - skillId }
         updateAllConversationExcludedIds { excluded ->
             if (skillId in excluded) excluded - skillId else null
         }
@@ -2376,18 +2338,18 @@ class RemoteDataRepository(
         invalidateSkillCache()
     }
 
-    override fun getExcludedSkillIds(): Set<String> = _currentExcludedSkillIds.value
+    override fun getExcludedSkillIds(): Set<String> = currentExcludedSkillIds.value
 
     override fun excludeSkill(skillId: String) {
-        _currentExcludedSkillIds.update { it + skillId }
+        currentExcludedSkillIds.update { it + skillId }
     }
 
     override fun includeSkill(skillId: String) {
-        _currentExcludedSkillIds.update { it - skillId }
+        currentExcludedSkillIds.update { it - skillId }
     }
 
     override fun getSkillEnabledTools(): Set<String> {
-        val excludedIds = _currentExcludedSkillIds.value
+        val excludedIds = currentExcludedSkillIds.value
         return getSkills()
             .filter { it.isEnabled && it.id !in excludedIds }
             .flatMap { it.requiredTools }
