@@ -1,7 +1,11 @@
 android:
   - changed-files:
       - any-glob-to-any-file: "androidApp/**"
-      - any-glob-to-any-file: "composeApp/**"
+      - any-glob-to-any-file: "composeApp/src/androidMain/**"
+
+desktop:
+  - changed-files:
+      - any-glob-to-any-file: "composeApp/src/desktopMain/**"
 
 ci:
   - changed-files:
