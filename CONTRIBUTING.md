@@ -37,4 +37,5 @@ For tiny/simple fixes (a few lines, obvious), direct pushes to `main` are fine.
 
 ## Code of Conduct
 
-Be respectful and constructive. We're all here to build something cool.
+This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
+Be respectful and constructive — we're all here to build something cool.
