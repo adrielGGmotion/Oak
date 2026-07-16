@@ -2072,13 +2072,31 @@ class RemoteDataRepository(
             else -> ChatPromptUiMode.NONE
         }
 
-        return buildChatSystemPrompt(
+        val leanPrompt = buildChatSystemPrompt(
             variant = variant,
             soul = soul,
             memoryInstructions = memoryInstructions,
             runtime = runtime,
             uiMode = uiMode,
-        ).ifEmpty { null }
+        ).ifEmpty { return null }
+
+        // Append prefix messages (memories, tasks, skills) for remote models.
+        // For CHAT_LOCAL the prefix content is omitted to keep the prompt lean
+        // for on-device models with limited context windows.
+        if (variant == SystemPromptVariant.CHAT_REMOTE) {
+            val prefixes = getPrefixMessages()
+            if (prefixes.isNotEmpty()) {
+                return buildString {
+                    append(leanPrompt)
+                    for (prefix in prefixes) {
+                        append("\n\n")
+                        append(prefix)
+                    }
+                }
+            }
+        }
+
+        return leanPrompt
     }
 
     /**
