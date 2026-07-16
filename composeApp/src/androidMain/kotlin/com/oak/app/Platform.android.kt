@@ -51,7 +51,6 @@ import com.oak.app.tools.SkillTools
 import com.oak.app.tools.SmsTools
 import com.oak.app.tools.WebSearchTool
 import com.oak.app.tools.askQuestionsToolInfo
-import com.oak.app.tools.compressContextTool
 import com.oak.app.tools.createAskQuestionsTool
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
@@ -505,14 +504,6 @@ actual fun getAvailableTools(): List<Tool> {
 
         if (appSettings.isToolEnabled(EditFileTool.schema.name, defaultEnabled = true)) {
             add(EditFileTool)
-        }
-
-        if (appSettings.isToolEnabled(CommonTools.compressContextToolInfo.id, defaultEnabled = true)) {
-            add(
-                compressContextTool { keepRecent, focus ->
-                    dataRepository.triggerCompaction(keepRecent, focus)
-                },
-            )
         }
 
         if (appSettings.isToolEnabled(askQuestionsToolInfo.id, defaultEnabled = true)) {

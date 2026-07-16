@@ -276,12 +276,6 @@ object CommonTools {
         descriptionRes = Res.string.tool_wait_description,
     )
 
-    val compressContextToolInfo = ToolInfo(
-        id = "compress_context",
-        name = "Compress Context",
-        description = "Compress older conversation history to free up context window space",
-    )
-
     val commonToolDefinitions = listOf(
         WebSearchTool.toolInfo,
         localTimeToolInfo,
@@ -289,7 +283,6 @@ object CommonTools {
         openUrlToolInfo,
         waitToolInfo,
         FetchUrlTool.toolInfo,
-        compressContextToolInfo,
         askQuestionsToolInfo,
     ) +
         listOf(memoryStoreToolInfo, memoryForgetToolInfo, memoryLearnToolInfo, memoryReinforceToolInfo) +

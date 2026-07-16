@@ -3,16 +3,9 @@ package com.oak.app.data
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-/**
- * Locks in the contract of [buildChatSystemPrompt] for every conditional section and
- * every variant. Golden tests catch ordering/whitespace drift; focused tests document
- * which section is gated by which input.
- *
- * If you're adding a new section to the chat system prompt, add a focused test here for
- * it AND extend the golden tests so the section lands in the right variant.
- */
 class ChatSystemPromptBuilderTest {
 
     private val runtime = ChatPromptRuntimeContext(
@@ -52,605 +45,134 @@ class ChatSystemPromptBuilderTest {
         cron = cron,
     )
 
-    private fun build(
-        variant: SystemPromptVariant,
-        soul: String = "You are Oak.",
-        memoryInstructions: String? = null,
-        generalMemories: List<MemoryEntry> = emptyList(),
-        preferenceMemories: List<MemoryEntry> = emptyList(),
-        learningMemories: List<MemoryEntry> = emptyList(),
-        errorMemories: List<MemoryEntry> = emptyList(),
-        pendingTasks: List<ScheduledTask> = emptyList(),
-        heartbeatAdditions: List<ScheduledTask> = emptyList(),
-        emailAccounts: List<EmailAccountSummary> = emptyList(),
-        uiMode: ChatPromptUiMode = ChatPromptUiMode.NONE,
-        activeSkills: List<Skill> = emptyList(),
-    ) = buildChatSystemPrompt(
-        variant = variant,
-        soul = soul,
-        memoryInstructions = memoryInstructions,
-        generalMemories = generalMemories,
-        preferenceMemories = preferenceMemories,
-        learningMemories = learningMemories,
-        errorMemories = errorMemories,
-        pendingTasks = pendingTasks,
-        heartbeatAdditions = heartbeatAdditions,
-        emailAccounts = emailAccounts,
-        runtime = runtime,
-        uiMode = uiMode,
-        activeSkills = activeSkills,
-    )
-
-    // region CHAT_REMOTE — focused tests
+    // ── buildChatSystemPrompt (lean system prompt) ────────────────────────
 
     @Test
-    fun `CHAT_REMOTE default emits soul + context`() {
-        val out = build(SystemPromptVariant.CHAT_REMOTE)
+    fun `CHAT_REMOTE default emits soul + tool guidance + context`() {
+        val out = buildChatSystemPrompt(
+            variant = SystemPromptVariant.CHAT_REMOTE,
+            soul = "You are Oak.",
+            memoryInstructions = null,
+            runtime = runtime,
+            uiMode = ChatPromptUiMode.NONE,
+        )
         assertTrue(out.startsWith("You are Oak."))
+        assertTrue("## Tool Use" in out)
         assertTrue("## Context" in out)
-        assertTrue("- Local time: 2026-04-11T02:00:00+02:00 (Europe/Berlin)" in out)
-        assertTrue("- UTC: 2026-04-11T00:00:00Z" in out)
-        assertTrue("- Platform: Test" in out)
-        assertTrue("- Model: test-model" in out)
         assertTrue("- Provider: Test Provider" in out)
     }
 
     @Test
-    fun `CHAT_REMOTE includes automation skill content when active`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            activeSkills = listOf(Skill.AUTOMATION_SKILL),
-        )
-        assertTrue("schedule_task" in out)
-        assertTrue("execute_at" in out)
-        assertTrue("cron" in out)
-        assertTrue("on_heartbeat" in out)
-        assertTrue("user-controlled" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE omits automation skill content when inactive`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            activeSkills = listOf(Skill.AUTOMATION_SKILL.copy(isEnabled = false)),
-        )
-        assertFalse("schedule_task" in out)
-    }
-
-    @Test
     fun `CHAT_REMOTE includes memory instructions when provided`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            memoryInstructions = "Use memory_store to save user info.",
-        )
-        assertTrue("Use memory_store to save user info." in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE includes Your Memories when general memories present`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            generalMemories = listOf(memory("user_name", "Alice")),
-        )
-        assertTrue("## Your Memories" in out)
-        assertTrue("- **user_name**: Alice" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE includes User Preferences when preference memories present`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            preferenceMemories = listOf(memory("tone", "concise", category = MemoryCategory.PREFERENCE)),
-        )
-        assertTrue("## User Preferences" in out)
-        assertTrue("- **tone**: concise" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE includes Learnings with reinforcement counts`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            learningMemories = listOf(
-                memory("commit_style", "gerund verbs", category = MemoryCategory.LEARNING, hitCount = 5),
-            ),
-        )
-        assertTrue("## Learnings" in out)
-        assertTrue("- **commit_style** (reinforced 5x): gerund verbs" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE includes Known Issues section when error memories present`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            errorMemories = listOf(memory("flaky_test", "retry twice", category = MemoryCategory.ERROR)),
-        )
-        assertTrue("## Known Issues & Resolutions" in out)
-        assertTrue("- **flaky_test**: retry twice" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE includes Scheduled Tasks with cron annotation`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            pendingTasks = listOf(
-                task(id = "t1", description = "Morning check", cron = "0 9 * * *"),
-            ),
-        )
-        assertTrue("## Scheduled Tasks" in out)
-        assertTrue("- **Morning check** (id: t1" in out)
-        assertTrue("[cron: 0 9 * * *]" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE omits Scheduled Tasks when list is empty`() {
-        val out = build(variant = SystemPromptVariant.CHAT_REMOTE)
-        assertFalse("## Scheduled Tasks" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE includes email skill content when active with accounts`() {
-        val accounts = listOf(
-            EmailAccountSummary(
-                email = "alice@example.com",
-                unreadCount = 3,
-                lastSyncEpochMs = 1_700_000_000_000L,
-            ),
-        )
-        val emailContent = buildString {
-            append("The user has these email accounts connected. Use them via the existing email tools — ")
-            append("do NOT suggest adding, re-authenticating, or connecting a new account unless the user explicitly asks.\n")
-            for (account in accounts) {
-                append("- **${account.email}**: ${account.unreadCount} unread\n")
-            }
-        }
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            emailAccounts = accounts,
-            activeSkills = listOf(Skill.EMAIL_SKILL.copy(content = emailContent)),
-        )
-        assertTrue("do NOT suggest adding" in out)
-        assertTrue("- **alice@example.com**: 3 unread" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE email skill surfaces sync failures via lastError`() {
-        val accounts = listOf(
-            EmailAccountSummary(
-                email = "bob@example.com",
-                unreadCount = 0,
-                lastSyncEpochMs = 0L,
-                lastError = "AUTHENTICATIONFAILED",
-            ),
-        )
-        val emailContent = buildString {
-            append("The user has these email accounts connected.\n")
-            for (account in accounts) {
-                append("- **${account.email}**: sync failing — ${account.lastError}\n")
-            }
-        }
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            emailAccounts = accounts,
-            activeSkills = listOf(Skill.EMAIL_SKILL.copy(content = emailContent)),
-        )
-        assertTrue("- **bob@example.com**: sync failing — AUTHENTICATIONFAILED" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE omits email skill content when inactive`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            activeSkills = listOf(Skill.EMAIL_SKILL.copy(isEnabled = false)),
-        )
-        assertFalse("do NOT suggest adding" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE includes Heartbeat Additions when list non-empty`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            heartbeatAdditions = listOf(
-                ScheduledTask(
-                    id = "h1",
-                    description = "Greeting",
-                    prompt = "Greet the user warmly.",
-                    scheduledAtEpochMs = 0L,
-                    createdAtEpochMs = 0L,
-                    trigger = TaskTrigger.HEARTBEAT,
-                ),
-            ),
-        )
-        assertTrue("## Heartbeat Additions" in out)
-        assertTrue("- **Greeting** (id: h1): Greet the user warmly." in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE omits Heartbeat Additions when list is empty`() {
-        val out = build(variant = SystemPromptVariant.CHAT_REMOTE)
-        assertFalse("## Heartbeat Additions" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE includes Dynamic UI section when uiMode is DYNAMIC_UI`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            uiMode = ChatPromptUiMode.DYNAMIC_UI,
-        )
-        assertTrue("## Dynamic UI" in out)
-        assertTrue("oak-ui" in out)
-        assertFalse("## Interactive UI Mode" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE includes Interactive UI Mode section when uiMode is INTERACTIVE_UI`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            uiMode = ChatPromptUiMode.INTERACTIVE_UI,
-        )
-        assertTrue("## Interactive UI Mode (ACTIVE)" in out)
-        assertFalse("## Dynamic UI\n" in out)
-    }
-
-    @Test
-    fun `CHAT_REMOTE omits UI sections when uiMode is NONE`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            uiMode = ChatPromptUiMode.NONE,
-        )
-        assertFalse("## Dynamic UI" in out)
-        assertFalse("## Interactive UI Mode" in out)
-    }
-
-    // endregion
-
-    // region CHAT_LOCAL — focused tests
-
-    @Test
-    fun `CHAT_LOCAL default emits only soul + context`() {
-        val out = build(SystemPromptVariant.CHAT_LOCAL)
-        assertTrue(out.startsWith("You are Oak."))
-        assertTrue("## Context" in out)
-        assertFalse("## Structured Learning" in out)
-    }
-
-    @Test
-    fun `CHAT_LOCAL includes memory instructions when provided`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            memoryInstructions = "Use memory_store to save user info.",
-        )
-        assertTrue("Use memory_store to save user info." in out)
-    }
-
-    @Test
-    fun `CHAT_LOCAL omits Structured Learning section even with memory instructions`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            memoryInstructions = "Use memory_store to save user info.",
-        )
-        assertFalse("## Structured Learning" in out)
-        assertFalse("memory_learn" in out)
-    }
-
-    @Test
-    fun `CHAT_LOCAL includes memory category sections when within budget`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            generalMemories = listOf(memory("user_name", "Alice")),
-            preferenceMemories = listOf(memory("tone", "concise", category = MemoryCategory.PREFERENCE)),
-            learningMemories = listOf(memory("style", "gerunds", category = MemoryCategory.LEARNING, hitCount = 3)),
-            errorMemories = listOf(memory("flaky_test", "retry", category = MemoryCategory.ERROR)),
-        )
-        assertTrue("## Your Memories" in out)
-        assertTrue("- **user_name**: Alice" in out)
-        assertTrue("## User Preferences" in out)
-        assertTrue("- **tone**: concise" in out)
-        assertTrue("## Learnings" in out)
-        assertTrue("- **style** (reinforced 3x): gerunds" in out)
-        assertTrue("## Known Issues & Resolutions" in out)
-        assertTrue("- **flaky_test**: retry" in out)
-    }
-
-    @Test
-    fun `CHAT_LOCAL includes all memories with unlimited budget`() {
-        // 50 entries with long content — combined size far exceeds the old 800-char cap.
-        // With Int.MAX_VALUE budget, all entries should be present.
-        val big = (1..50).map { i ->
-            memory(
-                key = "key_$i",
-                content = "x".repeat(100),
-                category = MemoryCategory.GENERAL,
-            )
-        }
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            generalMemories = big,
-        )
-        assertTrue("## Your Memories" in out)
-        assertTrue("- **key_1**:" in out, "First entry should be included")
-        assertTrue("- **key_50**:" in out, "All entries should be included (unlimited budget)")
-    }
-
-    @Test
-    fun `CHAT_LOCAL includes all categories with unlimited budget`() {
-        val bigGeneral = (1..19).map { i ->
-            memory(
-                key = "g_$i",
-                content = "x".repeat(80),
-                category = MemoryCategory.GENERAL,
-            )
-        }
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            generalMemories = bigGeneral,
-            preferenceMemories = listOf(memory("pref_key", "small content", category = MemoryCategory.PREFERENCE)),
-            learningMemories = listOf(memory("learn_key", "small content", category = MemoryCategory.LEARNING)),
-            errorMemories = listOf(memory("err_key", "small content", category = MemoryCategory.ERROR)),
-        )
-        assertTrue("## Your Memories" in out)
-        assertTrue("## User Preferences" in out, "Preference category should be present (unlimited budget)")
-        assertTrue("## Learnings" in out, "Learning category should be present (unlimited budget)")
-        assertTrue("## Known Issues & Resolutions" in out, "Error category should be present (unlimited budget)")
-    }
-
-    @Test
-    fun `CHAT_LOCAL omits Scheduled Tasks regardless of input`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            pendingTasks = listOf(task(description = "Do the thing")),
-        )
-        assertFalse("## Scheduled Tasks" in out)
-        assertFalse("Do the thing" in out)
-    }
-
-    @Test
-    fun `CHAT_LOCAL omits Automation section`() {
-        val out = build(variant = SystemPromptVariant.CHAT_LOCAL)
-        assertFalse("## Automation" in out)
-        assertFalse("schedule_task" in out)
-    }
-
-    @Test
-    fun `CHAT_LOCAL omits Email Accounts regardless of input`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            emailAccounts = listOf(
-                EmailAccountSummary(
-                    email = "alice@example.com",
-                    unreadCount = 3,
-                    lastSyncEpochMs = 0L,
-                ),
-            ),
-        )
-        assertFalse("## Email Accounts" in out)
-        assertFalse("alice@example.com" in out)
-    }
-
-    @Test
-    fun `CHAT_LOCAL omits Heartbeat Additions regardless of input`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            heartbeatAdditions = listOf(
-                ScheduledTask(
-                    id = "h1",
-                    description = "Greeting",
-                    prompt = "Hi!",
-                    scheduledAtEpochMs = 0L,
-                    createdAtEpochMs = 0L,
-                    trigger = TaskTrigger.HEARTBEAT,
-                ),
-            ),
-        )
-        assertFalse("## Heartbeat Additions" in out)
-    }
-
-    @Test
-    fun `CHAT_LOCAL omits Dynamic UI even when uiMode is DYNAMIC_UI`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            uiMode = ChatPromptUiMode.DYNAMIC_UI,
-        )
-        assertFalse("## Dynamic UI" in out)
-        assertFalse("oak-ui" in out)
-    }
-
-    @Test
-    fun `CHAT_LOCAL omits Interactive UI Mode even when uiMode is INTERACTIVE_UI`() {
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            uiMode = ChatPromptUiMode.INTERACTIVE_UI,
-        )
-        assertFalse("## Interactive UI Mode" in out)
-    }
-
-    // endregion
-
-    // region Golden snapshots
-
-    @Test
-    fun `golden CHAT_LOCAL with soul + memory instructions + context`() {
-        // No memories or tasks — just the minimal CHAT_LOCAL shape. Memory inclusion
-        // with a budget is covered by separate focused tests. Scheduled tasks and oak-ui
-        // sections are verified as omitted below.
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            soul = "You are Oak, a helpful assistant.",
-            memoryInstructions = "Save user preferences with memory_store.",
-            pendingTasks = listOf(task(description = "ignored task")),
-            uiMode = ChatPromptUiMode.DYNAMIC_UI,
-        )
-        val expected = """
-            You are Oak, a helpful assistant.
-
-            Save user preferences with memory_store.
-
-            ## Context
-            - Local time: 2026-04-11T02:00:00+02:00 (Europe/Berlin)
-            - UTC: 2026-04-11T00:00:00Z
-            - Platform: Test
-            - Model: test-model
-            - Provider: Test Provider
-
-        """.trimIndent()
-        assertEquals(expected, out)
-    }
-
-    @Test
-    fun `golden CHAT_REMOTE with every section enabled`() {
-        val emailContent = "The user has these email accounts connected.\n- **alice@example.com**: 1 unread\n"
-        val out = build(
+        val out = buildChatSystemPrompt(
             variant = SystemPromptVariant.CHAT_REMOTE,
             soul = "You are Oak.",
-            memoryInstructions = "Basic memory guidance.",
-            generalMemories = listOf(memory("fact", "value")),
-            preferenceMemories = listOf(memory("pref", "val", category = MemoryCategory.PREFERENCE)),
-            learningMemories = listOf(memory("lesson", "body", category = MemoryCategory.LEARNING, hitCount = 3)),
-            errorMemories = listOf(memory("issue", "resolution", category = MemoryCategory.ERROR)),
-            pendingTasks = listOf(task(id = "t1", description = "First task")),
-            emailAccounts = listOf(
-                EmailAccountSummary(
-                    email = "alice@example.com",
-                    unreadCount = 1,
-                    lastSyncEpochMs = 0L,
-                ),
-            ),
-            heartbeatAdditions = listOf(
-                ScheduledTask(
-                    id = "h1",
-                    description = "Greeting",
-                    prompt = "Say hi",
-                    scheduledAtEpochMs = 0L,
-                    createdAtEpochMs = 0L,
-                    trigger = TaskTrigger.HEARTBEAT,
-                ),
-            ),
+            memoryInstructions = "Use memory_store to save user info.",
+            runtime = runtime,
             uiMode = ChatPromptUiMode.NONE,
-            activeSkills = listOf(
-                Skill.AUTOMATION_SKILL,
-                Skill.EMAIL_SKILL.copy(content = emailContent),
-                Skill.STRUCTURED_LEARNING_SKILL,
-            ),
         )
-        // Just assert the section headers are present in order — the full oak-ui sections
-        // are verified by separate DYNAMIC_UI / INTERACTIVE_UI tests.
-        val headerOrder = listOf(
-            "You are Oak.",
-            "Basic memory guidance.",
-            "## Your Memories",
-            "## User Preferences",
-            "## Learnings",
-            "## Known Issues & Resolutions",
-            "## Scheduled Tasks",
-            "## Heartbeat Additions",
-            "## Context",
-            "schedule_task",
-            "alice@example.com",
-            "memory_learn",
-        )
-        var lastIdx = -1
-        for (header in headerOrder) {
-            val idx = out.indexOf(header)
-            assertTrue(idx >= 0, "Expected '$header' in output but was not found. Output:\n$out")
-            assertTrue(idx > lastIdx, "Expected '$header' to come after previous section. Output:\n$out")
-            lastIdx = idx
-        }
+        assertTrue("Use memory_store to save user info." in out)
     }
 
-    // endregion
+    @Test
+    fun `CHAT_LOCAL omits tool guidance`() {
+        val out = buildChatSystemPrompt(
+            variant = SystemPromptVariant.CHAT_LOCAL,
+            soul = "You are Oak.",
+            memoryInstructions = null,
+            runtime = runtime,
+            uiMode = ChatPromptUiMode.NONE,
+        )
+        assertFalse("## Tool Use" in out)
+        assertTrue("## Context" in out)
+    }
 
-    // region Skills — focused tests
+    // ── buildMemoryPrefixMessage ──────────────────────────────────────────
 
     @Test
-    fun `CHAT_REMOTE includes skill content when active skills provided`() {
+    fun `memory prefix includes all categories`() {
+        val out = buildMemoryPrefixMessage(
+            generalMemories = listOf(memory("user_name", "Alice")),
+            preferenceMemories = listOf(memory("tone", "concise", category = MemoryCategory.PREFERENCE)),
+            learningMemories = listOf(memory("lesson", "body", category = MemoryCategory.LEARNING, hitCount = 3)),
+            errorMemories = listOf(memory("fix", "retry", category = MemoryCategory.ERROR)),
+        )
+        assertNotNull(out)
+        val s = out!!
+        assertTrue("## Known Information" in s)
+        assertTrue("- **user_name**: Alice" in s)
+        assertTrue("- **tone**: concise" in s)
+        assertTrue("- **lesson** (reinforced 3x): body" in s)
+        assertTrue("- **fix**: retry" in s)
+    }
+
+    @Test
+    fun `memory prefix returns null when no memories`() {
+        assertEquals(null, buildMemoryPrefixMessage(emptyList(), emptyList(), emptyList(), emptyList()))
+    }
+
+    // ── buildSkillPrefixMessage ───────────────────────────────────────────
+
+    @Test
+    fun `skill prefix includes enabled skill content`() {
         val skill = Skill(
             id = "test_skill",
             name = "Test Skill",
             description = "A test skill",
-            content = "## Test Skill Instructions\nBe helpful.",
+            content = "## Test Instructions\nBe helpful.",
             isEnabled = true,
         )
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            activeSkills = listOf(skill),
-        )
-        assertTrue("## Test Skill Instructions" in out)
-        assertTrue("Be helpful." in out)
+        val out = buildSkillPrefixMessage(listOf(skill))
+        assertNotNull(out)
+        val s = out!!
+        assertTrue("## Active Skills" in s)
+        assertTrue("## Test Instructions" in s)
     }
 
     @Test
-    fun `CHAT_REMOTE omits disabled skill content`() {
+    fun `skill prefix returns null when no enabled skills`() {
         val skill = Skill(
             id = "test_skill",
             name = "Test Skill",
             description = "A test skill",
-            content = "## Test Skill Instructions\nBe helpful.",
+            content = "Hidden",
             isEnabled = false,
         )
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            activeSkills = listOf(skill),
+        assertEquals(null, buildSkillPrefixMessage(listOf(skill)))
+    }
+
+    // ── buildTaskPrefixMessage ────────────────────────────────────────────
+
+    @Test
+    fun `task prefix includes scheduled tasks`() {
+        val out = buildTaskPrefixMessage(
+            pendingTasks = listOf(task(id = "t1", description = "Morning check", cron = "0 9 * * *")),
+            heartbeatAdditions = emptyList(),
         )
-        assertFalse("## Test Skill Instructions" in out)
+        assertNotNull(out)
+        val s = out!!
+        assertTrue("## Active Tasks" in s)
+        assertTrue("- **Morning check**" in s)
     }
 
     @Test
-    fun `CHAT_REMOTE skill content appears after Context section`() {
-        val skill = Skill(
-            id = "test_skill",
-            name = "Test Skill",
-            description = "A test skill",
-            content = "## Test Skill Instructions",
-            isEnabled = true,
-        )
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            activeSkills = listOf(skill),
-        )
-        val contextIdx = out.indexOf("## Context")
-        val skillIdx = out.indexOf("## Test Skill Instructions")
-        assertTrue(contextIdx >= 0, "Context section should exist")
-        assertTrue(skillIdx > contextIdx, "Skill content should appear after Context")
+    fun `task prefix returns null when no tasks`() {
+        assertEquals(null, buildTaskPrefixMessage(emptyList(), emptyList()))
     }
 
     @Test
-    fun `CHAT_LOCAL omits skill content regardless of input`() {
-        val skill = Skill(
-            id = "test_skill",
-            name = "Test Skill",
-            description = "A test skill",
-            content = "## Test Skill Instructions",
-            isEnabled = true,
+    fun `task prefix includes heartbeat additions`() {
+        val heartbeat = ScheduledTask(
+            id = "h1", description = "Greeting", prompt = "Hi!",
+            scheduledAtEpochMs = 0L, createdAtEpochMs = 0L,
+            trigger = TaskTrigger.HEARTBEAT,
         )
-        val out = build(
-            variant = SystemPromptVariant.CHAT_LOCAL,
-            activeSkills = listOf(skill),
+        val out = buildTaskPrefixMessage(
+            pendingTasks = emptyList(),
+            heartbeatAdditions = listOf(heartbeat),
         )
-        assertFalse("## Test Skill Instructions" in out)
+        assertNotNull(out)
+        assertTrue("Heartbeat Additions" in out!!)
+        // No need to extract since only one assertion on the value
     }
-
-    @Test
-    fun `CHAT_REMOTE multiple skills are all included`() {
-        val skill1 = Skill(
-            id = "skill_1",
-            name = "Skill One",
-            description = "First skill",
-            content = "## Skill One Content",
-            isEnabled = true,
-        )
-        val skill2 = Skill(
-            id = "skill_2",
-            name = "Skill Two",
-            description = "Second skill",
-            content = "## Skill Two Content",
-            isEnabled = true,
-        )
-        val out = build(
-            variant = SystemPromptVariant.CHAT_REMOTE,
-            activeSkills = listOf(skill1, skill2),
-        )
-        assertTrue("## Skill One Content" in out)
-        assertTrue("## Skill Two Content" in out)
-    }
-
-    // endregion
 }

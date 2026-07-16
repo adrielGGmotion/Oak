@@ -1,10 +1,8 @@
 @file:OptIn(kotlin.time.ExperimentalTime::class)
 
-// Pure builders for the chat system prompt. Every input is passed explicitly — no DI,
-// no suspend, no resource loading, no Clock — so tests can call `buildChatSystemPrompt`
-// directly with hand-crafted inputs. Section composition is controlled by
-// `SystemPromptVariant`; each `if (variant == ...)` block is the single source of
-// truth for where a section belongs. No post-hoc regex stripping.
+// Pure builders for system prompt and prefix messages. Every input is passed explicitly
+// — no DI, no suspend, no resource loading, no Clock — so tests can call builders
+// directly with hand-crafted inputs.
 
 package com.oak.app.data
 
@@ -20,8 +18,7 @@ enum class SystemPromptVariant {
     /**
      * Trimmed prompt for on-device LiteRT plain chat — only sections a 2-4B Gemma can
      * coherently attend to. Soul + basic memory guidance + runtime `## Context`. Drops
-     * memory category dumps, scheduled tasks, Structured Learning guidance, and oak-ui
-     * modes (the latter is also hidden from the UI for on-device services — see
+     * oak-ui modes (the latter is also hidden from the UI for on-device services — see
      * `ChatScreen.kt`).
      */
     CHAT_LOCAL,
@@ -45,10 +42,7 @@ internal enum class ChatPromptUiMode { NONE, DYNAMIC_UI, INTERACTIVE_UI }
 
 /**
  * Shared shape for rendering a connected email account into a prompt section — used by
- * both the chat `## Email Accounts` block and the heartbeat `## Email Status` block.
- * Carries enough context for the AI to reason about account state (unread, last sync,
- * last error). Message bodies/previews don't belong here; those are surfaced separately
- * by the heartbeat's `## New Emails` section or fetched via the email-reading tools.
+ * both the chat prefix block and the heartbeat `## Email Status` block.
  */
 internal data class EmailAccountSummary(
     val email: String,
@@ -56,15 +50,6 @@ internal data class EmailAccountSummary(
     val lastSyncEpochMs: Long,
     val lastError: String? = null,
 )
-
-/**
- * Total character budget for the memory category sections (`## Your Memories`, etc.)
- * when building the `CHAT_LOCAL` variant. Memories are appended in order — general →
- * preferences → learnings → errors — and entries that would push the combined size
- * past this budget are dropped silently at the entry boundary. Removed the cap
- * (was 800) — modern local models handle larger context windows without issue.
- */
-private const val LOCAL_MEMORY_BUDGET_CHARS = Int.MAX_VALUE
 
 /**
  * Tells remote models that tools are handled through the API's structured
@@ -90,28 +75,34 @@ internal const val DEFAULT_TOOL_CALL_GUIDANCE =
         "Your text responses should contain only " +
         "natural language and, when appropriate, ```oak-ui blocks for interactive UI."
 
+// ── Limits for prefix messages (memories, skills, tasks) ──────────────────────
+
+/** Max combined character budget for the memory prefix block. */
+private const val MEMORY_PREFIX_BUDGET_CHARS = 4_000
+/** Max combined character budget for the skill content prefix block. */
+private const val SKILL_PREFIX_BUDGET_CHARS = 4_000
+/** Max combined character budget for the tasks/emails prefix block. */
+private const val TASK_PREFIX_BUDGET_CHARS = 2_000
+
+// ── System prompt (lean — identity + behavior + context only) ─────────────────
+
 /**
- * Composes the full chat system prompt for the given [variant].
+ * Composes the LEAN system prompt for the given [variant].
  *
- * Returns an empty string when there is literally nothing to render (which the caller
- * should map to `null`). All inputs are passed explicitly — memory lists are pre-split
- * by the caller so this function doesn't touch the `MemoryStore`.
+ * Contains only what the model needs for behaviour and identity:
+ * soul + memory instructions + tool guidance + runtime context.
+ *
+ * Dynamic data (memories, skills content, tasks, emails) is injected as
+ * **prefix messages** — separate system-role messages that participate in
+ * front-truncation when the context window is full. See [buildMemoryPrefixMessage],
+ * [buildSkillPrefixMessage], and [buildTaskPrefixMessage].
  */
 internal fun buildChatSystemPrompt(
     variant: SystemPromptVariant,
     soul: String,
     memoryInstructions: String?,
-    generalMemories: List<MemoryEntry>,
-    preferenceMemories: List<MemoryEntry>,
-    learningMemories: List<MemoryEntry>,
-    errorMemories: List<MemoryEntry>,
-    pendingTasks: List<ScheduledTask>,
-    heartbeatAdditions: List<ScheduledTask>,
-    emailAccounts: List<EmailAccountSummary>,
     runtime: ChatPromptRuntimeContext,
     uiMode: ChatPromptUiMode,
-    activeSkills: List<Skill> = emptyList(),
-    inactiveSkills: List<Skill> = emptyList(),
 ): String = buildString {
     append(soul)
 
@@ -120,80 +111,13 @@ internal fun buildChatSystemPrompt(
         append(memoryInstructions)
     }
 
-    // Memory category sections are emitted for BOTH variants. memory_store / memory_forget /
-    // memory_reinforce are in the local allowlist, and memories may have been learned via
-    // remote models — the local model should be able to reference them. A char-count budget
-    // (unlimited for remote; [LOCAL_MEMORY_BUDGET_CHARS] for local) prevents runaway growth
-    // on small on-device context windows.
-    val memoryBudget = when (variant) {
-        SystemPromptVariant.CHAT_REMOTE -> Int.MAX_VALUE
-        SystemPromptVariant.CHAT_LOCAL -> LOCAL_MEMORY_BUDGET_CHARS
-    }
-    var remaining = memoryBudget
-    remaining = appendMemoryCategorySection("Your Memories", generalMemories, withHitCount = false, remaining)
-    remaining = appendMemoryCategorySection("User Preferences", preferenceMemories, withHitCount = false, remaining)
-    remaining = appendMemoryCategorySection("Learnings", learningMemories, withHitCount = true, remaining)
-    appendMemoryCategorySection("Known Issues & Resolutions", errorMemories, withHitCount = false, remaining)
-
-    // Data-driven sections: scheduled tasks and heartbeat additions render the actual task
-    // lists. Guidance for automation/email/structured-learning is now handled by skills.
-    if (variant == SystemPromptVariant.CHAT_REMOTE) {
-        if (pendingTasks.isNotEmpty()) {
-            if (isNotEmpty()) append("\n\n")
-            appendScheduledTasksSection(pendingTasks)
-        }
-        if (heartbeatAdditions.isNotEmpty()) {
-            if (isNotEmpty()) append("\n\n")
-            appendHeartbeatAdditionsSection(heartbeatAdditions)
-        }
-    }
-
-    // Tool call guidance — remote-only. Remote models receive tools through the API's
-    // structured `tools` parameter and should respond via the API's native tool invocation
-    // mechanism, not by emitting inline markup. Local models get their own
-    // tool-use instructions injected by buildLocalToolPrompt().
+    // Tool call guidance — remote-only.
     if (variant == SystemPromptVariant.CHAT_REMOTE) {
         if (isNotEmpty()) append("\n\n")
         append(DEFAULT_TOOL_CALL_GUIDANCE)
     }
 
     appendContextSection(runtime)
-
-    // Inject skill information after Context, before oak-ui sections.
-    // Skills can reference time/model info from Context.
-    // Both loaded (active) and available (not loaded) skills are surfaced so the
-    // model can see what's available without calling list_skills first.
-    if (variant == SystemPromptVariant.CHAT_REMOTE) {
-        val loadedSkills = activeSkills.filter { it.isEnabled && it.content.isNotBlank() }
-        val availableSkills = inactiveSkills.filter { it.isEnabled }
-        val hasActive = loadedSkills.isNotEmpty()
-        val hasAvailable = availableSkills.isNotEmpty()
-
-        if (hasActive || hasAvailable) {
-            if (isNotEmpty()) append("\n\n")
-            append("## Skills\n")
-            append("When the user asks you to generate, create, produce, or transform something, check these skills before using an ad-hoc approach.\n")
-
-            if (hasActive) {
-                append("\nActive (loaded) Skills — their instructions are in effect:\n")
-                for (skill in loadedSkills) {
-                    append("- **${skill.name}**: ${skill.description}\n")
-                }
-                for (skill in loadedSkills) {
-                    append("\n\n")
-                    append(skill.content)
-                }
-            }
-
-            if (hasAvailable) {
-                if (hasActive) append("\n")
-                append("\nAvailable (not loaded) Skills — call `load_skill` with the skill id to activate one:\n")
-                for (skill in availableSkills) {
-                    append("- **${skill.name}** (id: `${skill.id}`): ${skill.description}\n")
-                }
-            }
-        }
-    }
 
     if (variant == SystemPromptVariant.CHAT_REMOTE) {
         when (uiMode) {
@@ -204,50 +128,124 @@ internal fun buildChatSystemPrompt(
     }
 }
 
-/**
- * Appends a memory category section subject to a char budget. Entries are added one by
- * one until the next entry would push the section past [remainingBudget]; remaining
- * entries are dropped silently. If no entries fit, the header is not emitted either.
- *
- * Returns the remaining budget after emission so the caller can thread it through the
- * next category section. [Int.MAX_VALUE] means unlimited (no truncation).
- */
-private fun StringBuilder.appendMemoryCategorySection(
-    header: String,
-    entries: List<MemoryEntry>,
-    withHitCount: Boolean,
-    remainingBudget: Int,
-): Int {
-    if (entries.isEmpty() || remainingBudget <= 0) return remainingBudget
+// ── Prefix message builders ──────────────────────────────────────────────────
 
-    val section = StringBuilder()
-    section.append("\n\n## ").append(header).append("\n")
-    val headerLen = section.length
-    var included = 0
-    for (entry in entries) {
-        val entryStart = section.length
-        section.append("- **").append(entry.key).append("**")
-        if (withHitCount) {
-            section.append(" (reinforced ").append(entry.hitCount).append("x)")
-        }
-        section.append(": ").append(entry.content).append('\n')
-        if (section.length > remainingBudget) {
-            // This entry pushed us over. Revert it and stop.
-            section.setLength(entryStart)
-            break
-        }
-        included++
-    }
-    if (included == 0) {
-        // Not even the first entry fit — don't emit the header alone.
-        return remainingBudget
-    }
-    append(section)
-    return (remainingBudget - section.length).coerceAtLeast(0)
+/**
+ * Builds the memory prefix block — stored memories grouped by category.
+ *
+ * Participates in front-truncation: when context is tight this block is
+ * dropped before any conversation messages. Budgeted at [MEMORY_PREFIX_BUDGET_CHARS]
+ * to prevent runaway growth.
+ *
+ * Returns null when there are no memories so the caller can skip injecting
+ * an empty prefix message.
+ */
+internal fun buildMemoryPrefixMessage(
+    generalMemories: List<MemoryEntry>,
+    preferenceMemories: List<MemoryEntry>,
+    learningMemories: List<MemoryEntry>,
+    errorMemories: List<MemoryEntry>,
+): String? {
+    if (generalMemories.isEmpty() && preferenceMemories.isEmpty() &&
+        learningMemories.isEmpty() && errorMemories.isEmpty()
+    ) return null
+
+    var remaining = MEMORY_PREFIX_BUDGET_CHARS
+    val buffer = StringBuilder()
+    buffer.append("## Known Information\n")
+    buffer.append("The following information has been learned from your conversation. Use `memory_store`/`memory_forget` to manage it.\n")
+    val headerLen = buffer.length
+
+    remaining = appendMemoryCategorySection(buffer, "Your Memories", generalMemories, withHitCount = false, remaining)
+    remaining = appendMemoryCategorySection(buffer, "User Preferences", preferenceMemories, withHitCount = false, remaining)
+    remaining = appendMemoryCategorySection(buffer, "Learnings", learningMemories, withHitCount = true, remaining)
+    appendMemoryCategorySection(buffer, "Known Issues & Resolutions", errorMemories, withHitCount = false, remaining)
+
+    if (buffer.length == headerLen) return null // nothing fit
+    return buffer.toString()
 }
 
-private fun StringBuilder.appendHeartbeatAdditionsSection(additions: List<ScheduledTask>) {
-    append("\n\n## Heartbeat Additions\n")
+/**
+ * Builds the skills prefix block — names and descriptions of active skills,
+ * followed by the full content of each loaded skill.
+ *
+ * Returns null when there are no active skills.
+ */
+internal fun buildSkillPrefixMessage(activeSkills: List<Skill>): String? {
+    val enabled = activeSkills.filter { it.isEnabled && it.content.isNotBlank() }
+    if (enabled.isEmpty()) return null
+
+    val buffer = StringBuilder()
+    buffer.append("## Active Skills\n")
+    buffer.append("The following skills are loaded and their instructions are in effect:\n")
+    for (skill in enabled) {
+        buffer.append("- **${skill.name}**: ${skill.description}\n")
+    }
+    var remaining = SKILL_PREFIX_BUDGET_CHARS - buffer.length
+
+    for (skill in enabled) {
+        val entry = "\n\n### ${skill.name}\n${skill.content}"
+        if (entry.length > remaining) {
+            // Would push over budget — skip remaining skills
+            buffer.append("\n\n[Remaining skill contents omitted — context budget reached]")
+            break
+        }
+        buffer.append(entry)
+        remaining -= entry.length
+    }
+
+    // Also list available (not loaded) skills
+    val available = activeSkills.filter { it.isEnabled && it.content.isBlank() }
+    if (available.isNotEmpty()) {
+        buffer.append("\n\n### Available Skills\n")
+        buffer.append("Call `load_skill` with a skill id to activate it:\n")
+        for (skill in available) {
+            buffer.append("- **${skill.name}** (id: `${skill.id}`): ${skill.description}\n")
+        }
+    }
+
+    return buffer.toString()
+}
+
+/**
+ * Builds the tasks prefix block — scheduled tasks and heartbeat additions.
+ * Returns null when there are no pending items.
+ */
+internal fun buildTaskPrefixMessage(
+    pendingTasks: List<ScheduledTask>,
+    heartbeatAdditions: List<ScheduledTask>,
+): String? {
+    if (pendingTasks.isEmpty() && heartbeatAdditions.isEmpty()) return null
+
+    var remaining = TASK_PREFIX_BUDGET_CHARS
+    val buffer = StringBuilder()
+    buffer.append("## Active Tasks\n")
+    val headerLen = buffer.length
+
+    if (pendingTasks.isNotEmpty()) {
+        val section = buildScheduledTasksSection(pendingTasks)
+        if (section.length <= remaining) {
+            buffer.append(section)
+            remaining -= section.length
+        }
+    }
+
+    if (heartbeatAdditions.isNotEmpty() && remaining > 0) {
+        val section = buildHeartbeatAdditionsSection(heartbeatAdditions)
+        if (section.length <= remaining) {
+            buffer.append(section)
+            remaining -= section.length
+        }
+    }
+
+    if (buffer.length == headerLen) return null
+    return buffer.toString()
+}
+
+// ── Internal helpers (also used by heartbeats) ───────────────────────────────
+
+internal fun buildHeartbeatAdditionsSection(additions: List<ScheduledTask>): String = buildString {
+    append("\n\n### Heartbeat Additions\n")
     append("Standing instructions the user has set to run on every heartbeat (trigger=HEARTBEAT). Don't duplicate these when the user asks for similar behaviour; cancel via `cancel_task` if they want one removed.\n")
     for (t in additions) {
         append("- **")
@@ -260,8 +258,8 @@ private fun StringBuilder.appendHeartbeatAdditionsSection(additions: List<Schedu
     }
 }
 
-private fun StringBuilder.appendScheduledTasksSection(pendingTasks: List<ScheduledTask>) {
-    append("\n\n## Scheduled Tasks\n")
+internal fun buildScheduledTasksSection(pendingTasks: List<ScheduledTask>): String = buildString {
+    append("\n\n### Scheduled Tasks\n")
     for (t in pendingTasks) {
         append("- **")
         append(t.description)
@@ -279,11 +277,49 @@ private fun StringBuilder.appendScheduledTasksSection(pendingTasks: List<Schedul
     }
 }
 
+/**
+ * Appends a memory category section subject to a char budget. Entries are added
+ * one by one until the next entry would push the section past [remainingBudget];
+ * remaining entries are dropped silently. If no entries fit, the header is not
+ * emitted either.
+ *
+ * Returns the remaining budget after emission so the caller can thread it through
+ * the next category section.
+ */
+internal fun appendMemoryCategorySection(
+    buffer: StringBuilder,
+    header: String,
+    entries: List<MemoryEntry>,
+    withHitCount: Boolean,
+    remainingBudget: Int,
+): Int {
+    if (entries.isEmpty() || remainingBudget <= 0) return remainingBudget
+
+    val section = StringBuilder()
+    section.append("\n\n### ").append(header).append("\n")
+    var included = 0
+    for (entry in entries) {
+        val entryStart = section.length
+        section.append("- **").append(entry.key).append("**")
+        if (withHitCount) {
+            section.append(" (reinforced ").append(entry.hitCount).append("x)")
+        }
+        section.append(": ").append(entry.content).append('\n')
+        if (section.length > remainingBudget) {
+            section.setLength(entryStart)
+            break
+        }
+        included++
+    }
+    if (included == 0) return remainingBudget
+    buffer.append(section)
+    return (remainingBudget - section.length).coerceAtLeast(0)
+}
+
+// ── Sections injected into the lean system prompt ────────────────────────────
+
 private fun StringBuilder.appendContextSection(runtime: ChatPromptRuntimeContext) {
     append("\n\n## Context\n")
-    // Lead with local time so the model anchors on the user's wall clock when computing
-    // relative times ("in 3 minutes", "tomorrow at 9"). Tools that accept a naive datetime
-    // (e.g. `schedule_task`'s `execute_at`) interpret it in this zone.
     append("- Local time: ")
     append(runtime.nowLocalIsoWithOffset)
     append(" (")
@@ -306,7 +342,7 @@ private fun StringBuilder.appendContextSection(runtime: ChatPromptRuntimeContext
 private fun StringBuilder.appendDynamicUiSection() {
     append("\n## Dynamic UI\n")
     append("Dynamic UI mode is active. Use oak-ui blocks to enhance your responses with interactive elements.\n")
-    append("The component catalog, layout tips, and examples are provided by the oak-ui skill above.\n")
+    append("The component catalog, layout tips, and examples are provided by the oak-ui skill.\n")
 }
 
 private fun StringBuilder.appendInteractiveUiSection() {

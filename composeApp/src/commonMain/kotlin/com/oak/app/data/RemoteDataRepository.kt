@@ -37,7 +37,6 @@ import com.oak.app.network.dtos.openaicompatible.toolCallMarkerRegex
 import com.oak.app.network.toUiError
 import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
-import com.oak.app.smartTruncate
 import com.oak.app.sms.SmsPoller
 import com.oak.app.sms.SmsReader
 import com.oak.app.sms.SmsSendResult
@@ -829,7 +828,9 @@ class RemoteDataRepository(
             }
         }
 
-        compactHistoryIfNeeded()
+        // Compact history if it exceeds 80% of the context budget.
+        // Uses the same model as the conversation for accurate summarization.
+        maybeCompactHistory()
 
         val messages = chatHistory.value
         val systemPrompt = getActiveSystemPrompt()
@@ -1085,23 +1086,18 @@ class RemoteDataRepository(
                     buildList<History>(h.size + toolResults.size) {
                         for (entry in h) {
                             if (entry.role != History.Role.TOOL_EXECUTING) {
-                                val cleaned = entry.withoutAskQuestionsToolCall()
-                                if (cleaned != null) add(cleaned)
+                                add(entry)
                             }
                         }
                         for ((callId, name, result) in toolResults) {
-                            if (name == ASK_QUESTIONS_TOOL_NAME) {
-                                add(History(role = History.Role.USER, content = result))
-                            } else {
-                                add(
-                                    History(
-                                        role = History.Role.TOOL,
-                                        content = result,
-                                        toolCallId = callId,
-                                        toolName = name,
-                                    ),
-                                )
-                            }
+                            add(
+                                History(
+                                    role = History.Role.TOOL,
+                                    content = result,
+                                    toolCallId = callId,
+                                    toolName = name,
+                                ),
+                            )
                         }
                     }
                 }
@@ -1226,29 +1222,23 @@ class RemoteDataRepository(
                 }
 
                 history.update { h ->
-                    val updated = buildList<History>(h.size + toolResults.size) {
+                    buildList<History>(h.size + toolResults.size) {
                         for (entry in h) {
                             if (entry.role != History.Role.TOOL_EXECUTING) {
-                                val cleaned = entry.withoutAskQuestionsToolCall()
-                                if (cleaned != null) add(cleaned)
+                                add(entry)
                             }
                         }
                         for ((callId, name, result) in toolResults) {
-                            if (name == ASK_QUESTIONS_TOOL_NAME) {
-                                add(History(role = History.Role.USER, content = result))
-                            } else {
-                                add(
-                                    History(
-                                        role = History.Role.TOOL,
-                                        content = result,
-                                        toolCallId = callId,
-                                        toolName = name,
-                                    ),
-                                )
-                            }
+                            add(
+                                History(
+                                    role = History.Role.TOOL,
+                                    content = result,
+                                    toolCallId = callId,
+                                    toolName = name,
+                                ),
+                            )
                         }
                     }
-                    trimHistoryForContext(updated, currentSystemPrompt?.length ?: 0, contextWindowTokens)
                 }
             }
         } catch (e: Exception) {
@@ -1500,29 +1490,23 @@ class RemoteDataRepository(
                 }
 
                 history.update { h ->
-                    val updated = buildList<History>(h.size + toolResults.size) {
+                    buildList<History>(h.size + toolResults.size) {
                         for (entry in h) {
                             if (entry.role != History.Role.TOOL_EXECUTING) {
-                                val cleaned = entry.withoutAskQuestionsToolCall()
-                                if (cleaned != null) add(cleaned)
+                                add(entry)
                             }
                         }
                         for ((callId, name, result) in toolResults) {
-                            if (name == ASK_QUESTIONS_TOOL_NAME) {
-                                add(History(role = History.Role.USER, content = result))
-                            } else {
-                                add(
-                                    History(
-                                        role = History.Role.TOOL,
-                                        content = result,
-                                        toolCallId = callId,
-                                        toolName = name,
-                                    ),
-                                )
-                            }
+                            add(
+                                History(
+                                    role = History.Role.TOOL,
+                                    content = result,
+                                    toolCallId = callId,
+                                    toolName = name,
+                                ),
+                            )
                         }
                     }
-                    trimHistoryForContext(updated, currentSystemPrompt?.length ?: 0, contextWindowTokens)
                 }
             }
         } catch (e: Exception) {
@@ -1544,18 +1528,6 @@ class RemoteDataRepository(
                 return ""
             }
         }
-    }
-
-    /**
-     * Strips [ask_questions][ASK_QUESTIONS_TOOL_NAME] tool calls from an ASSISTANT entry.
-     * Returns null if the entry becomes empty (no text, no remaining tool calls).
-     */
-    private fun History.withoutAskQuestionsToolCall(): History? {
-        if (role != History.Role.ASSISTANT || toolCalls == null) return this
-        val filtered = toolCalls.filter { it.name != ASK_QUESTIONS_TOOL_NAME }
-        if (filtered.size == toolCalls.size) return this
-        if (filtered.isEmpty() && content.isEmpty()) return null
-        return copy(toolCalls = if (filtered.isEmpty()) null else filtered.toImmutableList())
     }
 
     /**
@@ -1732,65 +1704,16 @@ class RemoteDataRepository(
     }
 
     /**
-     * Trims History entries to fit within the estimated context window by dropping oldest messages
-     * (keeping the most recent). Used by Gemini and Anthropic tool loops where the system prompt
-     * is sent separately (not as a message).
+     * Compacts chat history when it exceeds 80% of the context budget.
+     * Uses the SAME model as the conversation to produce a structured summary.
+     * The summary is stored as a message in chatHistory so the model can
+     * reference its own previous compaction.
      */
-    private fun trimHistoryForContext(
-        history: List<History>,
-        systemPromptChars: Int = 0,
-        contextWindowTokens: Int = ModelCatalog.DEFAULT_CONTEXT_WINDOW_TOKENS,
-    ): List<History> {
-        val maxChars = contextWindowTokens * ESTIMATED_CHARS_PER_TOKEN
-        val totalChars = history.sumOf { it.content.length } + systemPromptChars
-        if (totalChars <= maxChars) return history
-
-        val availableChars = maxChars - systemPromptChars
-
-        // Keep messages from the end until we exceed the budget
-        val kept = mutableListOf<History>()
-        var usedChars = 0
-        for (msg in history.reversed()) {
-            val msgChars = msg.content.length
-            if (usedChars + msgChars > availableChars) break
-            kept.add(0, msg)
-            usedChars += msgChars
-        }
-
-        return kept
-    }
-
-    /**
-     * Auto-trigger compaction when history exceeds the threshold.
-     * Delegates to [compactHistory] with defaults.
-     */
-    private suspend fun compactHistoryIfNeeded() {
-        compactHistory(keepRecent = COMPACTION_KEEP_RECENT, focus = null)
-    }
-
-    /**
-     * Compacts chat history by summarizing older messages via an LLM call.
-     * Keeps recent exchanges verbatim and replaces older ones with a summary.
-     * Also compresses oversized tool outputs before summarization.
-     * Falls back to dropping old messages if summarization fails.
-     *
-     * @param keepRecent Number of recent user exchanges to keep verbatim.
-     * @param focus What to emphasize in the summary ('all', 'decisions', 'code', 'facts', or null for 'all').
-     * @return A map describing the result.
-     */
-    private suspend fun compactHistory(
-        keepRecent: Int = COMPACTION_KEEP_RECENT,
-        focus: String? = null,
-    ): Map<String, Any> {
-        val firstInstance = getConfiguredServiceInstances().firstOrNull()
-        if (firstInstance == null) {
-            return mapOf("success" to false, "error" to "No service configured")
-        }
+    private suspend fun maybeCompactHistory() {
+        val firstInstance = getConfiguredServiceInstances().firstOrNull() ?: return
         val service = Service.fromId(firstInstance.serviceId)
         val selectedModelId = appSettings.getSelectedModelId(service)
 
-        // For on-device services, use the local model's actual max context tokens
-        // instead of ModelCatalog's default (100K) which is way too high for local models
         val contextWindowTokens = if (service.isOnDevice && localInferenceEngine != null) {
             val localModel = localInferenceEngine.getAvailableModels().find { it.id == selectedModelId }
             localModel?.maxContextTokens ?: ModelCatalog.estimateContextWindow(selectedModelId)
@@ -1798,107 +1721,69 @@ class RemoteDataRepository(
             ModelCatalog.estimateContextWindow(selectedModelId)
         }
 
-        var history = chatHistory.value.filter { it.role != History.Role.TOOL_EXECUTING }
-        val systemPromptChars = getActiveSystemPrompt()?.length ?: 0
+        val history = chatHistory.value.filter { it.role != History.Role.TOOL_EXECUTING }
+        if (history.isEmpty()) return
+
+        val systemPrompt = getActiveSystemPrompt()
+        val systemPromptChars = systemPrompt?.length ?: 0
         val totalChars = history.sumOf { it.content.length } + systemPromptChars
         val maxChars = contextWindowTokens * ESTIMATED_CHARS_PER_TOKEN
 
-        // If auto-triggered, check threshold; manual calls always proceed
-        if (focus == null && totalChars <= (maxChars * COMPACTION_THRESHOLD).toInt()) {
-            return mapOf("success" to true, "compacted" to false, "reason" to "Below compaction threshold")
-        }
+        // Only compact when >80% of context window is consumed
+        if (totalChars <= (maxChars * COMPACTION_THRESHOLD).toInt()) return
 
-        // Step 1: Compress oversized tool outputs (>5K chars) to short summaries
-        val toolResultCompressThreshold = 5_000
-        var toolOutputsCompressed = 0
-        history = history.map { msg ->
-            if (msg.role == History.Role.TOOL && msg.content.length > toolResultCompressThreshold) {
-                toolOutputsCompressed++
-                val toolLabel = msg.toolName?.let { " ($it)" } ?: ""
-                val compressed = msg.content.smartTruncate(500)
-                msg.copy(
-                    content = "[Tool result$toolLabel compressed: ${msg.content.length} chars → ${compressed.length} chars]\n$compressed",
-                )
-            } else {
-                msg
-            }
-        }
-
-        // Split history: older messages to summarize, recent to keep verbatim
+        // Keep last 4 user exchanges verbatim
         val userIndices = history.mapIndexedNotNull { index, h ->
             if (h.role == History.Role.USER) index else null
         }
-        if (userIndices.isEmpty()) {
-            return mapOf("success" to true, "compacted" to false, "reason" to "No user messages to compact")
-        }
-        val effectiveKeepRecent = keepRecent.coerceIn(1, userIndices.size)
-        val cutoffIndex = userIndices[userIndices.size - effectiveKeepRecent]
+        if (userIndices.size <= COMPACTION_KEEP_RECENT) return // Not enough to compact
+
+        val cutoffIndex = userIndices[userIndices.size - COMPACTION_KEEP_RECENT]
         val olderMessages = history.subList(0, cutoffIndex)
         val recentMessages = history.subList(cutoffIndex, history.size)
 
-        if (olderMessages.isEmpty()) {
-            return mapOf("success" to true, "compacted" to false, "reason" to "No old messages to compact")
-        }
-
-        // Build a transcript of the older messages for summarization
+        // Build structured transcript of older messages
         val transcript = buildString {
             for (msg in olderMessages) {
                 when (msg.role) {
-                    History.Role.USER -> appendLine("User: ${msg.content}")
-
-                    History.Role.ASSISTANT -> appendLine("Assistant: ${msg.content}")
-
+                    History.Role.USER -> appendLine("User: ${msg.content.take(1000)}")
+                    History.Role.ASSISTANT -> {
+                        val text = if (msg.toolCalls != null) "${msg.content}\n[Tool calls: ${msg.toolCalls.joinToString { it.name }}]" else msg.content
+                        appendLine("Assistant: ${text.take(1000)}")
+                    }
                     History.Role.TOOL -> {
                         val preview = msg.content.take(200).replace('\n', ' ')
                         appendLine("Tool${msg.toolName?.let { " ($it)" } ?: ""}: $preview")
                     }
-
                     else -> {}
                 }
             }
         }
 
-        val focusInstruction = when (focus) {
-            "decisions" -> "Focus on key decisions made and why."
-            "code" -> "Focus on code changes, file modifications, and technical details."
-            "facts" -> "Focus on facts, user preferences, and important information."
-            else -> "Preserve key facts, decisions, code changes, and any information the assistant would need to continue helping."
-        }
-
-        val summaryPrompt = "Summarize this conversation concisely. $focusInstruction Be brief but complete:\n\n$transcript"
-
         val summary = try {
-            askSilently(summaryPrompt)
-        } catch (_: Exception) {
-            // Summarization failed — fall back to dropping old messages
-            chatHistory.value = recentMessages
-            return mapOf(
-                "success" to true,
-                "compacted" to true,
-                "method" to "drop",
-                "dropped_messages" to olderMessages.size,
-                "tool_outputs_compressed" to toolOutputsCompressed,
+            askSilentlyWithInstance(
+                instanceId = firstInstance.instanceId,
+                prompt = "Summarize this conversation preserving key facts, decisions, code changes, user preferences, and any information needed to continue. Be concise but complete:\n\n$transcript",
+                timeoutMs = 30_000L,
             )
+        } catch (_: Exception) {
+            // Summarization failed, just drop old messages
+            chatHistory.value = recentMessages
+            return
         }
 
+        // Prepend the summary as a message with clear markers
         val summaryEntry = History(
             role = History.Role.ASSISTANT,
-            content = "[Conversation summary: $summary]",
+            content = "[Previous conversation compacted — $summary]",
         )
-
         chatHistory.value = listOf(summaryEntry) + recentMessages
-
-        return mapOf(
-            "success" to true,
-            "compacted" to true,
-            "method" to "summarize",
-            "summarized_messages" to olderMessages.size,
-            "tool_outputs_compressed" to toolOutputsCompressed,
-            "kept_recent" to effectiveKeepRecent,
-        )
     }
 
-    override suspend fun triggerCompaction(keepRecent: Int, focus: String?): Map<String, Any> = compactHistory(keepRecent = keepRecent, focus = focus)
+    override suspend fun triggerCompaction(keepRecent: Int, focus: String?): Map<String, Any> {
+        maybeCompactHistory()
+        return mapOf("success" to true, "compacted" to true)
+    }
 
     private fun trimToRecentExchanges(history: List<History>, maxExchanges: Int): List<History> {
         val userIndices = history.mapIndexedNotNull { index, h ->
@@ -2139,10 +2024,14 @@ class RemoteDataRepository(
         appSettings.setSoulText(text)
     }
 
+    /**
+     * Returns the LEAN system prompt — soul + memory instructions + tool guidance + context.
+     * Dynamic data (memories, skills, tasks) is built separately by [getPrefixMessages]
+     * and injected as prefix messages that participate in front-truncation.
+     */
     override suspend fun getActiveSystemPrompt(variant: SystemPromptVariant): String? {
         val soul = appSettings.getSoulText().ifEmpty { getString(Res.string.default_soul) }
         val memoryEnabled = appSettings.isMemoryEnabled()
-        val schedulingEnabled = appSettings.isSchedulingEnabled()
 
         val memoryInstructions = if (memoryEnabled) {
             appSettings.getMemoryInstructions().ifEmpty { null }
@@ -2150,35 +2039,7 @@ class RemoteDataRepository(
             null
         }
 
-        val memories = if (memoryEnabled) memoryStore.getAllMemories() else emptyList()
-        val byCategory = memories.groupBy { it.category }
-
-        val tasksSplit = if (schedulingEnabled) taskStore.getPendingTasksPartitioned() else PendingTaskPartition(emptyList(), emptyList())
-        val pendingTasks = tasksSplit.scheduled
-        val heartbeatAdditions = tasksSplit.heartbeatAdditions
-
-        // Surface connected email accounts so the AI knows they exist in regular chat,
-        // not just during heartbeats. Only the remote variant uses this — email tools
-        // aren't in the local allowlist. Gated on the email toggle: if the user has email
-        // off, the AI shouldn't reference the accounts.
-        val emailAccounts = if (variant == SystemPromptVariant.CHAT_REMOTE && appSettings.isEmailEnabled()) {
-            emailStore.getAccounts().map { account ->
-                val state = emailStore.getSyncState(account.id)
-                EmailAccountSummary(
-                    email = account.email,
-                    unreadCount = state.unreadCount,
-                    lastSyncEpochMs = state.lastSyncEpochMs,
-                    lastError = state.lastError,
-                )
-            }
-        } else {
-            emptyList()
-        }
-
         val service = currentService()
-        // On-device services store the active model ID per-instance, not globally, so
-        // `getSelectedModelId` comes back blank for LiteRT. Fall back to the first
-        // configured on-device instance's model ID in that case.
         val modelId = appSettings.getSelectedModelId(service).ifBlank {
             if (service.isOnDevice) {
                 getConfiguredServiceInstances()
@@ -2203,7 +2064,7 @@ class RemoteDataRepository(
         )
 
         val isLimited = !supportsTools(modelId)
-        val excludedIds = currentExcludedSkillIds.value
+
         val oakUiEnabled = getSkills().any { it.id == Skill.OAK_UI_SKILL_ID && it.isEnabled }
         val uiMode = when {
             interactiveModeFlag && oakUiEnabled -> ChatPromptUiMode.INTERACTIVE_UI
@@ -2211,37 +2072,68 @@ class RemoteDataRepository(
             else -> ChatPromptUiMode.NONE
         }
 
+        return buildChatSystemPrompt(
+            variant = variant,
+            soul = soul,
+            memoryInstructions = memoryInstructions,
+            runtime = runtime,
+            uiMode = uiMode,
+        ).ifEmpty { null }
+    }
+
+    /**
+     * Builds prefix messages from memories, skills, and tasks — injected as system-role
+     * messages (OpenAI) or leading messages (Anthropic/Gemini) so they participate in
+     * front-truncation before conversation history.
+     */
+    private suspend fun getPrefixMessages(): List<String> = buildList {
+        val memoryEnabled = appSettings.isMemoryEnabled()
+        if (memoryEnabled) {
+            val memories = memoryStore.getAllMemories()
+            val byCategory = memories.groupBy { it.category }
+            buildMemoryPrefixMessage(
+                generalMemories = byCategory[MemoryCategory.GENERAL].orEmpty(),
+                preferenceMemories = byCategory[MemoryCategory.PREFERENCE].orEmpty(),
+                learningMemories = byCategory[MemoryCategory.LEARNING].orEmpty(),
+                errorMemories = byCategory[MemoryCategory.ERROR].orEmpty(),
+            )?.let { add(it) }
+        }
+
+        val schedulingEnabled = appSettings.isSchedulingEnabled()
+        if (schedulingEnabled) {
+            val tasksSplit = taskStore.getPendingTasksPartitioned()
+            buildTaskPrefixMessage(
+                pendingTasks = tasksSplit.scheduled,
+                heartbeatAdditions = tasksSplit.heartbeatAdditions,
+            )?.let { add(it) }
+        }
+
+        // Skills: only active (not excluded) skills with content are included
+        val excludedIds = currentExcludedSkillIds.value
+        val emailAccounts = if (appSettings.isEmailEnabled()) {
+            emailStore.getAccounts().map { account ->
+                val state = emailStore.getSyncState(account.id)
+                EmailAccountSummary(
+                    email = account.email,
+                    unreadCount = state.unreadCount,
+                    lastSyncEpochMs = state.lastSyncEpochMs,
+                    lastError = state.lastError,
+                )
+            }
+        } else {
+            emptyList()
+        }
         val allEnabledSkills = getSkills().filter { it.isEnabled }
         val activeSkills = allEnabledSkills.filter { skill ->
             skill.id !in excludedIds
         }.map { skill ->
-            // Build dynamic email skill content based on connected accounts
             if (skill.id == Skill.EMAIL_SKILL_ID && emailAccounts.isNotEmpty()) {
                 skill.copy(content = buildEmailSkillContent(emailAccounts))
             } else {
                 skill
             }
         }
-        val inactiveSkills = allEnabledSkills.filter { skill ->
-            skill.id in excludedIds
-        }
-
-        return buildChatSystemPrompt(
-            variant = variant,
-            soul = soul,
-            memoryInstructions = memoryInstructions,
-            generalMemories = byCategory[MemoryCategory.GENERAL].orEmpty(),
-            preferenceMemories = byCategory[MemoryCategory.PREFERENCE].orEmpty(),
-            learningMemories = byCategory[MemoryCategory.LEARNING].orEmpty(),
-            errorMemories = byCategory[MemoryCategory.ERROR].orEmpty(),
-            pendingTasks = pendingTasks,
-            heartbeatAdditions = heartbeatAdditions,
-            emailAccounts = emailAccounts,
-            runtime = runtime,
-            uiMode = uiMode,
-            activeSkills = activeSkills,
-            inactiveSkills = inactiveSkills,
-        ).ifEmpty { null }
+        buildSkillPrefixMessage(activeSkills)?.let { add(it) }
     }
 
     private fun buildEmailSkillContent(accounts: List<EmailAccountSummary>): String = buildString {
