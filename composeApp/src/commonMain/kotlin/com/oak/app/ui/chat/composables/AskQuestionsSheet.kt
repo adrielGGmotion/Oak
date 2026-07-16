@@ -61,6 +61,8 @@ import oak.composeapp.generated.resources.ask_questions_back
 import oak.composeapp.generated.resources.ask_questions_back_to_questions
 import oak.composeapp.generated.resources.ask_questions_of
 import oak.composeapp.generated.resources.ask_questions_q_label
+import oak.composeapp.generated.resources.ask_questions_next
+import oak.composeapp.generated.resources.ask_questions_review_answers
 import oak.composeapp.generated.resources.ask_questions_review_your_answers
 import oak.composeapp.generated.resources.ask_questions_skipped
 import oak.composeapp.generated.resources.ask_questions_submit_answers
@@ -222,7 +224,7 @@ fun AskQuestionsSheet(
                     modifier = Modifier.fillMaxWidth().height(48.dp).handCursor(),
                     shape = RoundedCornerShape(12.dp),
                 ) {
-                    Text(if (isLast) "Review answers" else "Next")
+                    Text(if (isLast) stringResource(Res.string.ask_questions_review_answers) else stringResource(Res.string.ask_questions_next))
                 }
             }
         }

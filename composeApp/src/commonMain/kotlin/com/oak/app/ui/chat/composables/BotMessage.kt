@@ -51,8 +51,11 @@ import nl.marc_apps.tts.TextToSpeechInstance
 import nl.marc_apps.tts.errors.TextToSpeechSynthesisInterruptedError
 import oak.composeapp.generated.resources.Res
 import oak.composeapp.generated.resources.bot_message_copy_content_description
+import oak.composeapp.generated.resources.bot_message_cancel_edit
+import oak.composeapp.generated.resources.bot_message_edit_submission
 import oak.composeapp.generated.resources.bot_message_regenerate_content_description
 import oak.composeapp.generated.resources.bot_message_speech_content_description
+import oak.composeapp.generated.resources.bot_message_thought
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -109,7 +112,7 @@ internal fun BotMessage(
                             )
                             Spacer(Modifier.width(4.dp))
                             Text(
-                                text = "Thought",
+                                text = stringResource(Res.string.bot_message_thought),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -152,7 +155,7 @@ internal fun BotMessage(
                     ) {
                         Icon(
                             imageVector = if (isEditing) Icons.Default.Close else Icons.Default.Edit,
-                            contentDescription = if (isEditing) "Cancel edit" else "Edit submission",
+                            contentDescription = if (isEditing) stringResource(Res.string.bot_message_cancel_edit) else stringResource(Res.string.bot_message_edit_submission),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
