@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.oak.app.mcp.PopularMcpServer
+import com.oak.app.mcp.localizedDescription
 import com.oak.app.mcp.popularMcpServers
 import com.oak.app.ui.OakOutlinedTextField
 import com.oak.app.ui.components.VerticalScrollbarForScroll

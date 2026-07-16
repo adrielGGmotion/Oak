@@ -42,7 +42,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.readLine
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -297,7 +297,7 @@ class Requests {
                 val channel = response.bodyAsChannel()
                 try {
                     while (!channel.isClosedForRead) {
-                        val line = channel.readLineStrict() ?: break
+                        val line = channel.readLine() ?: break
                         if (!line.startsWith("data: ")) continue
                         val data = line.removePrefix("data: ").trim()
                         if (data == OpenAICompatibleChatChunkDto.DONE_MARKER) break
