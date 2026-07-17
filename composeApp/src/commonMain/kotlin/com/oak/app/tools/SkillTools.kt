@@ -453,8 +453,7 @@ object SkillTools {
         return Skill.fromJson(json, Json)
     }
 
-    private fun generateSkillId(name: String, existingIds: Set<String>): String =
-        generateSkillIdFromName(name, existingIds)
+    private fun generateSkillId(name: String, existingIds: Set<String>): String = generateSkillIdFromName(name, existingIds)
 
     private fun parseStringList(value: Any?): List<String> {
         if (value == null) return emptyList()

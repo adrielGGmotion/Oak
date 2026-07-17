@@ -63,12 +63,14 @@ import oak.composeapp.generated.resources.sandbox_files_action_delete
 import oak.composeapp.generated.resources.sandbox_files_action_more
 import oak.composeapp.generated.resources.sandbox_files_action_open_external
 import oak.composeapp.generated.resources.sandbox_files_action_rename
+import oak.composeapp.generated.resources.sandbox_files_binary_preview_error
 import oak.composeapp.generated.resources.sandbox_files_delete_confirm
 import oak.composeapp.generated.resources.sandbox_files_delete_message_directory
 import oak.composeapp.generated.resources.sandbox_files_delete_message_file
 import oak.composeapp.generated.resources.sandbox_files_delete_title
 import oak.composeapp.generated.resources.sandbox_files_dialog_cancel
 import oak.composeapp.generated.resources.sandbox_files_editor_open_externally
+import oak.composeapp.generated.resources.sandbox_files_empty_directory
 import oak.composeapp.generated.resources.sandbox_files_force_open_text
 import oak.composeapp.generated.resources.sandbox_files_open_in_app
 import oak.composeapp.generated.resources.sandbox_files_rename_confirm
@@ -251,7 +253,7 @@ private fun FileList(
     if (state.entries.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
             Text(
-                "Empty directory",
+                stringResource(Res.string.sandbox_files_empty_directory),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -419,7 +421,7 @@ private fun EditorBody(
         ) {
             Spacer(Modifier.weight(1f))
             Text(
-                "Binary or too large to preview as text.",
+                stringResource(Res.string.sandbox_files_binary_preview_error),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

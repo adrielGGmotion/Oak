@@ -32,6 +32,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import oak.composeapp.generated.resources.Res
+import oak.composeapp.generated.resources.chat_another_chat
+import oak.composeapp.generated.resources.chat_current_conversation
+import oak.composeapp.generated.resources.chat_generation_in_progress
+import oak.composeapp.generated.resources.chat_please_wait_generation
+import oak.composeapp.generated.resources.chat_pressed
+import oak.composeapp.generated.resources.chat_responded_with
 import oak.composeapp.generated.resources.conversation_untitled
 import oak.composeapp.generated.resources.error_unsupported_file_type
 import oak.composeapp.generated.resources.litert_no_model_warning
@@ -203,17 +209,19 @@ class ChatViewModel(
     )
 
     private fun submitUiCallback(event: String, data: Map<String, String>) {
-        val message = if (data.isNotEmpty()) {
-            val formattedData = data.entries.joinToString(", ") { "${it.key}: ${it.value}" }
-            "Responded with: $formattedData"
-        } else {
-            "Pressed: $event"
+        viewModelScope.launch {
+            val message = if (data.isNotEmpty()) {
+                val formattedData = data.entries.joinToString(", ") { "${it.key}: ${it.value}" }
+                getString(Res.string.chat_responded_with, formattedData)
+            } else {
+                getString(Res.string.chat_pressed, event)
+            }
+            val lastAssistant = dataRepository.chatHistory.value.lastRenderedAssistant()
+            val submission = lastAssistant?.let {
+                UiSubmission(sourceContent = it.content, values = data, pressedEvent = event)
+            }
+            askInternal(message, submission)
         }
-        val lastAssistant = dataRepository.chatHistory.value.lastRenderedAssistant()
-        val submission = lastAssistant?.let {
-            UiSubmission(sourceContent = it.content, values = data, pressedEvent = event)
-        }
-        askInternal(message, submission)
     }
 
     private fun ask(question: String?) {
@@ -238,9 +246,11 @@ class ChatViewModel(
         // calls for different sessions corrupt each other's context tracking.
         if (sessionManager.getGeneratingSessionIds().any { it != id }) {
             val otherId = sessionManager.getGeneratingSessionIds().first { it != id }
-            val otherTitle = sessionManager.getSession(otherId)
-                ?.conversation?.title?.ifEmpty { "another chat" } ?: "another chat"
-            _state.update { it.copy(snackbarText = "Generation already in progress on $otherTitle") }
+            viewModelScope.launch {
+                val otherTitle = sessionManager.getSession(otherId)
+                    ?.conversation?.title?.ifEmpty { getString(Res.string.chat_another_chat) } ?: getString(Res.string.chat_another_chat)
+                _state.update { it.copy(snackbarText = getString(Res.string.chat_generation_in_progress, otherTitle)) }
+            }
             return
         }
 
@@ -423,9 +433,11 @@ class ChatViewModel(
         // session), currentConversationId won't match — alert the user.
         if (dataRepository.currentConversationId.value != id) {
             val currentId = dataRepository.currentConversationId.value
-            val title = currentId?.let { sessionManager.getSession(it)?.conversation?.title?.ifEmpty { null } }
-                ?: "current conversation"
-            _state.update { it.copy(snackbarText = "Please wait — generation in progress on $title") }
+            viewModelScope.launch {
+                val title = currentId?.let { sessionManager.getSession(it)?.conversation?.title?.ifEmpty { null } }
+                    ?: getString(Res.string.chat_current_conversation)
+                _state.update { it.copy(snackbarText = getString(Res.string.chat_please_wait_generation, title)) }
+            }
             return
         }
 

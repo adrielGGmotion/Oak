@@ -24,8 +24,6 @@ import com.oak.app.inference.EngineState
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.McpServerConfig
 import com.oak.app.network.tools.ToolInfo
-import com.oak.app.ssh.SshAuthType
-import com.oak.app.ssh.SshServerConfig
 import com.oak.app.tools.CommonTools
 import com.oak.app.ui.chat.History
 import com.oak.app.ui.settings.SettingsModel
@@ -315,77 +313,6 @@ class FakeDataRepository : DataRepository {
         mcpServers.filter { it.isEnabled }.forEach { mcpConnected.add(it.id) }
     }
 
-    // SSH Servers
-    private val sshServers = mutableListOf<SshServerConfig>()
-    private val sshConnected = mutableSetOf<String>()
-
-    override fun getSshServers(): List<SshServerConfig> = sshServers.toList()
-
-    override suspend fun addSshServer(
-        name: String,
-        host: String,
-        port: Int,
-        username: String,
-        authType: SshAuthType,
-        password: String,
-        privateKey: String,
-        passphrase: String,
-    ): SshServerConfig {
-        val base = name.lowercase().replace(Regex("[^a-z0-9]"), "_").take(30)
-        val existingIds = sshServers.map { it.id }.toSet()
-        val id = if (base !in existingIds) {
-            base
-        } else {
-            var counter = 2
-            while ("${base}_$counter" in existingIds) counter++
-            "${base}_$counter"
-        }
-        val config = SshServerConfig(
-            id = id,
-            name = name,
-            host = host,
-            port = port,
-            username = username,
-            authType = authType,
-            password = password,
-            privateKey = privateKey,
-            passphrase = passphrase,
-        )
-        sshServers.add(config)
-        return config
-    }
-
-    override suspend fun removeSshServer(serverId: String) {
-        sshServers.removeAll { it.id == serverId }
-        sshConnected.remove(serverId)
-    }
-
-    override suspend fun setSshServerEnabled(serverId: String, enabled: Boolean) {
-        val index = sshServers.indexOfFirst { it.id == serverId }
-        if (index >= 0) {
-            sshServers[index] = sshServers[index].copy(isEnabled = enabled)
-        }
-        if (!enabled) {
-            sshConnected.remove(serverId)
-        }
-    }
-
-    override suspend fun connectSshServer(serverId: String): Result<Unit> {
-        sshConnected.add(serverId)
-        return Result.success(Unit)
-    }
-
-    override fun isSshServerConnected(serverId: String): Boolean = serverId in sshConnected
-
-    override suspend fun disconnectSshServer(serverId: String) {
-        sshConnected.remove(serverId)
-    }
-
-    override suspend fun connectEnabledSshServers() {
-        sshServers.filter { it.isEnabled }.forEach { sshConnected.add(it.id) }
-    }
-
-    // Soul (system prompt)
     private var soulText = ""
 
     override fun getSoulText(): String = soulText

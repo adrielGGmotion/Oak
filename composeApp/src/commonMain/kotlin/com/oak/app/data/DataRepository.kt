@@ -6,8 +6,6 @@ import com.oak.app.inference.EngineState
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.McpServerConfig
 import com.oak.app.network.tools.ToolInfo
-import com.oak.app.ssh.SshAuthType
-import com.oak.app.ssh.SshServerConfig
 import com.oak.app.ui.chat.History
 import com.oak.app.ui.settings.SettingsModel
 import io.github.vinceglb.filekit.PlatformFile
@@ -97,12 +95,16 @@ interface DataRepository {
     fun setSkillEnabled(skillId: String, enabled: Boolean)
     fun removeSkill(skillId: String)
     fun importSkill(skill: Skill)
+
     /** Skill IDs excluded from the current conversation. Empty means all enabled skills are active. */
     fun getExcludedSkillIds(): Set<String>
+
     /** Exclude a skill from the current conversation. Persists with the conversation. */
     fun excludeSkill(skillId: String)
+
     /** Include a previously excluded skill in the current conversation. */
     fun includeSkill(skillId: String)
+
     /**
      * Compute the set of tool IDs required by the currently active (non-excluded) skills.
      * Used by platform tool-list builders to inject skill-required tools.
@@ -130,16 +132,6 @@ interface DataRepository {
     // Daemon mode
     fun isDaemonEnabled(): Boolean
     fun setDaemonEnabled(enabled: Boolean)
-
-    // SSH Servers
-    fun getSshServers(): List<SshServerConfig>
-    suspend fun addSshServer(name: String, host: String, port: Int, username: String, authType: SshAuthType, password: String, privateKey: String, passphrase: String): SshServerConfig
-    suspend fun removeSshServer(serverId: String)
-    suspend fun setSshServerEnabled(serverId: String, enabled: Boolean)
-    suspend fun connectSshServer(serverId: String): Result<Unit>
-    fun isSshServerConnected(serverId: String): Boolean
-    suspend fun disconnectSshServer(serverId: String)
-    suspend fun connectEnabledSshServers()
 
     // Unlimited tool calls — disabling limits lets the agent run until it naturally
     // produces a text response, but may cause the AI to hallucinate about hitting

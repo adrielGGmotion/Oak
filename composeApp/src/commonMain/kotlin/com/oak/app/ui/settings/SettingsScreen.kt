@@ -55,6 +55,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -64,7 +65,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -170,7 +170,16 @@ import oak.composeapp.generated.resources.settings_ai_font_family_description
 import oak.composeapp.generated.resources.settings_ai_mistakes_warning
 import oak.composeapp.generated.resources.settings_api_key_label
 import oak.composeapp.generated.resources.settings_api_key_optional_label
+import oak.composeapp.generated.resources.settings_auto_description
+import oak.composeapp.generated.resources.settings_backend_active
+import oak.composeapp.generated.resources.settings_backend_label
+import oak.composeapp.generated.resources.settings_backend_unknown
 import oak.composeapp.generated.resources.settings_base_url_label
+import oak.composeapp.generated.resources.settings_changes_on_next_message
+import oak.composeapp.generated.resources.settings_compute_auto
+import oak.composeapp.generated.resources.settings_compute_cpu
+import oak.composeapp.generated.resources.settings_compute_gpu
+import oak.composeapp.generated.resources.settings_compute_preference
 import oak.composeapp.generated.resources.settings_daemon_mode
 import oak.composeapp.generated.resources.settings_daemon_mode_description
 import oak.composeapp.generated.resources.settings_documentation
@@ -197,7 +206,6 @@ import oak.composeapp.generated.resources.settings_import_section_memory
 import oak.composeapp.generated.resources.settings_import_section_scheduling
 import oak.composeapp.generated.resources.settings_import_section_services
 import oak.composeapp.generated.resources.settings_import_section_soul
-import oak.composeapp.generated.resources.settings_import_section_ssh
 import oak.composeapp.generated.resources.settings_import_section_tools
 import oak.composeapp.generated.resources.settings_import_success
 import oak.composeapp.generated.resources.settings_mcp_cancel
@@ -286,7 +294,6 @@ import oak.composeapp.generated.resources.snackbar_mcp_server_removed
 import oak.composeapp.generated.resources.snackbar_memory_deleted
 import oak.composeapp.generated.resources.snackbar_service_removed
 import oak.composeapp.generated.resources.snackbar_skill_removed
-import oak.composeapp.generated.resources.snackbar_ssh_server_removed
 import oak.composeapp.generated.resources.snackbar_task_cancelled
 import oak.composeapp.generated.resources.snackbar_undo
 import org.jetbrains.compose.resources.StringResource
@@ -362,7 +369,6 @@ fun SettingsScreenContent(
     val emailRemovedMsg = stringResource(Res.string.snackbar_email_removed)
     val serviceRemovedMsg = stringResource(Res.string.snackbar_service_removed)
     val mcpServerRemovedMsg = stringResource(Res.string.snackbar_mcp_server_removed)
-    val sshServerRemovedMsg = stringResource(Res.string.snackbar_ssh_server_removed)
     val skillRemovedMsg = stringResource(Res.string.snackbar_skill_removed)
 
     LaunchedEffect(uiState.pendingDeletion) {
@@ -374,7 +380,6 @@ fun SettingsScreenContent(
             is PendingDeletion.EmailAccount -> emailRemovedMsg
             is PendingDeletion.Service -> serviceRemovedMsg
             is PendingDeletion.McpServer -> mcpServerRemovedMsg
-            is PendingDeletion.SshServer -> sshServerRemovedMsg
             is PendingDeletion.Skill -> skillRemovedMsg
         }
         val result = snackbarHostState.showSnackbar(
@@ -1315,7 +1320,7 @@ private fun LiteRTSettings(
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    text = "Backend: ${activeBackend?.uppercase() ?: "?"}",
+                    text = stringResource(Res.string.settings_backend_label, activeBackend?.uppercase() ?: "?"),
                     style = MaterialTheme.typography.titleSmall,
                     color = if (activeBackend == "gpu") {
                         StatusColorConnected
@@ -1327,7 +1332,7 @@ private fun LiteRTSettings(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = if (activeBackend != null) "(active)" else "(unknown — send a message first)",
+                    text = if (activeBackend != null) stringResource(Res.string.settings_backend_active) else stringResource(Res.string.settings_backend_unknown),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1336,7 +1341,7 @@ private fun LiteRTSettings(
             HorizontalDivider()
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "Compute preference:",
+                text = stringResource(Res.string.settings_compute_preference),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1345,7 +1350,7 @@ private fun LiteRTSettings(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                listOf("auto" to "Auto", "gpu" to "GPU", "cpu" to "CPU").forEach { (value, label) ->
+                listOf("auto" to stringResource(Res.string.settings_compute_auto), "gpu" to stringResource(Res.string.settings_compute_gpu), "cpu" to stringResource(Res.string.settings_compute_cpu)).forEach { (value, label) ->
                     val isSelected = backendPreference == value
                     Surface(
                         onClick = { onChangeBackendPreference(value) },
@@ -1375,7 +1380,7 @@ private fun LiteRTSettings(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = if (backendPreference != "auto") "Changes apply on next message" else "Auto: tries GPU, falls back to CPU",
+                text = if (backendPreference != "auto") stringResource(Res.string.settings_changes_on_next_message) else stringResource(Res.string.settings_auto_description),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -2098,18 +2103,6 @@ private fun AgentContent(uiState: SettingsUiState, actions: SettingsActions) {
 @Composable
 private fun SettingsContent(state: SettingsUiState, actions: SettingsActions) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-        // SSH Servers section
-        SettingsCard {
-            SshServersSection(
-                sshServers = state.sshServers,
-                onAddSshServer = actions.onAddSshServer,
-                onRemoveSshServer = actions.onRemoveSshServer,
-                onToggleSshServer = actions.onToggleSshServer,
-                onConnectSshServer = actions.onConnectSshServer,
-                showAddDialog = state.showAddSshServerDialog,
-                onShowAddDialog = actions.onShowAddSshServerDialog,
-            )
-        }
         Spacer(Modifier.height(16.dp))
 
         // Request integration section
@@ -2451,7 +2444,6 @@ private fun sectionDisplayName(section: ImportSection): String = when (section) 
     ImportSection.SMS -> stringResource(Res.string.settings_sms)
     ImportSection.TOOLS -> stringResource(Res.string.settings_import_section_tools)
     ImportSection.MCP -> stringResource(Res.string.settings_import_section_mcp)
-    ImportSection.SSH -> stringResource(Res.string.settings_import_section_ssh)
     ImportSection.CONVERSATIONS -> stringResource(Res.string.settings_import_section_conversations)
     ImportSection.SKILLS -> stringResource(Res.string.settings_skills_title)
 }

@@ -7,7 +7,6 @@ import com.oak.app.data.Service
 import com.oak.app.data.ThemeMode
 import com.oak.app.inference.LocalModel
 import com.oak.app.mcp.PopularMcpServer
-import com.oak.app.ssh.SshAuthType
 
 @Immutable
 data class SettingsActions(
@@ -58,11 +57,6 @@ data class SettingsActions(
     val onRefreshMcpServer: (String) -> Unit,
     val onShowAddMcpServerDialog: (Boolean) -> Unit,
     val onAddPopularMcpServer: (PopularMcpServer) -> Unit,
-    val onAddSshServer: (String, String, Int, String, String, String, String, SshAuthType) -> Unit,
-    val onRemoveSshServer: (String) -> Unit,
-    val onToggleSshServer: (String, Boolean) -> Unit,
-    val onConnectSshServer: (String) -> Unit,
-    val onShowAddSshServerDialog: (Boolean) -> Unit,
     val onToggleSkill: (String, Boolean) -> Unit,
     val onRemoveSkill: (String) -> Unit,
     val onImportSkill: (String, String, String, List<String>) -> Unit,
@@ -132,11 +126,6 @@ data class SettingsActions(
             onRefreshMcpServer = {},
             onShowAddMcpServerDialog = {},
             onAddPopularMcpServer = {},
-            onAddSshServer = { _, _, _, _, _, _, _, _ -> },
-            onRemoveSshServer = {},
-            onToggleSshServer = { _, _ -> },
-            onConnectSshServer = {},
-            onShowAddSshServerDialog = {},
             onToggleSkill = { _, _ -> },
             onRemoveSkill = {},
             onImportSkill = { _, _, _, _ -> },

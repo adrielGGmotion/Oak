@@ -21,8 +21,6 @@ import com.oak.app.data.TaskStore
 import com.oak.app.mcp.McpServerManager
 import com.oak.app.network.tools.Tool
 import com.oak.app.network.tools.ToolInfo
-import com.oak.app.ssh.SshClient
-import com.oak.app.ssh.SshClientImpl
 import com.oak.app.tools.CommonTools
 import com.oak.app.tools.EditFileTool
 import com.oak.app.tools.EmailTools
@@ -33,7 +31,6 @@ import com.oak.app.tools.ReadFileTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
 import com.oak.app.tools.SkillTools
-import com.oak.app.tools.SshTools
 import com.oak.app.tools.WebSearchTool
 import com.oak.app.tools.askQuestionsToolInfo
 import com.oak.app.tools.compressContextTool
@@ -164,7 +161,7 @@ actual fun getPlatformToolDefinitions(): List<ToolInfo> = listOf(
     ProcessManagerTool.toolInfo,
     ReadFileTool.toolInfo,
     EditFileTool.toolInfo,
-) + CommonTools.commonToolDefinitions + SshTools.toolDefinitions + SkillTools.skillToolDefinitions
+) + CommonTools.commonToolDefinitions + SkillTools.skillToolDefinitions
 
 actual fun getAvailableTools(): List<Tool> {
     val appSettings: AppSettings by inject(AppSettings::class.java)
@@ -213,10 +210,6 @@ actual fun getAvailableTools(): List<Tool> {
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)
         addAll(mcpServerManager.getEnabledMcpTools())
 
-        if (appSettings.isToolEnabled("ssh_connect")) {
-            addAll(SshTools.getTools())
-        }
-
         // Skill-enabled tools: tools that are enabled because a skill requires them
         val skillEnabledToolIds = dataRepository.getSkillEnabledTools()
         val currentToolNames = map { it.schema.name }.toSet()
@@ -234,53 +227,72 @@ actual fun getAvailableTools(): List<Tool> {
         }
 
         // Skill management tools
-        addAll(SkillTools.getSkillTools(
-            appSettings = appSettings,
-            getExcludedSkillIds = { dataRepository.getExcludedSkillIds() },
-            excludeSkill = { dataRepository.excludeSkill(it) },
-            includeSkill = { dataRepository.includeSkill(it) },
-            importSkill = { dataRepository.importSkill(it) },
-        ))
+        addAll(
+            SkillTools.getSkillTools(
+                appSettings = appSettings,
+                getExcludedSkillIds = { dataRepository.getExcludedSkillIds() },
+                excludeSkill = { dataRepository.excludeSkill(it) },
+                includeSkill = { dataRepository.includeSkill(it) },
+                importSkill = { dataRepository.importSkill(it) },
+            ),
+        )
     }
 }
 
 // Tool ID → Tool resolver for skill-required tool auto-enablement.
 // Platform-specific: Desktop does not have OpenFileTool (Android-only).
-private fun findToolById(toolId: String, memoryStore: MemoryStore, taskStore: TaskStore, emailStore: EmailStore): Tool? {
-    return when (toolId) {
-        // Common tools (singletons)
-        CommonTools.localTimeTool.schema.name -> CommonTools.localTimeTool
-        CommonTools.ipLocationTool.schema.name -> CommonTools.ipLocationTool
-        WebSearchTool.schema.name -> WebSearchTool
-        CommonTools.openUrlTool.schema.name -> CommonTools.openUrlTool
-        FetchUrlTool.schema.name -> FetchUrlTool
-        CommonTools.waitTool.schema.name -> CommonTools.waitTool
-        ShellCommandTool.schema.name -> ShellCommandTool
-        ProcessManagerTool.schema.name -> ProcessManagerTool
-        ReadFileTool.schema.name -> ReadFileTool
-        EditFileTool.schema.name -> EditFileTool
+private fun findToolById(toolId: String, memoryStore: MemoryStore, taskStore: TaskStore, emailStore: EmailStore): Tool? = when (toolId) {
+    // Common tools (singletons)
+    CommonTools.localTimeTool.schema.name -> CommonTools.localTimeTool
 
-        // Memory tools (factory-created)
-        "memory_store" -> CommonTools.memoryStoreTool(memoryStore)
-        "memory_forget" -> CommonTools.memoryForgetTool(memoryStore)
-        "memory_learn" -> CommonTools.memoryLearnTool(memoryStore)
-        "memory_reinforce" -> CommonTools.memoryReinforceTool(memoryStore)
+    CommonTools.ipLocationTool.schema.name -> CommonTools.ipLocationTool
 
-        // Scheduling tools (factory-created)
-        "schedule_task" -> SchedulingTools.scheduleTaskTool(taskStore)
-        "cancel_task" -> SchedulingTools.cancelTaskTool(taskStore)
-        "list_tasks" -> SchedulingTools.listTasksTool(taskStore)
+    WebSearchTool.schema.name -> WebSearchTool
 
-        // Email tools (factory-created)
-        "compose_email" -> EmailTools.composeEmailTool(emailStore)
-        "reply_email" -> EmailTools.replyEmailTool(emailStore)
-        "check_email" -> EmailTools.checkEmailTool(emailStore)
-        "read_email" -> EmailTools.readEmailTool(emailStore)
-        "search_email" -> EmailTools.searchEmailTool(emailStore)
-        "setup_email" -> EmailTools.setupEmailTool(emailStore)
+    CommonTools.openUrlTool.schema.name -> CommonTools.openUrlTool
 
-        else -> null
-    }
+    FetchUrlTool.schema.name -> FetchUrlTool
+
+    CommonTools.waitTool.schema.name -> CommonTools.waitTool
+
+    ShellCommandTool.schema.name -> ShellCommandTool
+
+    ProcessManagerTool.schema.name -> ProcessManagerTool
+
+    ReadFileTool.schema.name -> ReadFileTool
+
+    EditFileTool.schema.name -> EditFileTool
+
+    // Memory tools (factory-created)
+    "memory_store" -> CommonTools.memoryStoreTool(memoryStore)
+
+    "memory_forget" -> CommonTools.memoryForgetTool(memoryStore)
+
+    "memory_learn" -> CommonTools.memoryLearnTool(memoryStore)
+
+    "memory_reinforce" -> CommonTools.memoryReinforceTool(memoryStore)
+
+    // Scheduling tools (factory-created)
+    "schedule_task" -> SchedulingTools.scheduleTaskTool(taskStore)
+
+    "cancel_task" -> SchedulingTools.cancelTaskTool(taskStore)
+
+    "list_tasks" -> SchedulingTools.listTasksTool(taskStore)
+
+    // Email tools (factory-created)
+    "compose_email" -> EmailTools.composeEmailTool(emailStore)
+
+    "reply_email" -> EmailTools.replyEmailTool(emailStore)
+
+    "check_email" -> EmailTools.checkEmailTool(emailStore)
+
+    "read_email" -> EmailTools.readEmailTool(emailStore)
+
+    "search_email" -> EmailTools.searchEmailTool(emailStore)
+
+    "setup_email" -> EmailTools.setupEmailTool(emailStore)
+
+    else -> null
 }
 
 actual fun openUrl(url: String): Boolean = try {
@@ -351,8 +363,6 @@ actual fun sendHeartbeatNotification(title: String, body: String) {
         // notify-send missing, AWT headless, sandboxed osascript, etc. — fall back silently.
     }
 }
-
-actual fun createSshClient(): SshClient = SshClientImpl()
 
 actual suspend fun resolveSandboxImagePath(path: String): String? {
     // Reject directory traversal attempts

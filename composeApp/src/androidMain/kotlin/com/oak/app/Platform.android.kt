@@ -30,8 +30,6 @@ import com.oak.app.notifications.declaresNotificationListener
 import com.oak.app.sms.SmsReader
 import com.oak.app.sms.SmsSender
 import com.oak.app.sms.declaresReadSms
-import com.oak.app.ssh.SshClient
-import com.oak.app.ssh.SshClientImpl
 import com.oak.app.tools.CalendarPermissionController
 import com.oak.app.tools.CalendarRepository
 import com.oak.app.tools.CalendarResult
@@ -49,9 +47,8 @@ import com.oak.app.tools.ProcessManagerTool
 import com.oak.app.tools.ReadFileTool
 import com.oak.app.tools.SchedulingTools
 import com.oak.app.tools.ShellCommandTool
-import com.oak.app.tools.SmsTools
 import com.oak.app.tools.SkillTools
-import com.oak.app.tools.SshTools
+import com.oak.app.tools.SmsTools
 import com.oak.app.tools.WebSearchTool
 import com.oak.app.tools.askQuestionsToolInfo
 import com.oak.app.tools.compressContextTool
@@ -77,9 +74,7 @@ import oak.composeapp.generated.resources.tool_send_notification_description
 import oak.composeapp.generated.resources.tool_send_notification_name
 import oak.composeapp.generated.resources.tool_set_alarm_description
 import oak.composeapp.generated.resources.tool_set_alarm_name
-import org.apache.sshd.common.util.io.PathUtils
 import org.koin.java.KoinJavaComponent.inject
-import java.nio.file.Paths
 import kotlin.coroutines.CoroutineContext
 
 actual fun httpClient(config: HttpClientConfig<*>.() -> Unit): HttpClient = HttpClient(Android) {
@@ -249,13 +244,6 @@ actual fun getPlatformToolDefinitions(): List<ToolInfo> = buildList {
     // master toggles (isSmsEnabled / isSmsSendEnabled) plus the FOSS-only `isSmsSupported`
     // check in `getAvailableTools()`. Listing per-tool toggles in the Tools tab was dead
     // UI — `getAvailableTools()` never consulted them.
-
-    // SSH tools
-    try {
-        addAll(SshTools.toolDefinitions)
-    } catch (_: Throwable) {
-        // SSH tools failed to load
-    }
 
     // Skill management tools
     addAll(SkillTools.skillToolDefinitions)
@@ -535,15 +523,6 @@ actual fun getAvailableTools(): List<Tool> {
         val mcpServerManager: McpServerManager by inject(McpServerManager::class.java)
         addAll(mcpServerManager.getEnabledMcpTools())
 
-        // SSH tools (always available, tools handle no-connection state gracefully)
-        if (appSettings.isToolEnabled("ssh_connect")) {
-            try {
-                addAll(SshTools.getTools())
-            } catch (_: Throwable) {
-                // SSH tools unavailable
-            }
-        }
-
         // Skill-enabled tools: tools that are enabled because a skill requires them
         val skillEnabledToolIds = dataRepository.getSkillEnabledTools()
         val currentToolNames = map { it.schema.name }.toSet()
@@ -561,56 +540,75 @@ actual fun getAvailableTools(): List<Tool> {
         }
 
         // Skill management tools
-        addAll(SkillTools.getSkillTools(
-            appSettings = appSettings,
-            getExcludedSkillIds = { dataRepository.getExcludedSkillIds() },
-            excludeSkill = { dataRepository.excludeSkill(it) },
-            includeSkill = { dataRepository.includeSkill(it) },
-            importSkill = { dataRepository.importSkill(it) },
-        ))
+        addAll(
+            SkillTools.getSkillTools(
+                appSettings = appSettings,
+                getExcludedSkillIds = { dataRepository.getExcludedSkillIds() },
+                excludeSkill = { dataRepository.excludeSkill(it) },
+                includeSkill = { dataRepository.includeSkill(it) },
+                importSkill = { dataRepository.importSkill(it) },
+            ),
+        )
     }
 }
 
 // Tool ID → Tool resolver for skill-required tool auto-enablement.
 // Platform-specific: includes Android-only tools (ShellCommandTool, ProcessManagerTool, OpenFileTool).
-private fun findToolById(toolId: String, memoryStore: MemoryStore, taskStore: TaskStore, emailStore: EmailStore): Tool? {
-    return when (toolId) {
-        // Common tools (singletons)
-        CommonTools.localTimeTool.schema.name -> CommonTools.localTimeTool
-        CommonTools.ipLocationTool.schema.name -> CommonTools.ipLocationTool
-        WebSearchTool.schema.name -> WebSearchTool
-        CommonTools.openUrlTool.schema.name -> CommonTools.openUrlTool
-        FetchUrlTool.schema.name -> FetchUrlTool
-        CommonTools.waitTool.schema.name -> CommonTools.waitTool
-        ReadFileTool.schema.name -> ReadFileTool
-        EditFileTool.schema.name -> EditFileTool
-        OpenFileTool.schema.name -> OpenFileTool
+private fun findToolById(toolId: String, memoryStore: MemoryStore, taskStore: TaskStore, emailStore: EmailStore): Tool? = when (toolId) {
+    // Common tools (singletons)
+    CommonTools.localTimeTool.schema.name -> CommonTools.localTimeTool
 
-        // Memory tools (factory-created)
-        "memory_store" -> CommonTools.memoryStoreTool(memoryStore)
-        "memory_forget" -> CommonTools.memoryForgetTool(memoryStore)
-        "memory_learn" -> CommonTools.memoryLearnTool(memoryStore)
-        "memory_reinforce" -> CommonTools.memoryReinforceTool(memoryStore)
+    CommonTools.ipLocationTool.schema.name -> CommonTools.ipLocationTool
 
-        // Scheduling tools (factory-created)
-        "schedule_task" -> SchedulingTools.scheduleTaskTool(taskStore)
-        "cancel_task" -> SchedulingTools.cancelTaskTool(taskStore)
-        "list_tasks" -> SchedulingTools.listTasksTool(taskStore)
+    WebSearchTool.schema.name -> WebSearchTool
 
-        // Email tools (factory-created)
-        "compose_email" -> EmailTools.composeEmailTool(emailStore)
-        "reply_email" -> EmailTools.replyEmailTool(emailStore)
-        "check_email" -> EmailTools.checkEmailTool(emailStore)
-        "read_email" -> EmailTools.readEmailTool(emailStore)
-        "search_email" -> EmailTools.searchEmailTool(emailStore)
-        "setup_email" -> EmailTools.setupEmailTool(emailStore)
+    CommonTools.openUrlTool.schema.name -> CommonTools.openUrlTool
 
-        // Android-specific tools (singletons)
-        ShellCommandTool.schema.name -> ShellCommandTool
-        ProcessManagerTool.schema.name -> ProcessManagerTool
+    FetchUrlTool.schema.name -> FetchUrlTool
 
-        else -> null
-    }
+    CommonTools.waitTool.schema.name -> CommonTools.waitTool
+
+    ReadFileTool.schema.name -> ReadFileTool
+
+    EditFileTool.schema.name -> EditFileTool
+
+    OpenFileTool.schema.name -> OpenFileTool
+
+    // Memory tools (factory-created)
+    "memory_store" -> CommonTools.memoryStoreTool(memoryStore)
+
+    "memory_forget" -> CommonTools.memoryForgetTool(memoryStore)
+
+    "memory_learn" -> CommonTools.memoryLearnTool(memoryStore)
+
+    "memory_reinforce" -> CommonTools.memoryReinforceTool(memoryStore)
+
+    // Scheduling tools (factory-created)
+    "schedule_task" -> SchedulingTools.scheduleTaskTool(taskStore)
+
+    "cancel_task" -> SchedulingTools.cancelTaskTool(taskStore)
+
+    "list_tasks" -> SchedulingTools.listTasksTool(taskStore)
+
+    // Email tools (factory-created)
+    "compose_email" -> EmailTools.composeEmailTool(emailStore)
+
+    "reply_email" -> EmailTools.replyEmailTool(emailStore)
+
+    "check_email" -> EmailTools.checkEmailTool(emailStore)
+
+    "read_email" -> EmailTools.readEmailTool(emailStore)
+
+    "search_email" -> EmailTools.searchEmailTool(emailStore)
+
+    "setup_email" -> EmailTools.setupEmailTool(emailStore)
+
+    // Android-specific tools (singletons)
+    ShellCommandTool.schema.name -> ShellCommandTool
+
+    ProcessManagerTool.schema.name -> ProcessManagerTool
+
+    else -> null
 }
 
 actual fun openUrl(url: String): Boolean = try {
@@ -649,13 +647,6 @@ actual fun decodeToImageBitmap(bytes: ByteArray): ImageBitmap? = try {
 @androidx.compose.runtime.Composable
 actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler(enabled = enabled, onBack = onBack)
-}
-
-actual fun createSshClient(): SshClient {
-    PathUtils.setUserHomeFolderResolver {
-        Paths.get(System.getProperty("java.io.tmpdir") ?: "/data/local/tmp")
-    }
-    return SshClientImpl()
 }
 
 actual suspend fun saveFileToDevice(bytes: ByteArray, baseName: String, extension: String) {
