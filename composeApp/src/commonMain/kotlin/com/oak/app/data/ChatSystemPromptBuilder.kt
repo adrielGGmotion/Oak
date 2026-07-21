@@ -80,7 +80,7 @@ internal const val DEFAULT_TOOL_CALL_GUIDANCE =
 /** Max combined character budget for the memory prefix block. */
 private const val MEMORY_PREFIX_BUDGET_CHARS = 4_000
 /** Max combined character budget for the skill content prefix block. */
-private const val SKILL_PREFIX_BUDGET_CHARS = 4_000
+private const val SKILL_PREFIX_BUDGET_CHARS = Int.MAX_VALUE
 /** Max combined character budget for the tasks/emails prefix block. */
 private const val TASK_PREFIX_BUDGET_CHARS = 2_000
 
@@ -166,8 +166,13 @@ internal fun buildMemoryPrefixMessage(
 }
 
 /**
- * Builds the skills prefix block — names and descriptions of active skills,
- * followed by the full content of each loaded skill.
+ * Builds the skills prefix block — full content of each active skill,
+ * followed by descriptions.
+ *
+ * Skills are loaded on-demand by the agent via `load_skill`, so truncating
+ * them would defeat the purpose. The [SKILL_PREFIX_BUDGET_CHARS] budget is
+ * effectively unlimited ([Int.MAX_VALUE]); context management is handled by
+ * [trimMessagesForContext] which drops entire prefix messages from the front.
  *
  * Returns null when there are no active skills.
  */
@@ -178,20 +183,16 @@ internal fun buildSkillPrefixMessage(activeSkills: List<Skill>): String? {
     val buffer = StringBuilder()
     buffer.append("## Active Skills\n")
     buffer.append("The following skills are loaded and their instructions are in effect:\n")
+
+    // Full content first — the actual instructions the model needs.
+    for (skill in enabled) {
+        buffer.append("\n\n### ${skill.name}\n${skill.content}")
+    }
+
+    // Descriptions after content
+    buffer.append("\n\n")
     for (skill in enabled) {
         buffer.append("- **${skill.name}**: ${skill.description}\n")
-    }
-    var remaining = SKILL_PREFIX_BUDGET_CHARS - buffer.length
-
-    for (skill in enabled) {
-        val entry = "\n\n### ${skill.name}\n${skill.content}"
-        if (entry.length > remaining) {
-            // Would push over budget — skip remaining skills
-            buffer.append("\n\n[Remaining skill contents omitted — context budget reached]")
-            break
-        }
-        buffer.append(entry)
-        remaining -= entry.length
     }
 
     // Also list available (not loaded) skills
