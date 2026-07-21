@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -96,6 +97,12 @@ class ChatViewModel(
 
     init {
         updateAvailableServices()
+
+        viewModelScope.launch {
+            dataRepository.serviceConfigVersion
+                .drop(1)
+                .collect { updateAvailableServices() }
+        }
 
         viewModelScope.launch(backgroundDispatcher) {
             dataRepository.loadConversations()
@@ -582,7 +589,6 @@ class ChatViewModel(
     }
 
     fun refreshSettings() {
-        updateAvailableServices()
         viewModelScope.launch(backgroundDispatcher) {
             dataRepository.restoreCurrentConversation()
             presetInteractiveModeForCurrentConversation()

@@ -18,6 +18,8 @@ interface DataRepository {
     val streamingReasoning: StateFlow<String?>
     val streamingContent: StateFlow<String?>
 
+    val serviceConfigVersion: StateFlow<Int>
+
     // Configured services management
     fun getConfiguredServiceInstances(): List<ServiceInstance>
     fun addConfiguredService(serviceId: String): ServiceInstance

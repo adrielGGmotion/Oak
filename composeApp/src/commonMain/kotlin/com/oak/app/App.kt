@@ -576,9 +576,7 @@ private fun AppContent(
                         composable<Settings> {
                             if (showTabBar) {
                                 DisposableEffect(Unit) {
-                                    onDispose {
-                                        chatViewModel.refreshSettings()
-                                    }
+                                    onDispose { chatViewModel.refreshSettings() }
                                 }
                             }
                             SettingsScreen(

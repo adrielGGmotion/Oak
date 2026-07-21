@@ -129,9 +129,10 @@ class ChatViewModelLiteRTTest {
             val state = awaitItem()
             assertNotNull(state.warning)
 
-            // Simulate switching primary service to Gemini
+            // Simulate switching primary service to Gemini.
+            // The reactive collector picks this up via serviceConfigVersion.
             fakeRepository.fakeServiceEntries = listOf(geminiServiceEntry(), litertServiceEntry())
-            viewModel.refreshSettings()
+            fakeRepository.bumpServiceConfigVersion()
             testDispatcher.scheduler.advanceUntilIdle()
 
             var updated: ChatUiState

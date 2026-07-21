@@ -154,6 +154,13 @@ class RemoteDataRepository(
 
     private val prettyJson = Json { prettyPrint = true }
 
+    private val _serviceConfigVersion = MutableStateFlow(0)
+    override val serviceConfigVersion: StateFlow<Int> = _serviceConfigVersion
+
+    private fun bumpServiceConfigVersion() {
+        _serviceConfigVersion.update { it + 1 }
+    }
+
     /**
      * Returns the tools exposed to the on-device (LiteRT) model. Filtered by name against
      * [LOCAL_TOOL_ALLOWLIST]. Tools the user has disabled in settings (e.g. shell command,
@@ -202,6 +209,7 @@ class RemoteDataRepository(
         val current = appSettings.getConfiguredServiceInstances().toMutableList()
         current.add(instance)
         appSettings.setConfiguredServiceInstances(current)
+        bumpServiceConfigVersion()
         return instance
     }
 
@@ -211,6 +219,7 @@ class RemoteDataRepository(
         appSettings.setConfiguredServiceInstances(current)
         appSettings.removeInstanceSettings(instanceId)
         modelsByInstance.remove(instanceId)
+        bumpServiceConfigVersion()
     }
 
     override fun reorderConfiguredServices(orderedInstanceIds: List<String>) {
@@ -218,6 +227,7 @@ class RemoteDataRepository(
         val byId = current.associateBy { it.instanceId }
         val reordered = orderedInstanceIds.mapNotNull { byId[it] }
         appSettings.setConfiguredServiceInstances(reordered)
+        bumpServiceConfigVersion()
     }
 
     override fun getServiceEntries(): List<ServiceEntry> = getConfiguredServiceInstances().map { instance ->
@@ -257,6 +267,7 @@ class RemoteDataRepository(
 
     override fun updateInstanceApiKey(instanceId: String, apiKey: String) {
         appSettings.setInstanceApiKey(instanceId, apiKey)
+        bumpServiceConfigVersion()
     }
 
     override fun getInstanceBaseUrl(instanceId: String, service: Service): String {
@@ -266,6 +277,7 @@ class RemoteDataRepository(
 
     override fun updateInstanceBaseUrl(instanceId: String, baseUrl: String) {
         appSettings.setInstanceBaseUrl(instanceId, baseUrl)
+        bumpServiceConfigVersion()
     }
 
     override fun getInstanceModels(instanceId: String, service: Service): StateFlow<List<SettingsModel>> = modelsByInstance.getOrPut(instanceId) {
@@ -291,6 +303,7 @@ class RemoteDataRepository(
         modelsByInstance[instanceId]?.update { models ->
             models.map { it.copy(isSelected = it.id == modelId) }
         }
+        bumpServiceConfigVersion()
         // Free the previously-loaded on-device model as soon as the user picks a new one.
         // Deferring until the next chat would briefly hold both models' GPU buffers resident
         // and the driver's lazy reclaim can push us past LMK thresholds on mid-range devices.
@@ -392,6 +405,7 @@ class RemoteDataRepository(
                 flow.update { m -> m.map { it.copy(isSelected = it.id == default.id) } }
             }
         }
+        bumpServiceConfigVersion()
     }
 
     private fun pickDefaultModel(models: List<SettingsModel>, service: Service? = null): SettingsModel? {

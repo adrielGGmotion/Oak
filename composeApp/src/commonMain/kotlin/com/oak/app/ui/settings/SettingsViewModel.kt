@@ -39,6 +39,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -66,6 +67,8 @@ class SettingsViewModel(
     private var hasCheckedInitialConnection = false
     private val pendingDeleteJobs: MutableMap<KClass<out PendingDeletion>, Job> = mutableMapOf()
     private var requestIdCounter = 0L
+
+    private var modelsObservationJob: Job? = null
 
     private fun buildFullState(): SettingsUiState = SettingsUiState(
         configuredServices = buildConfiguredServiceEntries().toImmutableList(),
@@ -216,6 +219,15 @@ class SettingsViewModel(
     )
 
     init {
+        viewModelScope.launch {
+            dataRepository.serviceConfigVersion
+                .drop(1)
+                .collect {
+                    refreshServiceList()
+                    refreshMcpServers()
+                }
+        }
+
         // Observe download state from the engine singleton (survives activity recreation)
         val downloadingFlow = dataRepository.getLocalDownloadingModelId() ?: flowOf(null)
         val progressFlow = dataRepository.getLocalDownloadProgress() ?: flowOf(null)
@@ -337,27 +349,39 @@ class SettingsViewModel(
 
     private fun onExpandService(instanceId: String?) {
         _state.update { it.copy(expandedServiceId = instanceId) }
+        modelsObservationJob?.cancel()
+        modelsObservationJob = null
         if (instanceId != null) {
-            refreshInstanceModels(instanceId)
+            observeInstanceModels(instanceId)
         }
     }
 
-    private fun refreshInstanceModels(instanceId: String) {
+    private fun observeInstanceModels(instanceId: String) {
         val entry = _state.value.configuredServices.find { it.instanceId == instanceId } ?: return
-        val models = dataRepository.getInstanceModels(instanceId, entry.service).value
-        _state.update { state ->
-            state.copy(
-                configuredServices = state.configuredServices.map { e ->
-                    if (e.instanceId == instanceId) {
-                        e.copy(
-                            models = models.toImmutableList(),
-                            selectedModel = models.firstOrNull { it.isSelected },
-                        )
-                    } else {
-                        e
-                    }
-                }.toImmutableList(),
-            )
+        modelsObservationJob = viewModelScope.launch {
+            dataRepository.getInstanceModels(instanceId, entry.service).collect { models ->
+                val currentEntry = _state.value.configuredServices.find { it.instanceId == instanceId } ?: return@collect
+                val selectedModel = if (currentEntry.selectedModel != null) {
+                    models.firstOrNull { it.isSelected }
+                        ?: currentEntry.selectedModel
+                } else {
+                    models.firstOrNull { it.isSelected }
+                }
+                _state.update { state ->
+                    state.copy(
+                        configuredServices = state.configuredServices.map { e ->
+                            if (e.instanceId == instanceId) {
+                                e.copy(
+                                    models = models.toImmutableList(),
+                                    selectedModel = selectedModel,
+                                )
+                            } else {
+                                e
+                            }
+                        }.toImmutableList(),
+                    )
+                }
+            }
         }
     }
 
@@ -400,7 +424,6 @@ class SettingsViewModel(
     private fun onSelectModel(instanceId: String, modelId: String) {
         val entry = _state.value.configuredServices.find { it.instanceId == instanceId } ?: return
         dataRepository.updateInstanceSelectedModel(instanceId, entry.service, modelId)
-        refreshInstanceModels(instanceId)
     }
 
     private fun onSaveSoul(text: String) {
@@ -1152,7 +1175,6 @@ class SettingsViewModel(
                 } else {
                     updateConnectionStatus(instanceId, ConnectionStatus.Connected)
                 }
-                refreshInstanceModels(instanceId)
             } catch (e: Exception) {
                 val status = when (e) {
                     is OpenAICompatibleInvalidApiKeyException, is GeminiInvalidApiKeyException, is AnthropicInvalidApiKeyException ->

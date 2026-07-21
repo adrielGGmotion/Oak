@@ -37,6 +37,14 @@ class FakeDataRepository : DataRepository {
 
     private var currentService: Service = Service.OpenAICompatible
 
+    private val _serviceConfigVersion = MutableStateFlow(0)
+    override val serviceConfigVersion: StateFlow<Int> = _serviceConfigVersion
+
+    /** Call this from tests after mutating service config to simulate repository behavior. */
+    fun bumpServiceConfigVersion() {
+        _serviceConfigVersion.update { it + 1 }
+    }
+
     override val chatHistory: MutableStateFlow<List<History>> = MutableStateFlow(emptyList())
     override val currentConversationId: MutableStateFlow<String?> = MutableStateFlow(null)
     override val fallbackStatus: MutableStateFlow<FallbackStatus?> = MutableStateFlow(null)
@@ -77,6 +85,7 @@ class FakeDataRepository : DataRepository {
         }
         val instance = ServiceInstance(instanceId = instanceId, serviceId = serviceId)
         configuredInstances.add(instance)
+        bumpServiceConfigVersion()
         return instance
     }
 
@@ -85,6 +94,7 @@ class FakeDataRepository : DataRepository {
         instanceApiKeys.remove(instanceId)
         instanceBaseUrls.remove(instanceId)
         instanceModels.remove(instanceId)
+        bumpServiceConfigVersion()
     }
 
     override fun reorderConfiguredServices(orderedInstanceIds: List<String>) {
@@ -92,6 +102,7 @@ class FakeDataRepository : DataRepository {
         val reordered = orderedInstanceIds.mapNotNull { byId[it] }
         configuredInstances.clear()
         configuredInstances.addAll(reordered)
+        bumpServiceConfigVersion()
     }
 
     var fakeServiceEntries: List<ServiceEntry> = emptyList()
@@ -110,12 +121,14 @@ class FakeDataRepository : DataRepository {
 
     override fun updateInstanceApiKey(instanceId: String, apiKey: String) {
         instanceApiKeys[instanceId] = apiKey
+        bumpServiceConfigVersion()
     }
 
     override fun getInstanceBaseUrl(instanceId: String, service: Service): String = instanceBaseUrls[instanceId] ?: if (service is Service.OpenAICompatible) Service.DEFAULT_OPENAI_COMPATIBLE_BASE_URL else ""
 
     override fun updateInstanceBaseUrl(instanceId: String, baseUrl: String) {
         instanceBaseUrls[instanceId] = baseUrl
+        bumpServiceConfigVersion()
     }
 
     override fun getInstanceModels(instanceId: String, service: Service): StateFlow<List<SettingsModel>> = instanceModels.getOrPut(instanceId) {
@@ -134,6 +147,7 @@ class FakeDataRepository : DataRepository {
         instanceModels[instanceId]?.update { models ->
             models.map { it.copy(isSelected = it.id == modelId) }
         }
+        bumpServiceConfigVersion()
     }
 
     override fun clearInstanceModels(instanceId: String, service: Service) {
@@ -158,6 +172,7 @@ class FakeDataRepository : DataRepository {
             usedIds.add(instanceId)
             configuredInstances.add(ServiceInstance(instanceId = instanceId, serviceId = service.id))
         }
+        bumpServiceConfigVersion()
     }
 
     fun setInstanceApiKey(instanceId: String, apiKey: String) {
