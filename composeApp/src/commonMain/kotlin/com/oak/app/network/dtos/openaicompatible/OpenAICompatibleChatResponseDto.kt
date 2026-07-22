@@ -4,8 +4,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 internal val toolCallMarkerRegex = Regex(
-    "<tool_call\\b[^>]*>[\\s\\S]*?</tool_call>|<tool_call\\b[^>]*>[\\s\\S]*$" +
-        "|<toolcall\\b[^>]*>[\\s\\S]*?</toolcall>|<toolcall\\b[^>]*>[\\s\\S]*$",
+    "<tool_calls?\\b[^>]*>[\\s\\S]*?</tool_calls?>|<tool_calls?\\b[^>]*>[\\s\\S]*$" +
+        "|<toolcalls?\\b[^>]*>[\\s\\S]*?</toolcalls?>|<toolcalls?\\b[^>]*>[\\s\\S]*$",
     RegexOption.IGNORE_CASE,
 )
 

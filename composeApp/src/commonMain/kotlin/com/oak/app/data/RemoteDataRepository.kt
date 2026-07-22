@@ -101,6 +101,8 @@ private const val MIN_TOOL_DISPLAY_MS = 2000L
 private const val MAX_REPEATED_TOOL_CALLS = 3
 private const val MAX_UNLIMITED_REPEATED_TOOL_CALLS = 100
 
+private const val MAX_REPEATED_TOOL_RESULTS = 5
+
 private const val ASK_QUESTIONS_TOOL_NAME = "ask_questions"
 private const val LOAD_SKILL_TOOL_NAME = "load_skill"
 private const val UNLOAD_SKILL_TOOL_NAME = "unload_skill"
@@ -664,33 +666,64 @@ class RemoteDataRepository(
         ParsedInvokeCall(name = name, arguments = params.toString())
     }.toList()
 
-    private data class InlineToolCallResult(
+    private data class AnyToolCallResult(
         val toolCalls: List<ToolCallInfo>,
         val cleanContent: String,
     )
 
-    private fun parseInlineToolCalls(text: String): InlineToolCallResult? {
-        val cleaned = text.replace(toolCallMarkerRegex, "").trim()
-        val calls = parseInvokeBlocks(cleaned)
-        if (calls.isEmpty()) return null
-        return InlineToolCallResult(
-            toolCalls = calls.map { ToolCallInfo(id = "invoke-${Uuid.random()}", name = it.name, arguments = it.arguments) },
-            cleanContent = cleaned.replace(invokeBlockRegex, "").trim(),
-        )
-    }
-
-    private val jsonToolCallRegex = Regex(
-        """\{"function"\s*:\s*"([^"]+)"\s*,\s*"arguments"\s*:\s*(\{.*?\})\s*\}""",
-        RegexOption.DOT_MATCHES_ALL,
+    private val jsonToolCallPrefixRegex = Regex(
+        """\{"function"\s*:\s*"([^"]+)"\s*,\s*"arguments"\s*:\s*""",
     )
 
-    private fun parseJsonToolCalls(text: String): List<ParsedInvokeCall> {
-        return jsonToolCallRegex.findAll(text).mapNotNull { match ->
+    private fun extractJsonToolCallsWithRanges(
+        text: String,
+    ): List<Triple<String, String, IntRange>> {
+        return jsonToolCallPrefixRegex.findAll(text).mapNotNull { match ->
             val name = match.groupValues[1]
-            val rawArgs = match.groupValues[2]
-            val balanced = extractBalancedBraceBlock(rawArgs, 0) ?: return@mapNotNull null
-            ParsedInvokeCall(name = name, arguments = balanced)
+            val argsStart = match.range.last + 1
+            if (argsStart >= text.length || text[argsStart] != '{') return@mapNotNull null
+            val arguments = extractBalancedBraceBlock(text, argsStart) ?: return@mapNotNull null
+            val afterArgs = argsStart + arguments.length
+            val rest = text.substring(afterArgs)
+            val trimmedRest = rest.trimStart()
+            if (!trimmedRest.startsWith("}")) return@mapNotNull null
+            val wsLen = rest.length - trimmedRest.length
+            val closeBracePos = afterArgs + wsLen
+            Triple(name, arguments, match.range.first..closeBracePos)
         }.toList()
+    }
+
+    private fun parseAnyToolCalls(text: String): AnyToolCallResult {
+        val cleaned = text.replace(toolCallMarkerRegex, "").trim()
+
+        val invokeCalls = parseInvokeBlocks(cleaned)
+        if (invokeCalls.isNotEmpty()) {
+            return AnyToolCallResult(
+                toolCalls = invokeCalls.map {
+                    ToolCallInfo(id = "invoke-${Uuid.random()}", name = it.name, arguments = it.arguments)
+                },
+                cleanContent = cleaned.replace(invokeBlockRegex, "").trim(),
+            )
+        }
+
+        val jsonToolCalls = extractJsonToolCallsWithRanges(cleaned)
+        if (jsonToolCalls.isNotEmpty()) {
+            var result = cleaned
+            for ((_, _, range) in jsonToolCalls.sortedByDescending { it.third.first }) {
+                result = result.removeRange(range)
+            }
+            return AnyToolCallResult(
+                toolCalls = jsonToolCalls.map { (name, arguments, _) ->
+                    ToolCallInfo(id = "json-${Uuid.random()}", name = name, arguments = arguments)
+                },
+                cleanContent = result.trim(),
+            )
+        }
+
+        return AnyToolCallResult(
+            toolCalls = emptyList(),
+            cleanContent = cleaned.stripToolMarkup(),
+        )
     }
 
     private suspend fun askWithService(
@@ -946,6 +979,7 @@ class RemoteDataRepository(
 
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
+        val repeatedResults = mutableMapOf<String, Int>()
 
         try {
             while (true) {
@@ -1023,9 +1057,9 @@ class RemoteDataRepository(
 
                 if (toolCalls.isEmpty()) {
                     if (textContent != null) {
-                        val inlineResult = parseInlineToolCalls(textContent)
-                        if (inlineResult != null) {
-                            toolCalls = inlineResult.toolCalls.map { tc ->
+                        val fallbackResult = parseAnyToolCalls(textContent)
+                        if (fallbackResult.toolCalls.isNotEmpty()) {
+                            toolCalls = fallbackResult.toolCalls.map { tc ->
                                 OpenAICompatibleChatResponseDto.ToolCall(
                                     id = tc.id,
                                     type = "function",
@@ -1035,10 +1069,9 @@ class RemoteDataRepository(
                                     ),
                                 )
                             }
-                            textContent = inlineResult.cleanContent.ifEmpty { null }
+                            textContent = fallbackResult.cleanContent.ifEmpty { null }
                         } else {
-                            val stripped = textContent.stripToolMarkup()
-                            return stripped.ifEmpty { "" }
+                            return fallbackResult.cleanContent.ifEmpty { "" }
                         }
                     } else {
                         return ""
@@ -1079,6 +1112,16 @@ class RemoteDataRepository(
                 ) {
                     currentSystemPrompt = getActiveSystemPrompt()
                     currentTools = getAvailableTools()
+                }
+
+                // Bail out if the same tool produces the same result MAX_REPEATED_TOOL_RESULTS times.
+                for ((_, name, result) in toolResults) {
+                    val key = "$name:${result.hashCode()}"
+                    val count = repeatedResults.getOrDefault(key, 0) + 1
+                    repeatedResults[key] = count
+                    if (count >= MAX_REPEATED_TOOL_RESULTS) {
+                        return makeFinalCallWithoutTools(service, credentials, currentMessages)
+                    }
                 }
 
                 history.update { h ->
@@ -1131,6 +1174,7 @@ class RemoteDataRepository(
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
+        val repeatedResults = mutableMapOf<String, Int>()
 
         try {
             while (true) {
@@ -1164,12 +1208,13 @@ class RemoteDataRepository(
 
                 if (partsWithFunctionCalls.isEmpty()) {
                     val text = parts.filterNot { it.isThought }.joinToString("\n") { it.text ?: "" }
-                    val inlineResult = parseInlineToolCalls(text)
-                    if (inlineResult == null) {
-                        return text
+                    val fallbackResult = parseAnyToolCalls(text)
+                    if (fallbackResult.toolCalls.isNotEmpty()) {
+                        toolCallInfos = fallbackResult.toolCalls
+                        textContent = fallbackResult.cleanContent
+                    } else {
+                        return fallbackResult.cleanContent
                     }
-                    toolCallInfos = inlineResult.toolCalls
-                    textContent = inlineResult.cleanContent
                 } else {
                     toolCallInfos = partsWithFunctionCalls.map { part ->
                         val fc = part.functionCall!!
@@ -1223,6 +1268,25 @@ class RemoteDataRepository(
                 ) {
                     currentSystemPrompt = getActiveSystemPrompt()
                     currentTools = getAvailableTools()
+                }
+
+                // Bail out if the same tool produces the same result MAX_REPEATED_TOOL_RESULTS times.
+                for ((_, name, result) in toolResults) {
+                    val key = "$name:${result.hashCode()}"
+                    val count = repeatedResults.getOrDefault(key, 0) + 1
+                    repeatedResults[key] = count
+                    if (count >= MAX_REPEATED_TOOL_RESULTS) {
+                        val bailoutMessages = history.value.filter { it.role != History.Role.TOOL_EXECUTING }
+                        val geminiMessages = bailoutMessages.map { it.toGeminiMessageDto() }
+                        val bailoutResponse = retryApiCall {
+                            requests.geminiChat(
+                                credentials = credentials,
+                                messages = geminiMessages,
+                                systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
+                            ).getOrThrow()
+                        }
+                        return bailoutResponse.extractText()
+                    }
                 }
 
                 history.update { h ->
@@ -1406,6 +1470,7 @@ class RemoteDataRepository(
         val contextWindowTokens = ModelCatalog.estimateContextWindow(credentials.modelId)
         var iteration = 0
         val recentSignatures = mutableListOf<String>()
+        val repeatedResults = mutableMapOf<String, Int>()
 
         try {
             while (true) {
@@ -1441,12 +1506,13 @@ class RemoteDataRepository(
 
                 if (toolUseBlocks.isEmpty()) {
                     val text = response.extractText()
-                    val inlineResult = parseInlineToolCalls(text)
-                    if (inlineResult == null) {
-                        return text
+                    val fallbackResult = parseAnyToolCalls(text)
+                    if (fallbackResult.toolCalls.isNotEmpty()) {
+                        toolCallInfos = fallbackResult.toolCalls
+                        textContent = fallbackResult.cleanContent
+                    } else {
+                        return fallbackResult.cleanContent
                     }
-                    toolCallInfos = inlineResult.toolCalls
-                    textContent = inlineResult.cleanContent
                 } else {
                     toolCallInfos = toolUseBlocks.map { block ->
                         val argsJson = block.input?.toString() ?: "{}"
@@ -1497,6 +1563,26 @@ class RemoteDataRepository(
                 ) {
                     currentSystemPrompt = getActiveSystemPrompt()
                     currentTools = getAvailableTools()
+                }
+
+                // Bail out if the same tool produces the same result MAX_REPEATED_TOOL_RESULTS times.
+                for ((_, name, result) in toolResults) {
+                    val key = "$name:${result.hashCode()}"
+                    val count = repeatedResults.getOrDefault(key, 0) + 1
+                    repeatedResults[key] = count
+                    if (count >= MAX_REPEATED_TOOL_RESULTS) {
+                        val bailoutMessages = buildAnthropicMessages(
+                            history.value.filter { it.role != History.Role.TOOL_EXECUTING },
+                        )
+                        val bailoutResponse = retryApiCall {
+                            requests.anthropicChat(
+                                credentials = credentials,
+                                messages = bailoutMessages,
+                                systemInstruction = "Please synthesize your best answer based on the information you have gathered so far. $currentSystemPrompt",
+                            ).getOrThrow()
+                        }
+                        return bailoutResponse.extractText()
+                    }
                 }
 
                 history.update { h ->
