@@ -2,11 +2,11 @@
 
 **Last verified:** 2026-07-18
 
-Kai supports installable **skills**: reusable instruction bundles, modeled on Anthropic's [SKILL.md](https://github.com/anthropics/skills) format (now an open standard at [agentskills.io](https://agentskills.io)). A skill packages a name, a description, a body of instructions, and optional bundled files.
+Oak supports installable **skills**: reusable instruction bundles, modeled on Anthropic's [SKILL.md](https://github.com/anthropics/skills) format (now an open standard at [agentskills.io](https://agentskills.io)). A skill packages a name, a description, a body of instructions, and optional bundled files.
 
 User-installed skills live **in the Linux sandbox**: each is a folder at `~/skills/<id>/` (its `SKILL.md` plus any files). There is no separate copy of those folders in app settings. Because of this, the Skills UI is **Android-only** (the only platform with a sandbox) and requires the sandbox to be installed first. The user browses a curated set of skill marketplaces (or installs from any GitHub repo) and triggers a skill in chat by starting a message with its slash command.
 
-In addition, Kai ships a small set of **built-in skills** (currently `create-skill`) loaded from app compose resources. Built-ins appear in the Skills list once the sandbox is installed, are labeled as built-in, and are not removable through the UI. If a user installs a sandbox skill with the same id, the sandbox copy takes precedence over the built-in.
+In addition, Oak ships a small set of **built-in skills** (currently `create-skill`) loaded from app compose resources. Built-ins appear in the Skills list once the sandbox is installed, are labeled as built-in, and are not removable through the UI. If a user installs a sandbox skill with the same id, the sandbox copy takes precedence over the built-in.
 
 ## Concepts
 
@@ -28,7 +28,7 @@ When a turn activates a skill, the skill's body is appended to the system prompt
 
 A marketplace is a public GitHub repo of skills. The browse list aggregates a small **curated, vetted** set of marketplaces (`curatedSkillMarketplaces`) — skills bundle scripts that run in the sandbox, so the suggested set favors trusted sources over breadth. Current sources:
 
-- **Anthropic** ([anthropics/skills](https://github.com/anthropics/skills)) — a curated subset of the official repo that works well in Kai: document/data (pdf, docx, xlsx, pptx) and creative (algorithmic-art, slack-gif-creator). The Claude.ai/Claude-Code-oriented ones that don't translate to a mobile assistant (mcp-builder, skill-creator, theme-factory, web-artifacts-builder, webapp-testing, internal-comms, frontend-design, doc-coauthoring, canvas-design, brand-guidelines, claude-api) are excluded via the marketplace's `exclude` set.
+- **Anthropic** ([anthropics/skills](https://github.com/anthropics/skills)) — a curated subset of the official repo that works well in Oak: document/data (pdf, docx, xlsx, pptx) and creative (algorithmic-art, slack-gif-creator). The Claude.ai/Claude-Code-oriented ones that don't translate to a mobile assistant (mcp-builder, skill-creator, theme-factory, web-artifacts-builder, webapp-testing, internal-comms, frontend-design, doc-coauthoring, canvas-design, brand-guidelines, claude-api) are excluded via the marketplace's `exclude` set.
 - **Superpowers** ([obra/superpowers](https://github.com/obra/superpowers)) — the most popular Claude-skills repo, but a software-dev methodology, so only its broadly-useful "how to work" skills are surfaced via an allowlist (brainstorming, writing-plans); the Claude-Code-internal or coding-flow ones (git worktrees, code review, subagent dispatch, debugging, verification) are excluded.
 
 A marketplace is read via the [Claude Code plugin-marketplace standard](https://github.com/anthropics/skills): an explicit per-source skill **allowlist** wins when set; otherwise a `.claude-plugin/marketplace.json`, when present, provides the authoritative skill list (and grouping); otherwise the registry falls back to scanning skill folders under the marketplace's `root` (default `skills/`). Any folder named in the source's **exclude** set is then dropped. In all cases a single recursive git-tree call per repo enumerates paths, and each `SKILL.md` is then fetched from `raw.githubusercontent.com` to keep within GitHub's unauthenticated API rate limit.

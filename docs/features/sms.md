@@ -2,9 +2,9 @@
 
 **Last verified:** 2026-08-03
 
-> SMS is **FOSS-only** and **Android-only**. The Play Store variant of Kai does not declare `READ_SMS` or `SEND_SMS` and the feature is invisible there — no settings, no tools, no code path. Play Store's SMS/Call Log Permissions policy restricts both permissions to default SMS handlers, which Kai is not.
+> SMS is **FOSS-only** and **Android-only**. The Play Store variant of Oak does not declare `READ_SMS` or `SEND_SMS` and the feature is invisible there — no settings, no tools, no code path. Play Store's SMS/Call Log Permissions policy restricts both permissions to default SMS handlers, which Oak is not.
 
-Kai on the FOSS Android build can **read** incoming SMS messages and **draft** outgoing SMS for the user to review and send. Read and Send are independent user opt-ins: the user can let Kai read SMS without also letting it send, and vice versa. Sending is always gated by an explicit user tap in a review banner — the AI never sends directly.
+Oak on the FOSS Android build can **read** incoming SMS messages and **draft** outgoing SMS for the user to review and send. Read and Send are independent user opt-ins: the user can let Oak read SMS without also letting it send, and vice versa. Sending is always gated by an explicit user tap in a review banner — the AI never sends directly.
 
 ## Availability
 
@@ -39,8 +39,8 @@ If the user later revokes `READ_SMS` from system settings, the next poll records
 1. In **Settings → Agent → SMS → "Send SMS on your behalf"**, the user flips the toggle on.
 2. The app requests `SEND_SMS` at runtime.
 3. If granted, the `send_sms` and `reply_sms` tools become available to the AI.
-4. When the AI calls one of those tools, a [SmsDraft](../../composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/data/SmsModels.kt) is written to the persistent [SmsDraftStore](../../composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/data/SmsDraftStore.kt) — **no SMS is sent**. The tool result tells the AI the draft is waiting for user review.
-5. A [PendingSmsBanner](../../composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/ui/chat/composables/PendingSmsBanner.kt) appears at the top of the chat showing the draft's recipient and body, with **Send** and **Discard** buttons.
+4. When the AI calls one of those tools, a [SmsDraft](../../composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/data/SmsModels.kt) is written to the persistent [SmsDraftStore](../../composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/data/SmsDraftStore.kt) — **no SMS is sent**. The tool result tells the AI the draft is waiting for user review.
+5. A [PendingSmsBanner](../../composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/chat/composables/PendingSmsBanner.kt) appears at the top of the chat showing the draft's recipient and body, with **Send** and **Discard** buttons.
 6. Tapping **Send** transitions the draft to `SENDING` state, calls `SmsManager.sendTextMessage` (multipart-aware for long bodies), and updates the draft to `SENT` or `FAILED` in place. Tapping **Discard** removes the draft without sending.
 7. The draft store caps at 20 drafts to protect against runaway AI behavior.
 

@@ -64,7 +64,7 @@ jobs:
       - name: Update PKGBUILD version and checksum
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          TARBALL_URL="https://github.com/SimonSchubert/Kai/releases/download/v${VERSION}/Kai-${VERSION}-linux-x86_64.tar.gz"
+          TARBALL_URL="https://github.com/SimonSchubert/Oak/releases/download/v${VERSION}/Kai-${VERSION}-linux-x86_64.tar.gz"
 
           # Download tarball and compute SHA256
           curl -L -o tarball.tar.gz "$TARBALL_URL"
@@ -124,7 +124,7 @@ jobs:
           # Clone fresh repo inside container - actions/checkout's .git
           # is not usable from within containers (host/container boundary)
           cd /tmp
-          git clone --depth 1 https://x-access-token:${GITHUB_TOKEN}@github.com/SimonSchubert/Kai.git kai-repo
+          git clone --depth 1 https://x-access-token:${GITHUB_TOKEN}@github.com/SimonSchubert/Oak.git kai-repo
           cd kai-repo
 
           git config user.name "github-actions[bot]"

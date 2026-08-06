@@ -2,7 +2,7 @@
 
 **Last verified:** 2026-07-18
 
-Kai's daemon mode keeps the app running in the background on Android so that scheduled tasks, heartbeat checks, and email polling continue to execute even when the app is not in the foreground. On other platforms (desktop, iOS, web), daemon mode is a no-op.
+Oak's daemon mode keeps the app running in the background on Android so that scheduled tasks, heartbeat checks, and email polling continue to execute even when the app is not in the foreground. On other platforms (desktop, iOS, web), daemon mode is a no-op.
 
 ## Concepts
 
@@ -12,7 +12,7 @@ A platform-abstracted interface with `start()` and `stop()` methods. On Android,
 
 ### Foreground Service
 
-An Android service that runs with a persistent notification, preventing the system from killing the process. Kai's service uses the `dataSync` foreground service type and `IMPORTANCE_LOW` notification priority to minimize user disruption.
+An Android service that runs with a persistent notification, preventing the system from killing the process. Oak's service uses the `dataSync` foreground service type and `IMPORTANCE_LOW` notification priority to minimize user disruption.
 
 ## Service Lifecycle
 
@@ -40,7 +40,7 @@ The daemon's task scheduler polls every 60 seconds and handles four types of bac
 
 ## Notification
 
-- **Channel**: "Kai 9000 Background Service" with low importance
+- **Channel**: "Oak 9000 Background Service" with low importance
 - **Content**: "Daemon is running" with a sync icon
 - **Tap action**: Opens the app's main screen
 - The notification is required by Android for foreground services and cannot be hidden
@@ -56,7 +56,7 @@ No wake locks or battery optimization exemptions are requested. The service reli
 
 ## Settings UI
 
-A toggle labeled "Daemon Mode" appears in the General tab of settings, only on Android. The description reads: "Keep Kai 9000 running in the background so scheduled tasks execute even when the app is not in the foreground." Toggling it starts or stops the foreground service and persists the preference. On Android 13+, turning the toggle on also requests the notification permission, since the foreground service's persistent notification cannot be displayed without it.
+A toggle labeled "Daemon Mode" appears in the General tab of settings, only on Android. The description reads: "Keep Oak 9000 running in the background so scheduled tasks execute even when the app is not in the foreground." Toggling it starts or stops the foreground service and persists the preference. On Android 13+, turning the toggle on also requests the notification permission, since the foreground service's persistent notification cannot be displayed without it.
 
 ## Key Files
 

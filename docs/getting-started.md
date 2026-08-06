@@ -2,51 +2,45 @@
 
 ## Installation
 
-### App Stores
-
-- [**App Store**](https://apps.apple.com/us/app/kai-ai/id6758148023) (iOS)
-- [**Google Play**](https://play.google.com/store/apps/details?id=com.inspiredandroid.kai) (Android)
-- [**F-Droid**](https://f-droid.org/en/packages/com.inspiredandroid.kai/) (Android)
-
 ### Web
 
-Try Kai directly in your browser at [simonschubert.github.io/Kai](https://simonschubert.github.io/Kai).
+Try Oak directly in your browser at [simonschubert.github.io/Oak](https://simonschubert.github.io/Oak).
 
 ### Homebrew (macOS)
 
 ```bash
-brew install --cask simonschubert/tap/kai
+brew install --cask simonschubert/tap/oak
 ```
 
 ### AUR (Arch Linux)
 
 ```bash
-yay -S kai-bin
+yay -S oak-bin
 ```
 
 ### Winget (Windows)
 
 ```bash
-winget install SimonSchubert.Kai
+winget install SimonSchubert.Oak
 ```
 
 ### Direct Downloads
 
 | Platform | Format | Download |
 |----------|--------|----------|
-| Android | APK | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| macOS | DMG | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Windows | MSI | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Linux | DEB | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Linux | RPM | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Linux | AppImage | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
+| Android | APK | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| macOS | DMG | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Windows | MSI | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Linux | DEB | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Linux | RPM | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Linux | AppImage | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
 
 ## First Steps
 
-1. Launch Kai — you'll see the chat screen with an animated welcome
+1. Launch Oak — you'll see the chat screen with an animated welcome
 2. Start chatting immediately using the **Free** tier (no API key needed)
 3. For better models, open **Settings** and add a service (e.g. OpenAI, Gemini, DeepSeek)
-4. Enter your API key — Kai validates the connection and loads available models automatically
+4. Enter your API key — Oak validates the connection and loads available models automatically
 
 ## Adding a Service
 

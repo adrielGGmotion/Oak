@@ -2,7 +2,7 @@
 
 **Last verified:** 2026-08-03
 
-Kai has several distinct prompt-construction paths. Each one is built by a **pure function** with explicit inputs (no DI, no suspend, no resource loading, no clocks) and is covered by a unit-test suite so future edits don't silently break unrelated variations.
+Oak has several distinct prompt-construction paths. Each one is built by a **pure function** with explicit inputs (no DI, no suspend, no resource loading, no clocks) and is covered by a unit-test suite so future edits don't silently break unrelated variations.
 
 ## Paths
 
@@ -11,7 +11,7 @@ Kai has several distinct prompt-construction paths. Each one is built by a **pur
 | Chat (remote) | `buildChatSystemPrompt(variant = CHAT_REMOTE, …)` | `ChatSystemPromptBuilderTest` | Any remote service (OpenAI, Anthropic, Gemini, etc.) via `RemoteDataRepository.ask()` |
 | Chat (on-device) | `buildChatSystemPrompt(variant = CHAT_LOCAL, …)` | `ChatSystemPromptBuilderTest` | LiteRT via `RemoteDataRepository.askWithLocalEngine()` |
 | Heartbeat | `buildHeartbeatPrompt(…)` | `HeartbeatPromptBuilderTest` | `TaskScheduler` via `HeartbeatManager.buildHeartbeatPrompt()` — sent as a USER message, not a system prompt |
-| Splinterlands LLM picker | `buildLlmPrompt(…)` in `SplinterlandsTeamPicker.kt` | `SplinterlandsTeamPickerPromptTest` | `SplinterlandsBattleRunner` — fully isolated, does not use the chat prompt builder |
+
 
 The on-device tool allowlist (`LOCAL_TOOL_ALLOWLIST` in `RemoteDataRepository.kt`) decides which tools reach the on-device engine. Renaming a tool without updating that set silently drops it from the on-device path.
 
@@ -84,7 +84,5 @@ Interactive UI mode is **not** available on on-device services — the kai-ui co
 | `composeApp/src/commonMain/.../data/RemoteDataRepository.kt` | `getActiveSystemPrompt(variant)` wrapper that gathers inputs from `AppSettings` / `MemoryStore` / `TaskStore` and calls the pure builder |
 | `composeApp/src/commonMain/.../data/HeartbeatManager.kt` | `buildHeartbeatPrompt()` wrapper that gathers inputs and calls the pure builder |
 | `composeApp/src/commonMain/.../data/AppSettings.kt` | `DEFAULT_MEMORY_INSTRUCTIONS` (basic block, used by both variants). The advanced `## Structured Learning` block lives in `ChatSystemPromptBuilder.kt` and is remote-only |
-| `composeApp/src/commonMain/.../splinterlands/SplinterlandsTeamPicker.kt` | `buildLlmPrompt` (separate path, independent contract) |
 | `composeApp/src/commonTest/.../data/ChatSystemPromptBuilderTest.kt` | Focused + golden tests for every chat variant section |
 | `composeApp/src/commonTest/.../data/HeartbeatPromptBuilderTest.kt` | Focused + golden tests for every heartbeat section |
-| `composeApp/src/commonTest/.../splinterlands/SplinterlandsTeamPickerPromptTest.kt` | Focused tests for the Splinterlands LLM picker |

@@ -2,7 +2,7 @@
 
 **Last verified:** 2026-08-02
 
-Kai can run AI models directly on the user's device using Google's LiteRT LM SDK. This enables fully offline, private inference with no API key, no internet connection, and no cost. Available on **Android**, **Desktop** (macOS, Linux, Windows), and **iOS**.
+Oak can run AI models directly on the user's device using Google's LiteRT LM SDK. This enables fully offline, private inference with no API key, no internet connection, and no cost. Available on **Android**, **Desktop** (macOS, Linux, Windows), and **iOS**.
 
 ## How It Works
 
@@ -16,7 +16,7 @@ The digest is computed while the download streams to disk, so verification costs
 
 Verification also runs at load time. Before a model is handed to the inference engine, its marker is compared against the pinned digest; when the marker is missing — which is the case for models downloaded by app versions that predate this check — the file is hashed once and the result recorded, making every later load a string comparison. A model whose bytes do not match is refused rather than loaded, and the user is told to delete it and download it again. Nothing is deleted automatically at load time: a rejected file stays on disk for the user to keep, replace, or remove from Settings. Because the observed digest is recorded either way, a file already known not to match is refused immediately instead of being re-read on every attempt.
 
-**Imported models are exempt from verification.** An import whose file name matches a catalog model takes over that catalog slot, so it would otherwise be measured against a digest it was never meant to match — a user's own copy of a model, or one from a different upstream revision, would be rejected. Such an import records that the file is user-supplied, and the load-time check skips it. Imports that land under their own name carry no digest at all and are likewise never checked. Only files Kai itself downloaded are held to the pinned digest.
+**Imported models are exempt from verification.** An import whose file name matches a catalog model takes over that catalog slot, so it would otherwise be measured against a digest it was never meant to match — a user's own copy of a model, or one from a different upstream revision, would be rejected. Such an import records that the file is user-supplied, and the load-time check skips it. Imports that land under their own name carry no digest at all and are likewise never checked. Only files Oak itself downloaded are held to the pinned digest.
 
 Bumping a catalog model means updating its pinned revision, digest, and size together; the procedure is documented in the catalog file itself, and a unit test fails the build if any entry reverts to a mutable branch URL.
 
@@ -33,7 +33,7 @@ Models are `.litertlm` files from the [litert-community](https://huggingface.co/
 
 ## Tool support
 
-The application uses **litert-lm's native function calling** (`automaticToolCalling = true` on `ConversationConfig`): each exposed Kai tool is wrapped in an `OpenApiTool` adapter, registered on the conversation, and the engine drives the tool loop internally. The model uses its trained tool format and `chat()` returns the final assistant text after all tool round-trips complete. Tools are available **at any context size** — there's no threshold gating.
+The application uses **litert-lm's native function calling** (`automaticToolCalling = true` on `ConversationConfig`): each exposed Oak tool is wrapped in an `OpenApiTool` adapter, registered on the conversation, and the engine drives the tool loop internally. The model uses its trained tool format and `chat()` returns the final assistant text after all tool round-trips complete. Tools are available **at any context size** — there's no threshold gating.
 
 Only a small **allowlist** of tools is exposed on-device, because small Gemma models (2-4B params) struggle to emit valid function-call syntax for tools with many parameters or complex value types, and litert-lm's strict ANTLR parser crashes the call when the syntax is malformed.
 
@@ -62,7 +62,7 @@ If the engine throws (e.g. the model does emit malformed tool-call syntax that t
 Users manage models through the LiteRT service card in Settings:
 
 - **Download** -- each model card shows a download button with size info; disk space is validated before starting
-- **Import** -- a file picker accepts any `.litertlm` already on the device (e.g. from Downloads, Files, or another app that can export the file). The file is **copied** into Kai's private model storage (streaming — never loaded fully into memory). If the file name matches a catalog model, it fills that catalog slot and is marked as user-supplied so it is exempt from the integrity check; otherwise it appears under an **Imported** section with synthetic context/performance defaults
+- **Import** -- a file picker accepts any `.litertlm` already on the device (e.g. from Downloads, Files, or another app that can export the file). The file is **copied** into Oak's private model storage (streaming — never loaded fully into memory). If the file name matches a catalog model, it fills that catalog slot and is marked as user-supplied so it is exempt from the integrity check; otherwise it appears under an **Imported** section with synthetic context/performance defaults
 - **Select** -- radio button appears after download/import to set the active model; a successful import auto-selects the new model
 - **Delete** -- trash icon removes the downloaded or imported model file
 - **Cancel** -- active downloads and imports can be cancelled
@@ -71,7 +71,7 @@ Users manage models through the LiteRT service card in Settings:
 - **Performance indicator** -- each model shows a Good/OK/Poor label based on total device RAM vs estimated resident memory at the selected context size. The estimate sums the model file size (proxy for resident weights after mmap/PLE), a per-model baseline for GPU/KV working memory, and a per-token KV cache cost that scales with context. Thresholds: Good >= 2.5x, OK >= 1.85x, Poor < 1.85x of total device RAM -- the extra headroom over 1x accounts for OS reservation and GPU-driver overhead. Custom imports use a size-based heuristic for the GPU baseline
 - **Free space** -- available device storage is shown below the model list
 
-On Android, downloads run in a foreground service with a notification so they continue when the app is backgrounded. The service is only started once the HTTP connection is established, so a pre-connection failure (e.g. offline) surfaces as an inline error without leaving a promised-but-unfulfilled foreground service. On Desktop, downloads run in a background coroutine. Import always copies into app storage (same pattern as Gallery / PocketPal); Kai cannot silently scan other apps' private model directories.
+On Android, downloads run in a foreground service with a notification so they continue when the app is backgrounded. The service is only started once the HTTP connection is established, so a pre-connection failure (e.g. offline) surfaces as an inline error without leaving a promised-but-unfulfilled foreground service. On Desktop, downloads run in a background coroutine. Import always copies into app storage (same pattern as Gallery / PocketPal); Oak cannot silently scan other apps' private model directories.
 
 When the last LiteRT service instance is removed, all downloaded and imported models are automatically deleted.
 

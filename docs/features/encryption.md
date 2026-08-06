@@ -27,7 +27,7 @@ The following data is stored in secure settings:
 - **Encryption:** Hardware-backed Keychain encryption (AES-256-GCM via Secure Enclave on supported devices)
 - **Key management:** Managed by iOS Keychain Services
 - **Size limit:** Effectively unlimited
-- **Service identifier:** `com.inspiredandroid.kai`
+- **Service identifier:** `com.inspiredandroid.oak`
 
 ### Desktop (macOS, Windows, Linux)
 - **Mechanism:** `EncryptedFileSettings` — custom file-backed `Settings` implementation

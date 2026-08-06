@@ -1,8 +1,8 @@
-# Kai Build
+# Oak Build
 
 **Last verified:** 2026-08-02
 
-Kai Build is an **Android-only** coding environment inside the Kai app. It is intentionally separate from chat: no shared conversation store, no Alpine sandbox tools, no provider/settings coupling beyond the shared proot native libraries.
+Oak Build is an **Android-only** coding environment inside the Oak app. It is intentionally separate from chat: no shared conversation store, no Alpine sandbox tools, no provider/settings coupling beyond the shared proot native libraries.
 
 It is a **single screen with three states** — set up Linux, pick a project, work in that project's terminal.
 
@@ -10,9 +10,9 @@ It is a **single screen with three states** — set up Linux, pick a project, wo
 
 ### Separate product surface
 
-Kai Build is opened from the **empty chat state** — an "Open Kai Build" button next to "Start Interactive UI", shown on Android only. It then takes over the whole screen the same way Interactive UI mode does: no navigation destination, no second launcher icon, and no place in the back stack. A close button in its top bar and the system back gesture both return to the chat, leaving any drafted message intact. Inside a project, the same top-bar button and system back step back to the project list instead. The mode is not persisted across app restarts; it survives rotation only.
+Oak Build is opened from the **empty chat state** — an "Open Oak Build" button next to "Start Interactive UI", shown on Android only. It then takes over the whole screen the same way Interactive UI mode does: no navigation destination, no second launcher icon, and no place in the back stack. A close button in its top bar and the system back gesture both return to the chat, leaving any drafted message intact. Inside a project, the same top-bar button and system back step back to the project list instead. The mode is not persisted across app restarts; it survives rotation only.
 
-Storage lives under app-private `kai-build/` (rootfs, including `/root` for agent binaries and config) and an external-files folder bind-mounted only to `/root/projects`, so project code stays USB/MTP reachable without putting executables on storage that Android often mounts noexec. Uninstalling Kai Build's Linux does not touch the chat Alpine sandbox, and the reverse is also true.
+Storage lives under app-private `kai-build/` (rootfs, including `/root` for agent binaries and config) and an external-files folder bind-mounted only to `/root/projects`, so project code stays USB/MTP reachable without putting executables on storage that Android often mounts noexec. Uninstalling Oak Build's Linux does not touch the chat Alpine sandbox, and the reverse is also true.
 
 ### Set up Linux
 
@@ -22,13 +22,13 @@ Progress replaces the install button (download percent, extract, configure, base
 
 LXC images ship `etc/resolv.conf` as a symlink into systemd-resolved under `/run`, which does not exist under proot. Install replaces that link with a plain file pointing at public DNS (`8.8.8.8` / `8.8.4.4`) so apt and HTTPS work.
 
-Debian’s package manager relies on hardlinks when unpacking packages. On Android those often fail inside the app sandbox, so Kai Build starts proot with hardlink-to-symlink emulation (and the companion lstat fix) before any apt work. Without that, the base-packages step fails with a dpkg subprocess error even though `apt-get update` succeeded.
+Debian’s package manager relies on hardlinks when unpacking packages. On Android those often fail inside the app sandbox, so Oak Build starts proot with hardlink-to-symlink emulation (and the companion lstat fix) before any apt work. Without that, the base-packages step fails with a dpkg subprocess error even though `apt-get update` succeeded.
 
 ### Coding agents
 
-Three agents are offered — **Claude Code**, **Grok**, and **OpenCode** — each installed with its vendor script, which is why curl, certificates, tar, and coreutils ship with the base system. Installers write under `/root` on the rootfs (executable); only project folders live on the external bind. Vendor scripts put their binaries in different home folders (`~/.local/bin` for Claude, `~/.grok/bin` for Grok, `~/.opencode/bin` for OpenCode). Proot injects all three into `PATH` for install and detection. Login shells (every project terminal) rebuild `PATH` from system profile files and would otherwise drop those dirs — and vendor installers often skip writing shell-rc `PATH` lines when their bin dir is already present during install. Kai Build therefore writes a small system profile snippet that keeps every agent bin dir on `PATH` for login shells, links found binaries into `~/.local/bin`, and starts an agent session via the resolved absolute path so opening Claude or OpenCode does not depend on whichever installer rewrote `.bashrc`. An agent counts as installed only when its binary is actually reachable afterwards, regardless of what the installer's exit code claimed; agent state is probed from the live environment rather than remembered in a file.
+Three agents are offered — **Claude Code**, **Grok**, and **OpenCode** — each installed with its vendor script, which is why curl, certificates, tar, and coreutils ship with the base system. Installers write under `/root` on the rootfs (executable); only project folders live on the external bind. Vendor scripts put their binaries in different home folders (`~/.local/bin` for Claude, `~/.grok/bin` for Grok, `~/.opencode/bin` for OpenCode). Proot injects all three into `PATH` for install and detection. Login shells (every project terminal) rebuild `PATH` from system profile files and would otherwise drop those dirs — and vendor installers often skip writing shell-rc `PATH` lines when their bin dir is already present during install. Oak Build therefore writes a small system profile snippet that keeps every agent bin dir on `PATH` for login shells, links found binaries into `~/.local/bin`, and starts an agent session via the resolved absolute path so opening Claude or OpenCode does not depend on whichever installer rewrote `.bashrc`. An agent counts as installed only when its binary is actually reachable afterwards, regardless of what the installer's exit code claimed; agent state is probed from the live environment rather than remembered in a file.
 
-Vendor install pages often show both a Unix `curl | bash` line and a Windows PowerShell line. Only the Unix line is valid inside Kai Build — pasting both into the terminal will run the PowerShell tokens as shell commands and print `irm`/`iex: not found` after the real installer finishes.
+Vendor install pages often show both a Unix `curl | bash` line and a Windows PowerShell line. Only the Unix line is valid inside Oak Build — pasting both into the terminal will run the PowerShell tokens as shell commands and print `irm`/`iex: not found` after the real installer finishes.
 
 Agents can be added after setup from the Debian system card on the project list, which shows the install progress on the setup surface and returns to the projects when it finishes.
 
@@ -40,7 +40,7 @@ Above the list, an optional **Open with** row picks what a *fresh* project opens
 
 A **Debian system** card below the list is the home for everything about the Linux install rather than the projects: which Debian it is and for which architecture, how many packages are in it, how much space the system and the project folders take, how much room is left on the device, chips to install the remaining agents, and the uninstall action. The facts are read straight off the rootfs, so the card is current every time the list is shown.
 
-Opening Kai Build answers "is Linux installed?" from a marker file and shows the project list straight away. Everything that costs real work — probing each agent by running it, and measuring how much disk the system and projects take — happens right after and fills the card in a moment later, so an installed system never shows the setup screen while it is being checked.
+Opening Oak Build answers "is Linux installed?" from a marker file and shows the project list straight away. Everything that costs real work — probing each agent by running it, and measuring how much disk the system and projects take — happens right after and fills the card in a moment later, so an installed system never shows the setup screen while it is being checked.
 
 ### Terminal sessions
 
@@ -56,7 +56,7 @@ An **agent session** runs that agent's CLI first and drops to an ordinary shell 
 
 ### Project files
 
-Next to the session tabs — pinned, so it is always there — sits **Files**: the same file browser the chat sandbox uses, pointed at Kai Build's Debian instead. It opens on the project's own folder, and navigates the same way it does in chat: the breadcrumbs run all the way up to the filesystem root, so an agent's config under the home folder, `/etc`, or anything else in Debian is a crumb away rather than shell-only. Where it starts is the only difference between the two.
+Next to the session tabs — pinned, so it is always there — sits **Files**: the same file browser the chat sandbox uses, pointed at Oak Build's Debian instead. It opens on the project's own folder, and navigates the same way it does in chat: the breadcrumbs run all the way up to the filesystem root, so an agent's config under the home folder, `/etc`, or anything else in Debian is a crumb away rather than shell-only. Where it starts is the only difference between the two.
 
 It does everything it does in chat: open a file in the built-in editor and save it back — including the extension-less and unfamiliar-extension files a project is full of, since what counts as text is decided from the bytes rather than the name — hand a file to another app on the device, rename, delete, and re-list itself silently whenever the tab becomes visible, so files an agent just wrote show up without a manual refresh. Files are read and written directly rather than through a shell, so none of it depends on a session running.
 
@@ -64,7 +64,7 @@ Switching to Files leaves every session running — coming back finds the termin
 
 ### Terminal
 
-A session shows a **cell-grid terminal** sized to the visible viewport: cursor, basic colors, and common ANSI/VT control sequences, backed by an interactive login shell (`bash -l`) in the project folder. When the panel is laid out or the window changes (rotation, IME, split), Kai recomputes columns×rows from the monospace cell size, resizes the buffer, and tells the live PTY the new geometry (`TIOCSWINSZ` + `SIGWINCH`) so fullscreen apps reflow like a desktop terminal. A new session inherits the geometry that was last measured, so it starts at the right size instead of a default 80×24. There is no app-side clear button: `clear` and Ctrl-L do it from inside the shell, which keeps what is on screen and what the running program thinks is on screen the same thing.
+A session shows a **cell-grid terminal** sized to the visible viewport: cursor, basic colors, and common ANSI/VT control sequences, backed by an interactive login shell (`bash -l`) in the project folder. When the panel is laid out or the window changes (rotation, IME, split), Oak recomputes columns×rows from the monospace cell size, resizes the buffer, and tells the live PTY the new geometry (`TIOCSWINSZ` + `SIGWINCH`) so fullscreen apps reflow like a desktop terminal. A new session inherits the geometry that was last measured, so it starts at the right size instead of a default 80×24. There is no app-side clear button: `clear` and Ctrl-L do it from inside the shell, which keeps what is on screen and what the running program thinks is on screen the same thing.
 
 The grid is given as much of the screen as possible: the tab strip is the only chrome above it, and the panel runs edge to edge sideways — the grid keeps a small inset of its own, so a second margin around it would only cost columns.
 
@@ -96,14 +96,14 @@ The input surface that does this is deliberately kept out of the way rather than
 
 ### Repaint pacing
 
-The PTY hands Kai a block of output as often as the program produces one — under heavy output that is far more often than the display refreshes. Parsing every block into the cell grid happens immediately, so nothing is ever missed, but **painting is coalesced to at most one repaint per frame**. A burst of output collapses into a single redraw instead of one redraw per block, and the last state is always painted, so the final screen a command leaves behind is never the stale one. Everything the repaint needs — snapshotting the grid, scanning it for login codes, handing it to the UI — happens off the main thread, as do geometry changes. That is what keeps the rest of the app responsive while a command floods the terminal, and what keeps raising the soft keyboard from stalling.
+The PTY hands Oak a block of output as often as the program produces one — under heavy output that is far more often than the display refreshes. Parsing every block into the cell grid happens immediately, so nothing is ever missed, but **painting is coalesced to at most one repaint per frame**. A burst of output collapses into a single redraw instead of one redraw per block, and the last state is always painted, so the final screen a command leaves behind is never the stale one. Everything the repaint needs — snapshotting the grid, scanning it for login codes, handing it to the UI — happens off the main thread, as do geometry changes. That is what keeps the rest of the app responsive while a command floods the terminal, and what keeps raising the soft keyboard from stalling.
 
 ## Behavior
 
 - **Android only** — the entry button is hidden on iOS, desktop, and web, and the environment itself is a no-op there.
 - **Network required** — the rootfs download and every agent installer need HTTPS outbound access.
 - **Disk** — expect ~150 MB for the base system, more per agent; the project list reports the real figure once Debian is installed.
-- **Isolation** — Kai Build does not share its rootfs or home with the chat Linux sandbox.
+- **Isolation** — Oak Build does not share its rootfs or home with the chat Linux sandbox.
 - **Projects survive uninstall** — removing Linux deletes the Debian system, not the user's project folders.
 - **Files are ordinary files** — project folders live in app external storage, so the browser reads and writes them directly, and a file handed to another app opens as itself.
 
@@ -130,25 +130,25 @@ The PTY hands Kai a block of output as often as the program produces one — und
 
 | File | Purpose |
 | --- | --- |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/KaiBuildController.kt` | Environment interface plus the no-op used off Android. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/build/KaiBuildState.kt` | The single state snapshot the screen renders. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/build/BuildAgents.kt` | The three installable coding agents. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/build/terminal/` | Cell buffer, VT parser, immutable screen snapshot. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/build/terminal/TerminalKeys.kt` | Key set, modifier latches, and the xterm key-to-bytes encoder. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/build/terminal/TerminalMouse.kt` | Which mouse events an app asked for, and the touch-to-report encoder. |
-| `composeApp/src/androidMain/kotlin/com/inspiredandroid/kai/KaiBuildController.android.kt` | Android implementation backed by the environment manager. |
-| `composeApp/src/androidMain/kotlin/com/inspiredandroid/kai/build/runtime/BuildEnvironmentManager.kt` | Install, agent detection, projects, system facts, and the live sessions. |
-| `composeApp/src/androidMain/kotlin/com/inspiredandroid/kai/build/runtime/DebianRootfsInstaller.kt` | LXC index resolve, download, extract. |
-| `composeApp/src/androidMain/kotlin/com/inspiredandroid/kai/build/runtime/BuildProotExecutor.kt` | proot process launcher for Debian (PTY-wrapped streaming). |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/ui/build/BuildTerminalContent.kt` | Compose cell-grid terminal + input for the active session. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/ui/build/BuildSessionBar.kt` | Back, session tabs, and the new-session menu. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/ui/build/BuildProjectsContent.kt` | Project list, launch-agent row, Debian system card, new-project dialog. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/FileBrowserSource.kt` | The browsable-tree contract shared with the chat sandbox's file browser. |
-| `composeApp/src/androidMain/kotlin/com/inspiredandroid/kai/build/runtime/BuildFileBrowser.kt` | Kai Build's side of it: guest paths to host files, listing, read/write, rename, delete, open-with. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/ui/sandbox/SandboxFileBrowserScreen.kt` | The reused browser UI, rooted at the open project here. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/ui/build/TerminalKeyRow.kt` | The Ctrl/Alt/Shift/Esc/Tab/arrow/Enter row and its latch behavior. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/ui/build/TerminalKeyIcons.kt` | The arrow and Enter glyphs the key row draws. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/build/TerminalKeyboard.kt` | Platform input-surface declaration and whether keyboard mode is available. |
-| `composeApp/src/androidMain/kotlin/com/inspiredandroid/kai/build/TerminalInputView.kt` | The Android IME plumbing: null input type, key events, committed text. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/ui/build/KaiBuildScreen.kt` | Screen shell and the setup / projects / terminal routing. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/kai/ui/chat/composables/EmptyState.kt` | Hosts the "Open Kai Build" entry button. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/KaiBuildController.kt` | Environment interface plus the no-op used off Android. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/KaiBuildState.kt` | The single state snapshot the screen renders. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/BuildAgents.kt` | The three installable coding agents. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/terminal/` | Cell buffer, VT parser, immutable screen snapshot. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/terminal/TerminalKeys.kt` | Key set, modifier latches, and the xterm key-to-bytes encoder. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/terminal/TerminalMouse.kt` | Which mouse events an app asked for, and the touch-to-report encoder. |
+| `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/KaiBuildController.android.kt` | Android implementation backed by the environment manager. |
+| `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/build/runtime/BuildEnvironmentManager.kt` | Install, agent detection, projects, system facts, and the live sessions. |
+| `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/build/runtime/DebianRootfsInstaller.kt` | LXC index resolve, download, extract. |
+| `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/build/runtime/BuildProotExecutor.kt` | proot process launcher for Debian (PTY-wrapped streaming). |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/build/BuildTerminalContent.kt` | Compose cell-grid terminal + input for the active session. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/build/BuildSessionBar.kt` | Back, session tabs, and the new-session menu. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/build/BuildProjectsContent.kt` | Project list, launch-agent row, Debian system card, new-project dialog. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/FileBrowserSource.kt` | The browsable-tree contract shared with the chat sandbox's file browser. |
+| `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/build/runtime/BuildFileBrowser.kt` | Oak Build's side of it: guest paths to host files, listing, read/write, rename, delete, open-with. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/sandbox/SandboxFileBrowserScreen.kt` | The reused browser UI, rooted at the open project here. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/build/TerminalKeyRow.kt` | The Ctrl/Alt/Shift/Esc/Tab/arrow/Enter row and its latch behavior. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/build/TerminalKeyIcons.kt` | The arrow and Enter glyphs the key row draws. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/TerminalKeyboard.kt` | Platform input-surface declaration and whether keyboard mode is available. |
+| `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/build/TerminalInputView.kt` | The Android IME plumbing: null input type, key events, committed text. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/build/KaiBuildScreen.kt` | Screen shell and the setup / projects / terminal routing. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/chat/composables/EmptyState.kt` | Hosts the "Open Oak Build" entry button. |

@@ -1,19 +1,19 @@
-# Kai
+# Oak
 
 An **open-source AI assistant with persistent memory** that runs on **Android, iOS, Windows, Mac, Linux, and Web**.
 
 [:material-download: Get Started](getting-started.md){ .md-button .md-button--primary }
-[:material-github: GitHub](https://github.com/SimonSchubert/Kai){ .md-button }
+[:material-github: GitHub](https://github.com/SimonSchubert/Oak){ .md-button }
 
 ## Overview
 
-Kai is built with Kotlin Multiplatform and Compose Multiplatform. It connects to 11+ LLM providers with automatic fallback, remembers important details across conversations, and can act autonomously via scheduled heartbeats and tool execution.
+Oak is built with Kotlin Multiplatform and Compose Multiplatform. It connects to 11+ LLM providers with automatic fallback, remembers important details across conversations, and can act autonomously via scheduled heartbeats and tool execution.
 
 ## Key Features
 
-- **Persistent memory** — Kai remembers important details across conversations and uses them automatically
+- **Persistent memory** — Oak remembers important details across conversations and uses them automatically
 - **Customizable soul** — Define the AI's personality and behavior with an editable system prompt
-- **Multi-service fallback** — Configure multiple providers; Kai automatically tries the next one on failure
+- **Multi-service fallback** — Configure multiple providers; Oak automatically tries the next one on failure
 - **Tool execution** — Web search, notifications, calendar events, shell commands, and more
 - **Autonomous heartbeat** — Periodic self-checks that surface anything needing attention
 - **Encrypted storage** — Conversations are stored locally with encryption
@@ -76,7 +76,7 @@ Kai is built with Kotlin Multiplatform and Compose Multiplatform. It connects to
 
 | Service | API Type |
 |---|---|
-| **[Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_medium=link&utm_campaign=Kai)** | OpenAI-compatible |
+| **[Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_medium=link&utm_campaign=Oak)** | OpenAI-compatible |
 | [OpenAI](https://openai.com) | OpenAI-compatible |
 | [Gemini](https://aistudio.google.com) | Gemini native |
 | [DeepSeek](https://www.deepseek.com) | OpenAI-compatible |
@@ -114,7 +114,7 @@ Plus a built-in **Free** tier that requires no API key.
 
 ## Links
 
-- [GitHub Repository](https://github.com/SimonSchubert/Kai)
-- [Issue Tracker](https://github.com/SimonSchubert/Kai/issues)
-- [Releases](https://github.com/SimonSchubert/Kai/releases)
-- [Web App](https://kai9000.com/app/)
+- [GitHub Repository](https://github.com/SimonSchubert/Oak)
+- [Issue Tracker](https://github.com/SimonSchubert/Oak/issues)
+- [Releases](https://github.com/SimonSchubert/Oak/releases)
+

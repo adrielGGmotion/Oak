@@ -2,7 +2,7 @@
 
 **Last verified:** 2026-08-02
 
-Kai's tools feature allows the AI to execute external functions during conversations — web search, notifications, calendar events, shell commands, memory operations, and more. Tools are defined with a schema, executed with safety guards, and managed through per-tool toggles in settings.
+Oak's tools feature allows the AI to execute external functions during conversations — web search, notifications, calendar events, shell commands, memory operations, and more. Tools are defined with a schema, executed with safety guards, and managed through per-tool toggles in settings.
 
 ## Concepts
 
@@ -90,7 +90,7 @@ When the Linux Sandbox is set up and enabled, `execute_shell_command` routes com
 
 **Mirror fallback:** The downloader tries the primary Alpine CDN first, then falls back through a list of official mirrors (kernel.org, RWTH Aachen, ETH Zürich, Waterloo, Tsinghua) so setup succeeds in regions where the primary CDN is unreachable. The same mirror list is also used to pick `/etc/apk/repositories` during setup — `apk update` is retried against each mirror until one succeeds, so later `apk add` calls resolve through a reachable mirror.
 
-**Architecture:** Proot is a user-space chroot implementation that intercepts syscalls via ptrace. No root access is required. The Alpine rootfs and tmp directory live in the app's internal files directory under `linux-sandbox/`. The sandbox `/root` (home) is bind-mounted from the externally-visible app directory at `Android/data/com.inspiredandroid.kai/files/sandbox-home/` so files produced by the agent can be opened in Android apps via FileProvider Intents (`open_file`). On first run after upgrade, content from the legacy internal home is migrated automatically.
+**Architecture:** Proot is a user-space chroot implementation that intercepts syscalls via ptrace. No root access is required. The Alpine rootfs and tmp directory live in the app's internal files directory under `linux-sandbox/`. The sandbox `/root` (home) is bind-mounted from the externally-visible app directory at `Android/data/com.inspiredandroid.oak/files/sandbox-home/` so files produced by the agent can be opened in Android apps via FileProvider Intents (`open_file`). On first run after upgrade, content from the legacy internal home is migrated automatically.
 
 **Settings:** The sandbox section appears in Settings > Linux Sandbox on Android and contains a single Alpine Linux card with the install / install-basic-packages / uninstall actions and the "use sandbox vs native shell" toggle. Day-to-day usage (terminal, file browser, packages) is **not** in Settings — it lives behind the chat-bar shortcut.
 

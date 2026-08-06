@@ -14,8 +14,8 @@ plugins {
 
 sqldelight {
     databases {
-        create("KaiDatabase") {
-            packageName.set("com.inspiredandroid.kai.db")
+        create("OakDatabase") {
+            packageName.set("com.inspiredandroid.oak.db")
             // The schema lives on user devices — structural changes need a
             // numbered .sqm migration file (see conversation.sq header).
             // This makes the build verify that migrations reproduce the schema.
@@ -30,7 +30,7 @@ composeCompiler {
 
 kotlin {
     androidLibrary {
-        namespace = "com.inspiredandroid.kai.shared"
+        namespace = "com.inspiredandroid.oak.shared"
         compileSdk =
             libs.versions.android.compileSdk
                 .get()
@@ -61,7 +61,7 @@ kotlin {
             // Must differ from the iosApp bundle identifier — iOS refuses to install a
             // .app whose embedded framework shares its parent's identifier (MIInstaller
             // error 57 / DuplicateIdentifier).
-            binaryOption("bundleId", "com.inspiredandroid.kai.composeapp")
+            binaryOption("bundleId", "com.inspiredandroid.oak.composeapp")
         }
     }
 
@@ -184,7 +184,7 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "com.inspiredandroid.kai.MainKt"
+        mainClass = "com.inspiredandroid.oak.MainKt"
 
         buildTypes.release.proguard {
             configurationFiles.from(
@@ -195,18 +195,16 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm, TargetFormat.AppImage)
-            packageName = "Kai"
+            packageName = "Oak"
             packageVersion = libs.versions.appVersion.get()
 
             macOS {
-                iconFile.set(project.file("icon.icns"))
+                // No custom icon
             }
             windows {
-                iconFile.set(project.file("icon.ico"))
-                menuGroup = "Kai"
+                menuGroup = "Oak"
             }
             linux {
-                iconFile.set(project.file("icon.png"))
                 // Applies to the shared jlink runtime image for every platform, not just Linux —
                 // java.sql is required since the SQLDelight/SQLite migration (9d6ceec9).
                 modules("jdk.security.auth", "java.sql")
@@ -245,13 +243,13 @@ class VersionGeneratorPlugin : Plugin<Project> {
             // Generate Kotlin version file
             val versionFile =
                 layout.buildDirectory
-                    .file("generated/src/commonMain/kotlin/com/inspiredandroid/kai/Version.kt")
+                    .file("generated/src/commonMain/kotlin/com/inspiredandroid/oak/Version.kt")
                     .get()
                     .asFile
             versionFile.parentFile?.mkdirs()
             versionFile.writeText(
                 """
-                package com.inspiredandroid.kai
+                package com.inspiredandroid.oak
 
                 object Version {
                     const val appVersion = "$appVersion"

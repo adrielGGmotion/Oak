@@ -2,7 +2,7 @@
 
 **Last verified:** 2026-08-03
 
-Kai supports external tool servers via the [Model Context Protocol](https://modelcontextprotocol.io/) (MCP). Users can connect to remote MCP servers using Streamable HTTP transport and use their tools alongside native tools.
+Oak supports external tool servers via the [Model Context Protocol](https://modelcontextprotocol.io/) (MCP). Users can connect to remote MCP servers using Streamable HTTP transport and use their tools alongside native tools.
 
 ## Concepts
 
@@ -32,7 +32,7 @@ MCP server configurations are included in the settings export/import feature, so
 
 When a server is added or enabled:
 
-1. Kai creates an `McpClient` for the server URL and headers
+1. Oak creates an `McpClient` for the server URL and headers
 2. Sends an `initialize` JSON-RPC request with client capabilities
 3. Sends a `notifications/initialized` notification
 4. Calls `tools/list` to discover available tools

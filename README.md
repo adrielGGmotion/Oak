@@ -10,7 +10,7 @@
 
 An **open-source AI assistant with persistent memory** that runs on **Android, iOS, Windows, Mac, Linux, and Web**.
 
-**[Website](https://kai9000.com)** - **[Documentation](https://kai9000.com/docs/)**
+
 </div>
 
 <div align="center">
@@ -25,10 +25,7 @@ An **open-source AI assistant with persistent memory** that runs on **Android, i
 
 ## Installation
 
-[![App Store](https://raw.githubusercontent.com/SimonSchubert/Kai/main/screenshots/app_store_badge.png)](https://apps.apple.com/us/app/kai-ai/id6758148023)
-[![Play Store](https://raw.githubusercontent.com/SimonSchubert/Kai/main/screenshots/play_store_badge.png)](https://play.google.com/store/apps/details?id=com.inspiredandroid.kai)
-[![F-Droid](https://raw.githubusercontent.com/SimonSchubert/Kai/main/screenshots/fdroid_badge.png)](https://f-droid.org/en/packages/com.inspiredandroid.kai/)
-[![Web](https://raw.githubusercontent.com/SimonSchubert/Kai/main/screenshots/web_badge.png)](https://kai9000.com/app/)
+
 
 Homebrew (macOS):
 
@@ -52,12 +49,12 @@ winget install SimonSchubert.Kai
 
 | Platform | Format | Download |
 |----------|--------|----------|
-| Android | APK | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| macOS | DMG | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Windows | MSI | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Linux | DEB | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Linux | RPM | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
-| Linux | AppImage | [GitHub Releases](https://github.com/SimonSchubert/Kai/releases) |
+| Android | APK | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| macOS | DMG | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Windows | MSI | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Linux | DEB | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Linux | RPM | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Linux | AppImage | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
 
 ## AI That Builds Screens, Not Just Text
 
@@ -189,12 +186,6 @@ Kai supports the [Model Context Protocol](https://modelcontextprotocol.io/) for 
 | SubwayInfo NYC | Real-time NYC transit info |
 
 All popular servers are free and require no API key. MCP servers auto-reconnect on app startup.
-
-## Integrations
-
-### Splinterlands Auto-Battle (Android & Desktop)
-
-Kai can automatically play [Splinterlands](https://splinterlands.com) Wild Ranked battles. Configure one or more LLM services in priority order, add your Hive account, and hit Start -- Kai will continuously find matches, pick teams using LLM-powered strategy, and submit them on-chain. Falls back to a simple greedy picker if all LLM services fail. Available in **Settings > Integrations**.
 
 ## Supported Languages
 

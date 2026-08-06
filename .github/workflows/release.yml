@@ -269,7 +269,7 @@ jobs:
 
           # Patch manifest to use local tarball instead of URL
           cd flatpak
-          sed -i "s|url: https://github.com/SimonSchubert/Kai/releases/download/.*|path: Kai-linux-x86_64.tar.gz|" io.github.simonschubert.Kai.yaml
+          sed -i "s|url: https://github.com/SimonSchubert/Oak/releases/download/.*|path: Kai-linux-x86_64.tar.gz|" io.github.simonschubert.Kai.yaml
           sed -i "s|sha256: .*|sha256: ${SHA256}|" io.github.simonschubert.Kai.yaml
 
           # Build and bundle
