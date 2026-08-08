@@ -17,7 +17,7 @@ Users can backup and restore all Oak settings via a human-readable JSON file. Th
   - SMS — only if SMS receive or send is enabled
   - MCP — only if at least one server is configured
   - TOOLS — when a full export includes `tool_overrides`. The exporter writes the current enabled flag for every platform tool id (not only user-changed overrides), so Tools almost always appears whenever any tools exist on the platform
-- Confirming the dialog opens a native file-save dialog and writes `kai-settings.json` containing only the selected sections (plus a `"version": 1` field for forward-compatibility).
+- Confirming the dialog opens a native file-save dialog and writes `oak-settings.json` containing only the selected sections (plus a `"version": 1` field for forward-compatibility).
 - Cancelling the dialog discards the export without writing a file.
 - Sections listed under **Excluded** below are never exported.
 

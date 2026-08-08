@@ -1,6 +1,6 @@
 # Oak Build
 
-**Last verified:** 2026-08-02
+**Last verified:** 2026-08-08
 
 Oak Build is an **Android-only** coding environment inside the Oak app. It is intentionally separate from chat: no shared conversation store, no Alpine sandbox tools, no provider/settings coupling beyond the shared proot native libraries.
 
@@ -12,7 +12,7 @@ It is a **single screen with three states** — set up Linux, pick a project, wo
 
 Oak Build is opened from the **empty chat state** — an "Open Oak Build" button next to "Start Interactive UI", shown on Android only. It then takes over the whole screen the same way Interactive UI mode does: no navigation destination, no second launcher icon, and no place in the back stack. A close button in its top bar and the system back gesture both return to the chat, leaving any drafted message intact. Inside a project, the same top-bar button and system back step back to the project list instead. The mode is not persisted across app restarts; it survives rotation only.
 
-Storage lives under app-private `kai-build/` (rootfs, including `/root` for agent binaries and config) and an external-files folder bind-mounted only to `/root/projects`, so project code stays USB/MTP reachable without putting executables on storage that Android often mounts noexec. Uninstalling Oak Build's Linux does not touch the chat Alpine sandbox, and the reverse is also true.
+Storage lives under app-private `oak-build/` (rootfs, including `/root` for agent binaries and config) and an external-files folder bind-mounted only to `/root/projects`, so project code stays USB/MTP reachable without putting executables on storage that Android often mounts noexec. Uninstalling Oak Build's Linux does not touch the chat Alpine sandbox, and the reverse is also true.
 
 ### Set up Linux
 
@@ -130,13 +130,13 @@ The PTY hands Oak a block of output as often as the program produces one — und
 
 | File | Purpose |
 | --- | --- |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/KaiBuildController.kt` | Environment interface plus the no-op used off Android. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/KaiBuildState.kt` | The single state snapshot the screen renders. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/OakBuildController.kt` | Environment interface plus the no-op used off Android. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/OakBuildState.kt` | The single state snapshot the screen renders. |
 | `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/BuildAgents.kt` | The three installable coding agents. |
 | `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/terminal/` | Cell buffer, VT parser, immutable screen snapshot. |
 | `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/terminal/TerminalKeys.kt` | Key set, modifier latches, and the xterm key-to-bytes encoder. |
 | `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/terminal/TerminalMouse.kt` | Which mouse events an app asked for, and the touch-to-report encoder. |
-| `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/KaiBuildController.android.kt` | Android implementation backed by the environment manager. |
+| `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/OakBuildController.android.kt` | Android implementation backed by the environment manager. |
 | `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/build/runtime/BuildEnvironmentManager.kt` | Install, agent detection, projects, system facts, and the live sessions. |
 | `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/build/runtime/DebianRootfsInstaller.kt` | LXC index resolve, download, extract. |
 | `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/build/runtime/BuildProotExecutor.kt` | proot process launcher for Debian (PTY-wrapped streaming). |
@@ -150,5 +150,5 @@ The PTY hands Oak a block of output as often as the program produces one — und
 | `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/build/TerminalKeyIcons.kt` | The arrow and Enter glyphs the key row draws. |
 | `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/build/TerminalKeyboard.kt` | Platform input-surface declaration and whether keyboard mode is available. |
 | `composeApp/src/androidMain/kotlin/com/inspiredandroid/oak/build/TerminalInputView.kt` | The Android IME plumbing: null input type, key events, committed text. |
-| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/build/KaiBuildScreen.kt` | Screen shell and the setup / projects / terminal routing. |
+| `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/build/OakBuildScreen.kt` | Screen shell and the setup / projects / terminal routing. |
 | `composeApp/src/commonMain/kotlin/com/inspiredandroid/oak/ui/chat/composables/EmptyState.kt` | Hosts the "Open Oak Build" entry button. |

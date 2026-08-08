@@ -10,7 +10,7 @@ import java.io.File
 class BuildPaths(context: Context) {
     private val appContext = context.applicationContext
 
-    val buildDir: File get() = File(appContext.filesDir, "kai-build")
+    val buildDir: File get() = File(appContext.filesDir, "oak-build")
     val rootfsDir: File get() = File(buildDir, "rootfs")
     val tmpDir: File get() = File(buildDir, "tmp")
 
@@ -25,7 +25,7 @@ class BuildPaths(context: Context) {
      * while code stays USB/MTP reachable under external files.
      */
     val homeDir: File by lazy {
-        File(appContext.getExternalFilesDir(null) ?: buildDir, "kai-build-home")
+        File(appContext.getExternalFilesDir(null) ?: buildDir, "oak-build-home")
     }
 
     /** Every Oak Build project is a folder in here — `/root/projects` inside Debian. */

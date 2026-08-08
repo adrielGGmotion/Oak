@@ -64,7 +64,7 @@ jobs:
       - name: Update PKGBUILD version and checksum
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          TARBALL_URL="https://github.com/SimonSchubert/Oak/releases/download/v${VERSION}/Kai-${VERSION}-linux-x86_64.tar.gz"
+          TARBALL_URL="https://github.com/adrielGGmotion/Oak/releases/download/v${VERSION}/Oak-${VERSION}-linux-x86_64.tar.gz"
 
           # Download tarball and compute SHA256
           curl -L -o tarball.tar.gz "$TARBALL_URL"
@@ -102,15 +102,15 @@ jobs:
           done
 
           # Configure git
-          git config --global user.name "Simon Schubert"
-          git config --global user.email "sschubert89@gmail.com"
+          git config --global user.name "Adriel O'Connel"
+          git config --global user.email "adriel.gg.motion@proton.me"
 
           # Clone AUR repo, update files, push
           cd /tmp
-          git clone ssh://aur@aur.archlinux.org/kai-bin.git
-          cp $GITHUB_WORKSPACE/aur/PKGBUILD kai-bin/
-          cp $GITHUB_WORKSPACE/aur/.SRCINFO kai-bin/
-          cd kai-bin
+          git clone ssh://aur@aur.archlinux.org/oak-bin.git
+          cp $GITHUB_WORKSPACE/aur/PKGBUILD oak-bin/
+          cp $GITHUB_WORKSPACE/aur/.SRCINFO oak-bin/
+          cd oak-bin
           git add PKGBUILD .SRCINFO
           git commit -m "Update to ${{ steps.version.outputs.version }}"
           git push
@@ -124,8 +124,8 @@ jobs:
           # Clone fresh repo inside container - actions/checkout's .git
           # is not usable from within containers (host/container boundary)
           cd /tmp
-          git clone --depth 1 https://x-access-token:${GITHUB_TOKEN}@github.com/SimonSchubert/Oak.git kai-repo
-          cd kai-repo
+          git clone --depth 1 https://x-access-token:${GITHUB_TOKEN}@github.com/adrielGGmotion/Oak.git oak-repo
+          cd oak-repo
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

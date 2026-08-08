@@ -39,7 +39,7 @@ class BuildProotHandle internal constructor(
      * thread also keeps the bytes in the order they were typed.
      */
     private val writer = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "kai-build-pty-write").apply { isDaemon = true }
+        Thread(runnable, "oak-build-pty-write").apply { isDaemon = true }
     }
 
     fun cancel() {
@@ -109,11 +109,11 @@ class BuildProotExecutor(
     private val columns: Int = 80,
     private val rows: Int = 24,
     /** Guest path the host writes "rows cols" to — one file per live session. */
-    private val winsizePath: String = "/tmp/kai-winsize",
+    private val winsizePath: String = "/tmp/oak-winsize",
     /** Guest path browser-open URLs are captured in — one file per live session. */
-    private val openUrlPath: String = "/tmp/kai-open-url",
+    private val openUrlPath: String = "/tmp/oak-open-url",
     /** File name (inside the bind-mounted tmp dir) the PTY bridge records its pid in. */
-    private val pidFileName: String = "kai-pid",
+    private val pidFileName: String = "oak-pid",
 ) {
 
     fun execute(
@@ -307,10 +307,10 @@ class BuildProotExecutor(
         // Grok opens the login URL via webbrowser; under proot there is no real browser.
         // GROK_TEST_OPEN_URL_FILE is an official Grok hook that writes the URL to a file.
         "GROK_TEST_OPEN_URL_FILE=$openUrlPath",
-        // Same target for the kai-browser wrapper, so both hooks feed one session's link bar.
-        "KAI_OPEN_URL_FILE=$openUrlPath",
+        // Same target for the oak-browser wrapper, so both hooks feed one session's link bar.
+        "OAK_OPEN_URL_FILE=$openUrlPath",
         // webbrowser crate falls back to $BROWSER when xdg-open is missing.
-        "BROWSER=/usr/local/bin/kai-browser",
+        "BROWSER=/usr/local/bin/oak-browser",
         "LD_LIBRARY_PATH=$libDir",
         "PROOT_TMP_DIR=$tmpPath",
         "PROOT_LOADER=${File(prootPath).parent.orEmpty()}/libproot-loader.so",

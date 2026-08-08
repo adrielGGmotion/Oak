@@ -1,4 +1,4 @@
-# Kai 9000
+# Oak
 
 <img src="https://img.shields.io/badge/Platform-Web-f7df1c?logo=javascript" alt="Web"> <img src="https://img.shields.io/badge/Platform-Android-34a853.svg?logo=android" alt="Android" /> <img src="https://img.shields.io/badge/Platform-iOS-lightgrey.svg?logo=apple" alt="iOS" /> <img src="https://img.shields.io/badge/Platform-Windows/macOS/Linux-e10707.svg?logo=openjdk" alt="Platform JVM" />
 <div align="center">
@@ -16,9 +16,9 @@ An **open-source AI assistant with persistent memory** that runs on **Android, i
 <div align="center">
 <br>
 
-**Sponsor: [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_medium=link&utm_campaign=Kai)**
+**Sponsor: [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_medium=link&utm_campaign=Oak)**
 
-<a href="https://www.atlascloud.ai?utm_source=github&utm_medium=link&utm_campaign=Kai"><img src="https://www.atlascloud.ai/logo.svg" height="36" alt="Atlas Cloud"></a>
+<a href="https://www.atlascloud.ai?utm_source=github&utm_medium=link&utm_campaign=Oak"><img src="https://www.atlascloud.ai/logo.svg" height="36" alt="Atlas Cloud"></a>
 
 
 </div>
@@ -30,41 +30,41 @@ An **open-source AI assistant with persistent memory** that runs on **Android, i
 Homebrew (macOS):
 
 ```
-brew install --cask simonschubert/tap/kai
+brew install --cask adrielggmotion/tap/oak
 ```
 
 AUR (Arch Linux):
 
 ```
-yay -S kai-bin
+yay -S oak-bin
 ```
 
 Winget (Windows):
 
 ```
-winget install SimonSchubert.Kai
+winget install adrielGGmotion.Oak
 ```
 
 ### Direct Downloads
 
 | Platform | Format | Download |
 |----------|--------|----------|
-| Android | APK | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| macOS | DMG | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| Windows | MSI | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| Linux | DEB | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| Linux | RPM | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| Linux | AppImage | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Android | APK | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| macOS | DMG | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| Windows | MSI | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| Linux | DEB | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| Linux | RPM | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| Linux | AppImage | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
 
 ## AI That Builds Screens, Not Just Text
 
-Kai 9000's Interactive UI lets the AI generate full interactive screens — quizzes, dashboards, recipes, brainstorms, and more. Navigate by tapping buttons instead of scrolling through chat.
+Oak's Interactive UI lets the AI generate full interactive screens — quizzes, dashboards, recipes, brainstorms, and more. Navigate by tapping buttons instead of scrolling through chat.
 
 <img src="screenshots/interactive-survival.png" alt="Survival Game" height="300"> <img src="screenshots/interactive-recipe.png" alt="Recipe Card" height="300"> <img src="screenshots/interactive-ecopulse.png" alt="EcoPulse Brainstorm" height="300"> <img src="screenshots/interactive-memories.png" alt="Memories" height="300">
 
 ## Features
 
-- **Persistent memory** — Kai remembers important details across conversations and uses them automatically
+- **Persistent memory** — Oak remembers important details across conversations and uses them automatically
 - **Customizable soul** — Define the AI's personality and behavior with an editable system prompt
 - **Multi-service fallback** — 29 LLM providers with automatic failover
 - **On-device inference** — Run AI models locally on Android using LiteRT, no internet needed
@@ -79,7 +79,7 @@ Kai 9000's Interactive UI lets the AI generate full interactive screens — quiz
 
 ## Linux Sandbox (Android)
 
-On Android, Kai includes a built-in Linux environment that the AI can use to execute shell commands, run scripts, and operate tools on your behalf. This turns Kai from a chat-only assistant into one that can take real action — installing packages, processing data, running Python scripts, and more.
+On Android, Oak includes a built-in Linux environment that the AI can use to execute shell commands, run scripts, and operate tools on your behalf. This turns Oak from a chat-only assistant into one that can take real action — installing packages, processing data, running Python scripts, and more.
 
 - **Powered by Alpine Linux** — A lightweight ~3 MB download sets up a full Linux userland via [proot](https://proot-me.github.io/), no root required
 - **Optional packages** — One tap installs bash, curl, wget, git, jq, python3, pip, and Node.js
@@ -162,11 +162,11 @@ Enable it in **Settings > Linux Sandbox**.
 
 ## Supported Services
 
-**[Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_medium=link&utm_campaign=Kai)** · [Anthropic](https://console.anthropic.com) · [OpenAI](https://openai.com) · [Gemini](https://aistudio.google.com) · [DeepSeek](https://www.deepseek.com) · [Mistral](https://mistral.ai) · [xAI](https://x.ai) · [OpenRouter](https://openrouter.ai) · [Groq](https://groq.com) · [NVIDIA](https://developer.nvidia.com) · [Cerebras](https://cerebras.ai) · [Ollama Cloud](https://ollama.com) · [LongCat](https://longcat.chat) · [Together AI](https://together.ai) · [Hugging Face](https://huggingface.co) · [Venice AI](https://venice.ai) · [Moonshot AI](https://moonshot.cn) · [Z.AI](https://z.ai) · [MiniMax](https://minimax.io) · [AIHubMix](https://aihubmix.com) · [Deep Infra](https://deepinfra.com) · [Fireworks AI](https://fireworks.ai) · [OpenCode](https://opencode.ai) · [AI Horde](https://stablehorde.net/) · [Perplexity](https://www.perplexity.ai) · OpenAI-Compatible API · LiteRT On-Device (Android) · Free tier (no API key needed)
+**[Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_medium=link&utm_campaign=Oak)** · [Anthropic](https://console.anthropic.com) · [OpenAI](https://openai.com) · [Gemini](https://aistudio.google.com) · [DeepSeek](https://www.deepseek.com) · [Mistral](https://mistral.ai) · [xAI](https://x.ai) · [OpenRouter](https://openrouter.ai) · [Groq](https://groq.com) · [NVIDIA](https://developer.nvidia.com) · [Cerebras](https://cerebras.ai) · [Ollama Cloud](https://ollama.com) · [LongCat](https://longcat.chat) · [Together AI](https://together.ai) · [Hugging Face](https://huggingface.co) · [Venice AI](https://venice.ai) · [Moonshot AI](https://moonshot.cn) · [Z.AI](https://z.ai) · [MiniMax](https://minimax.io) · [AIHubMix](https://aihubmix.com) · [Deep Infra](https://deepinfra.com) · [Fireworks AI](https://fireworks.ai) · [OpenCode](https://opencode.ai) · [AI Horde](https://stablehorde.net/) · [Perplexity](https://www.perplexity.ai) · OpenAI-Compatible API · LiteRT On-Device (Android) · Free tier (no API key needed)
 
 ## MCP Servers
 
-Kai supports the [Model Context Protocol](https://modelcontextprotocol.io/) for connecting to external tool servers. Go to **Settings > Tools > Add MCP Server** to connect to any Streamable HTTP MCP endpoint, or pick from a curated list of popular free servers:
+Oak supports the [Model Context Protocol](https://modelcontextprotocol.io/) for connecting to external tool servers. Go to **Settings > Tools > Add MCP Server** to connect to any Streamable HTTP MCP endpoint, or pick from a curated list of popular free servers:
 
 | Server | Description |
 |--------|-------------|
@@ -210,10 +210,10 @@ Two separate screenshot pipelines exist, both using Compose screenshot tests:
 bundle exec fastlane android upload_screenshots
 ```
 
-**Kai UI component screenshots** — Records golden images for `KaiUiScreenshotTest` only. Faster than recording the full suite when iterating on Kai UI components.
+**Oak UI component screenshots** — Records golden images for `OakUiScreenshotTest` only. Faster than recording the full suite when iterating on Oak UI components.
 
 ```bash
-./gradlew :screenshotTests:recordKaiUiScreenshots
+./gradlew :screenshotTests:recordOakUiScreenshots
 ```
 
 ## Sponsors

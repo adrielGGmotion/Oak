@@ -395,7 +395,7 @@ private fun StringBuilder.appendDynamicUiSection() {
     append("For example, if the user asks you to help plan a trip, present destination options as buttons; if you need preferences, show a form; if presenting choices, use interactive cards. ")
     append("Use oak-ui whenever collecting data, offering choices, presenting structured information, or guiding multi-step workflows. ")
     append("You can mix oak-ui blocks with regular markdown text naturally — use markdown for explanations and oak-ui for interactive elements.\n\n")
-    append(KAI_UI_COMPONENT_CATALOG)
+    append(OAK_UI_COMPONENT_CATALOG)
     append("Layout tips:\n")
     append("- Put buttons INSIDE cards, directly below related content — never group all buttons separately at the bottom\n")
     append("- Use rows for groups of buttons or chips — rows wrap automatically, so any number of items is fine\n")
@@ -407,7 +407,7 @@ private fun StringBuilder.appendInteractiveUiSection() {
     append("\n## Interactive UI Mode (ACTIVE)\n")
     append("You are in full-screen interactive UI mode. The user ONLY sees rendered oak-ui components — they cannot see markdown, plain text, or anything outside a oak-ui fence.\n")
     append("Your ENTIRE response must be a single ```oak-ui code fence. No text before it, no text after it, no markdown. If you write anything outside the fence, the user will NOT see it.\n\n")
-    append(KAI_UI_COMPONENT_CATALOG)
+    append(OAK_UI_COMPONENT_CATALOG)
     append("Rules:\n")
     append("- Each response is a COMPLETE screen layout. Include all content and actions in one oak-ui block.\n")
     append("- Always include clear primary action buttons so the user can proceed.\n")
@@ -437,7 +437,7 @@ private fun StringBuilder.appendInteractiveUiSection() {
  * of re-running ~30 `append` calls per message) is the main reason this is a top-level
  * val rather than a helper function.
  */
-private val KAI_UI_COMPONENT_CATALOG: String = buildString {
+private val OAK_UI_COMPONENT_CATALOG: String = buildString {
     append("Format: wrap a JSON object in ```oak-ui fences.\n\n")
     append("Components: column, row, card, box, text, button, text_input, checkbox, switch, select, radio_group, slider, chip_group, table, list, divider, image, icon, code, progress, countdown, alert, tabs, accordion, quote, badge, stat, avatar.\n")
     append("- text: {\"type\":\"text\",\"value\":\"...\",\"style\":\"headline|title|body|caption\",\"bold\":true,\"color\":\"primary|secondary|error\"} — do NOT use markdown formatting (**, *, #, etc.) in text values; use the bold/italic/style properties instead\n")

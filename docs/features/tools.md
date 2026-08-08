@@ -254,7 +254,7 @@ When loading, a chip appears at the bottom of the chat list containing the `Puls
 ### Interactive mode loading feedback
 
 The interactive-mode top bar shows only the static title — loading is surfaced closer to the user's point of action instead:
-- **Clicking a kai-ui action button**: the clicked button keeps its label and pulses (scale/alpha animation) until the response arrives; other buttons in the same message become disabled.
+- **Clicking a oak-ui action button**: the clicked button keeps its label and pulses (scale/alpha animation) until the response arrives; other buttons in the same message become disabled.
 - **First load** (no assistant response yet): a centered waiting row is shown.
 - **Typed-and-sent input**: the trailing send icon swaps to a stop icon in the input, as in standard chat.
 

@@ -34,7 +34,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             state = windowState,
-            title = "Oak 9000",
+            title = "Oak",
         ) {
             // Defer TTS initialization until after the first frame
             var ttsReady by remember { mutableStateOf(false) }

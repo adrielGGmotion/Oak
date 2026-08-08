@@ -419,7 +419,7 @@ private fun BottomInfo() {
                 .clip(CircleShape)
                 .size(24.dp)
                 .clickable(onClick = {
-                    uriHandler.openUri("https://github.com/SimonSchubert/Oak")
+                    uriHandler.openUri("https://github.com/adrielGGmotion/Oak")
                 })
                 .handCursor(),
             painter = painterResource(Res.drawable.github_mark),

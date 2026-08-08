@@ -164,12 +164,12 @@ jobs:
       - name: Create tarball
         run: |
           cd composeApp/build/compose/binaries/main-release/app
-          tar czf "$GITHUB_WORKSPACE/Kai-linux-x86_64.tar.gz" Kai
+          tar czf "$GITHUB_WORKSPACE/Oak-linux-x86_64.tar.gz" Oak
       - name: Upload Tarball Artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-tar-package
-          path: Kai-linux-x86_64.tar.gz
+          path: Oak-linux-x86_64.tar.gz
 
   appimage:
     name: Generate AppImage
@@ -203,24 +203,24 @@ jobs:
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
           # Copy distributable contents
-          cp -r composeApp/build/compose/binaries/main-release/app/Kai/* AppDir/usr/lib/
+          cp -r composeApp/build/compose/binaries/main-release/app/Oak/* AppDir/usr/lib/
 
           # Copy icon
-          cp composeApp/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/kai.png
-          cp composeApp/icon.png AppDir/kai.png
+          cp composeApp/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/oak.png
+          cp composeApp/icon.png AppDir/oak.png
 
           # Create desktop file
-          cat > AppDir/kai.desktop << 'EOF'
+          cat > AppDir/oak.desktop << 'EOF'
           [Desktop Entry]
-          Name=Kai
+          Name=Oak
           Comment=AI Assistant Application
-          Exec=kai
-          Icon=kai
+          Exec=Oak
+          Icon=oak
           Type=Application
           Categories=Utility;
           Terminal=false
           EOF
-          cp AppDir/kai.desktop AppDir/usr/share/applications/
+          cp AppDir/oak.desktop AppDir/usr/share/applications/
 
           # Create AppRun
           cat > AppDir/AppRun << 'EOF'
@@ -229,17 +229,17 @@ jobs:
           HERE=${SELF%/*}
           export PATH="${HERE}/usr/lib/bin:${PATH}"
           export LD_LIBRARY_PATH="${HERE}/usr/lib/lib/runtime/lib:${LD_LIBRARY_PATH}"
-          exec "${HERE}/usr/lib/bin/Kai" "$@"
+          exec "${HERE}/usr/lib/bin/Oak" "$@"
           EOF
           chmod +x AppDir/AppRun
       - name: Build AppImage
         run: |
-          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir Kai-x86_64.AppImage
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir Oak-x86_64.AppImage
       - name: Upload AppImage Artifact
         uses: actions/upload-artifact@v4
         with:
           name: appimage-package
-          path: Kai-*.AppImage
+          path: Oak-*.AppImage
 
   flatpak:
     name: Generate Flatpak
@@ -264,22 +264,22 @@ jobs:
       - name: Build Flatpak
         run: |
           # Copy tarball to flatpak dir and compute sha256
-          cp Kai-linux-x86_64.tar.gz flatpak/
-          SHA256=$(sha256sum Kai-linux-x86_64.tar.gz | cut -d' ' -f1)
+          cp Oak-linux-x86_64.tar.gz flatpak/
+          SHA256=$(sha256sum Oak-linux-x86_64.tar.gz | cut -d' ' -f1)
 
           # Patch manifest to use local tarball instead of URL
           cd flatpak
-          sed -i "s|url: https://github.com/SimonSchubert/Oak/releases/download/.*|path: Kai-linux-x86_64.tar.gz|" io.github.simonschubert.Kai.yaml
-          sed -i "s|sha256: .*|sha256: ${SHA256}|" io.github.simonschubert.Kai.yaml
+          sed -i "s|url: https://github.com/adrielGGmotion/Oak/releases/download/.*|path: Oak-linux-x86_64.tar.gz|" io.github.adrielggmotion.Oak.yaml
+          sed -i "s|sha256: .*|sha256: ${SHA256}|" io.github.adrielggmotion.Oak.yaml
 
           # Build and bundle
-          flatpak-builder --repo=repo --force-clean build-dir io.github.simonschubert.Kai.yaml
-          flatpak build-bundle repo ../Kai.flatpak io.github.simonschubert.Kai
+          flatpak-builder --repo=repo --force-clean build-dir io.github.adrielggmotion.Oak.yaml
+          flatpak build-bundle repo ../Oak.flatpak io.github.adrielggmotion.Oak
       - name: Upload Flatpak Artifact
         uses: actions/upload-artifact@v4
         with:
           name: flatpak-package
-          path: Kai.flatpak
+          path: Oak.flatpak
 
   play-store:
     name: Upload AAB to Play Store
@@ -374,14 +374,14 @@ jobs:
       - name: Rename assets
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          mv androidApp-foss-release-signed.apk "Kai-${VERSION}-android.apk"
-          mv *.dmg "Kai-${VERSION}-macos.dmg"
-          mv *.msi "Kai-${VERSION}-windows.msi"
-          mv *.deb "Kai-${VERSION}-linux.deb"
-          mv *.rpm "Kai-${VERSION}-linux.rpm"
-          mv *.AppImage "Kai-${VERSION}-linux.AppImage"
-          mv Kai-linux-x86_64.tar.gz "Kai-${VERSION}-linux-x86_64.tar.gz"
-          mv Kai.flatpak "Kai-${VERSION}-linux.flatpak"
+          mv androidApp-foss-release-signed.apk "Oak-${VERSION}-android.apk"
+          mv *.dmg "Oak-${VERSION}-macos.dmg"
+          mv *.msi "Oak-${VERSION}-windows.msi"
+          mv *.deb "Oak-${VERSION}-linux.deb"
+          mv *.rpm "Oak-${VERSION}-linux.rpm"
+          mv *.AppImage "Oak-${VERSION}-linux.AppImage"
+          mv Oak-linux-x86_64.tar.gz "Oak-${VERSION}-linux-x86_64.tar.gz"
+          mv Oak.flatpak "Oak-${VERSION}-linux.flatpak"
 
       - name: Extract changelog
         run: |
@@ -404,16 +404,16 @@ jobs:
         with:
           name: Release ${{ github.ref_name }}
           body_path: changelog.txt
-          files: Kai-*
+          files: Oak-*
 
       - name: Sync winget-pkgs fork
         env:
           GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
-        run: gh repo sync SimonSchubert/winget-pkgs --source microsoft/winget-pkgs --branch master --force
+        run: gh repo sync adrielGGmotion/winget-pkgs --source microsoft/winget-pkgs --branch master --force
 
       - name: Publish to WinGet
         uses: vedantmgoyal9/winget-releaser@v2
         with:
-          identifier: SimonSchubert.Kai
+          identifier: adrielGGmotion.Oak
           installers-regex: '\.msi$'
           token: ${{ secrets.WINGET_TOKEN }}

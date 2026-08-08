@@ -20,7 +20,7 @@ The following data is stored in secure settings:
 - **Value encryption:** AES-256-GCM
 - **Key management:** Android Keystore (`MasterKey` with `AES256_GCM` scheme)
 - **Size limit:** ~2 MB per value (SharedPreferences limit)
-- **File location:** App-private `kai_secure_prefs` SharedPreferences
+- **File location:** App-private `oak_secure_prefs` SharedPreferences
 
 ### iOS
 - **Mechanism:** `KeychainSettings` (`com.russhwolf/multiplatform-settings`)
@@ -32,11 +32,11 @@ The following data is stored in secure settings:
 ### Desktop (macOS, Windows, Linux)
 - **Mechanism:** `EncryptedFileSettings` — custom file-backed `Settings` implementation
 - **Encryption:** AES-256-GCM via `javax.crypto`
-- **Key management:** 256-bit random key generated via `SecureRandom`, stored at `~/.kai/settings.key`
+- **Key management:** 256-bit random key generated via `SecureRandom`, stored at `~/.oak/settings.key`
 - **IV:** 12-byte random IV per write, prepended to ciphertext
 - **Authentication tag:** 128-bit GCM tag (integrity + authenticity)
 - **File format:** `[12-byte IV][AES-GCM ciphertext + tag]`
-- **File location:** `~/.kai/settings.aes`
+- **File location:** `~/.oak/settings.aes`
 - **Size limit:** None (file-based)
 - **Migration:** On first run, migrates existing data from Java Preferences (`Preferences.userRoot()`) and clears the old store. Java Preferences was the previous backend but has an 8 KB per-value hard limit.
 

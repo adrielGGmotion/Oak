@@ -96,7 +96,7 @@ internal object BlockScanner {
             }
 
             if (line.trim() == "oak-ui") {
-                val splitResult = tryParseKaiUiSplit(lines, i, end)
+                val splitResult = tryParseOakUiSplit(lines, i, end)
                 if (splitResult != null) {
                     blocks += splitResult.first
                     i = splitResult.second
@@ -187,7 +187,7 @@ internal object BlockScanner {
         val (body, closed, next) = readFenceBody(lines, start + 1, end, fenceChar, fenceLen, indent)
 
         if (info.equals("oak-ui", ignoreCase = true)) {
-            return decodeKaiUi(body) to next
+            return decodeOakUi(body) to next
         }
 
         if (info.equals("latex", ignoreCase = true) ||
@@ -235,7 +235,7 @@ internal object BlockScanner {
         return line.substring(strip)
     }
 
-    private fun decodeKaiUi(body: String): BlockNode = when (val result = OakUiParser.parseUiBlockBody(body)) {
+    private fun decodeOakUi(body: String): BlockNode = when (val result = OakUiParser.parseUiBlockBody(body)) {
         is OakUiParser.UiBlockResult.Ui -> OakUiBlock(result.node, result.rawJson)
         is OakUiParser.UiBlockResult.Error -> OakUiError(result.rawJson)
         null -> OakUiError(body)
@@ -264,7 +264,7 @@ internal object BlockScanner {
         return DisplayMath(bodyLines.joinToString("\n").trim()) to i
     }
 
-    private fun tryParseKaiUiSplit(
+    private fun tryParseOakUiSplit(
         lines: List<String>,
         start: Int,
         end: Int,
@@ -279,7 +279,7 @@ internal object BlockScanner {
         val fenceLen = fence.groupValues[2].length
         val indent = fence.groupValues[1].length
         val (body, _, next) = readFenceBody(lines, j + 1, end, fenceChar, fenceLen, indent)
-        return decodeKaiUi(body) to next
+        return decodeOakUi(body) to next
     }
 
     // =========================================================================================

@@ -90,9 +90,9 @@ private class BuildSession(
     val rows = AtomicInteger(rows)
 
     /** Host-side file names inside the bind-mounted tmp dir — one set per session. */
-    val winsizeFile: String get() = "kai-winsize-$id"
-    val openUrlFile: String get() = "kai-open-url-$id"
-    val pidFile: String get() = "kai-pid-$id"
+    val winsizeFile: String get() = "oak-winsize-$id"
+    val openUrlFile: String get() = "oak-open-url-$id"
+    val pidFile: String get() = "oak-pid-$id"
 
     @Volatile
     var handle: BuildProotHandle? = null
@@ -649,7 +649,7 @@ class BuildEnvironmentManager(context: Context) {
     private fun ensureAgentPathProfile() {
         val dir = File(paths.rootfsDir, "etc/profile.d")
         dir.mkdirs()
-        File(dir, "kai-build-path.sh").writeText(
+        File(dir, "oak-build-path.sh").writeText(
             """
             |# Managed by Oak Build — keep coding-agent CLIs on PATH for login shells.
             |export PATH="/root/.local/bin:/root/.grok/bin:/root/.opencode/bin${'$'}{PATH:+:${'$'}PATH}"
@@ -674,19 +674,19 @@ class BuildEnvironmentManager(context: Context) {
     }
 
     /**
-     * Installs `/usr/local/bin/kai-browser` into the rootfs so `$BROWSER` captures
+     * Installs `/usr/local/bin/oak-browser` into the rootfs so `$BROWSER` captures
      * URLs Grok tries to open when no real display/browser exists under proot.
-     * The target file is per session, passed in as `KAI_OPEN_URL_FILE`.
+     * The target file is per session, passed in as `OAK_OPEN_URL_FILE`.
      */
     private fun ensureBrowserCaptureHelpers() {
-        val script = File(paths.rootfsDir, "usr/local/bin/kai-browser")
+        val script = File(paths.rootfsDir, "usr/local/bin/oak-browser")
         script.parentFile?.mkdirs()
         script.writeText(
             """
             |#!/bin/sh
             |# Oak Build: capture browser-open URLs for the in-app link bar.
             |url="${'$'}1"
-            |target="${'$'}{KAI_OPEN_URL_FILE:-/tmp/kai-open-url}"
+            |target="${'$'}{OAK_OPEN_URL_FILE:-/tmp/oak-open-url}"
             |if [ -n "${'$'}url" ]; then
             |  printf '%s\n' "${'$'}url" >> "${'$'}target"
             |fi
@@ -881,9 +881,9 @@ class BuildEnvironmentManager(context: Context) {
             tmpPath = paths.tmpDir.absolutePath,
             columns = columns,
             rows = rows,
-            winsizePath = "/tmp/${session?.winsizeFile ?: "kai-winsize"}",
-            openUrlPath = "/tmp/${session?.openUrlFile ?: "kai-open-url"}",
-            pidFileName = session?.pidFile ?: "kai-pid",
+            winsizePath = "/tmp/${session?.winsizeFile ?: "oak-winsize"}",
+            openUrlPath = "/tmp/${session?.openUrlFile ?: "oak-open-url"}",
+            pidFileName = session?.pidFile ?: "oak-pid",
         )
     }
 

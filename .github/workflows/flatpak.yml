@@ -24,7 +24,7 @@ jobs:
       - name: Update manifest version and checksum
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          TARBALL_URL="https://github.com/SimonSchubert/Oak/releases/download/v${VERSION}/Kai-${VERSION}-linux-x86_64.tar.gz"
+          TARBALL_URL="https://github.com/adrielGGmotion/Oak/releases/download/v${VERSION}/Oak-${VERSION}-linux-x86_64.tar.gz"
 
           # Download tarball and compute SHA256
           curl -L -o tarball.tar.gz "$TARBALL_URL"
@@ -33,8 +33,8 @@ jobs:
 
           # Update manifest
           cd flatpak
-          sed -i "s|url: https://github.com/SimonSchubert/Oak/releases/download/.*|url: ${TARBALL_URL}|" io.github.simonschubert.Kai.yaml
-          sed -i "s|sha256: .*|sha256: ${SHA256}|" io.github.simonschubert.Kai.yaml
+          sed -i "s|url: https://github.com/adrielGGmotion/Oak/releases/download/.*|url: ${TARBALL_URL}|" io.github.adrielggmotion.Oak.yaml
+          sed -i "s|sha256: .*|sha256: ${SHA256}|" io.github.adrielggmotion.Oak.yaml
 
           echo "Updated manifest to version ${VERSION} with sha256 ${SHA256}"
 
@@ -46,7 +46,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add flatpak/io.github.simonschubert.Kai.yaml
+          git add flatpak/io.github.adrielggmotion.Oak.yaml
           git commit -m "Update Flatpak manifest to ${VERSION}" || exit 0
           git pull --rebase origin main
           git push

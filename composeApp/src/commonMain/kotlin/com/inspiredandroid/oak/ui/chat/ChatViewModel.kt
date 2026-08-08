@@ -228,7 +228,7 @@ class ChatViewModel(
 
                 // Auto-retry in interactive mode if the response has no valid oak-ui
                 if (_state.value.isInteractiveMode) {
-                    retryIfNoValidKaiUi()
+                    retryIfNoValidOakUi()
                 }
 
                 _state.update {
@@ -264,7 +264,7 @@ class ChatViewModel(
         return localNetworkPermissionController.requestPermission()
     }
 
-    private suspend fun retryIfNoValidKaiUi(maxRetries: Int = 2) {
+    private suspend fun retryIfNoValidOakUi(maxRetries: Int = 2) {
         repeat(maxRetries) {
             currentCoroutineContext().ensureActive()
             val lastAssistant = dataRepository.chatHistory.value.lastRenderedAssistant() ?: return

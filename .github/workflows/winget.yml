@@ -10,6 +10,6 @@ jobs:
     steps:
       - uses: vedantmgoyal9/winget-releaser@v2
         with:
-          identifier: SimonSchubert.Kai
+          identifier: adrielGGmotion.Oak
           installers-regex: '\.msi$'
           token: ${{ secrets.WINGET_TOKEN }}

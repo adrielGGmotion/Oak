@@ -90,7 +90,7 @@ class SshConfigManagerTest {
     }
 
     @Test
-    fun upsertHostKeepsNonKaiContent() {
+    fun upsertHostKeepsNonOakContent() {
         File(home, ".ssh").mkdirs()
         val userPreamble = "# my hand-written notes\nHost legacy\n    HostName legacy.example\n\n"
         File(home, ".ssh/config").writeText(userPreamble)

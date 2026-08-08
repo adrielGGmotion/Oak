@@ -4,12 +4,12 @@
 
 ### Web
 
-Try Oak directly in your browser at [simonschubert.github.io/Oak](https://simonschubert.github.io/Oak).
+Try Oak directly in your browser at [adrielggmotion.github.io/Oak](https://adrielggmotion.github.io/Oak).
 
 ### Homebrew (macOS)
 
 ```bash
-brew install --cask simonschubert/tap/oak
+brew install --cask adrielggmotion/tap/oak
 ```
 
 ### AUR (Arch Linux)
@@ -21,19 +21,19 @@ yay -S oak-bin
 ### Winget (Windows)
 
 ```bash
-winget install SimonSchubert.Oak
+winget install adrielGGmotion.Oak
 ```
 
 ### Direct Downloads
 
 | Platform | Format | Download |
 |----------|--------|----------|
-| Android | APK | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| macOS | DMG | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| Windows | MSI | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| Linux | DEB | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| Linux | RPM | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
-| Linux | AppImage | [GitHub Releases](https://github.com/SimonSchubert/Oak/releases) |
+| Android | APK | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| macOS | DMG | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| Windows | MSI | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| Linux | DEB | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| Linux | RPM | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
+| Linux | AppImage | [GitHub Releases](https://github.com/adrielGGmotion/Oak/releases) |
 
 ## First Steps
 

@@ -1,40 +1,40 @@
-# Maintainer: Simon Schubert <sschubert89@gmail.com>
-# https://github.com/SimonSchubert/Kai
+# Maintainer: Adriel O'Connel <adriel.gg.motion@proton.me>
+# https://github.com/adrielGGmotion/Oak
 
-pkgname=kai-bin
+pkgname=oak-bin
 pkgver=2.9.0
 pkgrel=1
 pkgdesc='AI assistant powered by Ollama, Gemini, ChatGPT and more'
 arch=('x86_64')
-url='https://github.com/SimonSchubert/Kai'
+url='https://github.com/adrielGGmotion/Oak'
 license=('Apache-2.0')
 depends=('hicolor-icon-theme')
-provides=('kai')
-conflicts=('kai')
+provides=('oak')
+conflicts=('oak')
 options=('!strip')
 
-source=("Kai-${pkgver}-linux-x86_64.tar.gz::https://github.com/SimonSchubert/Kai/releases/download/v${pkgver}/Kai-${pkgver}-linux-x86_64.tar.gz")
+source=("Oak-${pkgver}-linux-x86_64.tar.gz::https://github.com/adrielGGmotion/Oak/releases/download/v${pkgver}/Oak-${pkgver}-linux-x86_64.tar.gz")
 sha256sums=('9d390f7f651a6d4d7fc7f7e39a73a0d05888b886559f24e572c02e3b003dcb2f')
 
 package() {
     # Install application files
-    install -dm755 "${pkgdir}/opt/kai"
-    cp -r "${srcdir}/Kai/"* "${pkgdir}/opt/kai/"
-    chmod -R go-w "${pkgdir}/opt/kai"
+    install -dm755 "${pkgdir}/opt/oak"
+    cp -r "${srcdir}/Oak/"* "${pkgdir}/opt/oak/"
+    chmod -R go-w "${pkgdir}/opt/oak"
 
     # Install wrapper script
-    install -Dm755 /dev/stdin "${pkgdir}/usr/bin/kai" << 'EOF'
+    install -Dm755 /dev/stdin "${pkgdir}/usr/bin/oak" << 'EOF'
 #!/bin/sh
-exec /opt/kai/bin/Kai "$@"
+exec /opt/oak/bin/Oak "$@"
 EOF
 
     # Install desktop entry
-    install -Dm644 /dev/stdin "${pkgdir}/usr/share/applications/kai.desktop" << EOF
+    install -Dm644 /dev/stdin "${pkgdir}/usr/share/applications/oak.desktop" << EOF
 [Desktop Entry]
-Name=Kai
+Name=Oak
 Comment=AI assistant powered by Ollama, Gemini, ChatGPT and more
-Exec=kai
-Icon=kai
+Exec=oak
+Icon=oak
 Type=Application
 Categories=Utility;Network;
 Keywords=AI;Chat;Ollama;Gemini;LLM;Assistant;
@@ -43,7 +43,7 @@ Terminal=false
 EOF
 
     # Install icon
-    install -Dm644 /dev/stdin "${pkgdir}/usr/share/icons/hicolor/scalable/apps/kai.svg" << 'EOF'
+    install -Dm644 /dev/stdin "${pkgdir}/usr/share/icons/hicolor/scalable/apps/oak.svg" << 'EOF'
 <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
    <circle cx="35" cy="45" r="30" fill="#6200ee" />
    <circle cx="55" cy="45" r="30" fill="#8063C5" />
@@ -51,14 +51,14 @@ EOF
 EOF
 
     # Install license
-    install -Dm644 "${srcdir}/Kai/lib/Kai.copyright" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE" 2>/dev/null ||
-    install -Dm644 "${srcdir}/Kai/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE" 2>/dev/null || true
+    install -Dm644 "${srcdir}/Oak/lib/Oak.copyright" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE" 2>/dev/null ||
+    install -Dm644 "${srcdir}/Oak/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE" 2>/dev/null || true
 }
 
 # Publishing steps:
 # 1. Create AUR account at https://aur.archlinux.org
-# 2. git clone ssh://aur@aur.archlinux.org/kai-bin.git
+# 2. git clone ssh://aur@aur.archlinux.org/oak-bin.git
 # 3. Copy PKGBUILD and .SRCINFO into the cloned repo
 # 4. git add PKGBUILD .SRCINFO
-# 5. git commit -m "Initial upload: kai-bin 1.7.9"
+# 5. git commit -m "Initial upload: oak-bin 1.7.9"
 # 6. git push

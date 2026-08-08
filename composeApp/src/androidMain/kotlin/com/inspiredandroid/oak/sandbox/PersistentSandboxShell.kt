@@ -27,7 +27,7 @@ private const val US = ""
 // Marker emitted once at shell startup so we know bash's pid before any user
 // command has finished. Without this, cancel on the first command had nothing
 // to signal (bashPid was null, set only from the sentinel of a completed run).
-private const val PID_PROBE_PREFIX = "${RS}KAIBASHPID$US"
+private const val PID_PROBE_PREFIX = "${RS}OAKBASHPID$US"
 
 class PersistentSandboxShell(
     private val executor: ProotExecutor,
@@ -179,7 +179,7 @@ class PersistentSandboxShell(
         // recognizes this marker on stderr and sets bashPid, so cancel on
         // the very first command has something to signal. Leading \n matches
         // the sentinel pattern below — flushes any partial line first.
-        h.writeInput("printf '\\n\\036KAIBASHPID\\037%d\\036\\n' \"\$\$\" >&2")
+        h.writeInput("printf '\\n\\036OAKBASHPID\\037%d\\036\\n' \"\$\$\" >&2")
         watchdog = scope.launch {
             h.awaitExit()
             // Shell died. Wake up any in-flight command with a shellDied result

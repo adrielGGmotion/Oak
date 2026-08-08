@@ -20,15 +20,15 @@ import kotlin.test.Test
  * Integration test that exercises real LLM providers with a battery of prompts and
  * validates that their responses contain well-formed oak-ui blocks.
  *
- * By default this test is **skipped** — it only runs when `KAI_INTEGRATION=1` is set
+ * By default this test is **skipped** — it only runs when `OAK_INTEGRATION=1` is set
  * in the environment, because it makes real (paid) API calls.
  *
  * ## How to run
  *
  * ```
- * KAI_INTEGRATION=1 \
- *   KAI_OPENAI_KEY=sk-... \
- *   KAI_ANTHROPIC_KEY=sk-ant-... \
+ * OAK_INTEGRATION=1 \
+ *   OAK_OPENAI_KEY=sk-... \
+ *   OAK_ANTHROPIC_KEY=sk-ant-... \
  *   ./gradlew :composeApp:desktopTest --tests "*OakUiValidationTest*" --info
  * ```
  *
@@ -37,23 +37,23 @@ import kotlin.test.Test
  *
  * | Provider     | Key env var           | Model env var (optional) | Default model                |
  * |--------------|-----------------------|--------------------------|------------------------------|
- * | OpenAI       | KAI_OPENAI_KEY        | KAI_OPENAI_MODEL         | gpt-4o-mini                  |
- * | Anthropic    | KAI_ANTHROPIC_KEY     | KAI_ANTHROPIC_MODEL      | claude-3-5-haiku-latest      |
- * | Gemini       | KAI_GEMINI_KEY        | KAI_GEMINI_MODEL         | gemini-2.0-flash             |
- * | Mistral      | KAI_MISTRAL_KEY       | KAI_MISTRAL_MODEL        | mistral-small-latest         |
- * | Groq         | KAI_GROQ_KEY          | KAI_GROQ_MODEL           | llama-3.3-70b-versatile      |
- * | OpenRouter   | KAI_OPENROUTER_KEY    | KAI_OPENROUTER_MODEL     | openai/gpt-4o-mini           |
- * | DeepSeek     | KAI_DEEPSEEK_KEY      | KAI_DEEPSEEK_MODEL       | deepseek-chat                |
- * | xAI          | KAI_XAI_KEY           | KAI_XAI_MODEL            | grok-2-latest                |
- * | Cerebras     | KAI_CEREBRAS_KEY      | KAI_CEREBRAS_MODEL       | llama-3.3-70b                |
- * | Moonshot     | KAI_MOONSHOT_KEY      | KAI_MOONSHOT_MODEL       | moonshot-v1-8k               |
- * | Together     | KAI_TOGETHER_KEY      | KAI_TOGETHER_MODEL       | meta-llama/Llama-3.3-70B-Instruct-Turbo |
- * | Mistral FT   | KAI_MISTRAL_FT_KEY    | KAI_MISTRAL_FT_MODEL     | ft:open-mistral-7b:latest  |
+ * | OpenAI       | OAK_OPENAI_KEY        | OAK_OPENAI_MODEL         | gpt-4o-mini                  |
+ * | Anthropic    | OAK_ANTHROPIC_KEY     | OAK_ANTHROPIC_MODEL      | claude-3-5-haiku-latest      |
+ * | Gemini       | OAK_GEMINI_KEY        | OAK_GEMINI_MODEL         | gemini-2.0-flash             |
+ * | Mistral      | OAK_MISTRAL_KEY       | OAK_MISTRAL_MODEL        | mistral-small-latest         |
+ * | Groq         | OAK_GROQ_KEY          | OAK_GROQ_MODEL           | llama-3.3-70b-versatile      |
+ * | OpenRouter   | OAK_OPENROUTER_KEY    | OAK_OPENROUTER_MODEL     | openai/gpt-4o-mini           |
+ * | DeepSeek     | OAK_DEEPSEEK_KEY      | OAK_DEEPSEEK_MODEL       | deepseek-chat                |
+ * | xAI          | OAK_XAI_KEY           | OAK_XAI_MODEL            | grok-2-latest                |
+ * | Cerebras     | OAK_CEREBRAS_KEY      | OAK_CEREBRAS_MODEL       | llama-3.3-70b                |
+ * | Moonshot     | OAK_MOONSHOT_KEY      | OAK_MOONSHOT_MODEL       | moonshot-v1-8k               |
+ * | Together     | OAK_TOGETHER_KEY      | OAK_TOGETHER_MODEL       | meta-llama/Llama-3.3-70B-Instruct-Turbo |
+ * | Mistral FT   | OAK_MISTRAL_FT_KEY    | OAK_MISTRAL_FT_MODEL     | ft:open-mistral-7b:latest  |
  *
  * Additional knobs:
  * - `OAK_REPORT_DIR` — where to write the report (default: `build/reports/oakui-integration`)
- * - `KAI_MIN_SUCCESS_RATE` — 0.0-1.0, fail the test below this rate (default: 0.0, never fail)
- * - `KAI_REPLAY_STRICT` — set to `1` to make the replay test fail when any saved response
+ * - `OAK_MIN_SUCCESS_RATE` — 0.0-1.0, fail the test below this rate (default: 0.0, never fail)
+ * - `OAK_REPLAY_STRICT` — set to `1` to make the replay test fail when any saved response
  *   no longer parses cleanly. Default off (report-only).
  *
  * ## What it produces
@@ -79,15 +79,15 @@ class OakUiValidationTest {
 
     @Test
     fun `validate oak-ui output across providers`() {
-        if (System.getenv("KAI_INTEGRATION") != "1") {
-            println("[OakUiValidationTest] Skipped — set KAI_INTEGRATION=1 to run.")
+        if (System.getenv("OAK_INTEGRATION") != "1") {
+            println("[OakUiValidationTest] Skipped — set OAK_INTEGRATION=1 to run.")
             return
         }
 
         val providers = discoverProviders()
         if (providers.isEmpty()) {
             println("[OakUiValidationTest] Skipped — no provider API keys found in env.")
-            println("    Set any of: KAI_OPENAI_KEY, KAI_ANTHROPIC_KEY, KAI_GEMINI_KEY, KAI_GROQ_KEY, KAI_OPENROUTER_KEY")
+            println("    Set any of: OAK_OPENAI_KEY, OAK_ANTHROPIC_KEY, OAK_GEMINI_KEY, OAK_GROQ_KEY, OAK_OPENROUTER_KEY")
             return
         }
 
@@ -117,7 +117,7 @@ class OakUiValidationTest {
         writeReport(reportDir, allResults, providers)
         printSummary(allResults, providers)
 
-        val minRate = System.getenv("KAI_MIN_SUCCESS_RATE")?.toDoubleOrNull() ?: 0.0
+        val minRate = System.getenv("OAK_MIN_SUCCESS_RATE")?.toDoubleOrNull() ?: 0.0
         if (minRate > 0.0) {
             val rate = allResults.count { it.status == Status.SUCCESS }.toDouble() / allResults.size
             check(rate >= minRate) {
@@ -133,7 +133,7 @@ class OakUiValidationTest {
      * `parseMarkdown()`, and reports which ones still fail. Free, fast, and needs no
      * API keys — use this while iterating on parser fixes or prompt tweaks.
      *
-     * Skips silently if no saved responses are found. Set `KAI_REPLAY_STRICT=1` to make
+     * Skips silently if no saved responses are found. Set `OAK_REPLAY_STRICT=1` to make
      * the test fail when any previously-failing response still fails to parse cleanly.
      */
     @Test
@@ -149,7 +149,7 @@ class OakUiValidationTest {
             .sortedBy { it.absolutePath }
         if (rawFiles.isEmpty()) {
             println("[OakUiValidationTest] Replay skipped — no .raw.txt files under ${reportDir.absolutePath}")
-            println("    Run the online test first with KAI_INTEGRATION=1 and at least one provider key.")
+            println("    Run the online test first with OAK_INTEGRATION=1 and at least one provider key.")
             return
         }
 
@@ -203,7 +203,7 @@ class OakUiValidationTest {
 
         println("\n[OakUiValidationTest] Replay summary: $success ok, $partial partial, $noUi no-ui, $parseError parse-error  (total ${rawFiles.size})")
 
-        val strict = System.getenv("KAI_REPLAY_STRICT") == "1"
+        val strict = System.getenv("OAK_REPLAY_STRICT") == "1"
         if (strict && failures.isNotEmpty()) {
             error(
                 "Replay strict mode: ${failures.size} file(s) did not parse cleanly:\n" +
@@ -227,122 +227,122 @@ class OakUiValidationTest {
 
     private fun discoverProviders(): List<ProviderSpec> {
         val out = mutableListOf<ProviderSpec>()
-        env("KAI_OPENAI_KEY")?.let {
+        env("OAK_OPENAI_KEY")?.let {
             out += ProviderSpec(
                 "openai",
                 "OpenAI",
                 Service.OpenAI,
-                env("KAI_OPENAI_MODEL") ?: "gpt-4o-mini",
+                env("OAK_OPENAI_MODEL") ?: "gpt-4o-mini",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )
         }
-        env("KAI_ANTHROPIC_KEY")?.let {
+        env("OAK_ANTHROPIC_KEY")?.let {
             out += ProviderSpec(
                 "anthropic",
                 "Anthropic",
                 Service.Anthropic,
-                env("KAI_ANTHROPIC_MODEL") ?: "claude-3-5-haiku-latest",
+                env("OAK_ANTHROPIC_MODEL") ?: "claude-3-5-haiku-latest",
                 it,
                 ProviderSpec.Kind.ANTHROPIC,
             )
         }
-        env("KAI_GEMINI_KEY")?.let {
+        env("OAK_GEMINI_KEY")?.let {
             out += ProviderSpec(
                 "gemini",
                 "Gemini",
                 Service.Gemini,
-                env("KAI_GEMINI_MODEL") ?: "gemini-2.0-flash",
+                env("OAK_GEMINI_MODEL") ?: "gemini-2.0-flash",
                 it,
                 ProviderSpec.Kind.GEMINI,
             )
         }
-        env("KAI_MISTRAL_KEY")?.let {
+        env("OAK_MISTRAL_KEY")?.let {
             out += ProviderSpec(
                 "mistral",
                 "Mistral",
                 Service.Mistral,
-                env("KAI_MISTRAL_MODEL") ?: "mistral-small-latest",
+                env("OAK_MISTRAL_MODEL") ?: "mistral-small-latest",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )
         }
-        env("KAI_GROQ_KEY")?.let {
+        env("OAK_GROQ_KEY")?.let {
             out += ProviderSpec(
                 "groq",
                 "Groq",
                 Service.Groq,
-                env("KAI_GROQ_MODEL") ?: "llama-3.3-70b-versatile",
+                env("OAK_GROQ_MODEL") ?: "llama-3.3-70b-versatile",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )
         }
-        env("KAI_OPENROUTER_KEY")?.let {
+        env("OAK_OPENROUTER_KEY")?.let {
             out += ProviderSpec(
                 "openrouter",
                 "OpenRouter",
                 Service.OpenRouter,
-                env("KAI_OPENROUTER_MODEL") ?: "openai/gpt-4o-mini",
+                env("OAK_OPENROUTER_MODEL") ?: "openai/gpt-4o-mini",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )
         }
-        env("KAI_DEEPSEEK_KEY")?.let {
+        env("OAK_DEEPSEEK_KEY")?.let {
             out += ProviderSpec(
                 "deepseek",
                 "DeepSeek",
                 Service.DeepSeek,
-                env("KAI_DEEPSEEK_MODEL") ?: "deepseek-chat",
+                env("OAK_DEEPSEEK_MODEL") ?: "deepseek-chat",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )
         }
-        env("KAI_XAI_KEY")?.let {
+        env("OAK_XAI_KEY")?.let {
             out += ProviderSpec(
                 "xai",
                 "xAI",
                 Service.XAI,
-                env("KAI_XAI_MODEL") ?: "grok-2-latest",
+                env("OAK_XAI_MODEL") ?: "grok-2-latest",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )
         }
-        env("KAI_CEREBRAS_KEY")?.let {
+        env("OAK_CEREBRAS_KEY")?.let {
             out += ProviderSpec(
                 "cerebras",
                 "Cerebras",
                 Service.Cerebras,
-                env("KAI_CEREBRAS_MODEL") ?: "llama-3.3-70b",
+                env("OAK_CEREBRAS_MODEL") ?: "llama-3.3-70b",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )
         }
-        env("KAI_MOONSHOT_KEY")?.let {
+        env("OAK_MOONSHOT_KEY")?.let {
             out += ProviderSpec(
                 "moonshot",
                 "Moonshot",
                 Service.Moonshot,
-                env("KAI_MOONSHOT_MODEL") ?: "moonshot-v1-8k",
+                env("OAK_MOONSHOT_MODEL") ?: "moonshot-v1-8k",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )
         }
-        env("KAI_TOGETHER_KEY")?.let {
+        env("OAK_TOGETHER_KEY")?.let {
             out += ProviderSpec(
                 "together",
                 "Together",
                 Service.Together,
-                env("KAI_TOGETHER_MODEL") ?: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+                env("OAK_TOGETHER_MODEL") ?: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )
         }
-        env("KAI_MISTRAL_FT_KEY")?.let {
+        env("OAK_MISTRAL_FT_KEY")?.let {
             out += ProviderSpec(
                 "mistral-ft",
                 "Mistral Fine-tuned",
                 Service.Mistral,
-                env("KAI_MISTRAL_FT_MODEL") ?: "ft:open-mistral-7b:latest",
+                env("OAK_MISTRAL_FT_MODEL") ?: "ft:open-mistral-7b:latest",
                 it,
                 ProviderSpec.Kind.OPENAI_COMPAT,
             )

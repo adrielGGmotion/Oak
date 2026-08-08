@@ -266,7 +266,7 @@
 ## v2.3.2 — 2026-04-23
 
 ### Fixes
-- Fix kai-ui rendering and restore issues
+- Fix oak-ui rendering and restore issues
 
 ### Improvements
 - Make OLED dark mode opt-in
@@ -320,7 +320,7 @@
 
 ### Features
 - Add custom markdown parser
-- Preserve previous Kai UI output and allow editing
+- Preserve previous Oak UI output and allow editing
 
 ### Improvements
 - Pulse animation on stop button
@@ -411,7 +411,7 @@
 - Add additional MCP servers
 
 ### Improvements
-- Improve kai-ui prompt and split-block parsing
+- Improve oak-ui prompt and split-block parsing
 - Replace Lottie animation with custom implementation
 - Improve tool use UI
 - Add missing localizations
@@ -426,7 +426,7 @@
 - Add custom MCP server headers
 
 ### Improvements
-- Improve Kai UI parsing
+- Improve Oak UI parsing
 - Use Gemini header auth instead of URL parameter
 
 ## v1.12.3 — 2026-04-02

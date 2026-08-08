@@ -13,7 +13,7 @@
    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
     <application
-        android:name="com.inspiredandroid.oak.KaiApplication"
+        android:name="com.inspiredandroid.oak.OakApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"

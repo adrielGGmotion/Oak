@@ -3,7 +3,7 @@
 An **open-source AI assistant with persistent memory** that runs on **Android, iOS, Windows, Mac, Linux, and Web**.
 
 [:material-download: Get Started](getting-started.md){ .md-button .md-button--primary }
-[:material-github: GitHub](https://github.com/SimonSchubert/Oak){ .md-button }
+[:material-github: GitHub](https://github.com/adrielGGmotion/Oak){ .md-button }
 
 ## Overview
 
@@ -114,7 +114,7 @@ Plus a built-in **Free** tier that requires no API key.
 
 ## Links
 
-- [GitHub Repository](https://github.com/SimonSchubert/Oak)
-- [Issue Tracker](https://github.com/SimonSchubert/Oak/issues)
-- [Releases](https://github.com/SimonSchubert/Oak/releases)
+- [GitHub Repository](https://github.com/adrielGGmotion/Oak)
+- [Issue Tracker](https://github.com/adrielGGmotion/Oak/issues)
+- [Releases](https://github.com/adrielGGmotion/Oak/releases)
 

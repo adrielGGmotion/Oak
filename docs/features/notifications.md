@@ -1,6 +1,6 @@
 # Notifications
 
-**Last verified:** 2026-08-03
+**Last verified:** 2026-08-08
 
 > Reading notifications is **FOSS-only** and **Android-only**. The Play Store variant of Oak does not declare `BIND_NOTIFICATION_LISTENER_SERVICE` and the feature is invisible there — no settings, no tools, no code path. Play Store's notification-access policies restrict the listener to a narrow set of approved use cases (accessibility, smartwatches, replacement notification UIs), which Oak is not.
 
@@ -31,7 +31,7 @@ Notification access is granted via system settings, not a runtime permission dia
 1. In **Settings → Agent → Notifications → "Read notifications"**, the user flips the toggle on. The toggle records **user intent** and stays on even if access is not yet granted.
 2. The app deep-links to **Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS** (or the per-component variant on API 30+) and instructs the user to enable Oak in the list.
 3. On return (and whenever the settings screen becomes visible), the app re-reads `NotificationManager.isNotificationListenerAccessGranted(…)` (API 27+) or `Settings.Secure.getString("enabled_notification_listeners")`. Access state is shown separately ("Listener active" / inactive, plus an open-access control when intent is on but access is missing). The master toggle does **not** auto-reset when access is denied.
-4. Once granted, Android binds `KaiNotificationListenerService`. From then on every `onNotificationPosted` callback that passes the visibility filters writes a record into the pending queue. Until access is granted, posts are not delivered to the listener. The user can refine *which* apps Oak sees from the same system Notification Access screen — the "Apps" picker per listener is the source of truth.
+4. Once granted, Android binds `OakNotificationListenerService`. From then on every `onNotificationPosted` callback that passes the visibility filters writes a record into the pending queue. Until access is granted, posts are not delivered to the listener. The user can refine *which* apps Oak sees from the same system Notification Access screen — the "Apps" picker per listener is the source of truth.
 5. On the next heartbeat, the queue snapshot is included in the prompt under `## New Notifications`. After the heartbeat run, exactly that snapshot is removed from the queue — notifications that arrived during the call survive to the next heartbeat.
 
 If the user later revokes notification access from system settings, `onListenerDisconnected` fires, access reads as false, and the read tools stop appearing in the AI's available-tools list until access is re-granted (the intent toggle can remain on).
@@ -120,13 +120,13 @@ There is **no poll interval slider** — the listener is push-driven.
 
 | File | Purpose |
 |---|---|
-| `androidApp/src/foss/AndroidManifest.xml` | Declares `BIND_NOTIFICATION_LISTENER_SERVICE` and registers `KaiNotificationListenerService` in the FOSS flavor only |
+| `androidApp/src/foss/AndroidManifest.xml` | Declares `BIND_NOTIFICATION_LISTENER_SERVICE` and registers `OakNotificationListenerService` in the FOSS flavor only |
 | `composeApp/src/commonMain/.../data/NotificationModels.kt` | `NotificationRecord`, `NotificationSyncState` data classes |
 | `composeApp/src/commonMain/.../data/NotificationStore.kt` | Pending queue + broader store + retention sweeps |
 | `composeApp/src/commonMain/.../data/SettingsJson.kt` | Shared settings-backed JSON persistence: decode-or-default, encode-and-write, locked read-modify-write |
 | `composeApp/src/commonMain/.../notifications/NotificationReader.kt` | Expect interface for `getById`, `search`, `currentRecords` |
 | `composeApp/src/androidMain/.../notifications/NotificationReader.android.kt` | Reads from the in-memory + persisted listener store |
-| `composeApp/src/androidMain/.../notifications/KaiNotificationListenerService.kt` | `NotificationListenerService` subclass; visibility/hard-block filter + write to `NotificationStore` |
+| `composeApp/src/androidMain/.../notifications/OakNotificationListenerService.kt` | `NotificationListenerService` subclass; visibility/hard-block filter + write to `NotificationStore` |
 | `composeApp/src/commonMain/.../tools/NotificationTools.kt` | `check_notifications`, `read_notification`, `search_notifications` tool definitions |
 | `composeApp/src/commonMain/.../tools/NotificationListenerController.kt` | Expect interface for "is access granted" + "open settings" |
 | `composeApp/src/androidMain/.../tools/NotificationListenerController.android.kt` | `NotificationManager.isNotificationListenerAccessGranted` + `Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS` deep-link |
