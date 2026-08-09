@@ -280,6 +280,7 @@ private fun InteractiveModeScreen(
                             inputExpanded = false
                             uiState.actions.ask(it)
                         },
+                        onCompactNow = uiState.actions.compactNow,
                         supportedFileExtensions = uiState.supportedFileExtensions,
                         textState = questionInputText,
                         onTextStateChange = { questionInputText = it },
@@ -715,7 +716,9 @@ private fun ChatModeScreen(
                             val userIdByAssistantId = pairings.second
                             val executingToolsState = rememberExecutingTools(uiState.history)
 
-                            val fallbackStatusText = uiState.fallbackStatus?.let { status ->
+                            val fallbackStatusText = if (uiState.isCompactingContext) {
+                                "Optimizing conversation context…"
+                            } else uiState.fallbackStatus?.let { status ->
                                 val failed = stringResource(Res.string.fallback_service_failed, status.serviceName, uiErrorText(status.errorReason))
                                 val next = status.nextServiceName?.let { stringResource(Res.string.fallback_trying_next, it) }
                                 if (next != null) "$failed\n$next" else failed
@@ -933,6 +936,7 @@ private fun ChatModeScreen(
                     addFile = uiState.actions.addFile,
                     removeFile = uiState.actions.removeFile,
                     ask = uiState.actions.ask,
+                    onCompactNow = uiState.actions.compactNow,
                     supportedFileExtensions = uiState.supportedFileExtensions,
                     textState = questionInputText,
                     onTextStateChange = { questionInputText = it },

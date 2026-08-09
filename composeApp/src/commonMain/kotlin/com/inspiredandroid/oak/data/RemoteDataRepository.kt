@@ -69,6 +69,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.offsetAt
@@ -203,6 +205,11 @@ class RemoteDataRepository(
     )
 
     override val chatHistory: MutableStateFlow<List<History>> = MutableStateFlow(emptyList())
+    private val _isCompactingContext = MutableStateFlow(false)
+    override val isCompactingContext: StateFlow<Boolean> = _isCompactingContext
+    /** Serializes all user sends, including direct callers that bypass the UI. */
+    private val chatOperationMutex = Mutex()
+    private var contextCheckpoint: ContextCheckpoint? = null
 
     private val _currentConversationId = MutableStateFlow<String?>(null)
     override val currentConversationId: StateFlow<String?> = _currentConversationId
@@ -778,7 +785,7 @@ class RemoteDataRepository(
         return ordered.filterIndexed { index, entry -> index == 0 || !entry.service.isOnDevice }
     }
 
-    override suspend fun ask(question: String?, files: List<PlatformFile>, uiSubmission: UiSubmission?, activeSkillId: String?) {
+    override suspend fun ask(question: String?, files: List<PlatformFile>, uiSubmission: UiSubmission?, activeSkillId: String?) = chatOperationMutex.withLock {
         // The active skill (if any) is consumed for this single turn only — stored in a
         // field rather than a parameter on getActiveSystemPrompt so the existing internal
         // callers (heartbeat, askWithTools, etc.) don't all need a new parameter. The
@@ -797,6 +804,12 @@ class RemoteDataRepository(
                 skillManager.load()
             }
         }
+    }
+
+    override suspend fun compactConversationNow() = chatOperationMutex.withLock {
+        if (chatHistory.value.isEmpty()) return@withLock
+        buildRequestContext(force = true)
+        saveCurrentConversation()
     }
 
     private var pendingActiveSkillId: String? = null
@@ -880,9 +893,7 @@ class RemoteDataRepository(
             }
         }
 
-        compactHistoryIfNeeded()
-
-        val messages = chatHistory.value
+        val messages = buildRequestContext()
         val systemPrompt = getActiveSystemPrompt()
 
         val fallbackEntries = getOrderedFallbackEntries().filter { hasValidInstanceApiKey(it.instanceId, it.service) }
@@ -913,8 +924,11 @@ class RemoteDataRepository(
                 // No retry wrapper here: each network call retries inside askWithService.
                 // Retrying the whole call would re-enter the tool loop against a chat
                 // history already mutated by the failed attempt.
+                // Tool loops may trim their working list. Keep that state request-local so
+                // provider limits can never remove items from the visible transcript.
+                val requestHistory = MutableStateFlow(messages)
                 val turn = try {
-                    askWithService(entry.service, messages, systemPrompt, entry.instanceId)
+                    askWithService(entry.service, messages, systemPrompt, entry.instanceId, requestHistory)
                 } catch (e: Exception) {
                     if (e is kotlinx.coroutines.CancellationException) throw e
                     // On-device services should not silently fall back — surface the error
@@ -1131,6 +1145,7 @@ class RemoteDataRepository(
 
             val toolResults = executeToolCallsInParallel(
                 result.toolCalls.map { Triple(it.id, it.name, it.arguments) },
+                history,
             )
 
             history.update { h ->
@@ -1207,13 +1222,14 @@ class RemoteDataRepository(
      */
     private suspend fun executeToolCallsInParallel(
         toolCalls: List<Triple<String, String, String>>,
+        history: MutableStateFlow<List<History>>,
     ): List<Triple<String, String, String>> {
         // Add all TOOL_EXECUTING indicators first
         val executingIds = toolCalls.map { Uuid.random().toString() }
         for ((index, toolCall) in toolCalls.withIndex()) {
             val (_, name, _) = toolCall
             val toolDisplayName = toolExecutor.getToolDisplayName(name)
-            chatHistory.update {
+            history.update {
                 it.toMutableList().apply {
                     add(
                         History(
@@ -1252,7 +1268,7 @@ class RemoteDataRepository(
         } finally {
             // Remove all TOOL_EXECUTING indicators — also on cancellation, so stopping a
             // run doesn't strand spinner rows in the chat. Non-suspending, safe in finally.
-            chatHistory.update { history ->
+            history.update { history ->
                 history.filter { h -> h.id !in executingIds }
             }
         }
@@ -1385,60 +1401,71 @@ class RemoteDataRepository(
     }
 
     /**
-     * Compacts chat history by summarizing older messages via an LLM call when the history
-     * exceeds a percentage of the context window. Keeps recent exchanges verbatim and replaces
-     * older ones with a single summary. Falls back to simple drop-oldest trimming on failure.
+     * Builds a compact request context without changing the visible transcript.  A failed
+     * compaction deliberately returns the original history: data loss is never a fallback.
      */
-    private suspend fun compactHistoryIfNeeded() {
-        // Use primary service's context window for compaction decisions
-        val firstInstance = getConfiguredServiceInstances().firstOrNull() ?: return
-        val service = Service.fromId(firstInstance.serviceId)
-        val modelId = appSettings.getSelectedModelId(service)
-        val contextWindowTokens = ModelCatalog.estimateContextWindow(modelId)
+    private suspend fun buildRequestContext(force: Boolean = false): List<History> {
+        val service = currentService()
+        val modelId = currentModelId()
+        val maxChars = ModelCatalog.estimateContextWindow(modelId) * ESTIMATED_CHARS_PER_TOKEN
+        val fullHistory = chatHistory.value.filter { it.role != History.Role.TOOL_EXECUTING }
+        val totalChars = fullHistory.sumOf { it.content.length } + (getActiveSystemPrompt()?.length ?: 0)
+        val threshold = (maxChars * COMPACTION_THRESHOLD).toInt()
+        if (!force && totalChars <= threshold) return fullHistory
 
-        val history = chatHistory.value.filter { it.role != History.Role.TOOL_EXECUTING }
-        val systemPromptChars = getActiveSystemPrompt()?.length ?: 0
-        val totalChars = history.sumOf { it.content.length } + systemPromptChars
-        val maxChars = contextWindowTokens * ESTIMATED_CHARS_PER_TOKEN
-        if (totalChars <= (maxChars * COMPACTION_THRESHOLD).toInt()) return
-
-        // Split history: older messages to summarize, recent to keep verbatim
-        val userIndices = history.mapIndexedNotNull { index, h ->
-            if (h.role == History.Role.USER) index else null
-        }
-        if (userIndices.size <= COMPACTION_KEEP_RECENT) return
-        val cutoffIndex = userIndices[userIndices.size - COMPACTION_KEEP_RECENT]
-        val olderMessages = history.subList(0, cutoffIndex)
-        val recentMessages = history.subList(cutoffIndex, history.size)
-
-        if (olderMessages.isEmpty()) return
-
-        // Build a transcript of the older messages for summarization
-        val transcript = buildString {
-            for (msg in olderMessages) {
-                if (msg.role == History.Role.USER || msg.role == History.Role.ASSISTANT) {
-                    val role = if (msg.role == History.Role.USER) "User" else "Assistant"
-                    appendLine("$role: ${msg.content}")
-                }
+        // Reuse a persisted checkpoint until the checkpoint plus new turns reaches the
+        // threshold. This avoids repeatedly summarizing an already-compacted transcript.
+        contextCheckpoint?.let { checkpoint ->
+            val checkpointIndex = fullHistory.indexOfFirst { it.id == checkpoint.throughMessageId }
+            if (checkpointIndex >= 0) {
+                val checkpointContext = listOf(
+                    History(role = History.Role.ASSISTANT, content = "[Prior conversation context]\n${checkpoint.summary}"),
+                ) + fullHistory.drop(checkpointIndex + 1)
+                if (!force && checkpointContext.sumOf { it.content.length } <= threshold) return checkpointContext
             }
         }
 
-        val summaryPrompt = "Summarize this conversation concisely, preserving key facts, decisions, and any information the assistant would need to continue helping. Be brief but complete:\n\n$transcript"
-
-        val summary = try {
-            askSilently(summaryPrompt)
-        } catch (_: Exception) {
-            // Summarization failed — fall back to dropping old messages
-            chatHistory.value = recentMessages
-            return
+        val userIndices = fullHistory.mapIndexedNotNull { index, message ->
+            index.takeIf { message.role == History.Role.USER }
         }
+        val (older, recent) = if (force && userIndices.size <= 1) {
+            // A manual checkpoint must be observable even in a one-exchange chat.
+            fullHistory to emptyList()
+        } else {
+            val keepRecent = if (force) minOf(COMPACTION_KEEP_RECENT, userIndices.size - 1) else COMPACTION_KEEP_RECENT
+            if (keepRecent <= 0 || userIndices.size <= keepRecent) return fullHistory
+            val cutoff = userIndices[userIndices.size - keepRecent]
+            fullHistory.take(cutoff) to fullHistory.drop(cutoff)
+        }
+        if (older.isEmpty()) return fullHistory
 
-        val summaryEntry = History(
-            role = History.Role.ASSISTANT,
-            content = "[Conversation summary: $summary]",
-        )
-
-        chatHistory.value = listOf(summaryEntry) + recentMessages
+        val transcript = buildString {
+            older.forEach { message ->
+                when (message.role) {
+                    History.Role.USER -> appendLine("User: ${message.content}")
+                    History.Role.ASSISTANT -> appendLine("Assistant: ${message.content}")
+                    else -> Unit
+                }
+            }
+        }
+        _isCompactingContext.value = true
+        return try {
+            val summary = askSilently(
+                "Summarize this conversation for future context. Preserve facts, decisions, constraints, open tasks, names, and references. Do not invent information.\n\n$transcript",
+            )
+            if (summary.isBlank()) return fullHistory
+            contextCheckpoint = ContextCheckpoint(
+                summary = summary,
+                throughMessageId = older.last().id,
+                createdAt = Clock.System.now().toEpochMilliseconds(),
+                sourceMessageCount = older.size,
+            )
+            listOf(History(role = History.Role.ASSISTANT, content = "[Prior conversation context]\n$summary")) + recent
+        } catch (_: Exception) {
+            fullHistory
+        } finally {
+            _isCompactingContext.value = false
+        }
     }
 
     private fun trimToRecentExchanges(history: List<History>, maxExchanges: Int): List<History> {
@@ -1451,7 +1478,7 @@ class RemoteDataRepository(
     }
 
     private suspend fun saveCurrentConversation() {
-        val history = trimToRecentExchanges(chatHistory.value, 20)
+        val history = chatHistory.value
         if (history.isEmpty()) return
 
         val now = Clock.System.now().toEpochMilliseconds()
@@ -1487,6 +1514,7 @@ class RemoteDataRepository(
             updatedAt = now,
             title = title,
             type = existingConversation?.type ?: if (interactiveModeFlag) Conversation.TYPE_INTERACTIVE else Conversation.TYPE_CHAT,
+            contextCheckpoint = contextCheckpoint,
         )
 
         conversationStorage.saveConversation(conversation)
@@ -1537,6 +1565,7 @@ class RemoteDataRepository(
         val conversation = savedConversations.value.find { it.id == id } ?: return
 
         setCurrentConversationId(id)
+        contextCheckpoint = conversation.contextCheckpoint
         chatHistory.value = conversation.messages.map { m ->
             // Prefer the modern `attachments` field. Fall back to the legacy single-file
             // fields for conversations saved before multi-attachment support.
@@ -2040,7 +2069,8 @@ class RemoteDataRepository(
 
     override suspend fun askSilently(question: String): String {
         val service = currentService()
-        val firstInstance = getConfiguredServiceInstances().firstOrNull() ?: return ""
+        val firstInstance = getConfiguredServiceInstances().firstOrNull()
+            ?: ServiceInstance(instanceId = "free", serviceId = Service.Free.id)
         val messages = listOf(History(role = History.Role.USER, content = question))
 
         if (service.isOnDevice) {

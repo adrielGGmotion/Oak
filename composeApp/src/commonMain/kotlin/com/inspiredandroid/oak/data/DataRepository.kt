@@ -19,6 +19,8 @@ interface DataRepository {
     val chatHistory: StateFlow<List<History>>
     val currentConversationId: StateFlow<String?>
     val fallbackStatus: StateFlow<FallbackStatus?>
+    /** True only while context is being rebuilt; chat mutation is exclusive. */
+    val isCompactingContext: StateFlow<Boolean>
 
     // Configured services management
     fun getConfiguredServiceInstances(): List<ServiceInstance>
@@ -53,6 +55,8 @@ interface DataRepository {
         uiSubmission: UiSubmission? = null,
         activeSkillId: String? = null,
     )
+    /** Rebuild request context now, even below the normal threshold (temporary developer control). */
+    suspend fun compactConversationNow()
     fun clearHistory()
     fun currentService(): Service
     fun isUsingSharedKey(): Boolean

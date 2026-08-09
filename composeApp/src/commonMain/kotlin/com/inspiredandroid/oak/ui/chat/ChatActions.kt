@@ -6,6 +6,7 @@ import io.github.vinceglb.filekit.PlatformFile
 @Immutable
 data class ChatActions(
     val ask: (String) -> Unit,
+    val compactNow: () -> Unit,
     val toggleSpeechOutput: () -> Unit,
     val retry: () -> Unit,
     val clearHistory: () -> Unit,

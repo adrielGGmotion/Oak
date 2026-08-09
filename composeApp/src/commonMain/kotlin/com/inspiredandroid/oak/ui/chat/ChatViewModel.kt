@@ -54,6 +54,7 @@ class ChatViewModel(
 
     private val actions = ChatActions(
         ask = ::ask,
+        compactNow = ::compactNow,
         retry = ::retry,
         toggleSpeechOutput = ::toggleSpeechOutput,
         clearHistory = ::clearHistory,
@@ -106,6 +107,11 @@ class ChatViewModel(
         viewModelScope.launch {
             dataRepository.fallbackStatus.collect { status ->
                 _state.update { it.copy(fallbackStatus = status) }
+            }
+        }
+        viewModelScope.launch {
+            dataRepository.isCompactingContext.collect { compacting ->
+                _state.update { it.copy(isCompactingContext = compacting) }
             }
         }
         taskScheduler.isLoadingCheck = { _state.value.isLoading }
@@ -423,6 +429,18 @@ class ChatViewModel(
 
     companion object {
         private val FREE_MODE_INSTANCE_IDS = FreeMode.entries.associateBy { it.instanceId }
+    }
+
+    private fun compactNow() {
+        if (_state.value.isLoading) return
+        currentJob = viewModelScope.launch(backgroundDispatcher) {
+            _state.update { it.copy(isLoading = true, error = null) }
+            try {
+                dataRepository.compactConversationNow()
+            } finally {
+                _state.update { it.copy(isLoading = false) }
+            }
+        }
     }
 
     private fun regenerate() {

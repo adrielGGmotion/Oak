@@ -27,6 +27,8 @@ data class Conversation(
     val title: String = "",
     val type: String = TYPE_CHAT,
     val shellTranscript: List<TerminalLine> = emptyList(),
+    /** Derived request context; messages remain the complete, visible transcript. */
+    val contextCheckpoint: ContextCheckpoint? = null,
 ) {
     companion object {
         const val TYPE_CHAT = "chat"
@@ -53,6 +55,15 @@ data class Conversation(
         val fileName: String? = null,
     )
 }
+
+@Serializable
+data class ContextCheckpoint(
+    val summary: String,
+    /** Id of the last original message represented by [summary]. */
+    val throughMessageId: String,
+    val createdAt: Long,
+    val sourceMessageCount: Int,
+)
 
 /**
  * Snapshot of a oak-ui form the user submitted. Attached to the resulting User message so

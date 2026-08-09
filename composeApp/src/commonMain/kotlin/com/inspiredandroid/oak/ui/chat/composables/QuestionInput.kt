@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -88,6 +89,7 @@ fun QuestionInput(
     addFile: (PlatformFile) -> Unit,
     removeFile: (PlatformFile) -> Unit,
     ask: (String) -> Unit,
+    onCompactNow: () -> Unit = {},
     supportedFileExtensions: ImmutableList<String>,
     textState: TextFieldValue,
     onTextStateChange: (TextFieldValue) -> Unit,
@@ -99,6 +101,8 @@ fun QuestionInput(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
+        // Temporary developer control: force a checkpoint without needing the 70% threshold.
+        TextButton(onClick = onCompactNow, enabled = !isLoading) { Text("Compact now") }
         // Slash autocomplete: shown when the user is typing the first token and it starts
         // with `/`. Selecting an entry rewrites the first token to the canonical skill id
         // so the ViewModel can match it at send time.
@@ -167,6 +171,8 @@ fun QuestionInput(
         }
 
         fun submitQuestion() {
+            // Keyboard and programmatic send paths share this guard with the button.
+            if (isLoading) return
             val text = textState.text
             if (text.isNotBlank()) {
                 ask(text.trim())
