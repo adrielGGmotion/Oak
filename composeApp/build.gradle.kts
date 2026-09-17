@@ -48,23 +48,6 @@ kotlin {
         withHostTest {}
     }
 
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            // Dynamic so LiteRT-LM's `-Xlinker -all_load` (in its Package.swift) doesn't
-            // sweep up ComposeApp's static archive too and trip thousands of duplicate
-            // symbols at link time. Each framework gets its own link context.
-            isStatic = false
-            // Must differ from the iosApp bundle identifier — iOS refuses to install a
-            // .app whose embedded framework shares its parent's identifier (MIInstaller
-            // error 57 / DuplicateIdentifier).
-            binaryOption("bundleId", "com.inspiredandroid.oak.composeapp")
-        }
-    }
-
     jvm("desktop")
 
     @OptIn(ExperimentalWasmDsl::class)
@@ -170,12 +153,6 @@ kotlin {
             implementation(libs.litert.lm.jvm)
             implementation(libs.sqldelight.sqlite.driver)
         }
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
-            implementation(libs.ktor.network)
-            implementation(libs.ktor.network.tls)
-            implementation(libs.sqldelight.native.driver)
-        }
         wasmJsMain.dependencies {
             implementation(libs.ktor.client.js)
         }
@@ -256,19 +233,6 @@ class VersionGeneratorPlugin : Plugin<Project> {
                 }
                 """.trimIndent(),
             )
-
-            // Update iOS Config.xcconfig with version
-            val xcConfigFile = rootProject.file("iosApp/Configuration/Config.xcconfig")
-            if (xcConfigFile.exists()) {
-                val content = xcConfigFile.readText()
-                val updatedContent =
-                    if (content.contains("APP_VERSION=")) {
-                        content.replace(Regex("APP_VERSION=.*"), "APP_VERSION=$appVersion")
-                    } else {
-                        content.trimEnd() + "\nAPP_VERSION=$appVersion\n"
-                    }
-                xcConfigFile.writeText(updatedContent)
-            }
         }
     }
 }

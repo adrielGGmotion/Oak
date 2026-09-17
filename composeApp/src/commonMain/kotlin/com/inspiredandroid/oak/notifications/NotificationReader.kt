@@ -5,7 +5,7 @@ import com.inspiredandroid.oak.data.NotificationRecord
 /**
  * Multiplatform notification reader. Only the Android FOSS build returns real data —
  * the feature is gated by the `OakNotificationListenerService` being declared in the
- * merged manifest, which is only the case for the `foss` product flavor. iOS, desktop,
+ * merged manifest, which is only the case for the `foss` product flavor. Desktop and
  * and wasm return no-op stubs (notification access is either restricted or doesn't
  * exist on those platforms).
  *

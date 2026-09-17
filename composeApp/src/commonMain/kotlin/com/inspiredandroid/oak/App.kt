@@ -89,7 +89,7 @@ fun App(
     }
 
     // Reuse global Koin if already started (Android Application class),
-    // otherwise create a new instance (iOS, Desktop, Wasm).
+    // otherwise create a new instance (Desktop or Wasm).
     if (isKoinStarted) {
         AppContent(navController, lightColorScheme, darkColorScheme, textToSpeech, onAppOpens)
     } else {

@@ -2,7 +2,7 @@
 
 **Last verified:** 2026-08-08
 
-Oak's daemon mode keeps the app running in the background on Android so that scheduled tasks, heartbeat checks, and email polling continue to execute even when the app is not in the foreground. On other platforms (desktop, iOS, web), daemon mode is a no-op.
+Oak's daemon mode keeps the app running in the background on Android so that scheduled tasks, heartbeat checks, and email polling continue to execute even when the app is not in the foreground. On other platforms (desktop and web), daemon mode is a no-op.
 
 ## Concepts
 

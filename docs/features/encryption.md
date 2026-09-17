@@ -10,7 +10,7 @@ The following data is stored in secure settings:
 - Service API keys (per-instance)
 - Email account passwords
 - Encryption key for legacy conversation migration
-- Conversation history on the browser build only — on Android, iOS, and desktop, conversations live in a local SQLite database in app-private storage (unencrypted at the application layer; protected by the OS app sandbox and any platform full-disk/file-based encryption). See [chat.md](chat.md) for the storage layout and migration chain.
+- Conversation history on the browser build only — on Android and desktop, conversations live in a local SQLite database in app-private storage (unencrypted at the application layer; protected by the OS app sandbox and any platform full-disk/file-based encryption). See [chat.md](chat.md) for the storage layout and migration chain.
 
 ## Platform Implementations
 
@@ -21,13 +21,6 @@ The following data is stored in secure settings:
 - **Key management:** Android Keystore (`MasterKey` with `AES256_GCM` scheme)
 - **Size limit:** ~2 MB per value (SharedPreferences limit)
 - **File location:** App-private `oak_secure_prefs` SharedPreferences
-
-### iOS
-- **Mechanism:** `KeychainSettings` (`com.russhwolf/multiplatform-settings`)
-- **Encryption:** Hardware-backed Keychain encryption (AES-256-GCM via Secure Enclave on supported devices)
-- **Key management:** Managed by iOS Keychain Services
-- **Size limit:** Effectively unlimited
-- **Service identifier:** `com.inspiredandroid.oak`
 
 ### Desktop (macOS, Windows, Linux)
 - **Mechanism:** `EncryptedFileSettings` — custom file-backed `Settings` implementation
@@ -64,7 +57,6 @@ The XOR encryption key is retained in settings for any devices that haven't migr
 |---|---|
 | `composeApp/src/commonMain/.../Platform.kt` | `expect fun createSecureSettings()` declaration |
 | `composeApp/src/androidMain/.../Platform.android.kt` | Android EncryptedSharedPreferences setup |
-| `composeApp/src/iosMain/.../Platform.ios.kt` | iOS KeychainSettings setup |
 | `composeApp/src/desktopMain/.../Platform.jvm.kt` | Desktop EncryptedFileSettings wiring |
 | `composeApp/src/desktopMain/.../data/EncryptedFileSettings.kt` | AES-256-GCM file-backed Settings implementation |
 | `composeApp/src/wasmJsMain/.../Platform.wasmJs.kt` | Web localStorage setup |
