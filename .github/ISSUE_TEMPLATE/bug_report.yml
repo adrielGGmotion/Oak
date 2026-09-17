@@ -33,7 +33,6 @@ body:
       label: Platform
       options:
         - Android
-        - iOS
         - Windows
         - macOS
         - Linux

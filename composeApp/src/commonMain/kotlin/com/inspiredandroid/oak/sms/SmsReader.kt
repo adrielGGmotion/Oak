@@ -5,7 +5,7 @@ import com.inspiredandroid.oak.data.SmsMessage
 /**
  * Multiplatform SMS reader. Only the Android FOSS build returns real data — the
  * feature is gated by `READ_SMS` being declared in the merged manifest, which is
- * only the case for the `foss` product flavor. iOS, desktop, and wasm return
+ * only the case for the `foss` product flavor. Desktop and wasm return
  * no-op stubs.
  */
 expect class SmsReader() {

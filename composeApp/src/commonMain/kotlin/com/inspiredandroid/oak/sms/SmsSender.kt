@@ -3,7 +3,7 @@ package com.inspiredandroid.oak.sms
 /**
  * Multiplatform SMS sender. Only the Android FOSS build actually sends — the
  * Play Store flavor doesn't declare `SEND_SMS`, so [hasPermission] returns
- * false there and [send] no-ops with a failure result. iOS/desktop/wasm stub
+ * false there and [send] no-ops with a failure result. Desktop and wasm stub
  * the same way.
  */
 expect class SmsSender() {

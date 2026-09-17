@@ -100,7 +100,7 @@ The PTY hands Oak a block of output as often as the program produces one — und
 
 ## Behavior
 
-- **Android only** — the entry button is hidden on iOS, desktop, and web, and the environment itself is a no-op there.
+- **Android only** — the entry button is hidden on desktop and web, and the environment itself is a no-op there.
 - **Network required** — the rootfs download and every agent installer need HTTPS outbound access.
 - **Disk** — expect ~150 MB for the base system, more per agent; the project list reports the real figure once Debian is installed.
 - **Isolation** — Oak Build does not share its rootfs or home with the chat Linux sandbox.

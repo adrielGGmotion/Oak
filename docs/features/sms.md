@@ -10,7 +10,7 @@ Oak on the FOSS Android build can **read** incoming SMS messages and **draft** o
 
 - **FOSS Android build**: fully available. Read and Send are separate opt-ins.
 - **Play Store Android build**: feature is invisible — neither `READ_SMS` nor `SEND_SMS` is declared in the Play flavor's merged manifest, the runtime support check returns false, the settings section is hidden, and the SMS tools are never registered.
-- **iOS / desktop / web**: unsupported. No-op stubs.
+- **Desktop / web**: unsupported. No-op stubs.
 
 The FOSS gate is purely manifest-based: the `foss` product flavor contributes `androidApp/src/foss/AndroidManifest.xml` declaring both `READ_SMS` and `SEND_SMS`, while the `playStore` flavor does not. At runtime the app queries `PackageManager.getPackageInfo(…, GET_PERMISSIONS).requestedPermissions` to decide whether to show the feature.
 

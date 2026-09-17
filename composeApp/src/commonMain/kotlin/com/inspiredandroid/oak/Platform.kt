@@ -26,7 +26,6 @@ expect val BackIcon: ImageVector
 sealed class Platform(val displayName: String) {
     sealed class Mobile(displayName: String) : Platform(displayName) {
         data object Android : Mobile("Android")
-        data object Ios : Mobile("iOS")
     }
 
     sealed class Desktop(displayName: String) : Platform(displayName) {
@@ -84,7 +83,7 @@ expect suspend fun saveFileToDevice(bytes: ByteArray, baseName: String, extensio
 /**
  * Fires a background push notification for a heartbeat that produced a non-trivial
  * response. Android additionally wires a tap-to-open-heartbeat deep link via its
- * PendingIntent; iOS/desktop just surface the message in the OS notification center
+ * PendingIntent; desktop surfaces the message in the OS notification center
  * without deep-linking back to the conversation. No-op on web.
  */
 expect fun sendHeartbeatNotification(title: String, body: String)

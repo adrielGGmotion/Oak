@@ -2,7 +2,7 @@
 
 **Last verified:** 2026-08-02
 
-Oak can run AI models directly on the user's device using Google's LiteRT LM SDK. This enables fully offline, private inference with no API key, no internet connection, and no cost. Available on **Android**, **Desktop** (macOS, Linux, Windows), and **iOS**.
+Oak can run AI models directly on the user's device using Google's LiteRT LM SDK. This enables fully offline, private inference with no API key, no internet connection, and no cost. Available on **Android** and **Desktop** (macOS, Linux, Windows).
 
 ## How It Works
 
@@ -53,7 +53,7 @@ If the engine throws (e.g. the model does emit malformed tool-call syntax that t
 
 - **No image input** -- the `LocalInferenceEngine` interface only accepts text messages
 - **No dynamic UI** -- oak-ui prompts are skipped for on-device runs (the schema is too large for the native template parser)
-- **Not available on web** -- the WASM build returns no local engine. iOS uses a platform-specific LiteRT bridge rather than the Android/JVM AAR.
+- **Not available on web** -- the WASM build returns no local engine.
 - **Requires a 64-bit device (Android)** -- the LiteRT-LM AAR only ships `arm64-v8a` and `x86_64` native libraries. On pure 32-bit devices (armeabi-v7a), the LiteRT service card is hidden; the app still works with remote services.
 - **Requires AVX2 on x86_64 Linux** -- the LiteRT native binary is compiled with AVX2+ instructions, so older CPUs (e.g. Intel Ivy Bridge / 3rd-gen Core) would SIGILL on model load. On Linux desktop, the engine probes `/proc/cpuinfo` for the `avx2` flag and hides the LiteRT service card when missing. Remote services are unaffected.
 
@@ -88,18 +88,18 @@ When the last LiteRT service instance is removed, all downloaded and imported mo
 
 ## Platform Differences
 
-| Aspect | Android | Desktop | iOS |
-|--------|---------|---------|-----|
-| Model storage | `context.filesDir/litert_models` (catalog under `{id}/` with its digest marker alongside, imports under `imports/`) | `~/.oak/litert_models` (same layout) | App sandbox path via the iOS LiteRT bridge (same layout) |
-| Memory check | `ActivityManager.getMemoryInfo()` vs 512 MB floor | Skipped — desktop OSes manage memory via swap and cache eviction | Platform bridge |
-| Disk space | `StatFs.availableBytes` | `File.usableSpace` | Platform bridge |
-| Download notification | Foreground service with notification | No notification (no OS restriction) | Platform bridge |
-| Model import | FileKit file picker → stream-copy into app storage | Same | Same |
+| Aspect | Android | Desktop |
+|--------|---------|---------|
+| Model storage | `context.filesDir/litert_models` (catalog under `{id}/` with its digest marker alongside, imports under `imports/`) | `~/.oak/litert_models` (same layout) |
+| Memory check | `ActivityManager.getMemoryInfo()` vs 512 MB floor | Skipped — desktop OSes manage memory via swap and cache eviction |
+| Disk space | `StatFs.availableBytes` | `File.usableSpace` |
+| Download notification | Foreground service with notification | No notification (no OS restriction) |
+| Model import | FileKit file picker → stream-copy into app storage | Same |
 
 ## Fallback Behavior
 
 - LiteRT instances participate in the normal fallback chain
-- On unsupported platforms (iOS, web), LiteRT instances are silently skipped
+- On unsupported platforms (web), LiteRT instances are silently skipped
 - `askWithTools` (used by heartbeat and scheduling) prefers remote services and falls back to on-device when no remote is configured. The on-device fallback works at any context size, since the simple-tool allowlist has no schema-overhead penalty.
 
 ## Key Files
@@ -115,8 +115,6 @@ When the last LiteRT service instance is removed, all downloaded and imported mo
 | `composeApp/src/jvmShared/.../inference/LiteRTInferenceEngine.kt` | Shared Android+Desktop implementation wrapping LiteRT LM SDK |
 | `composeApp/src/androidMain/.../inference/InferencePlatform.android.kt` | Android platform implementations (storage, memory, notifications) |
 | `composeApp/src/desktopMain/.../inference/InferencePlatform.jvm.kt` | Desktop platform implementations (storage, memory) |
-| `composeApp/src/iosMain/.../inference/IosLiteRTInferenceEngine.kt` | iOS LiteRT engine implementation |
-| `composeApp/src/iosMain/.../inference/LocalInferenceEngineProvider.ios.kt` | iOS factory wiring |
 | `composeApp/src/androidMain/.../inference/ModelDownloadService.kt` | Android foreground service for background downloads |
 | `composeApp/src/commonMain/.../data/RemoteDataRepository.kt` | Inference dispatch, engine initialization status, local tool allowlist |
 | `composeApp/src/commonMain/.../network/NetworkExceptions.kt` | Maps inference failures, including a failed integrity check, to user-facing errors |

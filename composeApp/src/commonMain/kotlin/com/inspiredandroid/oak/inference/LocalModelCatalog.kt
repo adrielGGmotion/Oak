@@ -118,7 +118,7 @@ fun stripThinkBlocks(s: String): String = THINK_BLOCK_REGEX.replace(s, "").trim(
  * characters (U+10000–U+10FFFF — most emoji like 🗺️, 🎉, 🔥) as surrogate-pair
  * sequences where each half becomes a 3-byte block. That is invalid as *standard*
  * UTF-8, and the native runtime's `nlohmann::json` parser crashes with "ill-formed
- * UTF-8 byte" the moment it hits one. The Swift bridge on iOS hits the same parser.
+ * UTF-8 byte" the moment it hits one.
  *
  * Filtering surrogates drops every supplementary character (both halves are surrogate
  * code units in UTF-16) while leaving BMP characters — including BMP-only emoji like
